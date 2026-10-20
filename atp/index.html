@@ -13964,23 +13964,24 @@ function qrTry(im){
 }
 function scanMsg(t){ var m=document.getElementById('scanMsg'); if(m) m.textContent=t; }
 function scanDlg(){
-  dlg('<h2 style="margin-top:0">Scan QR code</h2><video id="scanV" playsinline muted style="width:100%;border-radius:8px;background:#000;max-height:46vh"></video><canvas id="scanC" style="display:none"></canvas><p class="muted" id="scanMsg">Starting camera… point it at the Auditor QR code on the last page of the ATP report.</p><div class="sheet-btns"><button class="btn primary big" data-act="scan-photo">📷 Take a photo of the QR code</button><button class="btn light big" data-act="scan-lib">🖼 Choose a photo / screenshot from my library</button><button class="btn big" data-act="scan-close">Cancel</button></div>','sheet');
+  dlg('<h2 style="margin-top:0">Scan QR code</h2><video id="scanV" playsinline muted style="width:100%;border-radius:8px;background:#000;max-height:46vh"></video><canvas id="scanC" style="display:none"></canvas><p class="muted" id="scanMsg">Starting camera… point it at the Auditor QR code on the last page of the ATP report.</p><div class="sheet-btns"><button class="btn primary big" data-act="scan-photo">📷 Take a photo of the QR code</button><button class="btn light big" data-act="scan-lib">🖼 Choose photos / screenshots from my library (pick all the codes)</button><button class="btn big" data-act="scan-close">Cancel</button></div>','sheet');
   var v=document.getElementById('scanV'), c=document.getElementById('scanC');
   if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){ scanMsg('Live scanning is blocked by the browser for files opened from Downloads. Tap “Take a photo of the QR code” below – it opens the camera, and the code is read as soon as you accept the picture.'); v.style.display='none'; return; }
-  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false}).then(function(st){
+  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false}).then(function(st){
     if(!document.getElementById('scanV')){ st.getTracks().forEach(function(t){ t.stop(); }); return; }
     scanStream=st; scanOn=true; v.srcObject=st; v.play(); scanMsg('Hold the QR code inside the picture…');
-    var tick=function(){ if(!scanOn) return; if(v.videoWidth){ var k=Math.min(1,720/v.videoWidth); c.width=Math.round(v.videoWidth*k); c.height=Math.round(v.videoHeight*k); c.getContext('2d').drawImage(v,0,0,c.width,c.height); var t=decodeCanvas(c,false); if(t){ if(String(t).indexOf('WIP1~')===0){ wipChunk(t); setTimeout(tick,900); return; } scanDone(t); return; } } setTimeout(tick,120); };
+    var tick=function(){ if(!scanOn) return; if(v.videoWidth){ var k=Math.min(1,1280/v.videoWidth); c.width=Math.round(v.videoWidth*k); c.height=Math.round(v.videoHeight*k); c.getContext('2d').drawImage(v,0,0,c.width,c.height); var t=decodeCanvas(c,false); if(t){ if(String(t).indexOf('WIP1~')===0){ wipChunk(t); setTimeout(tick,900); return; } scanDone(t); return; } } setTimeout(tick,120); };
     tick();
   }).catch(function(){ scanMsg('Live scanning could not start. Tap “Take a photo of the QR code” below – it opens the camera, and the code is read as soon as you accept the picture.'); v.style.display='none'; });
 }
 function scanPhoto(cam){
-  var i=document.createElement('input'); i.type='file'; i.accept='image/*'; if(cam) i.capture='environment'; i.style.cssText='position:fixed;left:-9999px;top:0;opacity:0'; document.body.appendChild(i);
+  var i=document.createElement('input'); i.type='file'; i.accept='image/*'; if(cam) i.capture='environment'; else i.multiple=true; i.style.cssText='position:fixed;left:-9999px;top:0;opacity:0'; document.body.appendChild(i);
   var done=function(){ setTimeout(function(){ try{ i.remove(); }catch(e){} },60000); };
-  i.onchange=function(){ var f=i.files[0]; done(); if(!f) return; scanMsg('Reading the photo…');
-    var url=URL.createObjectURL(f), im=new Image();
-    im.onload=function(){ setTimeout(function(){ var txt=null; try{ txt=qrTry(im); }catch(e){} URL.revokeObjectURL(url); if(txt) scanDone(txt); else scanMsg('No QR code found in that photo. Get closer so the code fills about half the picture, keep it flat and in focus, avoid glare, and try again.'); },30); };
-    im.onerror=function(){ scanMsg('Could not read that photo.'); }; im.src=url; };
+  var readOne=function(f){ return new Promise(function(res){ var url=URL.createObjectURL(f), im=new Image(); im.onload=function(){ setTimeout(function(){ var t=null; try{ t=qrTry(im); }catch(e){} URL.revokeObjectURL(url); res(t); },30); }; im.onerror=function(){ URL.revokeObjectURL(url); res(null); }; im.src=url; }); };
+  i.onchange=async function(){ var fs=Array.prototype.slice.call(i.files); done(); if(!fs.length) return; var bad=0;
+    for(var n=0;n<fs.length;n++){ scanMsg(fs.length>1?'Reading photo '+(n+1)+' of '+fs.length+'…':'Reading the photo…'); var txt=await readOne(fs[n]);
+      if(!txt){ bad++; continue; } if(String(txt).indexOf('WIP1~')!==0){ await scanDone(txt); return; } scanDone(txt); }
+    if(bad) scanMsg((fs.length>1?bad+' of '+fs.length+' photos had no readable QR code. ':'No QR code found in that photo. ')+'Get closer so the code fills about half the picture, keep it flat and in focus, avoid glare, and try again. Codes already read are kept.'); };
   i.click(); done();
 }
 async function scanDone(txt){
@@ -14225,7 +14226,7 @@ function wipChunk(txt){
   const mode=m[1],id=m[2],i=+m[3],n=+m[4],crc=m[5],data=m.slice(6).join('~');
   const key=id+'|'+crc+'|'+n,g=wipRx[key]||(wipRx[key]={mode,id,n,crc,parts:{}});g.parts[i]=data;
   const have=Object.keys(g.parts).map(Number).sort((a,b)=>a-b);
-  if(have.length<n){const miss=[];for(let k=1;k<=n;k++)if(!g.parts[k])miss.push(k);wipMsg(`✓ Code ${i} of ${n} read. Still needed: ${miss.join(', ')}. Scan the next code.`);return true;}
+  if(have.length<n){const miss=[];for(let k=1;k<=n;k++)if(!g.parts[k])miss.push(k);wipMsg(`✓ Code ${i} of ${n} read. Still needed: ${miss.join(', ')}. Show the next code to the camera, take another photo, or choose several photos from your library at once.`);return true;}
   const all=[];for(let k=1;k<=n;k++)all.push(g.parts[k]);const joined=all.join('');delete wipRx[key];
   if(wipH(joined)!==crc){wipMsg('One of the codes was misread. Start over: scan all the codes again.');return true;}
   wipApplyData(mode,joined);return true;}
