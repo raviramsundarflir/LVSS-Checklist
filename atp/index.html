@@ -231,6 +231,18 @@ h2{font-size:21px}
 .punch li.inl button.chip.on{background:#fff3c4;border-color:#c9a400}
 .punch li.inl button.pendbtn{display:block;width:100%}
 
+.row{grid-template-rows:auto 1fr}
+.row .num,.row .body{grid-row:1/3}
+.row .tgl{grid-row:2;grid-column:3/5;justify-self:end;align-self:start;white-space:nowrap;display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:2px 10px 2px 8px;font:inherit;font-size:12.5px;font-weight:600;color:#7a5c00;border:1px solid #d9c27a;background:#fff;border-radius:20px;cursor:pointer;touch-action:manipulation}
+.row .tgl .sw{width:30px;height:16px;border-radius:8px;background:#c9ced6;position:relative;flex:none;transition:background .15s}
+.row .tgl .sw::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:left .15s}
+.row .tgl.on{background:#b58900;border-color:#b58900;color:#fff}.row .tgl.on .sw{background:rgba(255,255,255,.4)}.row .tgl.on .sw::after{left:16px}
+@media (max-width:640px){
+  .row{grid-template-areas:"n b x" "n b c" "n t t";grid-template-rows:auto 1fr auto}
+  .row .num,.row .body{grid-row:auto}
+  .row .tgl{grid-area:t;justify-self:end;margin-top:2px}
+}
+
 /* ---------- Print ---------- */
 @media print{
   @page{size:letter;margin:11mm 11mm 10mm}
@@ -13350,7 +13362,7 @@ function rowHTML(r){
     '<button class="cam'+(off?' off':'')+'" data-act="cam" aria-label="Add photo to item '+r.num+'"'+(off?' disabled':'')+'>'+CAM+'<span class="cam-n">'+(ph.length||'')+'</span></button>'+
     '<input type="file" accept="image/*" capture="environment" data-f="photo" class="in-cam" hidden'+(off?' disabled':'')+'>'+
     '<input type="file" accept="image/*" multiple data-f="photo" class="in-lib" hidden'+(off?' disabled':'')+'>'+
-    '<button class="box" data-act="tap"'+(off?' disabled':'')+' aria-label="Item '+r.num+' status: '+STAT[s].label+'. Tap to change.">'+STAT[s].g+'</button></li>';
+    '<button class="box" data-act="tap"'+(off?' disabled':'')+' aria-label="Item '+r.num+' status: '+STAT[s].label+'. Tap to change.">'+STAT[s].g+'</button>'+((r.spare&&off)?'':'<button class=\"tgl'+(s===5?' on':'')+'\" data-act=\"cnt\" role=\"switch\" aria-checked=\"'+(s===5?'true':'false')+'\"><span class=\"sw\"></span>Could not test</button>')+'</li>';
 }
 function secCountText(si){
   var rows=buildRows(S.rec.tpl).filter(function(r){ return r.sec===si; }), t=0, d=0;
@@ -13398,6 +13410,7 @@ function refreshRow(li){
   STAT.forEach(function(x){ li.classList.remove(x.cls); }); li.classList.add(STAT[s].cls);
   var b=li.querySelector('.box'); b.innerHTML=STAT[s].g; b.setAttribute('aria-label','Item '+num+' status: '+STAT[s].label+'. Tap to change.');
   li.querySelector('.note').placeholder = s===4 ? 'Parts awaited / what is missing' : 'Describe the failure';
+  var tg=li.querySelector('.tgl'); if(tg){ tg.classList.toggle('on',s===5); tg.setAttribute('aria-checked',s===5?'true':'false'); }
   var sl=li.querySelector('.blk-slot'); if(sl) sl.innerHTML=blkHTML(buildRows(S.rec.tpl).find(function(x){ return x.num===num; }),d);
 }
 function tap(li){
@@ -13470,7 +13483,7 @@ async function renderReview(){
       var inl=revInline(it); if(inl) return inl;
       return '<li><button data-act="goto" data-num="'+it.r.num+'"><span class="pn">'+it.r.num+'</span><span class="pd"><b>'+esc(desc)+'</b><small>'+esc(lineText(it.r,it.d))+(n?' ('+n+' photo'+(n>1?'s':'')+')':'')+'</small></span><span class="tag tag-'+it.kind.split(' ')[0]+'">'+it.kind+'</span></button></li>';
     }).join('')+'</ol>' : '<p class="card">Nothing to rework. The punch list page will print as \u201cNo nonconformances found.\u201d</p>')+
-    fyiHTML(rec)+swRmaHTML(rec)+auQrCard(rec)+auEntryCard(rec)+'<h2>Report PDFs</h2><div class="actions"><button class="btn primary big" data-act="pdf-share-full">\u2709 Email full report (PDF attached)</button><button class="btn light big" data-act="pdf-save-full">\u2b07 Save full report</button></div><div class="actions"><button class="btn primary big" data-act="pdf-share-punch" style="background:var(--navy-2)">\u2709 Email punch list (PDF attached)</button><button class="btn light big" data-act="pdf-save-punch">\u2b07 Save punch list</button><button class="btn light big" data-act="backup-cur">Backup file</button></div>'+
+    fyiHTML(rec)+swRmaHTML(rec)+auQrCard(rec)+auEntryCard(rec)+'<h2>Report PDFs</h2><div class="actions"><button class="btn primary big" data-act="pdf-share-full">\u2709 Email full report (PDF attached)</button><button class="btn light big" data-act="pdf-save-full">\u2b07 Save full report</button></div><div class="actions"><button class="btn primary big" data-act="pdf-share-punch" style="background:var(--navy-2)">\u2709 Email punch list (PDF attached)</button><button class="btn light big" data-act="pdf-save-punch">\u2b07 Save punch list</button><button class="btn light big" data-act="backup-cur">Backup file</button><button class="btn light big" data-act="wip-copy">\ud83d\udccb Copy '+WIP_MAIL+'</button></div>'+
     '<p class="tip">PDFs are named eMSC-L_'+esc(safeName(snNum(h.newSerial)))+'_ATP / _PunchList. Tap an item above to jump back to it.</p></main>';
   setSaveInd(); measureBar(); window.scrollTo(0,0);
 }
@@ -13834,7 +13847,6 @@ function blkTxt(rec,d){ var b=blkBy(rec,d), why=(d.why||'').trim(); if(d.pend) r
 function blkHTML(r,d){
   var s=d.s||0;
   if(s!==5&&r.spare&&!(d.text||'').trim()) return '';
-  if(s!==5) return '<div class="blk-offer"><button class="btn light" data-act="blk">⏸ Can’t test yet – blocked by another issue</button><small>For an item that can’t be checked until another problem is fixed. It isn’t counted as a failure.</small></div>';
   if(s!==5) return '';
   var a=analyze(S.rec), cands=a.issues.filter(function(it){ return (it.kind==='FAIL'||it.kind==='AWP') && it.r.num!==r.num; });
   return '<div class="blkpanel"><b>⏸ Can’t be tested yet – not counted as a failure</b><p class="muted">Pick the failed item(s) that must be fixed first and/or say what is blocking it. It is listed as <b>Not tested</b> on the punch list and report, and needs a retest once the blocker is resolved. The KPI can’t pass while an item is untested.</p>'+
@@ -14017,7 +14029,7 @@ function auditHTML(){
   if(au.done){
     var ok=au.verdict==='pass';
     return '<section class="card" style="border:3px solid '+(ok?'#177a3c':'#c8202a')+'"><h2 style="margin:0 0 6px">Audit report – '+esc(snD(h))+' <span class="tag" style="background:'+(ok?'#177a3c':'#c8202a')+'">'+(ok?'AUDIT PASSED':'AUDIT FAILED')+'</span></h2><p class="muted">Auditor <b>'+esc(au.name)+'</b> · '+esc(fmtDate(au.date))+' · '+I.length+' item'+(I.length===1?'':'s')+' reviewed · '+I.filter(function(it){ return (au.items[it.r.num]||{}).r==='ok'; }).length+' verified · '+I.filter(function(it){ return (au.items[it.r.num]||{}).r==='no'; }).length+' not acceptable</p></section>'+
-      '<section class="card"><div class="actions"><button class="btn primary big" data-act="pdf-share-audit">📤 Share audit PDF</button><button class="btn light big" data-act="pdf-save-audit">⬇ Save audit PDF to tablet</button></div><div class="actions"><button class="btn light big" data-act="au-copy">📋 Copy audit summary (for email)</button><button class="btn light big" data-act="au-email">✉ Email audit (PDF attached)</button></div><p class="muted">The audit PDF is a one-page audit report (longer only if there are many items, or if the auditor added photos). It states it is the audit of the associated inspection report and punch list.</p></section>'+
+      '<section class="card"><div class="actions"><button class="btn primary big" data-act="pdf-share-audit">📤 Share audit PDF</button><button class="btn light big" data-act="pdf-save-audit">⬇ Save audit PDF to tablet</button></div><div class="actions"><button class="btn light big" data-act="au-copy">📋 Copy audit summary (for email)</button><button class="btn light big" data-act="au-email">✉ Email audit (PDF attached)</button><button class="btn light big" data-act="wip-copy">📋 Copy '+WIP_MAIL+'</button></div><p class="muted">The audit PDF is a one-page audit report (longer only if there are many items, or if the auditor added photos). It states it is the audit of the associated inspection report and punch list.</p></section>'+
       '<section class="card"><button class="btn light" data-act="au-reopen">Edit the audit</button> <button class="btn light" data-act="au-back">← Back</button></section>';
   }
   var done=I.filter(function(it){ return (au.items[it.r.num]||{}).r; }).length;
@@ -14166,6 +14178,7 @@ function wipShow(){
   <p class="muted" style="margin:0 0 8px">On the other tablet: Home → <b>Scan QR</b> → take a photo of ${n>1?'each code (any order)':'the code'}. Turn the screen brightness up and hold steady.</p>
   ${rec.carryNotes?`<div style="background:#fff8e0;border-left:5px solid #e0a800;padding:6px 10px;margin:0 0 8px;white-space:pre-wrap;font-size:14px"><b>Notes:</b> ${esc(rec.carryNotes)}</div>`:''}
   ${wipBtn('wip-mail','✉ Email carry-over to '+WIP_MAIL+' (sheet attached)','pri')}<p class="muted" style="margin:2px 0 8px;font-size:12px">The address is copied first – paste it into <b>To</b> when your email app opens. Some apps ignore the subject.</p>
+  ${wipBtn('wip-copy','📋 Copy '+WIP_MAIL,'')}
   ${wipBtn('wip-pdf','📄 Save carry-over sheet (PDF) – print &amp; leave with the equipment','')}
   ${wipBtn('wip-bk','💾 Backup file instead (includes photos)','')}
   ${wipBtn('wip-close','Close','')}`);}
@@ -14191,6 +14204,10 @@ function wipBuildPdf(){
     creditLine(d,creditCurRev());});
   return {blob:d.output('blob'),name:'CarryOver_'+String(WA.sn(rec)||'inspection').replace(/[^\w.\-]+/g,'_')+'.pdf',n,pg,FN,tech,sn,ts};}
 function wipCodesPdf(){const o=wipBuildPdf();WA.dl(o.blob,o.name);}
+async function wipCopyMail(b){
+  let ok=false;try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(WIP_MAIL);ok=true;}}catch(e){}
+  if(!ok){try{const t=document.createElement('textarea');t.value=WIP_MAIL;t.style.cssText='position:fixed;top:0;left:0;opacity:0';document.body.appendChild(t);t.focus();t.select();ok=document.execCommand('copy');t.remove();}catch(e){}}
+  if(b){const o=b.dataset.t||(b.dataset.t=b.innerHTML);b.innerHTML=ok?'✓ Copied '+WIP_MAIL:'Could not copy – type '+WIP_MAIL;clearTimeout(b._tm);b._tm=setTimeout(()=>{b.innerHTML=o;},2200);}}
 async function wipEmail(){
   const o=wipBuildPdf(),rec=WA.rec();
   const subj='Carry-over - '+o.FN+' - '+o.sn,
@@ -14277,6 +14294,7 @@ async function wipAct(a,b){
    case 'wip-next':if(S.wip&&S.wip.i<S.wip.p.parts.length-1){S.wip.i++;wipShow();}break;
    case 'wip-make':wipMake();break;
    case 'wip-mail':wipEmail();break;
+   case 'wip-copy':wipCopyMail(b);break;
    case 'wip-pdf':wipCodesPdf();break;
    case 'wip-bk':WA.close();WA.backup();break;
    case 'wip-close':WA.close();S.wipIn=null;break;
@@ -14610,6 +14628,7 @@ async function appAct(act,el){
   switch(act){
     case 'tech-pick': { var ti=document.getElementById('nf-inspector'); if(ti) ti.value=el.dataset.n; return true; }
     case 'blk': getD().s=5; refresh(); return true;
+    case 'cnt': var cd=getD(); cd.s=(cd.s===5)?0:5; refresh(); return true;
     case 'unblk': getD().s=2; refresh(); return true;
     case 'blk-by': var d=getD(), b=+el.dataset.by; d.by=d.by||[]; var k=d.by.indexOf(b); if(k>=0) d.by.splice(k,1); else d.by.push(b); refresh(); return true;
     case 'blk-pend': var d2=getD(); d2.pend=!d2.pend; refresh(); return true;

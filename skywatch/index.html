@@ -53,6 +53,11 @@ label.f{display:block;font-size:12px;color:var(--mut);font-weight:600;margin:0 0
 .box.na{background:#8a94a3;border-color:#8a94a3;color:#fff;font-size:15px}.box.blk{background:#b58900;border-color:#b58900;color:#fff;font-size:24px}.it.blk{background:#fffaf0}
 .box{position:relative}.box.fixed{color:#c62828}.box .fx{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#22d65f;font-size:34px;font-weight:900;text-shadow:0 0 4px #000,0 0 2px #000}.garrow{display:flex;align-items:center;gap:12px;margin:-4px 0 10px;color:#1b8a3a;font-weight:800;font-size:17px;animation:gpulse 1.2s ease-in-out infinite}.garrow svg{flex:none}@keyframes gpulse{0%,100%{transform:translateX(0)}50%{transform:translateX(10px)}}.pl.target,.card.target{outline:4px solid #1b8a3a;outline-offset:2px}.it.fail{background:#fff4f4}
 .pnl{grid-column:1/-1;padding:6px 6px 6px 50px}
+.it .n,.it .tx{grid-row:1/3}
+.tgl{grid-row:2;grid-column:3/6;justify-self:end;display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:2px 10px 2px 8px;font-size:13px;font-weight:600;color:#7a5c00;border-color:#d9c27a;background:#fff;border-radius:18px}
+.tgl .sw{width:30px;height:16px;border-radius:8px;background:#c9ced6;position:relative;flex:none;transition:background .15s}
+.tgl .sw::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:left .15s}
+.tgl.on{background:#b58900;border-color:#b58900;color:#fff}.tgl.on .sw{background:rgba(255,255,255,.4)}.tgl.on .sw::after{left:16px}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
 .chip{border:2px solid var(--line);border-radius:20px;padding:6px 12px;min-height:40px;font-weight:600;font-size:14px;background:#fff}
 .chip.low{border-color:var(--low)}.chip.med{border-color:var(--med)}.chip.high{border-color:var(--high)}.chip.dno{border-color:#000}
@@ -13076,12 +13081,13 @@ function infoHtml(){const r=S.rec;
 function rowHtml(x){const r=S.rec,d=r.items[x.id]||{st:'',lvl:'',note:'',ph:[],v:{}};const open=S.detail[x.id]||d.st==='fail'||d.st==='blk'||(d.note||(d.ph&&d.ph.length));
  const fl=x.f.length?`<div class="fl">${x.f.map((n,i)=>`<label>${esc(n)}<input data-b="items.${x.id}.v.${i}" value="${esc((d.v||{})[i]||'')}"></label>`).join('')}</div>`:'';
  const txt=x.extra?`<input data-b="extraT.${x.id}" value="${esc(x.t)}" placeholder="Describe the added item…">`:esc(x.t);
- return `<div class="it ${d.st}" id="r-${x.id}" data-id="${x.id}"><div class="n">${x.label}</div><div class="tx">${txt}${fl}${(d.st==='blk'||d.st==='fail'||(x.extra&&!x.t))?'':`<div style="margin-top:4px"><button data-act="cnt" data-id="${x.id}" style="min-height:34px;padding:2px 10px;font-size:13px;border-color:#b58900;color:#7a5c00">⏸ Could not test</button></div>`}</div>
+ return `<div class="it ${d.st}" id="r-${x.id}" data-id="${x.id}"><div class="n">${x.label}</div><div class="tx">${txt}${fl}</div>
  <button class="ic" data-act="cam" data-id="${x.id}" title="Photo">📷${(d.ph||[]).length?`<b>${d.ph.length}</b>`:''}</button>
  <button class="ic" data-act="det" data-id="${x.id}" title="Notes">✎</button>
  <button class="box ${d.st} ${d.st==='fail'&&d.rep?'fixed':''}" data-act="tog" data-id="${x.id}">${STL[d.st||'']}${d.st==='fail'&&d.rep?'<span class="fx">✓</span>':''}</button>
+ ${x.extra&&!x.t?'':`<button class="tgl ${d.st==='blk'?'on':''}" data-act="cnt" data-id="${x.id}" role="switch" aria-checked="${d.st==='blk'}"><span class="sw"></span>Could not test</button>`}
  ${open?panelHtml(x,d):''}</div>`;}
-function panelHtml(x,d){if(d.st==='blk')return blkPanel(x,d);return `<div class="pnl">${d.st==='fail'?`<div style="margin:0 0 8px"><button data-act="blk" data-id="${x.id}" style="border-color:#b58900;color:#7a5c00;font-weight:700">⏸ Can't test yet – blocked by another issue</button><div class="muted" style="font-size:13px;margin-top:2px">For an item that can't be checked until another problem is fixed. It isn't counted as a failure.</div></div>`:''}${d.st==='fail'?`${!d.lvl?'<p class="need">Select a concern level for this failed item:</p>':''}<div class="chips">${LV.map(l=>`<button class="chip ${l.k} ${d.lvl===l.k?'on':''}" data-act="lvl" data-id="${x.id}" data-l="${l.k}">${l.n}</button>`).join('')}</div>`:''}
+function panelHtml(x,d){if(d.st==='blk')return blkPanel(x,d);return `<div class="pnl">${d.st==='fail'?`${!d.lvl?'<p class="need">Select a concern level for this failed item:</p>':''}<div class="chips">${LV.map(l=>`<button class="chip ${l.k} ${d.lvl===l.k?'on':''}" data-act="lvl" data-id="${x.id}" data-l="${l.k}">${l.n}</button>`).join('')}</div>`:''}
  ${d.st==='fail'?`<label class="f">Coverage</label><div class="chips"><button class="chip war ${d.war==='w'?'on':''}" data-act="war" data-id="${x.id}" data-w="w">Warranty</button><button class="chip nwr ${d.war==='nw'?'on':''}" data-act="war" data-id="${x.id}" data-w="nw">Non-warranty</button>${d.war==='nw'?`<button class="chip cour ${d.courtesy?'on':''}" data-act="courtesy" data-id="${x.id}">${d.courtesy?'✓ ':''}Courtesy repair performed</button>`:''}</div>`:''}<textarea data-b="items.${x.id}.note" placeholder="${d.st==='fail'?'Describe the issue…':'Notes (optional)'}">${esc(d.note||'')}</textarea>
  ${d.st==='fail'?`<div class="row" style="margin-top:6px"><button class="${d.adv?'pri':''}" data-act="adv" data-id="${x.id}" style="min-width:130px">${d.adv?'✓ Advised':'☐ Advised'}</button><button class="${d.rep?'pri':''}" data-act="rep" data-id="${x.id}" style="min-width:170px">${d.rep?'✓ Repaired':'☐ Mark repaired'}</button><span class="muted">${d.rep?'Shows as repaired on the report.':d.adv?'Advised – shows as ADVISED on the report.':'Repaired on site, or advised? Mark it here, or later on the punch list.'}</span></div>`:''}
  <div class="ph">${(d.ph||[]).map(p=>S.photos[p]?`<div class="t"><img src="${S.photos[p].d}" data-act="zoomph" data-id="${x.id}" data-p="${p}" style="cursor:zoom-in"><button data-act="rmph" data-id="${x.id}" data-p="${p}">✕</button></div>`:'').join('')}</div>
@@ -13302,7 +13308,7 @@ function auSummary(r){const au=r.audit,P=auF(r),v=au.verdict==='pass'?'PASSED':'
 function auNeedHtml(){const r=S.rec,m=auMissing(r);return `<div id="auNeed">${m.length?`<div class="err" style="margin-top:10px"><b>Still needed before you can submit:</b><ul style="margin:6px 0 0 18px;padding:0">${m.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}<button class="pri" data-act="ausubmit" style="width:100%;margin-top:10px;background:#6b3fa0;border-color:#6b3fa0" ${m.length?'disabled':''}>Submit audit report</button></div>`;}
 function auditHtml(){const r=S.rec,au=auEns(r),P=auF(r),st=stats(r);
  if(au.done){const v=au.verdict==='pass',s=auSummary(r);return `<div class="card" style="border:3px solid ${v?'#1b8a3a':'#c62828'}"><div class="row"><h2 style="flex:1;margin:0">Audit report – ${esc(snD(r))}</h2><span class="vd ${v?'pass':'fail'}">${v?'✓ AUDIT PASSED':'✗ AUDIT FAILED'}</span></div><p class="muted">Auditor <b>${esc(au.name)}</b> · ${esc(fmtD(au.date))} · ${P.length} fault${P.length===1?'':'s'} reviewed · ${P.filter(x=>(au.items[x.id]||{}).r==='ok').length} verified · ${P.filter(x=>(au.items[x.id]||{}).r==='no').length} not acceptable</p><div id="pdfst" class="muted">Preparing PDF…</div></div>
- <div class="card"><div class="row"><button class="pri" data-act="share" style="flex:1">📤 Share audit PDF</button><button data-act="dl" style="flex:1">⬇ Save audit PDF to tablet</button></div><div class="row" style="margin-top:8px"><button data-act="aucopy" style="flex:1">📋 Copy audit summary (for email)</button><button data-act="auemail" style="flex:1">✉ Email audit (PDF attached)</button></div><p class="muted">The audit PDF is a one-page audit report (longer only if there are many faults, or if the auditor added photos). It states it is the audit of the associated inspection report and punch list.</p></div>
+ <div class="card"><div class="row"><button class="pri" data-act="share" style="flex:1">📤 Share audit PDF</button><button data-act="dl" style="flex:1">⬇ Save audit PDF to tablet</button></div><div class="row" style="margin-top:8px"><button data-act="aucopy" style="flex:1">📋 Copy audit summary (for email)</button><button data-act="wip-copy" style="flex:1">📋 Copy ${WIP_MAIL}</button><button data-act="auemail" style="flex:1">✉ Email audit (PDF attached)</button></div><p class="muted">The audit PDF is a one-page audit report (longer only if there are many faults, or if the auditor added photos). It states it is the audit of the associated inspection report and punch list.</p></div>
  <div class="card"><button data-act="aureopen">Edit the audit</button> <button data-act="auback">← Back to the report</button></div>`;}
  const m=auMissing(r),done=P.filter(x=>(au.items[x.id]||{}).r).length;
  return `<div class="card" style="border:2px solid #6b3fa0"><h2 style="margin:0 0 4px">Auditor review – ${esc(snD(r))}</h2><p class="muted" style="margin:0 0 8px">Go through every fault below, confirm each repair was completed appropriately, then record the audit result at the bottom. Nothing in the tech's report is changed.</p>
@@ -13391,7 +13397,7 @@ function sendHtml(){const r=S.rec,md=mailDefaults(r),m=r.mail;const st=stats(r);
  <div class="sp"></div><label class="f">TSC Teledyne FLIR admin e-mail (remembered on this tablet)</label><input data-set="tscEmail" value="${esc(S.settings.tscEmail||TSC_EMAIL)}"></div>
  <div class="card"><h3>Message</h3><label class="f">Subject</label><input data-b="mail.subject" value="${esc(m.subject!=null?m.subject:md.subject)}"><div class="sp"></div><label class="f">Text</label><textarea data-b="mail.body" style="min-height:190px">${esc(m.body!=null?m.body:md.body)}</textarea></div>
  <div class="card"><div class="row"><button class="pri" data-act="share" style="flex:1">✉ Email report (PDF attached)</button><button data-act="dl" style="flex:1">⬇ Save PDF to tablet</button></div>
- <div class="row" style="margin-top:8px"><button data-act="mailto" style="flex:1">✉ Open e-mail draft (no attachments)</button><button data-act="copy" style="flex:1">Copy addresses</button></div>
+ <div class="row" style="margin-top:8px"><button data-act="mailto" style="flex:1">✉ Open e-mail draft (no attachments)</button><button data-act="wip-copy" style="flex:1">📋 Copy ${WIP_MAIL}</button><button data-act="copy" style="flex:1">Copy addresses</button></div>
  <p class="muted">Needs a connection (shop Wi-Fi or your phone hotspot). <b>Share</b> opens the Android share sheet with the PDF attached – pick Gmail/Outlook, then paste the addresses (the list is copied for you first; the technician is the Cc line). A web page can't pre-fill recipients <i>and</i> attach a file at the same time. If the share sheet isn't offered, <b>Save PDF</b>, then <b>Open e-mail draft</b> (To, Cc, subject and text filled in) and attach the PDF from Downloads.</p>
  <div class="row"><button data-act="step" data-s="4">← Certificate</button></div></div>`;}
 async function prepPdfs(){const r=S.rec;S.pdf=null;const el=()=>$('#pdfst');
@@ -13604,7 +13610,8 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'swrm':{if(!await ask('Remove this swap entry?',{title:'Remove swap entry?',ok:'Remove',danger:1}))break;r.swap.list=r.swap.list.filter(e=>e.id!==id);markDirty();rerenderSwap();break;}
  case 'rmatbd':{const e=r.swap.list[+b.dataset.i];if(e){e.rma=e.rma==='TBD'?'':'TBD';markDirty();rerenderSwap();}break;}
  case 'rmatbd2':{const m=((r.swap.list[+b.dataset.i]||{}).mid||[])[+b.dataset.j];if(m){m.rma=m.rma==='TBD'?'':'TBD';markDirty();repunch();}break;}
- case 'pblk':case 'cnt':{openBlkDlg(id);break;}
+ case 'pblk':{openBlkDlg(id);break;}
+ case 'cnt':{const q=itm(id);if(q.st==='blk'){q.st='';markDirty();if($('#finalQ')||$('#pl-'+id))repunch();else rerenderRow(id);}else openBlkDlg(id);break;}
  case 'blkdby':{const q=itm(id);q.by=q.by||[];const k=b.dataset.by,i=q.by.indexOf(k);if(i>=0)q.by.splice(i,1);else q.by.push(k);markDirty();modal(blkDlgHtml(id));break;}
  case 'blksave':{const q=itm(id);if(!(q.by||[]).length&&!(q.why||'').trim()){modal(blkDlgHtml(id,1));break;}q.st='blk';q.rep=false;S.blkBak=null;markDirty();closeModal();if($('#finalQ')||$('#pl-'+id))repunch();else rerenderRow(id);break;}
  case 'blkcancel':{const bk=S.blkBak;if(bk&&bk.id===id){const q=itm(id);q.by=bk.by;q.why=bk.why;}S.blkBak=null;closeModal();break;}
@@ -13962,6 +13969,7 @@ function wipShow(){
   <p class="muted" style="margin:0 0 8px">On the other tablet: Home → <b>Scan QR</b> → take a photo of ${n>1?'each code (any order)':'the code'}. Turn the screen brightness up and hold steady.</p>
   ${rec.carryNotes?`<div style="background:#fff8e0;border-left:5px solid #e0a800;padding:6px 10px;margin:0 0 8px;white-space:pre-wrap;font-size:14px"><b>Notes:</b> ${esc(rec.carryNotes)}</div>`:''}
   ${wipBtn('wip-mail','✉ Email carry-over to '+WIP_MAIL+' (sheet attached)','pri')}<p class="muted" style="margin:2px 0 8px;font-size:12px">The address is copied first – paste it into <b>To</b> when your email app opens. Some apps ignore the subject.</p>
+  ${wipBtn('wip-copy','📋 Copy '+WIP_MAIL,'')}
   ${wipBtn('wip-pdf','📄 Save carry-over sheet (PDF) – print &amp; leave with the equipment','')}
   ${wipBtn('wip-bk','💾 Backup file instead (includes photos)','')}
   ${wipBtn('wip-close','Close','')}`);}
@@ -13987,6 +13995,10 @@ function wipBuildPdf(){
     creditLine(d,creditCurRev());});
   return {blob:d.output('blob'),name:'CarryOver_'+String(WA.sn(rec)||'inspection').replace(/[^\w.\-]+/g,'_')+'.pdf',n,pg,FN,tech,sn,ts};}
 function wipCodesPdf(){const o=wipBuildPdf();WA.dl(o.blob,o.name);}
+async function wipCopyMail(b){
+  let ok=false;try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(WIP_MAIL);ok=true;}}catch(e){}
+  if(!ok){try{const t=document.createElement('textarea');t.value=WIP_MAIL;t.style.cssText='position:fixed;top:0;left:0;opacity:0';document.body.appendChild(t);t.focus();t.select();ok=document.execCommand('copy');t.remove();}catch(e){}}
+  if(b){const o=b.dataset.t||(b.dataset.t=b.innerHTML);b.innerHTML=ok?'✓ Copied '+WIP_MAIL:'Could not copy – type '+WIP_MAIL;clearTimeout(b._tm);b._tm=setTimeout(()=>{b.innerHTML=o;},2200);}}
 async function wipEmail(){
   const o=wipBuildPdf(),rec=WA.rec();
   const subj='Carry-over - '+o.FN+' - '+o.sn,
@@ -14073,6 +14085,7 @@ async function wipAct(a,b){
    case 'wip-next':if(S.wip&&S.wip.i<S.wip.p.parts.length-1){S.wip.i++;wipShow();}break;
    case 'wip-make':wipMake();break;
    case 'wip-mail':wipEmail();break;
+   case 'wip-copy':wipCopyMail(b);break;
    case 'wip-pdf':wipCodesPdf();break;
    case 'wip-bk':WA.close();WA.backup();break;
    case 'wip-close':WA.close();S.wipIn=null;break;
