@@ -242,6 +242,8 @@ h2{font-size:21px}
   .row .num,.row .body{grid-row:auto}
   .row .tgl{grid-area:t;justify-self:end;margin-top:2px}
 }
+.emailbig{order:-1;flex:1 1 100%!important;width:100%;min-height:64px;font-size:19px;font-weight:800;background:#1b8a3a!important;border:2px solid #14702d!important;color:#fff!important;border-radius:12px;box-shadow:0 3px 10px rgba(27,138,58,.4);padding:12px 16px}
+.emailbig small{display:block;font-size:12px;font-weight:600;opacity:.92;margin-top:2px}
 
 /* ---------- Print ---------- */
 @media print{
@@ -3013,6 +3015,11 @@ var qrcode = function() {
 }(function () {
     return qrcode;
 }));
+
+;(function(){var o=qrcode;qrcode=function(t,e){var q=o(t,e),mk=q.make,ad=q.addData,data=[];
+ q.addData=function(d,m){data.push([d,m]);return ad.call(q,d,m);};
+ q.make=function(){mk.call(q);if(!t&&q.getModuleCount()===109){var q2=o(24,e);data.forEach(function(x){q2.addData(x[0],x[1]);});q2.make();for(var k in q2)q[k]=q2[k];}};
+ return q;};for(var k in o)qrcode[k]=o[k];})();
 </script>
 <script>(function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -13298,7 +13305,7 @@ async function renderHome(){
       '<button class="btn danger" data-act="delete" data-id="'+esc(rec.id)+'">Delete</button></div></li>';
   }).join('');
   app.innerHTML=
-    '<header class="bar"><div class="brand"><strong>eMSC-L ATP inspections</strong><span>Checklist rev. '+esc(S.tpl.revision||'')+'</span></div>'+
+    '<header class="bar"><div class="brand"><strong>eMSC-L ATP inspections</strong><span>Checklist rev. '+esc(S.tpl.revision||'')+'</span></div>'+((location.protocol==='http:'||location.protocol==='https:')?'<a href="../" class="btn light homelnk" style="text-decoration:none;display:inline-flex;align-items:center">\u2302 All forms</a>':'')+
     '<div class="bar-actions"><button class="btn light" data-act="scan">\ud83d\udcf7 Scan QR (audit / continue)</button><button class="btn light" data-act="import">Restore from backup file</button><button class="btn primary" data-act="new">New inspection</button></div></header>'+
     storageBanner()+
     '<main>'+(list.length ? '<h1>Saved on this tablet</h1><ul class="insp-list">'+cards+'</ul>'
@@ -13483,7 +13490,7 @@ async function renderReview(){
       var inl=revInline(it); if(inl) return inl;
       return '<li><button data-act="goto" data-num="'+it.r.num+'"><span class="pn">'+it.r.num+'</span><span class="pd"><b>'+esc(desc)+'</b><small>'+esc(lineText(it.r,it.d))+(n?' ('+n+' photo'+(n>1?'s':'')+')':'')+'</small></span><span class="tag tag-'+it.kind.split(' ')[0]+'">'+it.kind+'</span></button></li>';
     }).join('')+'</ol>' : '<p class="card">Nothing to rework. The punch list page will print as \u201cNo nonconformances found.\u201d</p>')+
-    fyiHTML(rec)+swRmaHTML(rec)+auQrCard(rec)+auEntryCard(rec)+'<h2>Report PDFs</h2><div class="actions"><button class="btn primary big" data-act="pdf-share-full">\u2709 Email full report (PDF attached)</button><button class="btn light big" data-act="pdf-save-full">\u2b07 Save full report</button></div><div class="actions"><button class="btn primary big" data-act="pdf-share-punch" style="background:var(--navy-2)">\u2709 Email punch list (PDF attached)</button><button class="btn light big" data-act="pdf-save-punch">\u2b07 Save punch list</button><button class="btn light big" data-act="backup-cur">Backup file</button><button class="btn light big" data-act="wip-copy">\ud83d\udccb Copy '+WIP_MAIL+'</button></div>'+
+    fyiHTML(rec)+swRmaHTML(rec)+auQrCard(rec)+auEntryCard(rec)+'<h2>Report PDFs</h2><div class="actions"><button class="btn emailbig" data-act="pdf-share-full">\u2709 Email full report (PDF attached)<small>Recommended \u2013 opens your email app with the PDF attached</small></button><button class="btn light big" data-act="pdf-save-full">\u2b07 Save full report</button></div><div class="actions"><button class="btn primary big" data-act="pdf-share-punch" style="background:var(--navy-2)">\u2709 Email punch list (PDF attached)</button><button class="btn light big" data-act="pdf-save-punch">\u2b07 Save punch list</button><button class="btn light big" data-act="backup-cur">Backup file</button><button class="btn light big" data-act="wip-copy">\ud83d\udccb Copy '+WIP_MAIL+'</button></div>'+
     '<p class="tip">PDFs are named eMSC-L_'+esc(safeName(snNum(h.newSerial)))+'_ATP / _PunchList. Tap an item above to jump back to it.</p></main>';
   setSaveInd(); measureBar(); window.scrollTo(0,0);
 }
@@ -13956,7 +13963,7 @@ function decodeCanvas(c,both){ var g=c.getContext('2d'), d=g.getImageData(0,0,c.
 function qrTry(im){
   var W=im.width,H=im.height;
   var one=function(sx,sy,sw,sh,M){ var k=Math.min(1,M/Math.max(sw,sh)), c=document.createElement('canvas'); c.width=Math.max(1,Math.round(sw*k)); c.height=Math.max(1,Math.round(sh*k)); c.getContext('2d').drawImage(im,sx,sy,sw,sh,0,0,c.width,c.height); return decodeCanvas(c,true); };
-  var Ms=[1600,1000,2400,700,500,1200], i, t;
+  var Ms=[1600,1000,2400,700,500,1200,2000,1400,900,800,600,1800,3000], i, t;
   for(i=0;i<Ms.length;i++){ t=one(0,0,W,H,Ms[i]); if(t) return t; }
   var crops=[[.15,.15,.7,.7],[0,0,.6,.6],[.4,0,.6,.6],[0,.4,.6,.6],[.4,.4,.6,.6],[.25,.25,.5,.5]];
   for(var c=0;c<crops.length;c++) for(var m=0;m<2;m++){ var q=crops[c], M=[1200,800][m]; t=one(Math.round(W*q[0]),Math.round(H*q[1]),Math.round(W*q[2]),Math.round(H*q[3]),M); if(t) return t; }
@@ -14030,7 +14037,7 @@ function auditHTML(){
   if(au.done){
     var ok=au.verdict==='pass';
     return '<section class="card" style="border:3px solid '+(ok?'#177a3c':'#c8202a')+'"><h2 style="margin:0 0 6px">Audit report – '+esc(snD(h))+' <span class="tag" style="background:'+(ok?'#177a3c':'#c8202a')+'">'+(ok?'AUDIT PASSED':'AUDIT FAILED')+'</span></h2><p class="muted">Auditor <b>'+esc(au.name)+'</b> · '+esc(fmtDate(au.date))+' · '+I.length+' item'+(I.length===1?'':'s')+' reviewed · '+I.filter(function(it){ return (au.items[it.r.num]||{}).r==='ok'; }).length+' verified · '+I.filter(function(it){ return (au.items[it.r.num]||{}).r==='no'; }).length+' not acceptable</p></section>'+
-      '<section class="card"><div class="actions"><button class="btn primary big" data-act="pdf-share-audit">📤 Share audit PDF</button><button class="btn light big" data-act="pdf-save-audit">⬇ Save audit PDF to tablet</button></div><div class="actions"><button class="btn light big" data-act="au-copy">📋 Copy audit summary (for email)</button><button class="btn light big" data-act="au-email">✉ Email audit (PDF attached)</button><button class="btn light big" data-act="wip-copy">📋 Copy '+WIP_MAIL+'</button></div><p class="muted">The audit PDF is a one-page audit report (longer only if there are many items, or if the auditor added photos). It states it is the audit of the associated inspection report and punch list.</p></section>'+
+      '<section class="card"><div class="actions"><button class="btn primary big" data-act="pdf-share-audit">📤 Share audit PDF</button><button class="btn light big" data-act="pdf-save-audit">⬇ Save audit PDF to tablet</button></div><div class="actions"><button class="btn light big" data-act="au-copy">📋 Copy audit summary (for email)</button><button class="btn emailbig" data-act="au-email">✉ Email audit (PDF attached)<small>Recommended – opens your email app with the PDF attached</small></button><button class="btn light big" data-act="wip-copy">📋 Copy '+WIP_MAIL+'</button></div><p class="muted">The audit PDF is a one-page audit report (longer only if there are many items, or if the auditor added photos). It states it is the audit of the associated inspection report and punch list.</p></section>'+
       '<section class="card"><button class="btn light" data-act="au-reopen">Edit the audit</button> <button class="btn light" data-act="au-back">← Back</button></section>';
   }
   var done=I.filter(function(it){ return (au.items[it.r.num]||{}).r; }).length;
@@ -14150,11 +14157,30 @@ async function wipUnzip(bytes){
 function wipB64e(b){let s='';for(let i=0;i<b.length;i+=8192)s+=String.fromCharCode.apply(null,b.subarray(i,i+8192));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
 function wipB64d(t){t=t.replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';const s=atob(t),b=new Uint8Array(s.length);for(let i=0;i<s.length;i++)b[i]=s.charCodeAt(i);return b;}
 function wipCounts(rec){const pc={};for(const k in(rec.elsewhere||{}))pc[k]=rec.elsewhere[k];const l=WA.local(rec);for(const k in l)pc[k]=(pc[k]||0)+l[k];for(const k in pc)if(!(pc[k]>0))delete pc[k];return pc;}
+const WIP_ONE=2300,WIP_NOTEK=new Set(['note','res','why','quote','carryNotes','comments','verdictNote','notes','find','msg']);
+function wipSlim(o,lv,inItems){
+  const cap=[0,160,60,25][lv]||0;
+  if(Array.isArray(o))return o.map(x=>wipSlim(x,lv,inItems));
+  if(o&&typeof o==='object'){const r={};
+    for(const k in o){let v=o[k];
+      if(lv>=2&&(k==='mail'||k==='comments'))continue;
+      v=wipSlim(v,lv,inItems||k==='items');
+      if(cap&&WIP_NOTEK.has(k)&&typeof v==='string'&&v.length>cap)v=v.slice(0,cap-1)+'…';
+      if(inItems&&k!=='items'&&(v===''||v===null||v===undefined||v===false||(Array.isArray(v)&&!v.length)||(v&&typeof v==='object'&&!Array.isArray(v)&&!Object.keys(v).length)))continue;
+      r[k]=v;}
+    if(o.items&&typeof o.items==='object'&&!Array.isArray(o.items)){for(const id in r.items)if(r.items[id]&&typeof r.items[id]==='object'&&!Object.keys(r.items[id]).length)delete r.items[id];}
+    return r;}
+  return o;}
 async function wipEncode(rec){
-  const obj={w:1,app:WA.app,id:rec.id,ts:WA.ts(rec),sn:WA.sn(rec),th:WA.th(rec),pg:WA.progress(rec),pc:wipCounts(rec),rec:wipClean(rec)};
-  const z=await wipZip(JSON.stringify(obj)),all=wipB64e(z.b),crc=wipH(all),n=Math.max(1,Math.ceil(all.length/WIP_CHUNK)),parts=[];
-  for(let i=0;i<n;i++)parts.push(['WIP1',z.z?'z':'r',rec.id,i+1,n,crc,all.slice(i*WIP_CHUNK,(i+1)*WIP_CHUNK)].join('~'));
-  return {parts,bytes:all.length,pg:obj.pg};}
+  let res,lv=0;
+  for(;lv<=3;lv++){
+    const obj={w:1,app:WA.app,id:rec.id,ts:WA.ts(rec),sn:WA.sn(rec),th:WA.th(rec),pg:WA.progress(rec),pc:wipCounts(rec),rec:wipSlim(wipClean(rec),lv)};
+    const z=await wipZip(JSON.stringify(obj));res={z,all:wipB64e(z.b),pg:obj.pg,obj};
+    if(res.all.length<=WIP_ONE)break;}
+  if(lv>3)lv=3;
+  const all=res.all,crc=wipH(all),size=all.length<=WIP_ONE?all.length:WIP_CHUNK,n=Math.max(1,Math.ceil(all.length/size)),parts=[];
+  for(let i=0;i<n;i++)parts.push(['WIP1',res.z.z?'z':'r',rec.id,i+1,n,crc,all.slice(i*size,(i+1)*size)].join('~'));
+  return {parts,bytes:all.length,pg:res.pg,trunc:lv>=1};}
 function wipQrSvg(t){try{const q=qrcode(0,'L');q.addData(t);q.make();return q.createSvgTag({cellSize:4,margin:4,scalable:true}).replace('<svg','<svg style="width:100%;height:auto;display:block"');}catch(e){return '';}}
 const wipBtn=(act,label,k,extra)=>`<button class="${WA.c(k)}" data-act="${act}" ${extra||''}>${label}</button>`;
 const WIP_MAIL='TSC@teledyne.com';
@@ -14177,6 +14203,7 @@ function wipShow(){
   <div style="background:#fff;border:1px solid #ccd;padding:6px;margin:0 auto;box-sizing:border-box;width:min(100%,60vh,560px)">${svg||'<p>The code could not be drawn.</p>'}</div>
   <div style="display:flex;gap:8px;align-items:center;justify-content:center;margin:8px 0">${n>1?wipBtn('wip-prev','‹ Previous','',i===0?'disabled':''):''}<b style="font-size:18px;white-space:nowrap">Code ${i+1} of ${n}</b>${n>1?wipBtn('wip-next','Next ›','pri',i===n-1?'disabled':''):''}</div>
   <p class="muted" style="margin:0 0 8px">On the other tablet: Home → <b>Scan QR</b> → take a photo of ${n>1?'each code (any order)':'the code'}. Turn the screen brightness up and hold steady.</p>
+  ${p.trunc?'<p class="muted" style="margin:0 0 6px;font-size:13px">Some long notes were shortened in the code so it fits in one. The full notes stay on this tablet.</p>':''}${n>1?'<p class="muted" style="margin:0 0 6px;font-size:13px"><b>This inspection is too large for one code.</b> All '+n+' codes are needed, or use the backup file.</p>':''}
   ${rec.carryNotes?`<div style="background:#fff8e0;border-left:5px solid #e0a800;padding:6px 10px;margin:0 0 8px;white-space:pre-wrap;font-size:14px"><b>Notes:</b> ${esc(rec.carryNotes)}</div>`:''}
   ${wipBtn('wip-mail','✉ Email carry-over to '+WIP_MAIL+' (sheet attached)','pri')}<p class="muted" style="margin:2px 0 8px;font-size:12px">The address is copied first – paste it into <b>To</b> when your email app opens. Some apps ignore the subject.</p>
   ${wipBtn('wip-copy','📋 Copy '+WIP_MAIL,'')}
@@ -14194,8 +14221,9 @@ function wipBuildPdf(){
     d.setTextColor(0);let y=92;
     const row=(a,b)=>{d.setFont('helvetica','bold');d.setFontSize(11);d.text(a,36,y);d.setFont('helvetica','normal');d.text(String(b),150,y);y+=17;};
     row('Serial / unit:',sn);row('Paused:',ts);if(tech)row('Paused by:',tech);if(pg.done!=null)row('Progress:',pg.done+' of '+pg.total+' items checked');row('This code:',(k+1)+' of '+n+(n>1?'  (all codes are needed)':''));
-    try{const q=qrcode(0,'L');q.addData(t);q.make();const m=q.getModuleCount(),qz=4,sz=360,cs=sz/(m+2*qz),x0=(612-sz)/2,y0=y+8;d.setFillColor(255,255,255);d.rect(x0,y0,sz,sz,'F');d.setFillColor(0,0,0);
-      for(let a=0;a<m;a++)for(let b=0;b<m;b++)if(q.isDark(a,b))d.rect(x0+(b+qz)*cs,y0+(a+qz)*cs,cs+.15,cs+.15,'F');d.setDrawColor(150);d.rect(x0,y0,sz,sz);y=y0+sz+22;}catch(e){y+=380;}
+    try{const q=qrcode(0,'L');q.addData(t);q.make();const m=q.getModuleCount(),qz=4,sz=420,x0=(612-sz)/2,y0=y+8,px=Math.max(4,Math.floor(1400/(m+2*qz))),W=(m+2*qz)*px,cv=document.createElement('canvas');cv.width=cv.height=W;const g=cv.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,W,W);g.fillStyle='#000';
+      for(let a=0;a<m;a++)for(let b=0;b<m;b++)if(q.isDark(a,b))g.fillRect((b+qz)*px,(a+qz)*px,px,px);
+      d.addImage(cv.toDataURL('image/png'),'PNG',x0,y0,sz,sz);d.setDrawColor(150);d.rect(x0,y0,sz,sz);y=y0+sz+22;}catch(e){y+=380;}
     d.setFont('helvetica','bold');d.setFontSize(11);d.text('Next technician - to continue this inspection:',36,y);y+=15;d.setFont('helvetica','normal');d.setFontSize(10);
     ['1. Open the same form on your tablet and tap Scan QR (Home screen).','2. Take a photo of '+(n>1?'EACH code ('+n+' pages, any order).':'this code.'),'3. Photos from the first tablet are not included - the app will ask which to retake.'].forEach(l=>{d.text(l,44,y);y+=13;});
     d.setTextColor(90);d.text('Received by: ______________________   Date: ____________',36,y+14);d.setTextColor(0);y+=34;

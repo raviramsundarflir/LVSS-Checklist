@@ -10,6 +10,9 @@ body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-ri
 button,a,label{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 input,textarea,select{font-size:max(16px,1em)}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.35 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-text-size-adjust:100%}
+.homelnk{margin-left:auto;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--blue);font-weight:700;text-decoration:none;white-space:nowrap;min-height:40px;display:inline-flex;align-items:center}
+.emailbig{order:-1;flex:1 1 100%!important;width:100%;min-height:64px;font-size:19px;font-weight:800;background:#1b8a3a!important;border:2px solid #14702d!important;color:#fff!important;border-radius:12px;box-shadow:0 3px 10px rgba(27,138,58,.4);padding:12px 16px}
+.emailbig small{display:block;font-size:12px;font-weight:600;opacity:.92;margin-top:2px}
 button{font:inherit;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;padding:10px 14px;min-height:44px}
 button.pri{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}
 button.dng{color:var(--fail);border-color:#e3b3b3}
@@ -2800,6 +2803,11 @@ var qrcode = function() {
 }(function () {
     return qrcode;
 }));
+
+;(function(){var o=qrcode;qrcode=function(t,e){var q=o(t,e),mk=q.make,ad=q.addData,data=[];
+ q.addData=function(d,m){data.push([d,m]);return ad.call(q,d,m);};
+ q.make=function(){mk.call(q);if(!t&&q.getModuleCount()===109){var q2=o(24,e);data.forEach(function(x){q2.addData(x[0],x[1]);});q2.make();for(var k in q2)q[k]=q2[k];}};
+ return q;};for(var k in o)qrcode[k]=o[k];})();
 </script>
 <script>(function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -12903,7 +12911,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 /***/ })
 /******/ ])["default"];
 });</script>
-<script>'use strict';
+<script>const HOMELINK=(location.protocol==='http:'||location.protocol==='https:')?'<a href="../" class="homelnk">⌂ All forms</a>':'';
+'use strict';
 const SOURCE='<!DOCTYPE html>\n'+document.documentElement.outerHTML; // captured before render (for admin "download app file")
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -13020,7 +13029,7 @@ function render(){if(S.view==='home')return renderHome();if(S.view==='admin')ret
 
 /* ----- home ----- */
 async function renderHome(){S.recs=(await dbAll('recs')).sort((a,b)=>b.updated-a.updated);
- app.innerHTML=`<div class="top"><div class="bar"><img src="${LOGO2}" alt="Teledyne FLIR"><div class="brand">SkyWatch Inspection + Completion Certificate<small>${esc(curTpl().revision||'')}</small></div></div></div>
+ app.innerHTML=`<div class="top"><div class="bar"><img src="${LOGO2}" alt="Teledyne FLIR"><div class="brand">SkyWatch Inspection + Completion Certificate<small>${esc(curTpl().revision||'')}</small></div>${HOMELINK}</div></div>
  <div class="wrap"><div class="card"><div class="row"><button class="pri" data-act="new">＋ New inspection</button><button data-act="scan">📷 Scan QR (audit / continue)</button><button data-act="backup">Backup file</button><button data-act="restore">Restore from backup file</button><button data-act="admin">Admin</button></div>
  <p class="muted">Everything is stored on this tablet and works with no internet. Internet is only needed at the very end to send the e-mail.</p></div>
  ${S.recs.length?'':'<div class="card muted">No inspections yet.</div>'}
@@ -13280,7 +13289,7 @@ function scanDlg(){closeModal();modal(`<h3>Scan QR code</h3><video id="scanV" pl
   const tick=()=>{if(!scanOn)return;if(v.videoWidth){const k=Math.min(1,1280/v.videoWidth);c.width=Math.round(v.videoWidth*k);c.height=Math.round(v.videoHeight*k);c.getContext('2d').drawImage(v,0,0,c.width,c.height);const t=decodeCanvas(c,false);if(t){if(String(t).startsWith('WIP1~')){wipChunk(t);setTimeout(tick,900);return;}scanDone(t);return;}}setTimeout(tick,120);};tick();})
  .catch(()=>{msg('Live scanning could not start. Tap “Take a photo of the QR code” below – it opens the camera, and the code is read as soon as you accept the picture.');v.style.display='none';});}
 function qrTry(im){const W=im.width,H=im.height;const one=(sx,sy,sw,sh,M)=>{const k=Math.min(1,M/Math.max(sw,sh));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(sw*k));c.height=Math.max(1,Math.round(sh*k));c.getContext('2d').drawImage(im,sx,sy,sw,sh,0,0,c.width,c.height);return decodeCanvas(c,true);};
- for(const M of [1600,1000,2400,700,500,1200]){const t=one(0,0,W,H,M);if(t)return t;}
+ for(const M of [1600,1000,2400,700,500,1200,2000,1400,900,800,600,1800,3000]){const t=one(0,0,W,H,M);if(t)return t;}
  const crops=[[.15,.15,.7,.7],[0,0,.6,.6],[.4,0,.6,.6],[0,.4,.6,.6],[.4,.4,.6,.6],[.25,.25,.5,.5]];
  for(const q of crops)for(const M of [1200,800]){const t=one(Math.round(W*q[0]),Math.round(H*q[1]),Math.round(W*q[2]),Math.round(H*q[3]),M);if(t)return t;}
  return null;}
@@ -13312,7 +13321,7 @@ function auSummary(r){const au=r.audit,P=auF(r),v=au.verdict==='pass'?'PASSED':'
 function auNeedHtml(){const r=S.rec,m=auMissing(r);return `<div id="auNeed">${m.length?`<div class="err" style="margin-top:10px"><b>Still needed before you can submit:</b><ul style="margin:6px 0 0 18px;padding:0">${m.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}<button class="pri" data-act="ausubmit" style="width:100%;margin-top:10px;background:#6b3fa0;border-color:#6b3fa0" ${m.length?'disabled':''}>Submit audit report</button></div>`;}
 function auditHtml(){const r=S.rec,au=auEns(r),P=auF(r),st=stats(r);
  if(au.done){const v=au.verdict==='pass',s=auSummary(r);return `<div class="card" style="border:3px solid ${v?'#1b8a3a':'#c62828'}"><div class="row"><h2 style="flex:1;margin:0">Audit report – ${esc(snD(r))}</h2><span class="vd ${v?'pass':'fail'}">${v?'✓ AUDIT PASSED':'✗ AUDIT FAILED'}</span></div><p class="muted">Auditor <b>${esc(au.name)}</b> · ${esc(fmtD(au.date))} · ${P.length} fault${P.length===1?'':'s'} reviewed · ${P.filter(x=>(au.items[x.id]||{}).r==='ok').length} verified · ${P.filter(x=>(au.items[x.id]||{}).r==='no').length} not acceptable</p><div id="pdfst" class="muted">Preparing PDF…</div></div>
- <div class="card"><div class="row"><button class="pri" data-act="share" style="flex:1">📤 Share audit PDF</button><button data-act="dl" style="flex:1">⬇ Save audit PDF to tablet</button></div><div class="row" style="margin-top:8px"><button data-act="aucopy" style="flex:1">📋 Copy audit summary (for email)</button><button data-act="wip-copy" style="flex:1">📋 Copy ${WIP_MAIL}</button><button data-act="auemail" style="flex:1">✉ Email audit (PDF attached)</button></div><p class="muted">The audit PDF is a one-page audit report (longer only if there are many faults, or if the auditor added photos). It states it is the audit of the associated inspection report and punch list.</p></div>
+ <div class="card"><div class="row"><button class="pri" data-act="share" style="flex:1">📤 Share audit PDF</button><button data-act="dl" style="flex:1">⬇ Save audit PDF to tablet</button></div><div class="row" style="margin-top:8px"><button data-act="aucopy" style="flex:1">📋 Copy audit summary (for email)</button><button data-act="wip-copy" style="flex:1">📋 Copy ${WIP_MAIL}</button><button class="emailbig" data-act="auemail">✉ Email audit (PDF attached)<small>Recommended – opens your email app with the PDF attached</small></button></div><p class="muted">The audit PDF is a one-page audit report (longer only if there are many faults, or if the auditor added photos). It states it is the audit of the associated inspection report and punch list.</p></div>
  <div class="card"><button data-act="aureopen">Edit the audit</button> <button data-act="auback">← Back to the report</button></div>`;}
  const m=auMissing(r),done=P.filter(x=>(au.items[x.id]||{}).r).length;
  return `<div class="card" style="border:2px solid #6b3fa0"><h2 style="margin:0 0 4px">Auditor review – ${esc(snD(r))}</h2><p class="muted" style="margin:0 0 8px">Go through every fault below, confirm each repair was completed appropriately, then record the audit result at the bottom. Nothing in the tech's report is changed.</p>
@@ -13400,7 +13409,7 @@ function sendHtml(){const r=S.rec,md=mailDefaults(r),m=r.mail;const st=stats(r);
  <div class="row" style="margin-top:8px"><input id="newRcp" type="email" placeholder="Add another e-mail address" style="flex:1;min-width:200px"><button data-act="addrcp">Add</button></div>
  <div class="sp"></div><label class="f">TSC Teledyne FLIR admin e-mail (remembered on this tablet)</label><input data-set="tscEmail" value="${esc(S.settings.tscEmail||TSC_EMAIL)}"></div>
  <div class="card"><h3>Message</h3><label class="f">Subject</label><input data-b="mail.subject" value="${esc(m.subject!=null?m.subject:md.subject)}"><div class="sp"></div><label class="f">Text</label><textarea data-b="mail.body" style="min-height:190px">${esc(m.body!=null?m.body:md.body)}</textarea></div>
- <div class="card"><div class="row"><button class="pri" data-act="share" style="flex:1">✉ Email report (PDF attached)</button><button data-act="dl" style="flex:1">⬇ Save PDF to tablet</button></div>
+ <div class="card"><div class="row"><button class="emailbig" data-act="share">✉ Email report (PDF attached)<small>Recommended – opens your email app with the PDF attached</small></button><button data-act="dl" style="flex:1">⬇ Save PDF to tablet</button></div>
  <div class="row" style="margin-top:8px"><button data-act="mailto" style="flex:1">✉ Open e-mail draft (no attachments)</button><button data-act="wip-copy" style="flex:1">📋 Copy ${WIP_MAIL}</button><button data-act="copy" style="flex:1">Copy addresses</button></div>
  <p class="muted">Needs a connection (shop Wi-Fi or your phone hotspot). <b>Share</b> opens the Android share sheet with the PDF attached – pick Gmail/Outlook, then paste the addresses (the list is copied for you first; the technician is the Cc line). A web page can't pre-fill recipients <i>and</i> attach a file at the same time. If the share sheet isn't offered, <b>Save PDF</b>, then <b>Open e-mail draft</b> (To, Cc, subject and text filled in) and attach the PDF from Downloads.</p>
  <div class="row"><button data-act="step" data-s="4">← Certificate</button></div></div>`;}
@@ -13944,11 +13953,30 @@ async function wipUnzip(bytes){
 function wipB64e(b){let s='';for(let i=0;i<b.length;i+=8192)s+=String.fromCharCode.apply(null,b.subarray(i,i+8192));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
 function wipB64d(t){t=t.replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';const s=atob(t),b=new Uint8Array(s.length);for(let i=0;i<s.length;i++)b[i]=s.charCodeAt(i);return b;}
 function wipCounts(rec){const pc={};for(const k in(rec.elsewhere||{}))pc[k]=rec.elsewhere[k];const l=WA.local(rec);for(const k in l)pc[k]=(pc[k]||0)+l[k];for(const k in pc)if(!(pc[k]>0))delete pc[k];return pc;}
+const WIP_ONE=2300,WIP_NOTEK=new Set(['note','res','why','quote','carryNotes','comments','verdictNote','notes','find','msg']);
+function wipSlim(o,lv,inItems){
+  const cap=[0,160,60,25][lv]||0;
+  if(Array.isArray(o))return o.map(x=>wipSlim(x,lv,inItems));
+  if(o&&typeof o==='object'){const r={};
+    for(const k in o){let v=o[k];
+      if(lv>=2&&(k==='mail'||k==='comments'))continue;
+      v=wipSlim(v,lv,inItems||k==='items');
+      if(cap&&WIP_NOTEK.has(k)&&typeof v==='string'&&v.length>cap)v=v.slice(0,cap-1)+'…';
+      if(inItems&&k!=='items'&&(v===''||v===null||v===undefined||v===false||(Array.isArray(v)&&!v.length)||(v&&typeof v==='object'&&!Array.isArray(v)&&!Object.keys(v).length)))continue;
+      r[k]=v;}
+    if(o.items&&typeof o.items==='object'&&!Array.isArray(o.items)){for(const id in r.items)if(r.items[id]&&typeof r.items[id]==='object'&&!Object.keys(r.items[id]).length)delete r.items[id];}
+    return r;}
+  return o;}
 async function wipEncode(rec){
-  const obj={w:1,app:WA.app,id:rec.id,ts:WA.ts(rec),sn:WA.sn(rec),th:WA.th(rec),pg:WA.progress(rec),pc:wipCounts(rec),rec:wipClean(rec)};
-  const z=await wipZip(JSON.stringify(obj)),all=wipB64e(z.b),crc=wipH(all),n=Math.max(1,Math.ceil(all.length/WIP_CHUNK)),parts=[];
-  for(let i=0;i<n;i++)parts.push(['WIP1',z.z?'z':'r',rec.id,i+1,n,crc,all.slice(i*WIP_CHUNK,(i+1)*WIP_CHUNK)].join('~'));
-  return {parts,bytes:all.length,pg:obj.pg};}
+  let res,lv=0;
+  for(;lv<=3;lv++){
+    const obj={w:1,app:WA.app,id:rec.id,ts:WA.ts(rec),sn:WA.sn(rec),th:WA.th(rec),pg:WA.progress(rec),pc:wipCounts(rec),rec:wipSlim(wipClean(rec),lv)};
+    const z=await wipZip(JSON.stringify(obj));res={z,all:wipB64e(z.b),pg:obj.pg,obj};
+    if(res.all.length<=WIP_ONE)break;}
+  if(lv>3)lv=3;
+  const all=res.all,crc=wipH(all),size=all.length<=WIP_ONE?all.length:WIP_CHUNK,n=Math.max(1,Math.ceil(all.length/size)),parts=[];
+  for(let i=0;i<n;i++)parts.push(['WIP1',res.z.z?'z':'r',rec.id,i+1,n,crc,all.slice(i*size,(i+1)*size)].join('~'));
+  return {parts,bytes:all.length,pg:res.pg,trunc:lv>=1};}
 function wipQrSvg(t){try{const q=qrcode(0,'L');q.addData(t);q.make();return q.createSvgTag({cellSize:4,margin:4,scalable:true}).replace('<svg','<svg style="width:100%;height:auto;display:block"');}catch(e){return '';}}
 const wipBtn=(act,label,k,extra)=>`<button class="${WA.c(k)}" data-act="${act}" ${extra||''}>${label}</button>`;
 const WIP_MAIL='TSC@teledyne.com';
@@ -13971,6 +13999,7 @@ function wipShow(){
   <div style="background:#fff;border:1px solid #ccd;padding:6px;margin:0 auto;box-sizing:border-box;width:min(100%,60vh,560px)">${svg||'<p>The code could not be drawn.</p>'}</div>
   <div style="display:flex;gap:8px;align-items:center;justify-content:center;margin:8px 0">${n>1?wipBtn('wip-prev','‹ Previous','',i===0?'disabled':''):''}<b style="font-size:18px;white-space:nowrap">Code ${i+1} of ${n}</b>${n>1?wipBtn('wip-next','Next ›','pri',i===n-1?'disabled':''):''}</div>
   <p class="muted" style="margin:0 0 8px">On the other tablet: Home → <b>Scan QR</b> → take a photo of ${n>1?'each code (any order)':'the code'}. Turn the screen brightness up and hold steady.</p>
+  ${p.trunc?'<p class="muted" style="margin:0 0 6px;font-size:13px">Some long notes were shortened in the code so it fits in one. The full notes stay on this tablet.</p>':''}${n>1?'<p class="muted" style="margin:0 0 6px;font-size:13px"><b>This inspection is too large for one code.</b> All '+n+' codes are needed, or use the backup file.</p>':''}
   ${rec.carryNotes?`<div style="background:#fff8e0;border-left:5px solid #e0a800;padding:6px 10px;margin:0 0 8px;white-space:pre-wrap;font-size:14px"><b>Notes:</b> ${esc(rec.carryNotes)}</div>`:''}
   ${wipBtn('wip-mail','✉ Email carry-over to '+WIP_MAIL+' (sheet attached)','pri')}<p class="muted" style="margin:2px 0 8px;font-size:12px">The address is copied first – paste it into <b>To</b> when your email app opens. Some apps ignore the subject.</p>
   ${wipBtn('wip-copy','📋 Copy '+WIP_MAIL,'')}
@@ -13988,8 +14017,9 @@ function wipBuildPdf(){
     d.setTextColor(0);let y=92;
     const row=(a,b)=>{d.setFont('helvetica','bold');d.setFontSize(11);d.text(a,36,y);d.setFont('helvetica','normal');d.text(String(b),150,y);y+=17;};
     row('Serial / unit:',sn);row('Paused:',ts);if(tech)row('Paused by:',tech);if(pg.done!=null)row('Progress:',pg.done+' of '+pg.total+' items checked');row('This code:',(k+1)+' of '+n+(n>1?'  (all codes are needed)':''));
-    try{const q=qrcode(0,'L');q.addData(t);q.make();const m=q.getModuleCount(),qz=4,sz=360,cs=sz/(m+2*qz),x0=(612-sz)/2,y0=y+8;d.setFillColor(255,255,255);d.rect(x0,y0,sz,sz,'F');d.setFillColor(0,0,0);
-      for(let a=0;a<m;a++)for(let b=0;b<m;b++)if(q.isDark(a,b))d.rect(x0+(b+qz)*cs,y0+(a+qz)*cs,cs+.15,cs+.15,'F');d.setDrawColor(150);d.rect(x0,y0,sz,sz);y=y0+sz+22;}catch(e){y+=380;}
+    try{const q=qrcode(0,'L');q.addData(t);q.make();const m=q.getModuleCount(),qz=4,sz=420,x0=(612-sz)/2,y0=y+8,px=Math.max(4,Math.floor(1400/(m+2*qz))),W=(m+2*qz)*px,cv=document.createElement('canvas');cv.width=cv.height=W;const g=cv.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,W,W);g.fillStyle='#000';
+      for(let a=0;a<m;a++)for(let b=0;b<m;b++)if(q.isDark(a,b))g.fillRect((b+qz)*px,(a+qz)*px,px,px);
+      d.addImage(cv.toDataURL('image/png'),'PNG',x0,y0,sz,sz);d.setDrawColor(150);d.rect(x0,y0,sz,sz);y=y0+sz+22;}catch(e){y+=380;}
     d.setFont('helvetica','bold');d.setFontSize(11);d.text('Next technician - to continue this inspection:',36,y);y+=15;d.setFont('helvetica','normal');d.setFontSize(10);
     ['1. Open the same form on your tablet and tap Scan QR (Home screen).','2. Take a photo of '+(n>1?'EACH code ('+n+' pages, any order).':'this code.'),'3. Photos from the first tablet are not included - the app will ask which to retake.'].forEach(l=>{d.text(l,44,y);y+=13;});
     d.setTextColor(90);d.text('Received by: ______________________   Date: ____________',36,y+14);d.setTextColor(0);y+=34;
@@ -14121,7 +14151,7 @@ const WA={app:'SKYW',c:k=>k==='pri'?'pri':'',
   if(oid.startsWith('sp:')){const k=oid.slice(3);if(k==='towerWhole')return 'Whole tower photo';if(k==='spares')return 'Spares left on site';const f=HDR_SER.find(x=>x[0]===k);return f?f[1]+' photo':k;}
   const g=(r.gear||[]).find(x=>x.id===oid);if(g)return 'Serial photo: '+(g.t||'device')+(g.s?' ('+g.s+')':'');
   const x=flat(r).find(y=>y.id===oid);return x?'#'+x.label+' '+x.t:oid;},
- tpl:ex=>clone(ex?ex.tpl:curTpl()),finish:r=>migrate(r),
+ tpl:ex=>clone(ex?ex.tpl:curTpl()),finish:r=>{const D={st:'',lvl:'',note:'',ph:[],v:{},rep:false,res:'',war:'',courtesy:false,quote:''};Object.keys(r.items||{}).forEach(k=>{r.items[k]=Object.assign({},D,{ph:[],v:{}},r.items[k]);});return migrate(r);},
  mergePhotos(rec,ex){const old=S.rec;S.rec=rec;try{WA.owners(ex).forEach(o=>{phOwner(o.oid).ph=o.ph.slice()})}finally{S.rec=old}},
  get:id=>dbGet('recs',id),put:r=>dbPut('recs',clone(r)),
  open:async r=>{S.audit=false;S.rec=r;await loadPhotos(r);S.view='rec';S.open=-1;S.detail={};S.dirty=false;render();},
