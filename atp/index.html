@@ -14144,8 +14144,16 @@ async function wipEncode(rec){
   return {parts,bytes:all.length,pg:obj.pg};}
 function wipQrSvg(t){try{const q=qrcode(0,'L');q.addData(t);q.make();return q.createSvgTag({cellSize:4,margin:4,scalable:true}).replace('<svg','<svg style="width:100%;height:auto;display:block"');}catch(e){return '';}}
 const wipBtn=(act,label,k,extra)=>`<button class="${WA.c(k)}" data-act="${act}" ${extra||''}>${label}</button>`;
-async function wipPause(){
-  const rec=WA.rec();if(!rec)return;if(WA.save)await WA.save();
+const WIP_MAIL='TSC@teledyne.com';
+function wipPause(){
+  const rec=WA.rec();if(!rec)return;
+  WA.dlg(`<h3>⏸ Pause – hand-off notes</h3>
+  <p class="muted" style="margin:0 0 8px">Optional. Tell the next tech where things stand: what is done, what is waiting on parts, anything to watch for. The notes go in the QR codes and on the carry-over sheet.</p>
+  <textarea id="wipNotes" maxlength="1000" rows="6" style="width:100%;font:inherit;padding:9px 10px;border:1px solid #bcc6d4;border-radius:8px" placeholder="e.g. Waiting on replacement camera (RMA ordered). Radar harness still to be checked.">${esc(rec.carryNotes||'')}</textarea>
+  ${wipBtn('wip-make','Make the carry-over codes','pri')}${wipBtn('wip-close','Cancel','')}`);}
+async function wipMake(){
+  const rec=WA.rec();if(!rec)return;const t=document.getElementById('wipNotes');if(t){rec.carryNotes=t.value.trim().slice(0,1000);if(WA.markDirty)WA.markDirty();}
+  if(WA.save)await WA.save();
   let p;try{p=await wipEncode(rec);}catch(e){WA.notice('Could not make the code: '+(e.message||e),'Pause');return;}
   S.wip={p,i:0};wipShow();}
 function wipShow(){
@@ -14156,10 +14164,12 @@ function wipShow(){
   <div style="background:#fff;border:1px solid #ccd;padding:6px;margin:0 auto;box-sizing:border-box;width:min(100%,60vh,560px)">${svg||'<p>The code could not be drawn.</p>'}</div>
   <div style="display:flex;gap:8px;align-items:center;justify-content:center;margin:8px 0">${n>1?wipBtn('wip-prev','‹ Previous','',i===0?'disabled':''):''}<b style="font-size:18px;white-space:nowrap">Code ${i+1} of ${n}</b>${n>1?wipBtn('wip-next','Next ›','pri',i===n-1?'disabled':''):''}</div>
   <p class="muted" style="margin:0 0 8px">On the other tablet: Home → <b>Scan QR</b> → take a photo of ${n>1?'each code (any order)':'the code'}. Turn the screen brightness up and hold steady.</p>
+  ${rec.carryNotes?`<div style="background:#fff8e0;border-left:5px solid #e0a800;padding:6px 10px;margin:0 0 8px;white-space:pre-wrap;font-size:14px"><b>Notes:</b> ${esc(rec.carryNotes)}</div>`:''}
+  ${wipBtn('wip-mail','✉ Email carry-over to '+WIP_MAIL+' (sheet attached)','pri')}<p class="muted" style="margin:2px 0 8px;font-size:12px">The address is copied first – paste it into <b>To</b> when your email app opens. Some apps ignore the subject.</p>
   ${wipBtn('wip-pdf','📄 Save carry-over sheet (PDF) – print &amp; leave with the equipment','')}
   ${wipBtn('wip-bk','💾 Backup file instead (includes photos)','')}
   ${wipBtn('wip-close','Close','')}`);}
-async function wipCodesPdf(){
+function wipBuildPdf(){
   const rec=WA.rec(),p=S.wip.p,d=new window.jspdf.jsPDF({unit:'pt',format:'letter',compress:true}),n=p.parts.length,pg=p.pg||{};
   const FN={LVSS:'LVSS / eMSC-L Post-Repair Checklist',SKYW:'SkyWatch Inspection',ATP:'eMSC-L ATP Inspection'}[WA.app]||'Inspection';
   const h=rec.hdr||rec.header||{},tech=String(h.tech||h.inspector||h.technician||h.techName||'').trim(),sn=WA.sn(rec)||'(no serial entered)';
@@ -14174,9 +14184,22 @@ async function wipCodesPdf(){
       for(let a=0;a<m;a++)for(let b=0;b<m;b++)if(q.isDark(a,b))d.rect(x0+(b+qz)*cs,y0+(a+qz)*cs,cs+.15,cs+.15,'F');d.setDrawColor(150);d.rect(x0,y0,sz,sz);y=y0+sz+22;}catch(e){y+=380;}
     d.setFont('helvetica','bold');d.setFontSize(11);d.text('Next technician - to continue this inspection:',36,y);y+=15;d.setFont('helvetica','normal');d.setFontSize(10);
     ['1. Open the same form on your tablet and tap Scan QR (Home screen).','2. Take a photo of '+(n>1?'EACH code ('+n+' pages, any order).':'this code.'),'3. Photos from the first tablet are not included - the app will ask which to retake.'].forEach(l=>{d.text(l,44,y);y+=13;});
-    d.setTextColor(90);d.text('Received by: ______________________   Date: ____________',36,y+14);d.setTextColor(0);
+    d.setTextColor(90);d.text('Received by: ______________________   Date: ____________',36,y+14);d.setTextColor(0);y+=34;
+    if(rec.carryNotes){d.setFont('helvetica','bold');d.setFontSize(10);d.text('Notes from the technician:',36,y);y+=13;d.setFont('helvetica','normal');d.setFontSize(9.5);
+      const L=d.splitTextToSize(String(rec.carryNotes).replace(/[^\x20-\x7E\n]/g,'?'),540);let cut=false;
+      for(const l of L){if(y>748){cut=true;break;}d.text(l,36,y);y+=11.5;}if(cut)d.text('(more in the app - scan the codes)',36,y);}
     creditLine(d,creditCurRev());});
-  WA.dl(d.output('blob'),'CarryOver_'+String(WA.sn(rec)||'inspection').replace(/[^\w.\-]+/g,'_')+'.pdf');}
+  return {blob:d.output('blob'),name:'CarryOver_'+String(WA.sn(rec)||'inspection').replace(/[^\w.\-]+/g,'_')+'.pdf',n,pg,FN,tech,sn,ts};}
+function wipCodesPdf(){const o=wipBuildPdf();WA.dl(o.blob,o.name);}
+async function wipEmail(){
+  const o=wipBuildPdf(),rec=WA.rec();
+  const subj='Carry-over - '+o.FN+' - '+o.sn,
+   text=['Carry-over for '+o.FN,'Unit: '+o.sn,'Paused: '+o.ts+(o.tech?' by '+o.tech:''),(o.pg.done!=null?'Progress: '+o.pg.done+' of '+o.pg.total+' items checked':''),'',rec.carryNotes?'Notes from the tech:\n'+rec.carryNotes:'(No notes added.)','','The carry-over sheet with the QR code'+(o.n>1?'s':'')+' is attached. Next tech: open the same form, tap Scan QR and photograph '+(o.n>1?'every code':'the code')+'. Photos are not included.'].filter((x,i)=>x!==''||i>0).join('\n');
+  try{if(navigator.clipboard)await navigator.clipboard.writeText(WIP_MAIL);}catch(e){}
+  try{const f=new File([o.blob],o.name,{type:'application/pdf'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:subj,text});return;}}catch(e){if(e&&e.name==='AbortError')return;}
+  WA.dl(o.blob,o.name,1);WA.notice('This browser cannot attach the sheet automatically. It was saved as "'+o.name+'" - attach it to the email that opens next.','PDF saved');
+  location.href='mailto:'+WIP_MAIL+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(text);}
+
 /* ---- receiving ---- */
 const wipRx={};
 function wipMsg(t){const m=document.getElementById('scanMsg');if(m)m.textContent=t;}
@@ -14196,10 +14219,11 @@ async function wipApplyData(mode,b64){
   const ex=await WA.get(obj.id);S.wipIn=obj;S.wipEx=ex||null;
   const when=t=>new Date(t).toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
   const pr=q=>q&&q.total!=null?`${q.done} of ${q.total} items checked`:'';
-  if(!ex){WA.dlg(`<h3>Continue this inspection?</h3><p class="muted">${esc(obj.sn||'Inspection')} · ${pr(obj.pg)} · saved ${when(obj.ts)} on the other tablet.</p>${wipBtn('wip-use','Continue it on this tablet','pri')}${wipBtn('wip-close','Cancel','')}`);return;}
+  const nt=(obj.rec&&obj.rec.carryNotes)?`<div style="background:#fff8e0;border-left:5px solid #e0a800;padding:8px 10px;margin:8px 0;white-space:pre-wrap"><b>Hand-off notes from the previous tech:</b>\n${esc(obj.rec.carryNotes)}</div>`:'';
+  if(!ex){WA.dlg(`<h3>Continue this inspection?</h3><p class="muted">${esc(obj.sn||'Inspection')} · ${pr(obj.pg)} · saved ${when(obj.ts)} on the other tablet.</p>${nt}${wipBtn('wip-use','Continue it on this tablet','pri')}${wipBtn('wip-close','Cancel','')}`);return;}
   const mine=WA.ts(ex),pm=WA.progress(ex),newer=obj.ts>mine,same=obj.ts===mine;
   WA.dlg(`<h3>This tablet already has this inspection</h3>
-   <p class="muted" style="margin:0 0 6px">${esc(obj.sn||'')}</p>
+   <p class="muted" style="margin:0 0 6px">${esc(obj.sn||'')}</p>${nt}
    <p style="margin:6px 0"><b>Other tablet:</b> ${pr(obj.pg)}<br>saved ${when(obj.ts)} ${newer?'<b style="color:#1b8a3a">(newer)</b>':''}</p>
    <p style="margin:6px 0"><b>This tablet:</b> ${pr(pm)}<br>saved ${when(mine)} ${(!newer&&!same)?'<b style="color:#1b8a3a">(newer)</b>':''}</p>
    ${same?'<p class="muted">Both copies are at the same point.</p>':newer?'<p class="muted">The other tablet has more recent progress. Updating replaces what is saved on this tablet (photos here are kept).</p>':'<p class="muted"><b>This tablet\'s copy is more recent.</b> Updating would replace it with older progress.</p>'}
@@ -14251,6 +14275,8 @@ async function wipAct(a,b){
    case 'wip-pause':wipPause();break;
    case 'wip-prev':if(S.wip&&S.wip.i>0){S.wip.i--;wipShow();}break;
    case 'wip-next':if(S.wip&&S.wip.i<S.wip.p.parts.length-1){S.wip.i++;wipShow();}break;
+   case 'wip-make':wipMake();break;
+   case 'wip-mail':wipEmail();break;
    case 'wip-pdf':wipCodesPdf();break;
    case 'wip-bk':WA.close();WA.backup();break;
    case 'wip-close':WA.close();S.wipIn=null;break;
