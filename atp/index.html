@@ -13470,7 +13470,7 @@ async function renderReview(){
       var inl=revInline(it); if(inl) return inl;
       return '<li><button data-act="goto" data-num="'+it.r.num+'"><span class="pn">'+it.r.num+'</span><span class="pd"><b>'+esc(desc)+'</b><small>'+esc(lineText(it.r,it.d))+(n?' ('+n+' photo'+(n>1?'s':'')+')':'')+'</small></span><span class="tag tag-'+it.kind.split(' ')[0]+'">'+it.kind+'</span></button></li>';
     }).join('')+'</ol>' : '<p class="card">Nothing to rework. The punch list page will print as \u201cNo nonconformances found.\u201d</p>')+
-    fyiHTML(rec)+swRmaHTML(rec)+auQrCard(rec)+auEntryCard(rec)+'<h2>Report PDFs</h2><div class="actions"><button class="btn primary big" data-act="pdf-share-full">\ud83d\udce4 Share full report PDF</button><button class="btn light big" data-act="pdf-save-full">\u2b07 Save full report</button></div><div class="actions"><button class="btn primary big" data-act="pdf-share-punch" style="background:var(--navy-2)">\ud83d\udce4 Share punch list PDF</button><button class="btn light big" data-act="pdf-save-punch">\u2b07 Save punch list</button><button class="btn light big" data-act="backup-cur">Backup file</button></div>'+
+    fyiHTML(rec)+swRmaHTML(rec)+auQrCard(rec)+auEntryCard(rec)+'<h2>Report PDFs</h2><div class="actions"><button class="btn primary big" data-act="pdf-share-full">\u2709 Email full report (PDF attached)</button><button class="btn light big" data-act="pdf-save-full">\u2b07 Save full report</button></div><div class="actions"><button class="btn primary big" data-act="pdf-share-punch" style="background:var(--navy-2)">\u2709 Email punch list (PDF attached)</button><button class="btn light big" data-act="pdf-save-punch">\u2b07 Save punch list</button><button class="btn light big" data-act="backup-cur">Backup file</button></div>'+
     '<p class="tip">PDFs are named eMSC-L_'+esc(safeName(snNum(h.newSerial)))+'_ATP / _PunchList. Tap an item above to jump back to it.</p></main>';
   setSaveInd(); measureBar(); window.scrollTo(0,0);
 }
@@ -13794,6 +13794,13 @@ function atpPdf(mode){
   footers(d,rec,(t.title||'ATP')+(full?'':' Punch List'),skip);
   return d;
 }
+function atpEmail(rec){
+  var h=rec.header, a=analyze(rec), I=a.issues, pass=!I.length;
+  var L=['Attached is the eMSC-L ATP inspection report for '+(snD(h)||'this unit')+'.','','Unit S/N: '+(snD(h)||'-')+'  |  VIN '+(h.vin||'-')+'  |  Plate '+(h.plate||'-'),'Inspector: '+(h.inspector||'-')+'  |  Date: '+(fmtDate(h.date)||'-'),'Result: '+(pass?'KPI PASS - no nonconformances found':'KPI FAIL - '+I.length+' item'+(I.length===1?'':'s')+' on the punch list')];
+  if(!pass){ L.push('','Punch list:'); I.slice(0,20).forEach(function(it){ var t=lineText(it.r,it.d); L.push('  #'+it.r.num+' '+(t.length>110?t.slice(0,107)+'...':t)); }); if(I.length>20) L.push('  ... and '+(I.length-20)+' more - see the attached report.'); }
+  L.push('','Thank you,',h.inspector||'');
+  return {subj:'eMSC-L ATP Inspection - '+(snD(h)||'')+' - '+(pass?'PASS':'FAIL'),text:L.join('\n')};
+}
 function pdfName(mode){ var n=safeName(snNum(S.rec.header.newSerial)); return 'eMSC-L_'+n+(mode==='full'?'_ATP':mode==='punch'?'_PunchList':'_AUDIT')+'.pdf'; }
 async function pdfOut(mode,how){
   if(dirty()) await save();
@@ -13802,7 +13809,7 @@ async function pdfOut(mode,how){
   try{ d=mode==='audit'?atpAuditPdf(S.rec):atpPdf(mode); }catch(e){ console.error(e); alert('Could not create the PDF: '+(e.message||e)); return; }
   var blob=d.output('blob'), name=pdfName(mode);
   if(how==='share'){
-    var file=new File([blob],name,{type:'application/pdf'}), data={files:[file],title:name};
+    var file=new File([blob],name,{type:'application/pdf'}), em=mode==='audit'?auSummary(S.rec):atpEmail(S.rec), data={files:[file],title:em.subj,text:em.text};
     try{ if(navigator.canShare && navigator.canShare(data)){ await navigator.share(data); return; } }catch(e){ if(e&&e.name==='AbortError') return; }
     downloadBlob(name,blob); toast('This browser cannot attach files from a page. The PDF was saved to Downloads - attach it from there.');
   } else { downloadBlob(name,blob); toast('PDF saved: '+name); }
@@ -14010,7 +14017,7 @@ function auditHTML(){
   if(au.done){
     var ok=au.verdict==='pass';
     return '<section class="card" style="border:3px solid '+(ok?'#177a3c':'#c8202a')+'"><h2 style="margin:0 0 6px">Audit report – '+esc(snD(h))+' <span class="tag" style="background:'+(ok?'#177a3c':'#c8202a')+'">'+(ok?'AUDIT PASSED':'AUDIT FAILED')+'</span></h2><p class="muted">Auditor <b>'+esc(au.name)+'</b> · '+esc(fmtDate(au.date))+' · '+I.length+' item'+(I.length===1?'':'s')+' reviewed · '+I.filter(function(it){ return (au.items[it.r.num]||{}).r==='ok'; }).length+' verified · '+I.filter(function(it){ return (au.items[it.r.num]||{}).r==='no'; }).length+' not acceptable</p></section>'+
-      '<section class="card"><div class="actions"><button class="btn primary big" data-act="pdf-share-audit">📤 Share audit PDF</button><button class="btn light big" data-act="pdf-save-audit">⬇ Save audit PDF to tablet</button></div><div class="actions"><button class="btn light big" data-act="au-copy">📋 Copy audit summary (for email)</button><button class="btn light big" data-act="au-email">✉ Open in email app</button></div><p class="muted">The audit PDF is a one-page audit report (longer only if there are many items, or if the auditor added photos). It states it is the audit of the associated inspection report and punch list.</p></section>'+
+      '<section class="card"><div class="actions"><button class="btn primary big" data-act="pdf-share-audit">📤 Share audit PDF</button><button class="btn light big" data-act="pdf-save-audit">⬇ Save audit PDF to tablet</button></div><div class="actions"><button class="btn light big" data-act="au-copy">📋 Copy audit summary (for email)</button><button class="btn light big" data-act="au-email">✉ Email audit (PDF attached)</button></div><p class="muted">The audit PDF is a one-page audit report (longer only if there are many items, or if the auditor added photos). It states it is the audit of the associated inspection report and punch list.</p></section>'+
       '<section class="card"><button class="btn light" data-act="au-reopen">Edit the audit</button> <button class="btn light" data-act="au-back">← Back</button></section>';
   }
   var done=I.filter(function(it){ return (au.items[it.r.num]||{}).r; }).length;
@@ -14604,7 +14611,7 @@ async function appAct(act,el){
       markDirty(); await save(); auRefresh(); window.scrollTo(0,0); return true;
     case 'au-reopen': S.rec.audit.done=false; markDirty(); auRefresh(); return true;
     case 'au-copy': var sm=auSummary(S.rec); try{ await navigator.clipboard.writeText(sm.text); toast('Audit summary copied'); }catch(e){ notice(sm.text,'Copy this text'); } return true;
-    case 'au-email': var s3=auSummary(S.rec); location.href='mailto:?subject='+encodeURIComponent(s3.subj)+'&body='+encodeURIComponent(s3.text); return true;
+    case 'au-email': pdfOut('audit','share'); return true;
   }
   return false;
 }
