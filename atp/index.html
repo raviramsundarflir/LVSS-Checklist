@@ -13495,7 +13495,7 @@ async function renderReview(){
       var inl=revInline(it); if(inl) return inl;
       return '<li><button data-act="goto" data-num="'+it.r.num+'"><span class="pn">'+it.r.num+'</span><span class="pd"><b>'+esc(desc)+'</b><small>'+esc(lineText(it.r,it.d))+(n?' ('+n+' photo'+(n>1?'s':'')+')':'')+'</small></span><span class="tag tag-'+it.kind.split(' ')[0]+'">'+it.kind+'</span></button></li>';
     }).join('')+'</ol>' : '<p class="card">Nothing to rework. The punch list page will print as \u201cNo nonconformances found.\u201d</p>')+
-    fyiHTML(rec)+swRmaHTML(rec)+ddReviewCard(rec)+calAtpCard(rec)+auQrCard(rec)+auEntryCard(rec)+'<h2>Report PDFs</h2><div class="actions"><button class="btn emailbig" data-act="pdf-share-full">\u2709 Email full report (PDF attached)<small>Recommended \u2013 opens your email app with the PDF attached</small></button><button class="btn light big" data-act="pdf-save-full">\u2b07 Save full report</button></div><div class="actions"><button class="btn primary big" data-act="pdf-share-punch" style="background:var(--navy-2)">\u2709 Email punch list (PDF attached)</button><button class="btn light big" data-act="pdf-save-punch">\u2b07 Save punch list</button><button class="btn light big" data-act="backup-cur">Backup file</button><button class="btn light big" data-act="wip-copy">\ud83d\udccb Copy '+WIP_MAIL+'</button></div>'+
+    fyiHTML(rec)+swRmaHTML(rec)+ddReviewCard(rec)+calAtpCard(rec)+finAtpCard(rec)+auQrCard(rec)+auEntryCard(rec)+'<h2>Report PDFs</h2><div class="actions"><button class="btn emailbig" data-act="pdf-share-full">\u2709 Email full report (PDF attached)<small>Recommended \u2013 opens your email app with the PDF attached</small></button><button class="btn light big" data-act="pdf-save-full">\u2b07 Save full report</button></div><div class="actions"><button class="btn primary big" data-act="pdf-share-punch" style="background:var(--navy-2)">\u2709 Email punch list (PDF attached)</button><button class="btn light big" data-act="pdf-save-punch">\u2b07 Save punch list</button><button class="btn light big" data-act="backup-cur">Backup file</button><button class="btn light big" data-act="wip-copy">\ud83d\udccb Copy '+WIP_MAIL+'</button></div>'+
     '<p class="tip">PDFs are named eMSC-L_'+esc(safeName(snNum(h.newSerial)))+'_ATP / _PunchList. Tap an item above to jump back to it.</p></main>';
   setSaveInd(); measureBar(); window.scrollTo(0,0);
 }
@@ -13712,6 +13712,7 @@ function atpPdf(mode){
   y+=6;
   y=ddReportPdf(d,rec,y,ens,cell);
   y=swPdf(d,rec,y);
+  if(rec.fin&&rec.fin.st){ ens(26); cell(MX,y,CW,26,"Jake's New Build Final Inspection",finAtpTxt(rec)); y+=26; }
   if(rec.cal&&rec.cal.st||atpCamSwapped(rec)){ ens(26); cell(MX,y,CW,26,'TFU & Radar Calibration',calAtpTxt(rec)); y+=26; }
   if(full){
     d.setFont('helvetica','bold'); d.setFontSize(9); d.setTextColor(0); d.text('Required tools:',MX,y+8);
@@ -13814,9 +13815,9 @@ function atpPdf(mode){
   // auditor QR page
   var ap=auQrPayload(rec);
   if(ap && ap.ok){
-    d.addPage(); y=TOP; d.setFont('helvetica','bold'); d.setFontSize(15); d.setTextColor(0); d.text('Auditor QR Code - Punch List',MX,y+12); y+=22;
+    d.addPage(); y=TOP; d.setFont('helvetica','bold'); d.setFontSize(15); d.setTextColor(0); d.text(ap.n?'Auditor QR Code - Punch List':'QR Code - Final Inspection / Audit',MX,y+12); y+=22;
     d.setFont('helvetica','normal'); d.setFontSize(9.5); d.setTextColor(90);
-    d.text(wrap(d,(snD(h)||'')+' - '+fmtDate(h.date)+' - '+ap.n+' punch list item'+(ap.n===1?'':'s')+'. For the auditor: scan this code in the eMSC-L ATP Inspection app (Scan QR to audit) to open an audit of this inspection\'s punch list. '+auQrNote(ap)+' The tech\'s photos are not included in the code.',CW),MX,y+8); y+=40;
+    d.text(wrap(d,(snD(h)||'')+' - '+fmtDate(h.date)+' - '+ap.n+' punch list item'+(ap.n===1?'':'s')+'. FINAL INSPECTION: scan this code in Jake\'s New Build Final Inspection Form (Scan QR) to start the final inspection with the skid S/N, VIN and serial numbers filled in. AUDITOR: scan it in the eMSC-L ATP Inspection app (Scan QR to audit) to open an audit of this inspection\'s punch list. '+(ap.n?auQrNote(ap)+' ':'')+'The tech\'s photos are not included in the code.',CW),MX,y+8); y+=52;
     try{ var q=auQrMake(rec), n=q.getModuleCount(), qz=4, sz=330, cs=sz/(n+2*qz), x0=(PW-sz)/2; d.setFillColor(255,255,255); d.rect(x0,y,sz,sz,'F'); d.setFillColor(0,0,0);
       for(var i2=0;i2<n;i2++) for(var j2=0;j2<n;j2++) if(q.isDark(i2,j2)) d.rect(x0+(j2+qz)*cs,y+(i2+qz)*cs,cs+.15,cs+.15,'F');
       d.setDrawColor(150); d.setLineWidth(.6); d.rect(x0,y,sz,sz); }catch(e){ d.setTextColor(200,0,0); d.text('Could not generate the audit QR code: '+cl(e.message),MX,y+10); }
@@ -13940,13 +13941,13 @@ var AUQ_MAX=2700;
 function tplHash(tpl){ var s=''; tpl.sections.forEach(function(x){ x.items.forEach(function(i){ s+=i.text+'|'; }); }); var h=5381; for(var i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))|0; return (h>>>0).toString(36); }
 function auCode(kind){ return kind==='FAIL'?'F':kind==='AWP'?'W':kind==='NOT TESTED'?'B':'N'; }
 function auQrPayload(rec){
-  var a=analyze(rec); if(!a.issues.length) return null;
+  var a=analyze(rec);
   var T=function(x,n){ return n?cl(x||'').trim().slice(0,n):''; };
   var levels=[[90,60],[45,40],[25,0],[0,0]], out=null;
   for(var li=0;li<levels.length;li++){
     var nn=levels[li][0], wn=levels[li][1];
     var f=a.issues.filter(function(it){ return !(it.kind==='NOT INSPECTED'&&!it.r.spare); }).map(function(it){ var d=it.d; var row=[it.r.num,auCode(it.kind),T(d.note,nn),T(d.why,wn),(d.by||[]).join(','),d.pend?1:0]; if(it.r.spare) row.push(T(d.text,70)); return row; });
-    var h=rec.header, o={a:'ATP',k:'A',v:1,tr:cl((rec.tpl&&rec.tpl.revision)||''),th:tplHash(rec.tpl),sn:cl(h.newSerial||''),ins:cl(h.inspector||''),d:h.date||'',vin:cl(h.vin||''),pl:cl(h.plate||''),kl:cl(h.kilo||''),f:f,ni:a.issues.filter(function(it){ return it.kind==='NOT INSPECTED'&&!it.r.spare; }).map(function(it){ return it.r.num; }).join(',')};
+    var h=rec.header, o={a:'ATP',k:'A',v:1,tr:cl((rec.tpl&&rec.tpl.revision)||''),th:tplHash(rec.tpl),sn:cl(h.newSerial||''),ins:cl(h.inspector||''),d:h.date||'',vin:cl(h.vin||''),pl:cl(h.plate||''),kl:cl(h.kilo||''),cs:cl(h.cameraSerial||''),rs:cl(h.radarSerial||''),ls:(/^\s*PDX\s*$/i.test(h.lcuSerial||'')?'':cl(h.lcuSerial||'')),f:f,ni:a.issues.filter(function(it){ return it.kind==='NOT INSPECTED'&&!it.r.spare; }).map(function(it){ return it.r.num; }).join(',')};
     var j=JSON.stringify(o), bytes=new TextEncoder().encode(j).length; out={json:j,level:li,n:a.issues.length,bytes:bytes,ok:bytes<=AUQ_MAX}; if(out.ok) break;
   }
   return out;
@@ -13955,13 +13956,14 @@ function auQrMake(rec){ var p=auQrPayload(rec); if(!p||!p.ok) return null; var q
 function auQrNote(p){ return p.level===0?'Full detail (item, status, tech notes and blocker reasons).':p.level===1?'Tech notes shortened to fit the code.':p.level===2?'Only short tech notes fit in the code.':'Too many items for notes - the code carries the item list and status only.'; }
 function auQrCard(rec){
   var p=auQrPayload(rec); if(!p) return '';
+  if(!p.n){ var q0=''; if(p.ok){ try{ q0=auQrMake(rec).createSvgTag({cellSize:4,margin:4,scalable:true}); }catch(e){ q0=''; } } return '<section class="card" style="border:2px solid #6b3fa0"><h2 style="margin:0 0 6px">QR code – final inspection</h2><p class="muted">Printed on the last page of the PDF. Scan it in <b>Jake\'s New Build Final Inspection Form</b> (Scan QR) to start the final inspection with the S/N, VIN and serials filled in. No punch-list items, so nothing to audit.</p>'+(q0?'<div style="width:260px;max-width:100%;background:#fff;border:1px solid var(--line);padding:6px">'+q0+'</div>':'')+'</section>'; }
   var qs=''; if(p.ok){ try{ qs=auQrMake(rec).createSvgTag({cellSize:4,margin:4,scalable:true}); }catch(e){ qs=''; } }
   return '<section class="card" style="border:2px solid #6b3fa0"><h2 style="margin:0 0 6px">Auditor QR code – punch list</h2>'+(qs?'<p class="muted">Printed on the last page of the PDF. The auditor taps <b>Scan QR to audit</b> on the home screen of their tablet and a ready-to-audit review opens with these '+p.n+' item'+(p.n===1?'':'s')+'. '+esc(auQrNote(p))+' Tech photos are not in the code.</p><div style="width:260px;max-width:100%;background:#fff;border:1px solid var(--line);padding:6px">'+qs+'</div>':'<div class="banner">The punch list is too large to fit in a QR code ('+p.bytes+' bytes). The auditor can still open the saved report on this tablet.</div>')+'</section>';
 }
 function qrParse(t){ try{ var o=JSON.parse(t); if(o&&o.a==='ATP'&&o.k==='A'&&Array.isArray(o.f)) return o; }catch(e){} return null; }
 function auFromQr(o){
   var now=new Date().toISOString();
-  var rec={id:uid('insp-'),app:'emscl-atp',created:now,updated:now,tpl:clone(S.tpl),header:{newSerial:o.sn||'',oldSerial:'',inspector:o.ins||'',date:o.d||today(),cameraSerial:'',radarSerial:'',lcuSerial:'',vin:o.vin||'',plate:o.pl||'',kilo:o.kl||'',auditor:S.lastAuditor||''},items:{},notes:'',kpiReason:null,lastSec:null,reviewed:Date.now(),fromQr:'audit'};
+  var rec={id:uid('insp-'),app:'emscl-atp',created:now,updated:now,tpl:clone(S.tpl),header:{newSerial:o.sn||'',oldSerial:'',inspector:o.ins||'',date:o.d||today(),cameraSerial:o.cs||'',radarSerial:o.rs||'',lcuSerial:o.ls||'',vin:o.vin||'',plate:o.pl||'',kilo:o.kl||'',auditor:S.lastAuditor||''},items:{},notes:'',kpiReason:null,lastSec:null,reviewed:Date.now(),fromQr:'audit'};
   buildRows(rec.tpl).forEach(function(r){ if(!r.spare) rec.items[r.num]={s:1}; });
   if(o.ni) String(o.ni).split(',').forEach(function(x){ if(x) rec.items[+x]={s:0}; });
   o.f.forEach(function(a){ var num=+a[0], code=a[1]; var d={s:code==='F'?2:code==='W'?4:code==='B'?5:0,note:a[2]||'',why:a[3]||'',by:a[4]?String(a[4]).split(',').map(Number):[],pend:!!a[5]}; if(a[6]) d.text=a[6]; rec.items[num]=d; });
@@ -14528,7 +14530,7 @@ async function reviewGate(){
   if(m.length){ dlg('<h2 style="margin-top:0">Swapped devices</h2><p class="muted" style="white-space:pre-line">Finish these first:\n\n• '+esc(m.join('\n• '))+'</p><div class="sheet-btns"><button class="btn primary big" data-act="sw-goto">➜ Take me there</button><button class="btn light big" data-act="mclose">Close</button></div>','sheet'); return; }
   if(!(await proceedCheck())) return;
   if(!S.calAsked&&!(S.rec.cal&&S.rec.cal.st)){ S.calAsked=true; S.calGate=true; calAskDlg(); return; }
-  serConfirmDlg();
+  afterCalGate();
 }
 async function swAppAct(act,el){
   if(!S.rec||(act.indexOf('sw-')!==0&&act.indexOf('rv-')!==0&&act.indexOf('fyi')!==0&&act.indexOf('cu-')!==0)) return false;
@@ -14589,7 +14591,20 @@ function calLaterDlg(){ var rec=S.rec, svg=''; try{ var q=window.qrcode(0,'L'); 
   dlg('<h2 style="margin-top:0">Start the calibration later</h2><p class="muted">Take a picture of this code, or print it. In the <b>TFU &amp; Radar Calibration</b> form tap <b>Scan QR</b> and a calibration for '+esc(snNum(rec.header.newSerial)||'this truck')+' opens with the serial number filled in.</p><div style="background:#fff;border:1px solid #ccd;padding:6px;max-width:260px;margin:0 auto">'+svg+'</div><div class="sheet-btns"><button class="btn primary big" data-act="cal-cont">Continue</button></div>','sheet'); }
 function calAskDlg(){ dlg('<h2 style="margin-top:0">TFU &amp; Radar Calibration</h2><p class="muted">Do you want to complete the TFU &amp; Radar Calibration (Roll, Pitch, camera azimuth and radar tracking) for this truck?'+(atpCamSwapped(S.rec)?' <b>A camera/TFU was swapped, so it is needed.</b>':'')+'</p><div class="sheet-btns"><button class="btn primary big" data-act="cal-open">Yes – open it now</button><button class="btn light big" data-act="cal-later">Later – get a QR code</button><button class="btn light big" data-act="cal-done">Already completed</button><button class="btn light big" data-act="cal-cont">Skip for now</button></div>','sheet'); }
 
-function calNext(){ var mr=document.getElementById('modal-root'); if(mr) mr.innerHTML=''; if(S.calGate){ S.calGate=false; serConfirmDlg(); } else renderReview(); }
+function calNext(){ var mr=document.getElementById('modal-root'); if(mr) mr.innerHTML=''; if(S.calGate){ S.calGate=false; afterCalGate(); } else renderReview(); }
+/* ---- Jake's New Build Final Inspection link ---- */
+function afterCalGate(){ if(!S.finAsked&&!(S.rec.fin&&S.rec.fin.st)){ S.finAsked=true; S.finGate=true; finAskDlg(); return; } serConfirmDlg(); }
+function finAtpTxt(rec){ var c=rec.fin||{}; return c.st==='done'?'Completed'+(c.date?' '+fmtDate(c.date):''):c.st==='later'?'To be completed later':'Not recorded'; }
+function finAtpUrl(rec){ if(!/^https?:$/.test(location.protocol)) return ''; var h=rec.header||{}; return '../final/?sn='+encodeURIComponent(String(h.newSerial||'').trim())+'&vin='+encodeURIComponent(String(h.vin||'').trim())+'&cam='+encodeURIComponent(String(h.cameraSerial||'').trim())+'&radar='+encodeURIComponent(String(h.radarSerial||'').trim())+'&lcu='+encodeURIComponent(/^\s*PDX\s*$/i.test(h.lcuSerial||'')?'':String(h.lcuSerial||'').trim())+'&src='+encodeURIComponent('ATP '+fmtDate(h.date||'')+(h.inspector?', inspector '+String(h.inspector).trim():'')); }
+function finAtpCard(rec){ var c=rec.fin||{}, ok=c.st==='done';
+  return '<section class="card" id="finCard" style="border:2px solid '+(ok?'#1b8a3a':'#b02a4f')+'"><h2 style="margin:0 0 6px">Jake\'s New Build Final Inspection</h2>'+
+    (ok?'<p style="margin:0 0 8px"><b>✓ Completed'+(c.date?' on '+esc(fmtDate(c.date)):'')+'.</b></p><button class="btn light big" data-act="fin-undo">Undo</button>'
+      :'<p class="muted" style="margin:0 0 8px">The final inspection follows the ATP on a new build. Start it now, or later by scanning the QR code on the last page of this report.'+(c.st==='later'?' <b>Marked: do it later.</b>':'')+'</p><div class="actions"><button class="btn primary big" data-act="fin-open">Open final inspection form now</button><button class="btn light big" data-act="fin-later">Later – show QR code</button><button class="btn light big" data-act="fin-done">✓ Already completed</button></div>')+'</section>'; }
+function finLaterDlg(){ var rec=S.rec, svg=''; try{ svg=auQrMake(rec).createSvgTag({cellSize:5,margin:4,scalable:true}); }catch(e){}
+  rec.fin=Object.assign({st:'',date:''},rec.fin||{}); if(rec.fin.st!=='done') rec.fin.st='later'; markDirty();
+  dlg('<h2 style="margin-top:0">Start the final inspection later</h2><p class="muted">Take a picture of this code (it is also on the last page of the ATP report). In <b>Jake\'s New Build Final Inspection Form</b> tap <b>Scan QR</b> and a final inspection for '+esc(rec.header.newSerial||'this unit')+' opens with the S/N, VIN and serials filled in.</p><div style="background:#fff;border:1px solid #ccd;padding:6px;max-width:260px;margin:0 auto">'+svg+'</div><div class="sheet-btns"><button class="btn primary big" data-act="fin-cont">Continue</button></div>','sheet'); }
+function finAskDlg(){ dlg('<h2 style="margin-top:0">Jake\'s New Build Final Inspection</h2><p class="muted">Is this a new build that needs Jake\'s final inspection? Start it now, or start it later from the QR code on this report.</p><div class="sheet-btns"><button class="btn primary big" data-act="fin-open">Yes – open it now</button><button class="btn light big" data-act="fin-later">Later – show QR code</button><button class="btn light big" data-act="fin-done">Already completed</button><button class="btn light big" data-act="fin-cont">Not a new build / skip</button></div>','sheet'); }
+function finNext(){ var mr=document.getElementById('modal-root'); if(mr) mr.innerHTML=''; if(S.finGate){ S.finGate=false; serConfirmDlg(); } else renderReview(); }
 /* ===== ATP: audit resolve flow (verified -> retest blocked -> check unassociated) + FYI list ===== */
 function labOf(n){ return '#'+n; }
 function trunc(t,n){ t=String(t||'').replace(/\s+/g,' ').trim(); return t.length>n?t.slice(0,n-1)+'…':t; }
@@ -14935,6 +14950,11 @@ async function appAct(act,el){
     case 'cal-done': S.rec.cal={st:'done',date:calLocalDate()}; markDirty(); calNext(); return true;
     case 'cal-undo': S.rec.cal={st:'',date:''}; markDirty(); renderReview(); return true;
     case 'cal-cont': calNext(); return true;
+    case 'fin-open': S.rec.fin=Object.assign({st:'',date:''},S.rec.fin||{}); var fu=finAtpUrl(S.rec); if(fu){ window.open(fu,'_blank'); S.rec.fin.st=S.rec.fin.st||'later'; markDirty(); finNext(); } else { notice('Open \u201cJake\u2019s New Build Final Inspection Form\u201d from the forms page or your tablet, tap Scan QR, and scan the QR code on the last page of this report (or choose \u201cLater\u201d to see it).','Open the final inspection form'); } return true;
+    case 'fin-later': finLaterDlg(); return true;
+    case 'fin-done': S.rec.fin={st:'done',date:calLocalDate()}; markDirty(); finNext(); return true;
+    case 'fin-undo': S.rec.fin={st:'',date:''}; markDirty(); renderReview(); return true;
+    case 'fin-cont': finNext(); return true;
     case 'au-email': pdfOut('audit','share'); return true;
   }
   return false;
@@ -14943,7 +14963,7 @@ async function modalAct(act,el){
   if(await swModalAct(act,el)) return true;
   if(act.indexOf('wip-')===0){ await wipAct(act,el); return true; }
   if(await ddModalAct(act,el)) return true;
-  if(act.indexOf('cal-')===0){ return appAct(act,el); }
+  if(act.indexOf('cal-')===0||act.indexOf('fin-')===0){ return appAct(act,el); }
   switch(act){
     case 'noop': return true;
     case 'mclose': modalRoot.innerHTML=''; return true;
