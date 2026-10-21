@@ -3,12 +3,12 @@
 <head><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="ATP Inspection">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#1d3b6a">
+<meta name="theme-color" content="#0b5d57">
 <title>eMSC-L ATP Inspection</title>
 <style>
 :root{
   --ink:#16202c; --muted:#5a6676; --line:#cfd6df; --field:#e9edf2; --paper:#fff;
-  --navy:#1d3b6a; --navy-2:#2b5496;
+  --navy:#0b5d57; --navy-2:#13827a;
   --pass:#177a3c; --fail:#c8202a; --na:#5e6b7a; --awp:#b56a00;
   --barH:64px;
   box-sizing:border-box;
@@ -244,6 +244,11 @@ h2{font-size:21px}
 }
 .emailbig{order:-1;flex:1 1 100%!important;width:100%;min-height:64px;font-size:19px;font-weight:800;background:#1b8a3a!important;border:2px solid #14702d!important;color:#fff!important;border-radius:12px;box-shadow:0 3px 10px rgba(27,138,58,.4);padding:12px 16px}
 .emailbig small{display:block;font-size:12px;font-weight:600;opacity:.92;margin-top:2px}
+.ddrow{padding:8px 0;border-top:1px solid var(--line)}.ddrow:first-child{border-top:0}
+.ddmiss{border-left:4px solid #c8202a;padding-left:8px}.ddwarn{display:block;color:#c8202a;font-weight:700;margin-top:2px}
+.omit-slot .omitbtn{border-color:#6b3fa0;color:#6b3fa0}.omit-slot .omitbtn.primary{background:#6b3fa0;color:#fff}
+.row.omitted{border-left-color:#6b3fa0;background:#f5f0fb}
+.ddin{display:flex;gap:6px;align-items:center}
 
 /* ---------- Print ---------- */
 @media print{
@@ -13148,7 +13153,7 @@ var STAT = [
   {cls:'st-blk',  label:'Not tested (blocked)', g:'\u23f8'}
 ];
 var HF = [
-  ['newSerial','New Unit Serial Number'],['oldSerial','Old Unit Serial Number'],
+  ['newSerial','New Unit Serial Number'],['oldSerial','Replaces old serial'],
   ['inspector','Inspector Name'],['date','Date of Inspection','date'],
   ['cameraSerial','Camera Serial Number'],['radarSerial','Radar Serial Number'],
   ['lcuSerial','LCU Serial Number'],['vin','Truck VIN'],
@@ -13230,6 +13235,7 @@ function analyze(rec){
   rows.forEach(function(r){
     var d=itemOf(rec, r.num); if(!counts(r,d)) return;
     c.total++; var s=d.s||0;
+    if(d.omit){ c.omit=(c.omit||0)+1; if(!(d.onote||'').trim()) issues.push({r:r, d:d, kind:'OMIT NOTE'}); return; }
     if(s===1) c.pass++;
     else if(s===3) c.na++;
     else if(s===2){ c.fail++; issues.push({r:r, d:d, kind:'FAIL'}); }
@@ -13340,7 +13346,7 @@ async function startInspection(){
   var dup=all.find(function(r){ return ((r.header||{}).newSerial||'').toLowerCase()===h.newSerial.toLowerCase(); });
   if(dup && confirm('An inspection for S/N '+h.newSerial+' is already on this tablet.\n\nOK: open that inspection\nCancel: start a separate new one')) return openInspection(dup.id);
   var now=new Date().toISOString();
-  var rec={id:uid('insp-'), app:'emscl-atp', created:now, updated:now, tpl:clone(S.tpl), header:h, items:{}, notes:'', kpiReason:null, lastSec:null};
+  var rec={id:uid('insp-'), app:'emscl-atp', created:now, updated:now, tpl:clone(S.tpl), header:h, items:{}, notes:'', kpiReason:null, lastSec:null, dd:{conf:true,na:{},rev:{},rvna:{},loc:'Tucson'}};
   await DB.put('inspections', rec);
   try{ if(h.inspector){ var on=await DB.get('settings','inspectorNames'); var ol=(on&&on.v)||[]; ol=[h.inspector].concat(ol.filter(function(x){ return x.toLowerCase()!==h.inspector.toLowerCase(); })).slice(0,5); await DB.put('settings',{k:'inspectorNames', v:ol}); } }catch(e){}
   toast('Saved as S/N '+h.newSerial);
@@ -13351,7 +13357,7 @@ async function startInspection(){
 async function openInspection(id){
   var rec=await DB.get('inspections', id); if(!rec){ toast('That inspection could not be found.'); return renderHome(); }
   S.rec=rec; S.photos=await DB.photosFor(id); S.rev=0; S.savedRev=0; S.saveError=false; S.lastSaved=rec.updated; S.activeSec=null;
-  renderInspection();
+  ddOpenCheck(); renderInspection();
   if(rec.lastSec!=null){ var el=document.getElementById('sec-'+rec.lastSec); if(el) el.scrollIntoView({block:'start'}); }
   else window.scrollTo(0,0);
 }
@@ -13365,7 +13371,7 @@ function rowHTML(r){
     (!r.spare && /serial (number|plate)/i.test(r.text) ? '<p class="hint">New unit S/N: <b class="sn">'+esc(S.rec.header.newSerial||'(not entered)')+'</b></p>' : '')+
     (r.timed ? '<label class="timed"><span>'+esc(r.timed)+':</span><input data-f="time" value="'+esc(d.time||'')+'" placeholder="e.g. 1:45" autocomplete="off"></label>' : '')+
     '<textarea class="note" data-f="note" rows="2" placeholder="'+(s===4?'Parts awaited / what is missing':'Describe the failure')+'">'+esc(d.note||'')+'</textarea>'+
-    '<div class="blk-slot">'+blkHTML(r,d)+'</div><div class="thumbs">'+ph.map(thumbHTML).join('')+'</div></div>'+
+    '<div class="blk-slot">'+blkHTML(r,d)+'</div>'+ddOmitHTML(r,d)+'<div class="thumbs">'+ph.map(thumbHTML).join('')+'</div></div>'+
     '<button class="cam'+(off?' off':'')+'" data-act="cam" aria-label="Add photo to item '+r.num+'"'+(off?' disabled':'')+'>'+CAM+'<span class="cam-n">'+(ph.length||'')+'</span></button>'+
     '<input type="file" accept="image/*" capture="environment" data-f="photo" class="in-cam" hidden'+(off?' disabled':'')+'>'+
     '<input type="file" accept="image/*" multiple data-f="photo" class="in-lib" hidden'+(off?' disabled':'')+'>'+
@@ -13394,9 +13400,7 @@ function renderInspection(){
       tpl.sections.map(function(s,si){ return '<option value="'+si+'">'+esc(s.title)+'</option>'; }).join('')+'<option value="notes">General notes</option></select>'+
     '<button class="btn light" data-act="wip-pause" title="Pause and move this inspection to another tablet">\u23f8 Pause</button><button class="save-ind" id="saveInd" data-act="save"></button><button class="btn primary" data-act="review">Review &amp; PDF</button></div></header>'+
     storageBanner()+
-    '<main><details class="card" id="sec-unit"'+(rec.lastSec==null?' open':'')+'><summary>Unit information</summary><div class="grid" style="margin-top:12px">'+
-      HF.map(function(f){ return '<label class="fld">'+esc(f[1])+'<input data-h="'+f[0]+'" type="'+(f[2]||'text')+'" value="'+esc(h[f[0]]||'')+'" autocomplete="off"></label>'; }).join('')+
-    '</div><div id="swapUnit">'+swEntriesHTML()+'</div><div id="custInfo">'+custHTML()+'</div><p class="tools"><b>Required tools:</b> '+esc((tpl.requiredTools||[]).join(', '))+'</p></details>'+
+    '<main><details class="card" id="sec-unit"'+(rec.lastSec==null?' open':'')+'><summary>Unit information</summary><div id="ddBox" style="margin-top:12px">'+ddHTML()+'</div><div id="swapUnit">'+swEntriesHTML()+'</div><div id="custInfo">'+custHTML()+'</div><p class="tools"><b>Required tools:</b> '+esc((tpl.requiredTools||[]).join(', '))+'</p></details>'+
     '<div class="legend"><span>Tap the box to cycle:</span><span><b class="lg-blank"></b>Blank</span><span><b class="lg-pass">1</b>Pass</span><span><b class="lg-fail">2</b>Fail</span><span><b class="lg-na">3</b>N/A</span><span><b class="lg-awp">4</b>AWP</span><span>5th tap clears it.</span><span>On a failed item, use \u201cCan\u2019t test yet\u201d if another issue blocks it.</span></div>'+
     secs+
     '<section class="card" id="sec-notes"><h2 style="margin:0">General notes</h2><label class="full">Anything else for the Notes / Comments / Findings page<textarea data-g="notes">'+esc(rec.notes||'')+'</textarea></label></section>'+
@@ -13490,7 +13494,7 @@ async function renderReview(){
       var inl=revInline(it); if(inl) return inl;
       return '<li><button data-act="goto" data-num="'+it.r.num+'"><span class="pn">'+it.r.num+'</span><span class="pd"><b>'+esc(desc)+'</b><small>'+esc(lineText(it.r,it.d))+(n?' ('+n+' photo'+(n>1?'s':'')+')':'')+'</small></span><span class="tag tag-'+it.kind.split(' ')[0]+'">'+it.kind+'</span></button></li>';
     }).join('')+'</ol>' : '<p class="card">Nothing to rework. The punch list page will print as \u201cNo nonconformances found.\u201d</p>')+
-    fyiHTML(rec)+swRmaHTML(rec)+auQrCard(rec)+auEntryCard(rec)+'<h2>Report PDFs</h2><div class="actions"><button class="btn emailbig" data-act="pdf-share-full">\u2709 Email full report (PDF attached)<small>Recommended \u2013 opens your email app with the PDF attached</small></button><button class="btn light big" data-act="pdf-save-full">\u2b07 Save full report</button></div><div class="actions"><button class="btn primary big" data-act="pdf-share-punch" style="background:var(--navy-2)">\u2709 Email punch list (PDF attached)</button><button class="btn light big" data-act="pdf-save-punch">\u2b07 Save punch list</button><button class="btn light big" data-act="backup-cur">Backup file</button><button class="btn light big" data-act="wip-copy">\ud83d\udccb Copy '+WIP_MAIL+'</button></div>'+
+    fyiHTML(rec)+swRmaHTML(rec)+ddReviewCard(rec)+calAtpCard(rec)+auQrCard(rec)+auEntryCard(rec)+'<h2>Report PDFs</h2><div class="actions"><button class="btn emailbig" data-act="pdf-share-full">\u2709 Email full report (PDF attached)<small>Recommended \u2013 opens your email app with the PDF attached</small></button><button class="btn light big" data-act="pdf-save-full">\u2b07 Save full report</button></div><div class="actions"><button class="btn primary big" data-act="pdf-share-punch" style="background:var(--navy-2)">\u2709 Email punch list (PDF attached)</button><button class="btn light big" data-act="pdf-save-punch">\u2b07 Save punch list</button><button class="btn light big" data-act="backup-cur">Backup file</button><button class="btn light big" data-act="wip-copy">\ud83d\udccb Copy '+WIP_MAIL+'</button></div>'+
     '<p class="tip">PDFs are named eMSC-L_'+esc(safeName(snNum(h.newSerial)))+'_ATP / _PunchList. Tap an item above to jump back to it.</p></main>';
   setSaveInd(); measureBar(); window.scrollTo(0,0);
 }
@@ -13679,6 +13683,7 @@ function kindLabel(it){ return it.kind; }
 function issueText(rec,it){
   var d=it.d;
   if(it.kind==='NOT TESTED') return blkTxt(rec,d);
+  if(it.kind==='OMIT NOTE') return 'Omitted - a note explaining why is required';
   return (d.note||'').trim() || (it.kind==='NOT INSPECTED'?'Not inspected':'No failure description entered');
 }
 function sName(r){ return r.sec; }
@@ -13696,14 +13701,17 @@ function atpPdf(mode){
   d.setFont('helvetica','normal'); d.setFontSize(10); d.setTextColor(90); d.text(cl(t.subtitle||''),MX+lw+20,60);
   hx(d,'setFillColor','#5b8dd6'); d.rect(MX,24+lh+8,CW,7,'F'); y=24+lh+24;
   var cell=function(x,yy,w,hh,lab,val){ d.setDrawColor(170); d.setLineWidth(.6); d.rect(x,yy,w,hh); d.setFont('helvetica','normal'); d.setFontSize(6.8); d.setTextColor(110); d.text(cl(lab),x+4,yy+8); d.setFontSize(9.5); d.setTextColor(0); d.text(wrap(d,val,w-8),x+4,yy+19); };
-  for(var i=0;i<HF.length;i+=2){
-    var f1=HF[i], f2=HF[i+1];
-    var hv=function(f){ var sw=swFor(rec,f[0]), base=f[0]==='newSerial'?snD(h):(f[2]==='date'?fmtDate(h[f[0]]):h[f[0]]); return (sw&&(sw.nw||'').trim())?(sw.nw+' (Old: '+(sw.old||base)+')'):base; }; var v1=hv(f1), v2=f2?hv(f2):'';
+  var HFP=HF.filter(function(f){ return ['newSerial','oldSerial','inspector','date','auditor'].indexOf(f[0])>=0; });
+  for(var i=0;i<HFP.length;i+=2){
+    var f1=HFP[i], f2=HFP[i+1];
+    var hv=function(f){ var sw=swFor(rec,f[0]), base=f[0]==='newSerial'?snD(h):f[0]==='oldSerial'?(DD(rec).oldNa?'N/A':h.oldSerial):(f[2]==='date'?fmtDate(h[f[0]]):h[f[0]]); return (sw&&(sw.nw||'').trim())?(sw.nw+' (Old: '+(sw.old||base)+')'):base; }; var v1=hv(f1), v2=f2?hv(f2):'';
     d.setFontSize(9.5); var n1=wrap(d,v1||'',262).length, n2=wrap(d,v2||'',262).length, hh=Math.max(26,14+Math.max(n1,n2)*11);
     ens(hh); cell(MX,y,CW/2,hh,f1[1],v1||''); cell(MX+CW/2,y,CW/2,hh,f2?f2[1]:'',v2||''); y+=hh;
   }
   y+=6;
+  y=ddReportPdf(d,rec,y,ens,cell);
   y=swPdf(d,rec,y);
+  if(rec.cal&&rec.cal.st||atpCamSwapped(rec)){ ens(26); cell(MX,y,CW,26,'TFU & Radar Calibration',calAtpTxt(rec)); y+=26; }
   if(full){
     d.setFont('helvetica','bold'); d.setFontSize(9); d.setTextColor(0); d.text('Required tools:',MX,y+8);
     d.setFont('helvetica','normal'); d.text(wrap(d,(t.requiredTools||[]).join(', '),CW-80),MX+66,y+8); y+=14;
@@ -13720,10 +13728,11 @@ function atpPdf(mode){
         if(r.timed) extra.push(r.timed+': '+(dd.time||'________'));
         if((s2===2||s2===4)&&(dd.note||'').trim()) extra.push((s2===4?'AWP: ':'Finding: ')+dd.note.trim());
         if(s2===5) extra.push(blkTxt(rec,dd)+((dd.note||'').trim()?' Note: '+dd.note.trim():''));
+        if(dd.omit) extra.push('OMITTED: '+((dd.onote||'').trim()||'(no note)'));
         if(photoCount[r.num]) extra.push('['+photoCount[r.num]+' photo'+(photoCount[r.num]>1?'s':'')+' - see photo pages]');
         d.setFontSize(8); var el=[]; extra.forEach(function(x){ el=el.concat(wrap(d,x,CW-38-100)); });
         var hh=Math.max((s2===0||s2===5)?23:17,6+tl.length*10.5+el.length*9.5); ens(hh);
-        var bad=(s2===0||s2===2||s2===4||s2===5);
+        var bad=!dd.omit&&(s2===0||s2===2||s2===4||s2===5);
         if(s2===5){ hx(d,'setFillColor','#fff8e0'); d.rect(MX,y,CW,hh,'F'); } else if(bad){ hx(d,'setFillColor','#fff1f1'); d.rect(MX,y,CW,hh,'F'); }
         d.setDrawColor(220); d.setLineWidth(.4); d.line(MX,y+hh,MX+CW,y+hh);
         d.setFont('helvetica','bold'); d.setFontSize(8.8); d.setTextColor(60); d.text(String(r.num),MX+30,y+11,{align:'right'});
@@ -13731,7 +13740,8 @@ function atpPdf(mode){
         if(el.length){ d.setFont('helvetica','italic'); d.setFontSize(8); d.setTextColor(90); d.text(el,MX+38,y+11+tl.length*10.5-1); }
         d.setFont('helvetica','bold'); d.setFontSize(9);
         var rx=MX+CW-48;
-        if(s2===1){ hx(d,'setTextColor','#177a3c'); d.text('PASS',rx,y+11,{align:'center'}); }
+        if(dd.omit){ hx(d,'setTextColor','#6b3fa0'); d.text('OMIT',rx,y+11,{align:'center'}); }
+        else if(s2===1){ hx(d,'setTextColor','#177a3c'); d.text('PASS',rx,y+11,{align:'center'}); }
         else if(s2===2){ hx(d,'setTextColor','#c8202a'); d.text('FAIL',rx,y+11,{align:'center'}); }
         else if(s2===3){ d.setTextColor(110); d.text('N/A',rx,y+11,{align:'center'}); }
         else if(s2===4){ hx(d,'setTextColor','#b56a00'); d.text('AWP',rx,y+11,{align:'center'}); }
@@ -13783,7 +13793,7 @@ function atpPdf(mode){
   row(34,function(){ d.setFont('helvetica','bold'); d.text('Inspector Signature:',MX+6,y+20); d.line(MX+150,y+24,MX+380,y+24); d.text('Date:',MX+400,y+20); d.setFont('helvetica','normal'); d.text(cl(fmtDate(h.date)),MX+432,y+20); });
   // photos
   var issueNums={}; a.issues.forEach(function(it){ issueNums[it.r.num]=it; });
-  var photos=S.photos.filter(function(p){ return (typeof p.num==='number' && (full||issueNums[p.num])) || (typeof p.num==='string' && p.num.indexOf('sw')===0); }).sort(function(x,z){ var xs=typeof x.num==='string', zs=typeof z.num==='string'; if(xs!==zs) return xs?1:-1; return (xs?0:x.num-z.num) || (x.created||'').localeCompare(z.created||''); });
+  var photos=S.photos.filter(function(p){ return (typeof p.num==='number' && (full||issueNums[p.num])) || (typeof p.num==='string' && (p.num.indexOf('sw')===0||p.num.indexOf('dd:')===0)); }).sort(function(x,z){ var xs=typeof x.num==='string', zs=typeof z.num==='string'; if(xs!==zs) return xs?1:-1; return (xs?0:x.num-z.num) || (x.created||'').localeCompare(z.created||''); });
   if(photos.length){
     d.addPage(); y=TOP; d.setFont('helvetica','bold'); d.setFontSize(15); d.setTextColor(0); d.text('Photos',MX,y+12); y+=26;
     var GAP=8, CWc=(CW-2*GAP)/3, IH=118;
@@ -13794,7 +13804,7 @@ function atpPdf(mode){
         try{ var pr=d.getImageProperties(p.data), kk=Math.min((CWc-4)/pr.width,(IH-4)/pr.height), w=pr.width*kk, hh2=pr.height*kk; d.addImage(p.data,'JPEG',x0+(CWc-w)/2,y+(IH-hh2)/2,w,hh2); }catch(e){}
         var r=a.rows.find(function(q){ return q.num===p.num; }), dd=itemOf(rec,p.num), s2=dd.s||0;
         var status=r&&counts(r,dd)?(s2===0?'Not inspected':s2===5?'Not tested':STAT[s2].label.replace(' (awaiting parts)','')):'';
-        var ty=y+IH+10; d.setFont('helvetica','bold'); d.setFontSize(7.5); d.setTextColor(0); wrap(d,(typeof p.num==='string'?swCap(rec,p):'Item '+p.num+(status?' - '+status:'')),CWc).slice(0,1).forEach(function(l){ d.text(l,x0,ty); ty+=9; });
+        var ty=y+IH+10; d.setFont('helvetica','bold'); d.setFontSize(7.5); d.setTextColor(0); wrap(d,(typeof p.num==='string'?(p.num.indexOf('dd:')===0?ddCap(rec,p):swCap(rec,p)):'Item '+p.num+(status?' - '+status:'')),CWc).slice(0,1).forEach(function(l){ d.text(l,x0,ty); ty+=9; });
         d.setFont('helvetica','normal'); d.setTextColor(70); wrap(d,r?lineText(r,dd):'',CWc).slice(0,3).forEach(function(l){ d.text(l,x0,ty); ty+=9; });
       });
       y+=rh;
@@ -13841,9 +13851,9 @@ function notice(msg,title){ dlg('<h2 style="margin-top:0">'+esc(title||'Heads up
 function ask(msg,o){ o=o||{}; return new Promise(function(res){ dlg('<h2 style="margin-top:0">'+esc(o.title||'Please confirm')+'</h2><p class="muted" style="white-space:pre-line">'+esc(msg)+'</p><div class="actions"><button class="btn" data-act="askno">'+esc(o.no||'Cancel')+'</button><button class="btn '+(o.danger?'danger':'primary')+'" data-act="askyes">'+esc(o.ok||'Yes')+'</button></div>','sheet'); S.askRes=res; }); }
 function serConfirmDlg(){
   var h=S.rec.header;
-  var rows=HF.filter(function(f){ return f[2]!=='date' && f[0]!=='inspector' && f[0]!=='auditor'; }).map(function(f){
-    var v=f[0]==='newSerial'?snD(h):h[f[0]]; var swe=swFor(S.rec,f[0]); if(swe&&(swe.nw||'').trim()) v=swe.nw+' (swapped - old: '+(swe.old||v)+')';
-    return '<tr><td style="padding:4px 8px 4px 0;font-weight:600;vertical-align:top">'+esc(f[1])+'</td><td style="padding:4px 0;font-family:ui-monospace,Menlo,Consolas,monospace;word-break:break-all">'+((v||'').trim()?esc(v):'<span class="muted">—</span>')+'</td></tr>';
+  var CL=[['newSerial',DD_LBL.newSerial],['oldSerial','Replaces old serial']].concat(DD_DEVS).concat([['vin','Vehicle VIN'],['kilo','Kilo #'],['plate','License plate # (DHS)']]);
+  var rows=CL.map(function(f){ var k=f[0], v=k==='newSerial'?snD(h):h[k]; var swe=swFor(S.rec,k); if(swe&&(swe.nw||'').trim()) v=swe.nw+' (swapped - old: '+(swe.old||v)+')'; if(DD().na[k]||(k==='oldSerial'&&DD().oldNa)) v='N/A';
+    return '<tr><td style="padding:4px 8px 4px 0;font-weight:600;vertical-align:top">'+esc(f[1])+'</td><td style="padding:4px 0;font-family:ui-monospace,Menlo,Consolas,monospace;word-break:break-all">'+((v||'').trim()?esc(v):'<span class="muted" style="color:#c8202a">missing</span>')+'</td></tr>';
   }).join('');
   dlg('<div style="width:62px;height:62px;border-radius:50%;background:#fff3cd;border:3px solid #e0a800;color:#8a6100;font:800 40px/56px sans-serif;text-align:center;margin:0 auto 8px">!</div><h2 style="text-align:center;margin-top:0">Confirm the serial numbers</h2><p class="muted">These go on the report and in the QR code. Check each one against its plate before you finish the report.</p><div style="max-height:38vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin-bottom:12px"><table style="width:100%;border-collapse:collapse;font-size:15px">'+rows+'</table></div><div class="sheet-btns"><button class="btn primary big" data-act="serok">✓ Yes, the serial numbers are accurate</button><button class="btn big" data-act="serfix">← No, take me back to check them</button></div>','sheet');
 }
@@ -13900,7 +13910,7 @@ function showPhoto(pid,keep){
   var rot=S.viewRot||0;
   var go=function(src){
     var B=function(i,dg,l){ return '<button type="button" id="'+i+'" class="btn light" style="flex:1;padding:4px 2px;min-height:42px;font-size:14px" title="Rotate '+Math.abs(dg)+'°">'+l+'</button>'; };
-    var title=typeof p.num==='number'?'Item '+p.num+' photo':(String(p.num)==='rmaf'?'RMA folder photo':String(p.num).indexOf('sw')===0?'Serial number photo':'Audit photo');
+    var title=typeof p.num==='number'?'Item '+p.num+' photo':(String(p.num)==='rmaf'?'RMA folder photo':String(p.num).indexOf('sw')===0||String(p.num).indexOf('dd:s')===0?'Serial number photo':String(p.num).indexOf('dd:r')===0?'Revision photo':'Audit photo');
     var canDel=true;
     modalRoot.innerHTML='<div class="scrim" data-act="noop"><div class="dialog vw" data-act="noop" style="width:min(96vw,1000px);height:96vh;height:96dvh;max-height:96dvh;padding:10px;display:flex;flex-direction:column;overflow:hidden">'+
       '<h2 style="margin:0 0 4px;font-size:17px">'+esc(t?t.what.charAt(0).toUpperCase()+t.what.slice(1):title)+'</h2>'+
@@ -14348,9 +14358,9 @@ const WA={app:'ATP',c:k=>k==='pri'?'btn primary big':'btn light big',
  rec:()=>S.rec,ts:r=>Date.parse(r.updated)||0,setTs:(r,t)=>{r.updated=new Date(t).toISOString()},
  sn:r=>String((r.header||{}).newSerial||'').trim(),th:r=>tplHash(r.tpl||S.tpl),
  progress:r=>{const c=analyze(r).c;return {done:c.done,total:c.total}},
- local(r){const o={};S.photos.forEach(p=>{if(typeof p.num==='number'||/^sw[nm]:/.test(String(p.num))||p.num==='rmaf')o[p.num]=(o[p.num]||0)+1});return o},
- localAsync:async ex=>{const o={};if(!ex)return o;(await DB.photosFor(ex.id)).forEach(p=>{if(typeof p.num==='number'||/^sw[nm]:/.test(String(p.num))||p.num==='rmaf')o[p.num]=(o[p.num]||0)+1});return o},
- label(r,oid){if(oid==='rmaf')return 'RMA folder photo';if(/^sw[nm]:/.test(String(oid)))return swCap(r,{num:oid});const x=buildRows(r.tpl||S.tpl).find(y=>y.num===+oid),d=(r.items||{})[oid]||{};return '#'+oid+' '+(x?(x.spare?(d.text||'Spare line'):x.text):'')},
+ local(r){const o={};S.photos.forEach(p=>{if(typeof p.num==='number'||/^(sw[nm]|dd:[sr]):/.test(String(p.num))||p.num==='rmaf')o[p.num]=(o[p.num]||0)+1});return o},
+ localAsync:async ex=>{const o={};if(!ex)return o;(await DB.photosFor(ex.id)).forEach(p=>{if(typeof p.num==='number'||/^(sw[nm]|dd:[sr]):/.test(String(p.num))||p.num==='rmaf')o[p.num]=(o[p.num]||0)+1});return o},
+ label(r,oid){if(oid==='rmaf')return 'RMA folder photo';if(/^dd:/.test(String(oid)))return ddCap(r,{num:oid});if(/^sw[nm]:/.test(String(oid)))return swCap(r,{num:oid});const x=buildRows(r.tpl||S.tpl).find(y=>y.num===+oid),d=(r.items||{})[oid]||{};return '#'+oid+' '+(x?(x.spare?(d.text||'Spare line'):x.text):'')},
  tpl:ex=>clone(ex?ex.tpl:S.tpl),finish:r=>r,mergePhotos(){},
  get:id=>DB.get('inspections',id),put:r=>DB.put('inspections',r),
  open:async r=>{S.audit=false;S.rec=r;S.photos=await DB.photosFor(r.id);S.rev=0;S.savedRev=0;S.saveError=false;S.lastSaved=r.updated;S.activeSec=null;renderInspection();window.scrollTo(0,0);},
@@ -14416,7 +14426,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'10/20/2026'};
+const CREDIT={by:'Ravi Ramsundar',built:'10/21/2026'};
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14429,7 +14439,7 @@ function ensureCredit(){
 ensureCredit();new MutationObserver(ensureCredit).observe(document.body,{childList:true});setInterval(ensureCredit,2500);
 
 /* ===== swap chain / serial-edit prompt / last check / failed-unit RMA / review inline controls (ATP) ===== */
-var SWD=[['newSerial','New unit'],['cameraSerial','Camera'],['radarSerial','Radar'],['lcuSerial','LCU']];
+var SWD=[['newSerial','New unit'],['cameraSerial','Camera'],['radarSerial','Radar'],['lcuSerial','LCU'],['radarPtSerial','Radar Pan Tilt'],['starlinkSerial','Starlink'],['ciscoEnclSerial','Network Encl. Cisco'],['ciscoModSerial','Network Encl. Cisco Module'],['serverSerial','Network Encl. Server'],['ciscoRtrSerial','Network Encl. Cisco Router'],['smuSerial','System Management Unit'],['gpsSerial','Trimble GPS']];
 function SW(rec){ rec=rec||S.rec; if(!rec.swap) rec.swap={a:'',chk:'',list:[]}; rec.swap.list.forEach(function(e){ e.mid=e.mid||[]; }); return rec.swap; }
 function swFor(rec,k){ var w=SW(rec); for(var i=0;i<w.list.length;i++){ if(w.list[i].dev===k) return w.list[i]; } return null; }
 function rmaOk(v){ v=String(v||'').trim(); return (v&&v.toUpperCase()!=='TBD')?v:''; }
@@ -14437,7 +14447,7 @@ function swName(k){ for(var i=0;i<SWD.length;i++){ if(SWD[i][0]===k) return SWD[
 function swPhotos(key){ return S.photos.filter(function(p){ return p.num===key; }); }
 function swThumbs(key){ var l=swPhotos(key); return l.length?'<div class="thumbs">'+l.map(thumbHTML).join('')+'</div>':''; }
 function choose(title,msg,btns){ return new Promise(function(res){ dlg('<h2 style="margin-top:0">'+esc(title)+'</h2><p class="muted" style="white-space:pre-line">'+esc(msg)+'</p><div class="sheet-btns">'+btns.map(function(b){ return '<button class="btn '+(b.c||'light')+' big" data-act="chpick" data-v="'+b.v+'">'+esc(b.t)+'</button>'; }).join('')+'</div>','sheet'); S.chRes=res; }); }
-function swRefresh(){ if(typeof custRefresh==='function') custRefresh(); var u=document.getElementById('swapUnit'); if(u) u.innerHTML=swEntriesHTML(); var e=document.getElementById('swapEnd'); if(e) e.innerHTML=swapEndHTML(); if(S.view==='review'&&!S.audit) reReview(); }
+function swRefresh(){ if(typeof custRefresh==='function') custRefresh(); if(typeof ddRefresh==='function') ddRefresh(); var u=document.getElementById('swapUnit'); if(u) u.innerHTML=swEntriesHTML(); var e=document.getElementById('swapEnd'); if(e) e.innerHTML=swapEndHTML(); if(S.view==='review'&&!S.audit) reReview(); }
 async function reReview(){ var y=window.scrollY; await renderReview(); window.scrollTo(0,y); }
 function swEntryHTML(e,i){
   var key='swn:'+e.id, n=swPhotos(key).length;
@@ -14472,7 +14482,7 @@ function swRmaHTML(rec){ var FU=failedUnits(rec); if(!FU.length) return '';
      '<button class="btn'+(tbd?' primary':' light')+'" data-act="sw-tbd2" data-i="'+u.i+'" data-j="'+u.j+'" style="margin-top:6px">'+(tbd?'✓ ':'')+'RMA TBD</button><p class="muted" style="font-size:13px;margin:4px 0 0">RMA TBD is a reminder for you only. The RMA only appears on the report once a number is entered.</p></div>'; }).join(''); }
 function swSet(el){ var p=el.dataset.sw.split('.'), w=SW(); if(p[0]==='m'){ var e=w.list[+p[1]]; if(e&&e.mid[+p[2]]) e.mid[+p[2]].rma=el.value; } else { var e2=w.list[+p[0]]; if(e2) e2[p[1]]=el.value; } markDirty(); }
 /* ---- serial edit prompt ---- */
-var SER_KEYS={newSerial:1,cameraSerial:1,radarSerial:1,lcuSerial:1};
+var SER_KEYS={newSerial:1,cameraSerial:1,radarSerial:1,lcuSerial:1,radarPtSerial:1,starlinkSerial:1,ciscoEnclSerial:1,ciscoModSerial:1,serverSerial:1,ciscoRtrSerial:1,smuSerial:1,gpsSerial:1};
 document.addEventListener('focusin',function(e){ var t=e.target, k=t.dataset&&t.dataset.h, p=t.dataset&&t.dataset.sw; if(!S.rec) return; if(k&&SER_KEYS[k]) S.serOrig={p:'h:'+k,v:String(S.rec.header[k]||'')}; else if(p&&/^\d+\.nw$/.test(p)){ var e2=SW().list[+p.split('.')[0]]; S.serOrig={p:'sw:'+p,v:String((e2&&e2.nw)||'')}; } });
 document.addEventListener('change',function(e){ swSerEdit(e.target); });
 async function swSerEdit(t){
@@ -14516,6 +14526,7 @@ async function reviewGate(){
   S.serBypass=false; var m=swGate(S.rec);
   if(m.length){ dlg('<h2 style="margin-top:0">Swapped devices</h2><p class="muted" style="white-space:pre-line">Finish these first:\n\n• '+esc(m.join('\n• '))+'</p><div class="sheet-btns"><button class="btn primary big" data-act="sw-goto">➜ Take me there</button><button class="btn light big" data-act="mclose">Close</button></div>','sheet'); return; }
   if(!(await proceedCheck())) return;
+  if(!S.calAsked&&!(S.rec.cal&&S.rec.cal.st)){ S.calAsked=true; S.calGate=true; calAskDlg(); return; }
   serConfirmDlg();
 }
 async function swAppAct(act,el){
@@ -14561,6 +14572,23 @@ function swPdf(d,rec,y){
   return y;
 }
 function swCap(rec,p){ var k=String(p.num), id=k.slice(4); if(k.indexOf('swm:')===0){ var m=null,ee=null; SW(rec).list.forEach(function(e){ e.mid.forEach(function(z){ if(z.id===id){ m=z; ee=e; } }); }); return 'FAILED unit (RMA required) - '+(ee?ee.t:'')+' '+(m?m.s:''); } var e2=SW(rec).list.filter(function(e){ return e.id===id; })[0]; return 'New serial photo - '+(e2?e2.t+' '+(e2.nw||''):'swapped device'); }
+
+/* ---- TFU & Radar calibration link ---- */
+function atpCamSwapped(rec){ return SW(rec).list.some(function(e){ return /camera|tfu/i.test(e.t||''); }); }
+function calLocalDate(){ var d=new Date(),p=function(n){return String(n).padStart(2,'0')}; return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+function calAtpTxt(rec){ var c=rec.cal||{}; return c.st==='done'?'Completed'+(c.date?' '+fmtDate(c.date):''):c.st==='later'?'To be completed later':(atpCamSwapped(rec)?'NOT COMPLETED - camera/TFU swapped':'Not recorded'); }
+function calAtpUrl(rec){ return /^https?:$/.test(location.protocol)?'../cal/?sn='+encodeURIComponent(snNum(rec.header.newSerial)||'')+'&tech='+encodeURIComponent(String(rec.header.inspector||'').trim()):''; }
+function calAtpCard(rec){ var c=rec.cal||{}, sw=atpCamSwapped(rec), ok=c.st==='done';
+  return '<section class="card" id="calCard" style="border:2px solid '+(ok?'#1b8a3a':sw?'#b58900':'#1d3b6a')+'"><h2 style="margin:0 0 6px">TFU &amp; Radar Calibration</h2>'+
+    (sw&&!ok?'<p style="margin:0 0 8px"><b>A camera/TFU was swapped</b> on this truck, so the calibration is needed. It can be done now or later.</p>':'')+
+    (ok?'<p style="margin:0 0 8px"><b>✓ Completed'+(c.date?' on '+esc(fmtDate(c.date)):'')+'.</b></p><button class="btn light big" data-act="cal-undo">Undo</button>'
+      :'<p class="muted" style="margin:0 0 8px">Do you want to complete the TFU &amp; Radar Calibration (Roll, Pitch, camera azimuth and radar tracking) for this truck? It is usually done after the ATP.'+(c.st==='later'?' <b>Marked: do it later.</b>':'')+'</p><div class="actions"><button class="btn primary big" data-act="cal-open">Open calibration form now</button><button class="btn light big" data-act="cal-later">Later – get a QR code</button><button class="btn light big" data-act="cal-done">✓ Already completed</button></div>')+'</section>'; }
+function calLaterDlg(){ var rec=S.rec, svg=''; try{ var q=window.qrcode(0,'L'); q.addData(JSON.stringify({a:'CAL',v:1,k:'S',sn:snNum(rec.header.newSerial)||'',t:String(rec.header.inspector||'').trim()})); q.make(); svg=q.createSvgTag({cellSize:5,margin:4,scalable:true}); }catch(e){}
+  rec.cal=Object.assign({st:'',date:''},rec.cal||{}); if(rec.cal.st!=='done') rec.cal.st='later'; markDirty();
+  dlg('<h2 style="margin-top:0">Start the calibration later</h2><p class="muted">Take a picture of this code, or print it. In the <b>TFU &amp; Radar Calibration</b> form tap <b>Scan QR</b> and a calibration for '+esc(snNum(rec.header.newSerial)||'this truck')+' opens with the serial number filled in.</p><div style="background:#fff;border:1px solid #ccd;padding:6px;max-width:260px;margin:0 auto">'+svg+'</div><div class="sheet-btns"><button class="btn primary big" data-act="cal-cont">Continue</button></div>','sheet'); }
+function calAskDlg(){ dlg('<h2 style="margin-top:0">TFU &amp; Radar Calibration</h2><p class="muted">Do you want to complete the TFU &amp; Radar Calibration (Roll, Pitch, camera azimuth and radar tracking) for this truck?'+(atpCamSwapped(S.rec)?' <b>A camera/TFU was swapped, so it is needed.</b>':'')+'</p><div class="sheet-btns"><button class="btn primary big" data-act="cal-open">Yes – open it now</button><button class="btn light big" data-act="cal-later">Later – get a QR code</button><button class="btn light big" data-act="cal-done">Already completed</button><button class="btn light big" data-act="cal-cont">Skip for now</button></div>','sheet'); }
+
+function calNext(){ var mr=document.getElementById('modal-root'); if(mr) mr.innerHTML=''; if(S.calGate){ S.calGate=false; serConfirmDlg(); } else renderReview(); }
 /* ===== ATP: audit resolve flow (verified -> retest blocked -> check unassociated) + FYI list ===== */
 function labOf(n){ return '#'+n; }
 function trunc(t,n){ t=String(t||'').replace(/\s+/g,' ').trim(); return t.length>n?t.slice(0,n-1)+'…':t; }
@@ -14641,6 +14669,221 @@ function custHTML(){ var c=CU(), n=swPhotos('rmaf').length;
    '<button class="btn primary" data-act="cu-add">＋ Add customer-reported issue</button></div>'; }
 function cuSet(el){ var p=el.dataset.cu, c=CU(); if(p==='date') c.date=el.value; else { var q=p.split('.'), it=c.list[+q[0]]; if(it) it[q[1]]=el.value; } markDirty(); }
 function custRefresh(){ var e=document.getElementById('custInfo'); if(e) e.innerHTML=custHTML(); }
+/* ===== ATP: DD1149 base serial checksheet, serial/revision/date capture, Omit, Override ===== */
+var DD_DEVS=[['cameraSerial','Camera'],['radarSerial','Radar'],['radarPtSerial','Radar Pan Tilt'],['starlinkSerial','Starlink'],['ciscoEnclSerial','Network Encl. Cisco'],['ciscoModSerial','Network Encl. Cisco Module'],['serverSerial','Network Encl. Server'],['ciscoRtrSerial','Network Encl. Cisco Router'],['smuSerial','System Management Unit'],['lcuSerial','Laptop Control Unit'],['gpsSerial','Trimble GPS']];
+var DD_REV=[['v0s','Server Image (created date)'],['v0c','Client Image (created date)'],['v1','PMU Version'],['v2','PCM Version'],['v3','HMI Version'],['v4','PSR Version'],['v5','Rim 1 Version'],['v6','Rim 2 Version'],['v7','Vehicle Mileage'],['v8','Engine Hours'],['v9','Idle Hours']];
+var DD_SHARED={v7:1,v8:1,v9:1};
+var DD_LBL={newSerial:'Platform (New Upfit) Serial',vin:'Vehicle VIN'}; DD_DEVS.forEach(function(d){ DD_LBL[d[0]]=d[1]; });
+function DD(rec){ rec=rec||S.rec; var x=rec.dd; if(!x||typeof x!=='object') x=rec.dd={};
+  ['na','rev','rvna'].forEach(function(k){ if(!x[k]||typeof x[k]!=='object') x[k]={}; });
+  ['rcvd','retro','skid','deliv','ov','flirName','flirDate','flirSig','custName','custDate','custSig'].forEach(function(k){ if(x[k]==null) x[k]=''; });
+  if(x.loc==null) x.loc='Tucson'; return x; }
+function ddSerial(rec,k){ var e=swFor(rec,k), nv=e&&String(e.nw||'').trim(); return nv?nv:String((rec.header||{})[k]||'').trim(); }
+function ddPhotos(rec,k){ var e=swFor(rec,k), out=S.photos.filter(function(p){ return p.num==='dd:s:'+k || (e&&p.num==='swn:'+e.id); });
+  if(k==='newSerial'&&S.rec===rec){ var rows=buildRows(rec.tpl).filter(function(r){ return !r.spare&&/serial (number|plate)/i.test(r.text); }).map(function(r){ return r.num; }); out=out.concat(S.photos.filter(function(p){ return typeof p.num==='number'&&rows.indexOf(p.num)>=0; })); }
+  return out; }
+function ddRevPhotos(k){ return S.photos.filter(function(p){ return p.num==='dd:r:'+(DD_SHARED[k]?'dash':k); }); }
+function ddOldTxt(rec){ var x=DD(rec); return x.oldNa?'N/A':String((rec.header||{}).oldSerial||'').trim(); }
+/* missing list: {k,label,what} */
+function ddMissing(rec){ var x=DD(rec), h=rec.header||{}, m=[];
+  var chk=function(k,lbl){ if(x.na[k]) return; if(!ddSerial(rec,k)) m.push({k:k,label:lbl,what:'serial'}); if(!ddPhotos(rec,k).length) m.push({k:k,label:lbl,what:'photo'}); };
+  chk('newSerial',DD_LBL.newSerial); DD_DEVS.forEach(function(d){ chk(d[0],d[1]); }); chk('vin','Vehicle VIN');
+  if(!x.oldNa&&!String(h.oldSerial||'').trim()) m.push({k:'oldSerial',label:'Replaces old serial',what:'serial'});
+  var dash=false;
+  DD_REV.forEach(function(f){ var k=f[0]; if(x.rvna[k]) return; if(!String(x.rev[k]||'').trim()) m.push({k:k,label:f[1],what:'revision'}); if(DD_SHARED[k]) dash=true; else if(!ddRevPhotos(k).length) m.push({k:k,label:f[1],what:'photo'}); });
+  if(dash&&!ddRevPhotos('v7').length) m.push({k:'dash',label:'Dashboard (mileage / engine / idle hours)',what:'photo'});
+  return m; }
+function ddPassed(rec){ return !analyze(rec).issues.length || !!String(DD(rec).ov||'').trim(); }
+function ddCap(rec,p){ var k=String(p.num); if(k.indexOf('dd:s:')===0){ var kk=k.slice(5); return 'Serial photo - '+(DD_LBL[kk]||kk)+' '+ddSerial(rec,kk); } var rk=k.slice(5); if(rk==='dash') return 'Dashboard - mileage / engine / idle hours'; var f=DD_REV.filter(function(z){ return z[0]===rk; })[0]; return 'Revision photo - '+(f?f[1]:rk); }
+
+/* ---- UI ---- */
+function ddThumbs(key){ return swThumbs(key); }
+function ddCamBtn(key,n){ return '<button class="btn light" data-act="sw-cam" data-key="'+key+'" style="min-height:44px" title="Photo">📷'+(n?' <b>'+n+'</b>':'')+'</button>'; }
+function ddSerRow(k,lbl,opts){ opts=opts||{}; var x=DD(), na=!!x.na[k], v=S.rec.header[k]||'', key='dd:s:'+k, n=ddPhotos(S.rec,k).length, miss=!na&&(!ddSerial(S.rec,k)||!n);
+  return '<div class="ddrow'+(miss?' ddmiss':'')+'"><label class="fld">'+esc(lbl)+'<span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center"><input data-h="'+k+'" value="'+esc(na?'':v)+'"'+(na?' disabled placeholder="N/A"':'')+' autocomplete="off" autocapitalize="characters" style="flex:1;min-width:0">'+
+    (opts.noNa?'':'<button type="button" class="btn '+(na?'primary':'light')+'" data-act="dd-na" data-k="'+k+'" style="min-height:44px">'+(na?'✓ ':'')+'N/A</button>')+(na?'':ddCamBtn(key,n))+'</span></label>'+(na?'':ddThumbs(key))+(miss&&!na?'<small class="ddwarn">'+(!ddSerial(S.rec,k)?'Serial # missing. ':'')+(!n?'Photo missing.':'')+'</small>':'')+'</div>'; }
+function ddRevRow(f){ var k=f[0], x=DD(), na=!!x.rvna[k], v=x.rev[k]||'', sh=!!DD_SHARED[k], n=sh?0:ddRevPhotos(k).length, miss=!na&&(!String(v).trim()||(!sh&&!n));
+  return '<div class="ddrow'+(miss?' ddmiss':'')+'"><label class="fld">'+esc(f[1])+'<span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center"><input data-dd="rev.'+k+'" value="'+esc(na?'':v)+'"'+(na?' disabled placeholder="N/A"':'')+' autocomplete="off" style="flex:1;min-width:0"><button type="button" class="btn '+(na?'primary':'light')+'" data-act="dd-rna" data-k="'+k+'" style="min-height:44px">'+(na?'✓ ':'')+'N/A</button>'+((na||sh)?'':ddCamBtn('dd:r:'+k,n))+'</span></label>'+((na||sh)?'':ddThumbs('dd:r:'+k))+(miss&&!na?'<small class="ddwarn">'+(!String(v).trim()?'Revision missing. ':'')+((!sh&&!n)?'Photo missing.':'')+'</small>':'')+'</div>'; }
+function ddHTML(){ var rec=S.rec, h=rec.header, x=DD(), ms=ddMissing(rec), nSer=ms.filter(function(m){ return m.what!=='revision'&&!/^v\d|dash/.test(m.k); }).length;
+  var pn=ddPhotos(rec,'newSerial').length;
+  var top='<div class="ddrow'+(!String(h.newSerial||'').trim()||!pn?' ddmiss':'')+'"><label class="fld req">Platform serial number (new upfit S/N)<span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center"><input data-h="newSerial" value="'+esc(h.newSerial||'')+'" autocomplete="off" autocapitalize="characters" style="flex:1;min-width:0">'+ddCamBtn('dd:s:newSerial',pn)+'</span></label>'+ddThumbs('dd:s:newSerial')+
+    '<label class="fld" style="margin-top:8px"><span class="muted" style="font-size:14px">Replaces old serial:</span><span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center"><input data-h="oldSerial" value="'+esc(x.oldNa?'':(h.oldSerial||''))+'"'+(x.oldNa?' disabled placeholder="N/A"':'')+' autocomplete="off" autocapitalize="characters" style="flex:1;min-width:0"><button type="button" class="btn '+(x.oldNa?'primary':'light')+'" data-act="dd-oldna" style="min-height:44px">'+(x.oldNa?'✓ ':'')+'N/A</button></span></label></div>';
+  var rest=['inspector','date','auditor'].map(function(k){ var f=HF.filter(function(z){ return z[0]===k; })[0]; return f?'<label class="fld">'+esc(f[1])+'<input data-h="'+k+'" type="'+(f[2]||'text')+'" value="'+esc(h[k]||'')+'" autocomplete="off"></label>':''; }).join('');
+  var dates='<h3 style="margin:14px 0 6px">Dates &amp; location</h3><div class="grid">'+
+    '<label class="fld">Date truck received at TSC<input type="date" data-dd="rcvd" value="'+esc(x.rcvd)+'"></label>'+
+    '<label class="fld">Skid installed onto truck<input type="date" data-dd="skid" value="'+esc(x.skid||'')+'"></label>'+
+    '<label class="fld">ATP completed date<input type="date" data-dd="retro" value="'+esc(x.retro)+'"></label>'+
+    '<label class="fld">Delivery date<span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap"><input type="date" data-dd="deliv" value="'+esc(x.deliv)+'"'+(x.delivTbd?' disabled':'')+' style="flex:1;min-width:0"><button type="button" class="btn '+(x.delivTbd?'primary':'light')+'" data-act="dd-tbd" style="min-height:44px">'+(x.delivTbd?'✓ ':'')+'TBD</button></span></label>'+
+    '<label class="fld">Location<input data-dd="loc" value="'+esc(x.loc)+'" autocomplete="off"></label></div>';
+  var sers='<div class="card" style="margin:14px 0 0;border:2px solid #1d3b6a"><h3 style="margin:0 0 2px">Serial number details'+(nSer?' <span class="tag" style="background:#c8202a">'+nSer+' missing</span>':'')+'</h3><p class="muted" style="margin:0 0 8px">Record each serial number with a photo of its plate, or tap N/A if the device is not on this truck. You can keep going if something is missing – it shows in red on the report.</p>'+
+    DD_DEVS.map(function(d){ return ddSerRow(d[0],d[1]+' serial number'); }).join('')+ddSerRow('vin','Vehicle VIN')+
+    '<div class="grid" style="margin-top:6px"><label class="fld">Kilo #<input data-h="kilo" value="'+esc(h.kilo||'')+'" autocomplete="off"></label><label class="fld">License plate # (DHS)<input data-h="plate" value="'+esc(h.plate||'')+'" autocomplete="off"></label></div></div>';
+  var nRev=ms.filter(function(m){ return m.what==='revision'||/^v\d|dash/.test(m.k); }).length;
+  var revs='<div class="card" style="margin:14px 0 0;border:2px solid #1d3b6a"><h3 style="margin:0 0 2px">Revisions'+(nRev?' <span class="tag" style="background:#c8202a">'+nRev+' missing</span>':'')+'</h3><p class="muted" style="margin:0 0 8px">Software / image revisions and the vehicle readings. Printed on the ATP report only.</p>'+
+    DD_REV.map(ddRevRow).join('')+'<div class="ddrow'+(ddRevPhotos('v7').length||DD_REV.slice(8).every(function(f){ return x.rvna[f[0]]; })?'':' ddmiss')+'"><label class="fld">Photo(s) of the dashboard – vehicle mileage, engine hours and idle hours<span class="muted" style="font-size:13px">One set of photos covers all three readings.</span></label><div class="au-cam">'+ddCamBtn('dd:r:dash',ddRevPhotos('v7').length)+'</div>'+ddThumbs('dd:r:dash')+'</div></div>';
+  return top+'<div class="grid" style="margin-top:10px">'+rest+'</div>'+dates+sers+revs; }
+function ddRefresh(){ var e=document.getElementById('ddBox'); if(!e) return; var f=document.activeElement, id=f&&f.dataset&&(f.dataset.h||f.dataset.dd), pos=f&&f.selectionStart; var y=window.scrollY; e.innerHTML=ddHTML(); window.scrollTo(0,y); if(id){ var n=e.querySelector('[data-h="'+id+'"],[data-dd="'+id+'"]'); if(n&&!n.disabled){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } } }
+function ddSet(el){ var x=DD(), p=el.dataset.dd; if(p.indexOf('rev.')===0) x.rev[p.slice(4)]=el.value; else x[p]=el.value; markDirty(); var ms=document.getElementById('ddBox'); }
+document.addEventListener('change',function(e){ var t=e.target; if(t&&t.dataset&&(t.dataset.dd||(t.dataset.h&&(DD_LBL[t.dataset.h]||t.dataset.h==='oldSerial')))) setTimeout(function(){ if(S.rec&&!S.audit&&S.view==='insp') ddRefresh(); },350); });
+/* ---- Omit ---- */
+function ddOmitHTML(r,d){ if(r.spare&&!(d.text||'').trim()) return ''; var on=!!d.omit;
+  return '<div class="omit-slot" data-num="'+r.num+'" style="margin-top:6px"><button type="button" class="btn '+(on?'primary':'light')+' omitbtn" data-act="dd-omit" style="min-height:38px;font-size:13px">'+(on?'✓ Omitted':'Omit this item')+'</button>'+(on?'<label class="full" style="margin-top:6px">Why is this item omitted? (required – printed on the report and checksheet)<textarea data-f="onote" rows="2">'+esc(d.onote||'')+'</textarea></label>':'')+'</div>'; }
+/* ---- ATP passed / override ---- */
+function ddReviewCard(rec){ var x=DD(rec), a=analyze(rec), open=a.issues.length, ov=String(x.ov||'').trim(), ms=ddMissing(rec), ok=ddPassed(rec), om=omitList(rec);
+  return '<section class="card" id="ddCard" style="border:2px solid '+(ok?'#1b8a3a':'#b58900')+';margin-top:12px"><h2 style="margin:0 0 6px">DD1149 base serial checksheet</h2>'+
+   (ok?'<p style="margin:0 0 6px"><b>✓ ATP passed'+(open&&ov?' by override':'')+'.</b></p>':'<p style="margin:0 0 6px"><b>The ATP is not passed yet</b> – '+open+' item'+(open===1?'':'s')+' still open. Fix them, or use Override and explain why.</p>')+
+   (ov?'<div class="card" style="background:#fff7e0;margin:6px 0"><b>Override reason:</b> '+esc(ov)+'<div class="row2"><button class="btn light" data-act="dd-ov">Edit</button><button class="btn light" data-act="dd-ovclear">Remove override</button></div></div>':(open?'<div class="row2"><button class="btn light big" data-act="dd-ov">Override – explain</button></div>':''))+
+   (om.length?'<p class="muted" style="margin:6px 0 0">'+om.length+' omitted item'+(om.length===1?'':'s')+' (acknowledged, with notes).</p>':'')+
+   (ms.length?'<p style="color:#c8202a;margin:8px 0 0"><b>'+ms.length+' serial / photo / revision item'+(ms.length===1?'':'s')+' missing</b> – these print in red on the report and checksheet. <button class="linkish" data-act="dd-gotoser">Go to them</button></p>':'')+
+   (ok?'<div class="actions" style="margin-top:8px"><button class="btn emailbig" data-act="dd-share" style="order:0">✉ Email checksheet (PDF attached)<small>Signatures can be added first</small></button><button class="btn light big" data-act="dd-save">⬇ Save checksheet PDF</button><button class="btn light big" data-act="dd-sign">✍ Signatures'+(x.flirSig||x.custSig?' ✓':'')+'</button></div>':'')+'</section>'; }
+function omitList(rec){ var o=[]; buildRows(rec.tpl).forEach(function(r){ var d=itemOf(rec,r.num); if(counts(r,d)&&d.omit) o.push({r:r,d:d}); }); return o; }
+/* ---- signature dialog ---- */
+function ddSigPad(id){ var c=document.getElementById(id); if(!c) return; var g=c.getContext('2d'), dn=false, lx=0, ly=0; g.lineWidth=2.4; g.lineCap='round'; g.strokeStyle='#000';
+  var pt=function(e){ var r=c.getBoundingClientRect(); return {x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height}; };
+  c.addEventListener('pointerdown',function(e){ e.preventDefault(); try{ c.setPointerCapture(e.pointerId); }catch(_){} dn=true; c.dataset.has='1'; var p=pt(e); lx=p.x; ly=p.y; g.beginPath(); g.arc(lx,ly,1.2,0,7); g.fill(); });
+  c.addEventListener('pointermove',function(e){ if(!dn) return; e.preventDefault(); var p=pt(e); g.beginPath(); g.moveTo(lx,ly); g.lineTo(p.x,p.y); g.stroke(); lx=p.x; ly=p.y; });
+  var up=function(){ dn=false; }; c.addEventListener('pointerup',up); c.addEventListener('pointercancel',up);
+  var old=DD()[id==='sigFlir'?'flirSig':'custSig']; if(old){ var im=new Image(); im.onload=function(){ g.drawImage(im,0,0,c.width,c.height); c.dataset.has='1'; }; im.src=old; } }
+function ddSignDlg(){ var x=DD(), blk=function(id,lbl,nm,dt){ return '<div class="card" style="margin:8px 0"><b>'+lbl+'</b><canvas id="'+id+'" width="600" height="180" style="width:100%;height:150px;background:#fff;border:2px dashed #8a97ab;border-radius:8px;touch-action:none;display:block;margin:6px 0"></canvas><button class="btn light" data-act="dd-sigclr" data-id="'+id+'" style="min-height:38px">Clear</button><div class="grid" style="margin-top:6px"><label class="fld">Printed name<input id="'+id+'N" value="'+esc(nm)+'" autocomplete="off"></label><label class="fld">Date<input id="'+id+'D" type="date" value="'+esc(dt||calLocalDate())+'"></label></div></div>'; };
+  dlg('<h2 style="margin-top:0">Checksheet signatures</h2><p class="muted">Sign with your finger. You can skip this and sign the printed page instead.</p>'+blk('sigFlir','FLIR signature',x.flirName||String(S.rec.header.inspector||''),x.flirDate)+blk('sigCust','Receiving (GOV employee) – DHS',x.custName,x.custDate)+'<div class="sheet-btns"><button class="btn primary big" data-act="dd-sigsave">Save signatures</button><button class="btn light big" data-act="mclose">Cancel</button></div>','sheet');
+  ddSigPad('sigFlir'); ddSigPad('sigCust'); }
+function ddSigSave(){ var x=DD(); [['sigFlir','flir'],['sigCust','cust']].forEach(function(p){ var c=document.getElementById(p[0]); if(!c) return; x[p[1]+'Name']=(document.getElementById(p[0]+'N').value||'').trim(); x[p[1]+'Date']=document.getElementById(p[0]+'D').value||''; x[p[1]+'Sig']=c.dataset.has?c.toDataURL('image/png'):''; }); markDirty(); modalRoot.innerHTML=''; if(S.view==='review') reReview(); }
+function ddOvDlg(){ var x=DD(); dlg('<h2 style="margin-top:0">Override – explain</h2><p class="muted">Some checklist items are still open. To pass the ATP anyway, explain why. This is printed on the final report.</p><textarea id="ddOvT" rows="4" style="width:100%;font-size:16px;border:2px solid var(--line);border-radius:8px;padding:8px">'+esc(x.ov||'')+'</textarea><div class="sheet-btns"><button class="btn primary big" data-act="dd-ovsave">Save override</button><button class="btn light big" data-act="mclose">Cancel</button></div>','sheet'); }
+/* ---- existing record: confirm carried-over serials ---- */
+function ddOpenCheck(){ var rec=S.rec; if(!rec||rec.dd) return; DD(rec); rec.dd.conf=false;
+  var L=[['newSerial',DD_LBL.newSerial]].concat(DD_DEVS).concat([['vin','Vehicle VIN']]).map(function(d){ var v=ddSerial(rec,d[0]); return v?'<tr><td style="padding:3px 8px 3px 0;font-weight:600">'+esc(d[1])+'</td><td style="font-family:ui-monospace,Menlo,Consolas,monospace;word-break:break-all">'+esc(v)+'</td></tr>':''; }).join('');
+  markDirty();
+  dlg('<h2 style="margin-top:0">Are these serial numbers still accurate?</h2><p class="muted">This inspection was started before the new serial, revision and date fields were added. Your earlier entries are kept. The new fields are blank – fill them in under <b>Unit information</b>.</p><table style="width:100%;border-collapse:collapse;font-size:15px;margin-bottom:10px">'+(L||'<tr><td class="muted">No serial numbers entered yet.</td></tr>')+'</table><div class="sheet-btns"><button class="btn primary big" data-act="dd-confok">✓ Yes, still accurate</button><button class="btn light big" data-act="dd-confno">No – let me update them</button></div>','sheet'); }
+
+async function ddAct(act,el){
+  if(act.indexOf('dd-')!==0) return false;
+  var x=DD(), rowEl=el.closest&&el.closest('.row'), num=rowEl&&rowEl.dataset?+rowEl.dataset.num:0;
+  switch(act){
+    case 'dd-na': { var k=el.dataset.k; x.na[k]=!x.na[k]; markDirty(); ddRefresh(); return true; }
+    case 'dd-rna': { var k2=el.dataset.k; x.rvna[k2]=!x.rvna[k2]; markDirty(); ddRefresh(); return true; }
+    case 'dd-oldna': x.oldNa=!x.oldNa; markDirty(); ddRefresh(); return true;
+    case 'dd-tbd': x.delivTbd=!x.delivTbd; if(x.delivTbd) x.deliv=''; markDirty(); ddRefresh(); return true;
+    case 'dd-omit': { var li=el.closest('li.row'); if(!li) return true; var n=+li.dataset.num, d=S.rec.items[n]||(S.rec.items[n]={}); d.omit=!d.omit; markDirty(); var r=buildRows(S.rec.tpl).find(function(q){ return q.num===n; }); var sl=li.querySelector('.omit-slot'); if(sl){ var t=document.createElement('div'); t.innerHTML=ddOmitHTML(r,d); sl.replaceWith(t.firstElementChild); } li.classList.toggle('omitted',!!d.omit); updateSecCount(+li.dataset.sec); updateProgress(); if(d.omit){ var ta=li.querySelector('[data-f=onote]'); if(ta) ta.focus(); } return true; }
+    case 'dd-ov': ddOvDlg(); return true;
+    case 'dd-ovclear': x.ov=''; markDirty(); reReview(); return true;
+    case 'dd-gotoser': { await renderInspection(); secScroll('unit'); return true; }
+    case 'dd-sign': ddSignDlg(); return true;
+    case 'dd-share': ddOut('share'); return true;
+    case 'dd-save': ddOut('save'); return true;
+  }
+  return false;
+}
+async function ddModalAct(act,el){
+  switch(act){
+    case 'dd-ovsave': { var v=(document.getElementById('ddOvT').value||'').trim(); if(!v){ toast('Type the reason first.'); return true; } DD().ov=v; markDirty(); modalRoot.innerHTML=''; reReview(); return true; }
+    case 'dd-sigclr': { var c=document.getElementById(el.dataset.id); if(c){ c.getContext('2d').clearRect(0,0,c.width,c.height); c.dataset.has=''; } return true; }
+    case 'dd-sigsave': ddSigSave(); return true;
+    case 'dd-confok': DD().conf=true; markDirty(); modalRoot.innerHTML=''; return true;
+    case 'dd-confno': DD().conf=true; markDirty(); modalRoot.innerHTML=''; secScroll('unit'); return true;
+  }
+  return false;
+}
+
+/* ---- PDF pieces for the ATP report ---- */
+function ddRed(d){ d.setTextColor(200,0,0); }
+function ddReportPdf(d,rec,y,ens0,cell){
+  var x=DD(rec), h=rec.header, ens=function(n){ if(y+n>BOT){ d.addPage(); y=TOP; } };
+  var half=function(a,b){ ens(28); cell(MX,y,CW/2,28,a[0],a[1]); cell(MX+CW/2,y,CW/2,28,b?b[0]:'',b?b[1]:''); y+=28; };
+  half(['Date truck received at TSC',fmtDate(x.rcvd)],['Skid installed onto truck',fmtDate(x.skid)]);
+  half(['ATP completed date',fmtDate(x.retro)],['Delivery date (asset returned)',x.delivTbd?'TBD':fmtDate(x.deliv)]);
+  half(['Location',x.loc||''],null);
+  y+=8;
+  var tbl=function(title,rows){ ens(60); hx(d,'setFillColor','#dbe6f6'); d.rect(MX,y,CW,15,'F'); d.setFont('helvetica','bold'); d.setFontSize(9); d.setTextColor(30); d.text(cl(title),MX+4,y+10.5); y+=15;
+    rows.forEach(function(r){ ens(18); d.setDrawColor(170); d.setLineWidth(.6); d.rect(MX,y,CW,17); d.line(MX+170,y,MX+170,y+17); d.line(MX+400,y,MX+400,y+17);
+      d.setFont('helvetica','normal'); d.setFontSize(8.8); d.setTextColor(0); d.text(cl(r.l),MX+4,y+11.5);
+      var f=function(txt,bad,xx){ if(bad) ddRed(d); else d.setTextColor(0); d.setFont('helvetica',bad?'bold':'normal'); d.text(wrap(d,txt,xx).slice(0,1),xx===226?MX+174:MX+404,y+11.5); };
+      f(r.v,r.vbad,226); f(r.p,r.pbad,130); y+=17; }); };
+  var srows=[]; var oldv=ddOldTxt(rec);
+  srows.push({l:'Platform (new upfit) serial',v:ddSerial(rec,'newSerial')||'MISSING',vbad:!ddSerial(rec,'newSerial'),p:ddPhotos(rec,'newSerial').length?ddPhotos(rec,'newSerial').length+' photo(s)':'NO PHOTO',pbad:!ddPhotos(rec,'newSerial').length});
+  srows.push({l:'Replaces old serial',v:oldv||'MISSING',vbad:!oldv,p:'-'});
+  DD_DEVS.concat([['vin','Vehicle VIN']]).forEach(function(dv){ var k=dv[0], na=x.na[k], sv=ddSerial(rec,k), n=ddPhotos(rec,k).length, e=swFor(rec,k);
+    srows.push({l:dv[1],v:na?'N/A':(sv||'MISSING')+(e&&e.nw?' (old: '+e.old+')':''),vbad:!na&&!sv,p:na?'-':(n?n+' photo(s)':'NO PHOTO'),pbad:!na&&!n}); });
+  srows.push({l:'Kilo #',v:h.kilo||'-',p:'-'}); srows.push({l:'License plate # (DHS)',v:h.plate||'-',p:'-'});
+  tbl('Serial Numbers',srows);
+  y+=8;
+  var rrows=DD_REV.map(function(f){ var k=f[0], na=x.rvna[k], v=String(x.rev[k]||'').trim(), sh=DD_SHARED[k], n=ddRevPhotos(k).length;
+    return {l:f[1],v:na?'N/A':(v||'MISSING'),vbad:!na&&!v,p:na?'-':(sh?(n?'dashboard photo':'NO DASH PHOTO'):(n?n+' photo(s)':'NO PHOTO')),pbad:!na&&!n}; });
+  tbl('Revisions',rrows);
+  y+=8;
+  var om=omitList(rec);
+  if(om.length){ ens(30); d.setFont('helvetica','bold'); d.setFontSize(10); d.setTextColor(0); d.text('Omitted checklist items (acknowledged by the technician)',MX,y+8); y+=12; d.setFont('helvetica','normal'); d.setFontSize(8.8);
+    om.forEach(function(o){ wrap(d,'#'+o.r.num+' '+lineText(o.r,o.d)+' - '+(o.d.onote||'(no note)'),CW-8).forEach(function(l){ ens(11); d.text(l,MX+4,y+8); y+=10.5; }); }); y+=6; }
+  var ov=String(x.ov||'').trim();
+  if(ov){ d.setFont('helvetica','normal'); d.setFontSize(9); var ol=wrap(d,ov,CW-12); ens(ol.length*11+24); d.setDrawColor(200,0,0); d.setLineWidth(1); d.rect(MX,y,CW,ol.length*11+22); d.setFont('helvetica','bold'); ddRed(d); d.text('ATP PASSED BY OVERRIDE - reason given by the technician:',MX+6,y+12); d.setFont('helvetica','normal'); d.setTextColor(0); d.text(ol,MX+6,y+24); y+=ol.length*11+30; }
+  return y; }
+
+/* ---- DD1149 checksheet PDF ---- */
+function ddPdf(rec){
+  var x=DD(rec), h=rec.header, d=pdfNew(), y=TOP;
+  var ld=function(){ };
+  d.setFont('helvetica','bold'); d.setFontSize(14); d.setTextColor(0);
+  d.text('RE: DD1149 Attachment',MX,y+8); y+=22;
+  var dl=x.delivTbd?'TBD':fmtDate(x.deliv), at=fmtDate(x.retro), sk=fmtDate(x.skid), rc=fmtDate(x.rcvd);
+  var sv=function(k){ var na=x.na[k], v=ddSerial(rec,k), n=ddPhotos(rec,k).length; return na?{t:'N/A'}:{t:v?v:'MISSING',bad:!v||!n,note:(!v?'':(!n?' (no photo)':''))}; };
+  var plat=ddSerial(rec,'newSerial'), oldS=x.oldNa?'':String(h.oldSerial||'').trim();
+  var cellx=function(cx,cy,w,hh,lab,v){ d.setDrawColor(120); d.setLineWidth(.7); d.rect(cx,cy,w,hh); d.setFont('helvetica','normal'); d.setFontSize(7.5); d.setTextColor(95); d.text(cl(lab),cx+5,cy+9);
+    d.setFont('helvetica','bold'); d.setFontSize(11); if(!v||!String(v.t||'').trim()||v.bad) ddRed(d); else d.setTextColor(0); d.text(cl(((v&&v.t)||'MISSING')+((v&&v.note)||'')),cx+5,cy+23); };
+  var pv=plat?{t:plat,bad:!ddPhotos(rec,'newSerial').length,note:ddPhotos(rec,'newSerial').length?'':' (no photo)'}:{t:'MISSING',bad:true};
+  var HW=CW/2, RH2=30;
+  cellx(MX,y,CW,oldS?40:RH2,'PLATFORM',pv); if(oldS){ d.setFont('helvetica','normal'); d.setFontSize(9.5); d.setTextColor(105); d.text(cl('(old serial: '+oldS+')'),MX+5,y+35); } y+=oldS?40:RH2;
+  var pair=function(a2,b2){ cellx(MX,y,HW,RH2,a2[0],a2[1]); cellx(MX+HW,y,HW,RH2,b2[0],b2[1]); y+=RH2; };
+  var dv=function(t){ return t?{t:t}:{t:'MISSING',bad:true}; };
+  pair(['DATE ASSET RETURNED TO DHS/CBP/USBP',dv(dl)],['DATE ATP COMPLETED',dv(at)]);
+  pair(['SKID INSTALLED ONTO TRUCK',dv(sk)],['DATE TRUCK RECEIVED',dv(rc)]);
+  pair(['LOCATION',{t:x.loc||'Tucson'}],['VEHICLE VIN',sv('vin')]);
+  pair(['KILO #',{t:String(h.kilo||'').trim()||'-'}],['DHS LICENSE PLATE #',{t:String(h.plate||'').trim()||'-'}]);
+  y+=16;
+  var rows=[];
+  [['cameraSerial','Camera Serial Number'],['radarSerial','Radar Serial Number'],['radarPtSerial','Radar Pan Tilt Serial Number'],['starlinkSerial','Starlink Serial Number'],['ciscoEnclSerial','Network Encl. Cisco Serial Number'],['ciscoModSerial','Network Encl. Cisco Module Serial Number'],['serverSerial','Network Encl. Server Serial Number'],['ciscoRtrSerial','Network Encl. Cisco Router Serial Number'],['smuSerial','System Management Unit Serial Number'],['lcuSerial','Laptop Control Unit Serial Number'],['gpsSerial','Trimble GPS Serial Number']].forEach(function(r){ rows.push([r[1],sv(r[0])]); });
+  var C1=250, RH=21;
+  d.setFillColor(0); d.rect(MX,y,CW,RH,'F'); d.setFont('helvetica','bold'); d.setFontSize(10.5); d.setTextColor(255); d.text('CBP Component',MX+6,y+14); d.text('Serial Numbers',MX+C1+6,y+14); y+=RH;
+  rows.forEach(function(r){ d.setDrawColor(120); d.setLineWidth(.7); d.rect(MX,y,CW,RH); d.line(MX+C1,y,MX+C1,y+RH); d.setFont('helvetica','bold'); d.setFontSize(10); d.setTextColor(0); d.text(cl(r[0]),MX+6,y+14);
+    var v=r[1]; d.setFont('helvetica',v.bad?'bold':'normal'); if(v.bad) ddRed(d); else d.setTextColor(0); d.text(cl(v.t+(v.note||'')),MX+C1+6,y+14); y+=RH; });
+  y+=26;
+  var sg=function(lbl,nm,dt,img){ d.setFont('helvetica','bold'); d.setFontSize(12); d.setTextColor(0); d.text(lbl,MX,y+12); d.setDrawColor(0); d.setLineWidth(.8); d.line(MX+170,y+30,MX+390,y+30); if(img){ try{ d.addImage(img,'PNG',MX+175,y-8,210,40); }catch(e){} }
+    d.text('Date:',MX+405,y+12); d.setFont('helvetica','normal'); d.setFontSize(11); d.text(cl(fmtDate(dt)),MX+440,y+12); d.line(MX+438,y+14,MX+540,y+14);
+    d.setFont('helvetica','normal'); d.setFontSize(9); d.setTextColor(80); d.text('Printed name: '+cl(nm||''),MX+170,y+43); y+=62; };
+  sg('FLIR Signature:',x.flirName||h.inspector,x.flirDate,x.flirSig); sg('Receiving (GOV Employee):',x.custName,x.custDate,x.custSig);
+  var om=omitList(rec);
+  if(om.length){ y+=6; if(y>BOT-40){ d.addPage(); y=TOP; } d.setFontSize(9); d.setFont('helvetica','bold'); d.text('Omitted ATP items (acknowledged):',MX,y); d.setFont('helvetica','normal'); y+=11; om.forEach(function(o){ wrap(d,'#'+o.r.num+' '+lineText(o.r,o.d)+' - '+(o.d.onote||''),CW).forEach(function(l){ if(y>BOT){ d.addPage(); y=TOP; } d.text(l,MX,y); y+=10.5; }); }); }
+  var ovr=String(x.ov||'').trim();
+  if(ovr){ y+=8; if(y>BOT-40){ d.addPage(); y=TOP; } d.setFont('helvetica','bold'); d.setFontSize(9); ddRed(d); d.text('ATP passed by override - reason:',MX,y); y+=11; d.setFont('helvetica','normal'); wrap(d,ovr,CW).forEach(function(l){ if(y>BOT){ d.addPage(); y=TOP; } d.text(l,MX,y); y+=10.5; }); }
+  /* photo index */
+  var items=[['Platform (New Upfit) Serial','newSerial']].concat(DD_DEVS.map(function(z){ return [z[1],z[0]]; })); items.splice(1,0,['Vehicle VIN','vin']);
+  var BW=(CW-12)/2, BH=218, per=6, ix=0;
+  items.forEach(function(it,i){
+    if(i%per===0){ d.addPage(); y=TOP; d.setFont('helvetica','bold'); d.setFontSize(14); d.setTextColor(0); d.text('Photo Index'+(i?' (cont.)':''),MX,y+10); y+=24; }
+    var pos=i%per, col=pos%2, rw=Math.floor(pos/2), bx=MX+col*(BW+12), by=y+rw*(BH+8), k=it[1], na=x.na[k], v=ddSerial(rec,k), ph=ddPhotos(rec,k);
+    d.setDrawColor(150); d.setLineWidth(.8); d.rect(bx,by,BW,BH);
+    d.setFont('helvetica','bold'); d.setFontSize(9.5); d.setTextColor(0); d.text(cl(it[0]),bx+6,by+13);
+    d.setFont('helvetica','normal'); d.setFontSize(9.5);
+    if(na){ d.setFontSize(26); d.setTextColor(120); d.text('N/A',bx+BW/2,by+BH/2+10,{align:'center'}); return; }
+    if(v) d.setTextColor(0); else ddRed(d); d.text(cl(v||'MISSING'),bx+6,by+26);
+    if(!ph.length){ ddRed(d); d.setFont('helvetica','bold'); d.setFontSize(14); d.text('NO PHOTO',bx+BW/2,by+BH/2+12,{align:'center'}); return; }
+    var show=ph.slice(0,4), cols=show.length===1?1:2, rws=show.length<=2?1:2, pw=(BW-12-(cols-1)*6)/cols, phh=(BH-48-(rws-1)*4)/rws;
+    show.forEach(function(p,j){ var px=bx+6+(j%cols)*(pw+6), py=by+34+Math.floor(j/cols)*(phh+4); d.setDrawColor(200); d.rect(px,py,pw,phh);
+      try{ var pr=d.getImageProperties(p.data), kk=Math.min((pw-2)/pr.width,(phh-2)/pr.height), w=pr.width*kk, hh=pr.height*kk; d.addImage(p.data,'JPEG',px+(pw-w)/2,py+(phh-hh)/2,w,hh); }catch(e){} });
+    if(ph.length>4){ d.setFont('helvetica','normal'); d.setFontSize(8); d.setTextColor(90); d.text('+'+(ph.length-4)+' more photo(s) in the ATP report',bx+6,by+BH-5); }
+  });
+  footers(d,rec,'DD1149 Base Serial Checksheet',new Set([1]));
+  return d;
+}
+async function ddOut(how){
+  if(dirty()) await save();
+  if(!ddPassed(S.rec)){ notice('The ATP is not passed yet. Finish the open items, or use Override – explain.','ATP not passed'); return; }
+  toast('Preparing checksheet...'); await new Promise(function(z){ setTimeout(z,40); });
+  var d; try{ d=ddPdf(S.rec); }catch(e){ console.error(e); alert('Could not create the PDF: '+(e.message||e)); return; }
+  var blob=d.output('blob'), name='eMSC-L_'+safeName(snNum(S.rec.header.newSerial))+'_DD1149_Checksheet.pdf';
+  if(how==='share'){ var file=new File([blob],name,{type:'application/pdf'}), data={files:[file],title:'DD1149 Base Serial Checksheet - eMSC-L '+snNum(S.rec.header.newSerial),text:'Attached is the DD1149 base serial checksheet for eMSC-L '+snNum(S.rec.header.newSerial)+'.'};
+    try{ if(navigator.canShare&&navigator.canShare(data)){ await navigator.share(data); return; } }catch(e){ if(e&&e.name==='AbortError') return; }
+    downloadBlob(name,blob); toast('This browser cannot attach files from a page. The PDF was saved to Downloads - attach it from there.');
+  } else { downloadBlob(name,blob); toast('PDF saved: '+name); }
+}
 
 function secScroll(si){ var el=document.getElementById(si==='unit'?'sec-unit':si==='notes'?'sec-notes':'sec-'+si); if(!el) return; if(el.tagName==='DETAILS') el.open=true; el.scrollIntoView({block:'start'}); }
 function auSet(el){
@@ -14651,6 +14894,7 @@ function auSet(el){
 async function appAct(act,el){
   if(await swAppAct(act,el)) return true;
   if(act.indexOf('wip-')===0){ await wipAct(act,el); return true; }
+  if(await ddAct(act,el)) return true;
   var rowEl=el.closest('.row'), num=rowEl?+rowEl.dataset.num:+el.dataset.num;
   var getD=function(){ return S.rec.items[num]||(S.rec.items[num]={}); };
   var refresh=function(){ markDirty(); refreshRow(rowEl); updateSecCount(+rowEl.dataset.sec); updateProgress(); };
@@ -14685,6 +14929,11 @@ async function appAct(act,el){
       markDirty(); await save(); auRefresh(); window.scrollTo(0,0); return true;
     case 'au-reopen': S.rec.audit.done=false; markDirty(); auRefresh(); return true;
     case 'au-copy': var sm=auSummary(S.rec); try{ await navigator.clipboard.writeText(sm.text); toast('Audit summary copied'); }catch(e){ notice(sm.text,'Copy this text'); } return true;
+    case 'cal-open': S.rec.cal=Object.assign({st:'',date:''},S.rec.cal||{}); var cu=calAtpUrl(S.rec); if(cu){ window.open(cu,'_blank'); S.rec.cal.st=S.rec.cal.st||'later'; markDirty(); calNext(); } else { notice('Open the \u201ceMSC-L TFU & Radar Calibration\u201d form from the forms page or your tablet, tap Scan QR, and scan the code from \u201cLater\u201d.','Open the calibration form'); } return true;
+    case 'cal-later': calLaterDlg(); return true;
+    case 'cal-done': S.rec.cal={st:'done',date:calLocalDate()}; markDirty(); calNext(); return true;
+    case 'cal-undo': S.rec.cal={st:'',date:''}; markDirty(); renderReview(); return true;
+    case 'cal-cont': calNext(); return true;
     case 'au-email': pdfOut('audit','share'); return true;
   }
   return false;
@@ -14692,6 +14941,8 @@ async function appAct(act,el){
 async function modalAct(act,el){
   if(await swModalAct(act,el)) return true;
   if(act.indexOf('wip-')===0){ await wipAct(act,el); return true; }
+  if(await ddModalAct(act,el)) return true;
+  if(act.indexOf('cal-')===0){ return appAct(act,el); }
   switch(act){
     case 'noop': return true;
     case 'mclose': modalRoot.innerHTML=''; return true;
@@ -14800,6 +15051,7 @@ app.addEventListener('input', function(e){
   }
   if(!S.rec) return;
   if(el.dataset.au){ auSet(el); return; }
+  if(el.dataset.dd){ ddSet(el); return; }
   if(el.dataset.sw){ swSet(el); return; }
   if(el.dataset.cu){ cuSet(el); return; }
   if(el.dataset.h){
