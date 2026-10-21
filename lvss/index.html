@@ -13773,7 +13773,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'pindone':{S.pin=null;repunch(S.lastPin);break;}
  case 'gotoneed':{const e=$('#'+(S.need==='final'?'finalQ':'pl-'+S.need));e&&e.scrollIntoView({behavior:'smooth',block:'center'});break;}
  case 'war':{const onP=!!$('#pl-'+id);if(onP)pinCard(id);const q=itm(id);q.war=q.war===b.dataset.w?'':b.dataset.w;if(q.war!=='nw'){if(q.courtesy&&q.repAuto){q.rep=false;q.repAuto=false}q.courtesy=false}markDirty();if(onP)repunch();else rerenderRow(id);break;}
- case 'courtesy':{const onP=!!$('#pl-'+id);if(onP)pinCard(id);const q=itm(id);q.courtesy=!q.courtesy;if(q.courtesy){if(!q.rep){q.rep=true;q.repAuto=true}}else if(q.repAuto){q.rep=false;q.repAuto=false}markDirty();if(onP)repunch();else rerenderRow(id);break;}
+ case 'courtesy':{const onP=!!$('#pl-'+id);if(onP)pinCard(id);const q=itm(id);const wasRep=q.rep;q.courtesy=!q.courtesy;if(q.courtesy){if(!q.rep){q.rep=true;q.repAuto=true}}else if(q.repAuto){q.rep=false;q.repAuto=false}markDirty();if(onP)repunch();else rerenderRow(id);if(q.courtesy&&q.rep&&!wasRep&&q.st==='fail')await afterResolve(id);break;}
  case 'verdict':{const v=b.dataset.v;if(r.verdict===v)r.verdict='';else{if(v==='pass'&&stats(r).openDno&&!await ask('Do Not Operate item(s) are still open. Mark the '+PLN(r)+' as PASSED anyway?',{title:'Do Not Operate items open',ok:'Mark PASSED anyway',danger:1}))break;r.verdict=v;}markDirty();repunch();break;}
  case 'blk':{if($('#finalQ')){openBlkDlg(id);break;}const q=itm(id);q.st='blk';q.by=q.by||[];markDirty();rerenderRow(id);break;}
  case 'unblk':{const q=itm(id);q.st='fail';q.pend=false;markDirty();rerenderRow(id);break;}
@@ -14052,7 +14052,11 @@ async function afterResolve(id,seen){seen=seen||new Set();if(seen.has(id))return
   const v=await choose('Retest the blocked items?',labOf(id)+' is resolved. These items could not be tested because of it:\n\n'+lines.join('\n'),[{v:'now',t:'Test them now',c:'pri'},{v:'later',t:'Wait – test later'}]);
   if(v==='now')await walkItems(asc);
   rem=blockedList(r).filter(y=>((r.items[y.id]||{}).by||[]).includes(id));}
- const up=((r.items[id]||{}).by||[]).filter(b=>b!==id&&(r.items[b]||{}).st==='fail'&&!(r.items[b]||{}).rep);
+ const up=Array.from(new Set([...((r.items[id]||{}).by||[]),...((r.items[id]||{}).rel||[])])).filter(b=>b!==id&&(r.items[b]||{}).st==='fail'&&!(r.items[b]||{}).rep);
+ const dn=flat(r).filter(y=>{const q=r.items[y.id]||{};return y.id!==id&&q.st==='fail'&&!q.rep&&(q.rel||[]).includes(id);});
+ for(const y of dn){const q0=r.items[y.id];if(q0.rep)continue;const v=await choose('Is '+labOf(y.id)+' resolved too?',labOf(y.id)+' was marked as related to '+labOf(id)+', which you just resolved:\n\n'+trunc(y.t,90)+'\n\nIs '+labOf(y.id)+' fixed by that repair too?',[{v:'yes',t:'Yes – mark '+labOf(y.id)+' Repaired',c:'pri'},{v:'no',t:'No – leave it open'}]);
+  if(v==='yes'){const yq=itm(y.id);yq.rep=true;yq.repAuto=false;markDirty();await afterResolve(y.id,seen);}}
+
  for(const u of up){const ux=flat(r).find(y=>y.id===u);
   const v=await choose('Is '+labOf(u)+' resolved too?',labOf(id)+' was linked to '+labOf(u)+', which is still open:\n\n'+(ux?trunc(ux.t,90):'')+'\n\nWas '+labOf(u)+' the cause, and is it resolved now?',[{v:'yes',t:'Yes – mark '+labOf(u)+' Repaired',c:'pri'},{v:'no',t:'No – leave it open'}]);
   if(v==='yes'){const uq=itm(u);uq.rep=true;uq.repAuto=false;markDirty();await afterResolve(u,seen);}}
