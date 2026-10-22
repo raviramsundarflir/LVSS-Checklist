@@ -12978,12 +12978,12 @@ const DB={db:null,
  get(st,k){return DB.tx(st,'readonly',s=>s.get(k));},put(st,o){return DB.tx(st,'readwrite',s=>s.put(o));},del(st,k){return DB.tx(st,'readwrite',s=>s.delete(k));},all(st){return DB.tx(st,'readonly',s=>s.getAll());}};
 async function setting(k,v){if(arguments.length>1){S.settings[k]=v;await DB.put('settings',{k,v});return v;}const o=await DB.get('settings',k);return o?o.v:undefined;}
 /* ---- records ---- */
-const recName=r=>(r.hdr.sn||'').trim()||'(no skid S/N)';
+const recName=r=>snShow(r.hdr.sn,null)||'(no skid S/N)';
 const initialsOf=n=>String(n||'').trim().split(/\s+/).filter(Boolean).map(w=>w[0].toUpperCase()).slice(0,3).join('');
 function newRec(sn,tech,pre){const r={id:'j-'+uid(),created:Date.now(),updated:Date.now(),archived:false,step:0,
  hdr:{sn:sn||'',date:today(),tech:tech||'',ini:initialsOf(tech)},f:{},ck:{},done:{notes:'',name:'',date:'',sig:'',complete:false,incPh:''},ph:[]};
  if(pre)Object.keys(pre).forEach(k=>{if(pre[k])r.f[k]=pre[k];});return r;}
-function activeFor(sn){sn=String(sn||'').trim().toLowerCase();return sn&&S.recs.find(x=>!x.archived&&String(x.hdr.sn||'').trim().toLowerCase()===sn);}
+function activeFor(sn){sn=String(sn||'').trim().toLowerCase();return sn&&S.recs.find(x=>!x.archived&&snShow(x.hdr.sn,null).toLowerCase()===snShow(sn,null).toLowerCase());}
 function markDirty(){S.dirty=true;if(S.rec)S.rec.updated=Date.now();paintSave();clearTimeout(S.saveTimer);S.saveTimer=setTimeout(save,700);}
 async function save(){const rec=S.rec;if(!rec||!S.dirty)return;S.dirty=false;clearTimeout(S.saveTimer);await DB.put('recs',clone(rec));const i=S.recs.findIndex(x=>x.id===rec.id);if(i<0)S.recs.push(rec);else S.recs[i]=rec;paintSave();}
 function paintSave(){const e=$('#saveInd');if(e)e.textContent=S.dirty?'Saving…':'✓ Saved';}
@@ -13011,6 +13011,19 @@ const techNames=()=>Array.isArray(S.settings.techNames)?S.settings.techNames:[];
 function techChips(){const L=techNames().slice(0,5);return L.length?`<div class="muted" style="font-size:13px;margin:6px 0 2px">Recent names on this tablet - tap to reuse:</div><div class="row" style="gap:6px;flex-wrap:wrap">${L.map((n,i)=>`<button type="button" data-act="tech-pick" data-i="${i}" style="width:auto">${esc(n)}</button>`).join('')}</div>`:''}
 function techRemember(n){n=(n||'').trim();if(!n)return;const L=[n,...techNames().filter(x=>x.toLowerCase()!==n.toLowerCase())].slice(0,5);S.settings.techNames=L;setting('techNames',L);}
 function techPick(i){const n=techNames()[i],el=$('#n-te');if(n&&el){el.value=n;S.techDraft=n;}}
+/* shared platform-serial helpers: LVSS-099 / eMSC-L 0099 (prefix and number stay editable) */
+var SN_RX=/^\s*(?:(lvss)|(e?msc[-\s_]*l?))[-\s_]*/i;
+function snType(s){var m=SN_RX.exec(String(s||''));return !m?'':(m[1]?'L':'E');}
+function snDig(s){return String(s||'').replace(SN_RX,'').trim();}
+function snMake(t,s){var d=snDig(s);if(/^\d+$/.test(d)){d=d.replace(/^0+(?=\d)/,'');d=('0000'+d).slice(-Math.max(d.length,t==='L'?3:4));}if(!d)return t==='L'?'LVSS-':'eMSC-L ';return (t==='L'?'LVSS-':'eMSC-L ')+d;}
+/* display form of a stored serial: typed prefix wins; bare digits get dflt (default eMSC-L) */
+function snShow(s,dflt){s=String(s||'').trim();if(!s)return '';var t=snType(s);if(t){var d=snDig(s);return (t==='L'?'LVSS-':'eMSC-L ')+d;}if(/^[A-Za-z]/.test(s)||dflt===null)return s;return (dflt==='L'?'LVSS-':'eMSC-L ')+s;}
+function snFile(s,dflt){s=snShow(s,dflt);var t=snType(s);var n=snDig(s);var p=t==='L'?'LVSS':t==='E'?'eMSC-L':'';var raw=(p?p+'_':'')+(p?n:s);return raw.replace(/[^A-Za-z0-9._-]+/g,'-').replace(/^-+|-+$/g,'')||'no-serial';}
+function snTg(id,val){var t=snType(val);return '<span class="sntg" style="display:inline-flex;gap:4px;margin:4px 0 0">'+[['L','LVSS'],['E','eMSC-L']].map(function(x){return '<button type="button" class="sntb'+(t===x[0]?' on':'')+'" data-sn="'+x[0]+'" data-for="'+id+'" style="min-height:36px;padding:4px 12px;border-radius:8px;border:1.5px solid #8a94a6;background:'+(t===x[0]?'#1d3b6a':'#fff')+';color:'+(t===x[0]?'#fff':'#333')+';font:600 14px system-ui,sans-serif;cursor:pointer">'+x[1]+'</button>';}).join('')+'</span>';}
+function snPaint(inp){var w=inp.parentNode&&inp.parentNode.querySelector&&document.querySelectorAll('.sntg button[data-for="'+inp.id+'"]');if(!w)return;var t=snType(inp.value);[].forEach.call(w,function(b){var on=b.getAttribute('data-sn')===t;b.classList.toggle('on',on);b.style.background=on?'#1d3b6a':'#fff';b.style.color=on?'#fff':'#333';});}
+document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('button[data-sn]');if(!b)return;e.preventDefault();e.stopPropagation();var inp=document.getElementById(b.getAttribute('data-for'));if(!inp||inp.disabled)return;inp.value=snMake(b.getAttribute('data-sn'),inp.value);snPaint(inp);inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));inp.focus();},true);
+document.addEventListener('input',function(e){var t=e.target;if(t&&t.hasAttribute&&t.hasAttribute('data-snin'))snPaint(t);},true);
+document.addEventListener('change',function(e){var t=e.target;if(t&&t.hasAttribute&&t.hasAttribute('data-snin')){var v=String(t.value||'').trim();if(/^\d+$/.test(v)){t.value=snMake('E',v);snPaint(t);}}},true);
 /* ---- UI ---- */
 const STEPS=['Serials','Checklist','Complete'];
 const bar=(sub,right)=>`<div class="top"><div class="bar"><img src="${LOGO2}" alt="Teledyne FLIR"><div class="brand">${esc(TPL.title)}<small>${esc(sub||TPL.subtitle)}</small></div>${right||''}</div></div>`;
@@ -13027,7 +13040,7 @@ function serHtml(r){const f=TPL.fields;
  const inp=(x)=>{const v=(r.f||{})[x.k]||'';if(x.o==='date')return `<input type="date" data-b="f.${x.k}" value="${esc(v)}">`;
   return `<input data-b="f.${x.k}" ${x.o==='nohist'?'data-nohist ':''}value="${esc(v)}" autocomplete="off" autocapitalize="characters">`;};
  return `<div class="card"><h2>Unit and technician</h2>${r.hdr.src?`<div class="warn" style="background:#eaf3ff;border-color:#9bbbe8"><b>Started from the ATP report</b> (${esc(r.hdr.src)}). Skid S/N, VIN and any serials the ATP recorded are filled in below - check them against the unit.</div>`:''}
- <div class="grid"><div><label class="f">Skid serial number (required)</label><input id="n-sn" data-b="hdr.sn" value="${esc(r.hdr.sn)}" placeholder="e.g. 56" autocomplete="off"></div><div><label class="f">Inspection date</label><input type="date" data-b="hdr.date" value="${esc(r.hdr.date)}"></div></div>${whoHtml(r,true)}</div>
+ <div class="grid"><div><label class="f">Skid serial number (required)</label>${snTg('n-sn',r.hdr.sn)}<input id="n-sn" data-snin="1" data-b="hdr.sn" value="${esc(r.hdr.sn)}" placeholder="e.g. eMSC-L 0056" autocomplete="off"></div><div><label class="f">Inspection date</label><input type="date" data-b="hdr.date" value="${esc(r.hdr.date)}"></div></div>${whoHtml(r,true)}</div>
  <div class="card"><h2>CBP component serial numbers</h2><p class="muted">Fill in what is on the unit. Anything left blank is listed when you finish.</p>${f.map(x=>`<div class="ser"><div class="lb">${esc(x.l)}</div><div>${inp(x)}</div></div>`).join('')}</div>`;}
 const phCount=(r,k)=>(r.ph||[]).filter(p=>p.k===k).length;
 function ckRow(r,i,idx){const c=ckOf(r,i.k),cl=c.n?'na':c.x?'dn':'',open=S.upd===i.k;
@@ -13172,11 +13185,16 @@ async function emailReport(){const r=S.rec,f=finalPdfFile(r),c=ckCount(r),subj=j
  const fl=new File([f.blob],f.name,{type:'application/pdf'}),z=(r.done.incPh==='1')?photoZipFile(r):null,fls=[fl].concat(z?[new File([z.blob],z.name,{type:'application/zip'})]:[]);try{if(navigator.canShare&&navigator.canShare({files:fls})){await navigator.share({files:fls,title:subj,text:body+(z?'\n\nA ZIP of '+z.n+' picture'+(z.n===1?'':'s')+' is attached too.':'')});return;}}catch(e){if(e&&e.name==='AbortError')return;}
  await notice('This browser cannot attach the PDF automatically, so the email will open without it. Use "Save PDF" and attach the file from Downloads.',{title:'PDF not attached'});location.href='mailto:'+WIP_MAIL+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);}
 async function scanDone(txt){scanStop();let o=null;try{o=JSON.parse(txt);}catch(e){}
- const ok=o&&((o.a==='ATP'&&o.k==='A')||(o.a==='FIN'&&o.k==='P'));
- if(!ok){const m=$('#scanMsg');if(m)m.textContent='That is not an ATP report QR code or a paused final-inspection QR code. Try again.';if($('#scanV')&&$('#scanV').style.display!=='none')scanDlg();return;}
+ const ok=o&&((o.a==='ATP'&&o.k==='A')||(o.a==='FIN'&&o.k==='P')||o.a==='FLR'||o.a==='CAL'||o.a==='LVSS');
+ if(!ok){const m=$('#scanMsg');if(m)m.textContent='That is not a QR code from one of the inspection forms. Try again.';if($('#scanV')&&$('#scanV').style.display!=='none')scanDlg();return;}
  closeModal();await fromQr(o);}
 async function openRec(x){S.rec=x;S.step=x.step||0;S.view='rec';render();}
 async function fromQr(o){
+ if(o.a==='ATP'&&o.rv&&o.rv!=='P'){await notice('The ATP inspection'+(o.sn?' for '+snShow(o.sn):'')+' is '+(o.rv==='F'?'FAILED':'INCOMPLETE')+'. Its information can\u2019t be used until the inspection passes.',{title:'Inspection not passed'});return;}
+ if(o.a==='FLR'||o.a==='CAL'||o.a==='LVSS'){const frm=o.a==='FLR'?'floor test':o.a==='CAL'?'calibration':'post-repair inspection',sn0=snShow(o.sn);
+  if(o.rv!=='P'){await notice(o.rv==='F'?'The '+frm+(sn0?' for '+sn0:'')+' is FAILED. Its information can\u2019t be used until it passes.':o.rv==='I'?'The '+frm+(sn0?' for '+sn0:'')+' is INCOMPLETE. Its information can\u2019t be used until it is finished and passes.':'This QR code has no pass result in it. Open that report and scan the QR code from its latest version.',{title:'Not passed'});return;}
+  const ex0=activeFor(sn0);if(ex0&&await ask('A final inspection for '+recName(ex0)+' is already on this tablet. Open it instead of starting a new one?',{title:'Already started',ok:'Open it',no:'Start a new one'})){await openRec(ex0);return;}
+  const r0=newRec(sn0,'');S.rec=r0;S.step=0;S.dirty=true;await save();S.view='rec';render();return;}
  if(o.a==='ATP'){const ex=activeFor(o.sn);
   if(ex&&await ask('A final inspection for skid '+recName(ex)+' is already on this tablet. Open it instead of starting a new one?',{title:'Already started',ok:'Open it',no:'Start a new one'})){await openRec(ex);return;}
   const r=newRec(o.sn||'','',{vin:o.vin,cam:o.cs,radar:o.rs,lcu:o.ls});r.hdr.src='ATP '+fmtD(o.d||'')+(o.ins?', inspector '+o.ins:'');
@@ -13246,7 +13264,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)save();});
 function curTpl(){return TPL}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'10/21/2026'};
+const CREDIT={by:'Ravi Ramsundar',built:'10/22/2026'};
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}

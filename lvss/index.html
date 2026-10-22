@@ -12985,7 +12985,7 @@ function calIssues(r){return camSwapped(r)&&!calDone(r)?['TFU & Radar Calibratio
 const calUrl=r=>/^https?:$/.test(location.protocol)?'../cal/?sn='+encodeURIComponent(String((r.hdr||{}).sn||'').trim())+'&tech='+encodeURIComponent(String((r.hdr||{}).tech||'').trim()):'';
 function calCard(r){if(!camSwapped(r))return '';const ok=calDone(r);
  return `<div class="card" id="calCard" style="border:2px solid ${ok?'#1b8a3a':'#b58900'};background:${ok?'#f1faf4':'#fffaf0'}"><h3>TFU &amp; Radar Calibration${ok?'':' – required'}</h3>${ok?`<div class="ok" style="margin:0 0 8px"><b>✓ Calibration completed${r.cal.date?' on '+fmtD(r.cal.date):''}.</b> This is stated in the report.</div><button data-act="calundo">Undo</button>`:`<p style="margin:0 0 8px">A camera/TFU was swapped on this eMSC-L, so the TFU &amp; Radar Calibration must be completed before the report goes out.</p><div class="row"><button class="pri" data-act="calopen" style="flex:1">Open calibration form now</button><button data-act="callater" style="flex:1">Do it later – get a QR code</button></div><div class="row" style="margin-top:8px"><button data-act="caldone" style="flex:1">✓ The calibration is completed</button></div>`}</div>`;}
-function calLaterDlg(){const r=S.rec;let svg='';try{const q=window.qrcode(0,'L');q.addData(JSON.stringify({a:'CAL',v:1,k:'S',sn:String(r.hdr.sn||'').trim(),t:String(r.hdr.tech||'').trim()}));q.make();svg=q.createSvgTag({cellSize:5,margin:4,scalable:true});}catch(e){svg='';}
+function calLaterDlg(){const r=S.rec;let svg='';try{const q=window.qrcode(0,'L');q.addData(JSON.stringify({a:'CAL',v:1,k:'S',sn:snD(r),t:String(r.hdr.tech||'').trim()}));q.make();svg=q.createSvgTag({cellSize:5,margin:4,scalable:true});}catch(e){svg='';}
  modal(`<h3 style="margin-top:0">Start the calibration later</h3><p class="muted">Take a picture of this code, or print it. In the <b>TFU &amp; Radar Calibration</b> form tap <b>Scan QR</b> and a calibration for ${esc(r.hdr.sn||'this truck')} opens with the serial number filled in.</p><div style="background:#fff;border:1px solid var(--line);padding:6px;max-width:260px;margin:0 auto">${svg}</div><button class="pri" onclick="closeModal()">Close</button>`);}
 function phOwner(id){const r=S.rec;
  if(id==='rmaf')return {get ph(){return r.rmaPh||(r.rmaPh=[])},set ph(v){r.rmaPh=v}};
@@ -13141,7 +13141,10 @@ function scanPhoto(cam){const i=document.createElement('input');i.type='file';i.
    if(!txt){bad++;continue;}if(!String(txt).startsWith('WIP1~')){await scanDone(txt);return;}scanDone(txt);}
   if(bad){const left=!!$('#scanMsg');if(left)msg((fs.length>1?`${bad} of ${fs.length} photos had no readable QR code. `:'No QR code found in that photo. ')+'Get closer so the code fills about half the picture, keep it flat and in focus, avoid glare, and try again. Codes already read are kept.');}};
  i.click();done();}
-async function scanDone(txt){if(String(txt).startsWith('WIP1~')){wipChunk(txt);return;}scanStop();const o=qrParse(txt);if(!o){const m=$('#scanMsg');if(m)m.textContent='That is not an LVSS QR code. Try again.';if($('#scanV')&&$('#scanV').style.display!=='none')scanDlg();return;}
+async function scanDone(txt){if(String(txt).startsWith('WIP1~')){wipChunk(txt);return;}scanStop();const o=qrParse(txt);let xo=null;try{xo=JSON.parse(txt)}catch(e){}
+ if(!o&&xo&&(xo.a==='CAL'||xo.a==='FLR'||xo.a==='ATP')){closeModal();const frm=xo.a==='CAL'?'calibration':xo.a==='FLR'?'floor test':'ATP inspection',csn=snShow(xo.sn);if(xo.rv!=='P'){await notice('The '+frm+(csn?' for '+csn:'')+' is '+(xo.rv==='F'?'FAILED':xo.rv==='I'?'INCOMPLETE':'missing a pass result (open that report and scan its latest QR code)')+'. Its information can\u2019t be used here until it passes.',{title:'Not passed'});return;}
+  if(!await ask('The '+frm+(csn?' for '+csn:'')+' passed. Start a new inspection with the serial number filled in?',{title:'Start from QR code?',ok:'Continue'}))return;newDlg();const t0=snType(csn);if(t0){S.newType=t0==='E'?'EMSCL':'LVSS';document.querySelectorAll('[data-act=ptype-new]').forEach(x=>x.classList.toggle('pri',x.dataset.v===S.newType));}const ne=$('#n-sn');if(ne)ne.value=t0?snDig(csn):csn;return;}
+ if(!o){const m=$('#scanMsg');if(m)m.textContent='That is not an LVSS QR code. Try again.';if($('#scanV')&&$('#scanV').style.display!=='none')scanDlg();return;}
  closeModal();if(o.k==='A'){const n=o.f.length;if(!await ask(`Start an audit of ${o.sn?lv(o.sn):'this platform'} (RMA ${o.rma||'-'}) with ${n} fault${n===1?'':'s'} from the tech's punch list?\n\nThe tech's photos are not in the QR code. Mark each fault Verified or Not acceptable, add your own photos and details, then submit the audit.`,{title:'Start audit from QR code?',ok:'Start audit'}))return;
   S.rec=auFromQr(o);S.photos={};S.view='rec';S.audit=true;S.open=-1;S.detail={};S.dirty=true;await save();render();return;}
  const n=o.s.length;if(!await ask(`Start a new inspection for ${o.sn?lv(o.sn):'LVSS (no serial)'} with ${n} serial number${n===1?'':'s'} filled in from the QR code?\n\nYou still take a fresh photo of each serial plate. Last-recorded version info is shown for reference.`,{title:'Start from QR code?',ok:'Start inspection'}))return;
@@ -13327,11 +13330,11 @@ function punchHtml(){const r=S.rec,P=punch(r),st=stats(r),IC=issueCounts(r);if(S
 
 /* ----- step 4: report ----- */
 const qrVerFields=r=>((r.tpl.versionInfo||{}).fields||[]).filter(f=>!f.noqr&&!/mileage|hours/i.test(f.label||''));
-function qrPayload(r){const i={};qrVerFields(r).forEach(f=>{const v=cl((r.ver||{})[f.key]||'').trim();if(v)i[f.key]=v;});return JSON.stringify({a:'LVSS',v:2,p:r.hdr.ptype==='EMSCL'?'E':'L',sn:cl(snD(r)||''),d:r.hdr.date||'',s:finalSerials(r).map(x=>[cl(x.n),cl(x.s)]),i});}
+function qrPayload(r){const i={};qrVerFields(r).forEach(f=>{const v=cl((r.ver||{})[f.key]||'').trim();if(v)i[f.key]=v;});return JSON.stringify({a:'LVSS',v:2,rv:r.verdict==='pass'?'P':r.verdict==='fail'?'F':'I',p:r.hdr.ptype==='EMSCL'?'E':'L',sn:cl(snD(r)||''),d:r.hdr.date||'',s:finalSerials(r).map(x=>[cl(x.n),cl(x.s)]),i});}
 function qrMake(r){const q=window.qrcode(0,'M');q.addData(qrPayload(r));q.make();return q;}
 /* ----- 2nd QR: punch list for the auditor ----- */
 const AUQ_MAX=2700;
-function auQrPayload(r){const P=auF(r);if(!P.length)return null;const base=sec=>({a:'LVSS',k:'A',v:1,p:r.hdr.ptype==='EMSCL'?'E':'L',sn:cl(snD(r)||''),rma:cl(r.hdr.rma||''),so:cl(r.hdr.so||''),ac:cl(r.hdr.acct||''),d:r.hdr.date||'',t:cl(r.hdr.tech||''),vd:r.verdict==='pass'?'p':'f'});
+function auQrPayload(r){const P=auF(r);if(!P.length)return null;const base=sec=>({a:'LVSS',k:'A',v:1,rv:r.verdict==='pass'?'P':r.verdict==='fail'?'F':'I',p:r.hdr.ptype==='EMSCL'?'E':'L',sn:cl(snD(r)||''),rma:cl(r.hdr.rma||''),so:cl(r.hdr.so||''),ac:cl(r.hdr.acct||''),d:r.hdr.date||'',t:cl(r.hdr.tech||''),vd:r.verdict==='pass'?'p':'f'});
  const T=(x,n)=>n?cl(x||'').trim().slice(0,n):'';
  const levels=[[90,90,60],[45,45,40],[25,0,0],[0,0,0]];let out=null;
  for(let li=0;li<levels.length;li++){const [nn,rn,wn]=levels[li];
@@ -13715,7 +13718,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  switch(a){
  case 'new':newDlg();break;
  case 'mclose':closeModal();break;
- case 'start':{const sn=$('#n-sn').value.trim(),te=$('#n-te').value.trim();if(!S.newType){const e=$('#ptNeed');if(e)e.style.display='block';break;}if(!sn){notice('Enter the platform serial number to start.',{title:'Serial number needed',fix:()=>{S.techDraft=te;newDlg();const e=$('#n-sn');e&&e.focus()},fixLabel:'Take me there'});break;}closeModal();S.rec=newRec({sn:S.newType==='EMSCL'?emS(sn):sn,tech:te,ptype:S.newType});techRemember(te);S.techDraft='';S.photos={};S.view='rec';S.open=-1;S.dirty=true;await save();render();break;}
+ case 'start':{const sn=$('#n-sn').value.trim(),te=$('#n-te').value.trim();if(!S.newType){const e=$('#ptNeed');if(e)e.style.display='block';break;}if(!sn){notice('Enter the platform serial number to start.',{title:'Serial number needed',fix:()=>{S.techDraft=te;newDlg();const e=$('#n-sn');e&&e.focus()},fixLabel:'Take me there'});break;}closeModal();S.rec=newRec({sn:/^\d+$/.test(sn)?snMake(S.newType==='EMSCL'?'E':'L',sn):S.newType==='EMSCL'?emS(sn):sn,tech:te,ptype:S.newType});techRemember(te);S.techDraft='';S.photos={};S.view='rec';S.open=-1;S.dirty=true;await save();render();break;}
  case 'scan':scanDlg();break;
  case 'copyfrom':{const L=S.recs||[];modal(`<h3>Copy from a previous report</h3>${L.length?'<p class="muted">Pick the report to copy into a new inspection.</p>'+L.map(x=>`<button data-act="copypick" data-rid="${x.id}" style="text-align:left">${esc(title(x))} – ${esc(fmtD(x.hdr.date))}${x.hdr.rma?' · RMA '+esc(x.hdr.rma):''}</button>`).join(''):'<p class="muted">No saved reports on this tablet yet. Use <b>Restore from backup file</b> to bring in reports from another tablet.</p>'}<button data-act="mclose">Cancel</button>`);break;}
  case 'copypick':{const x=(S.recs||[]).find(y=>y.id===b.dataset.rid);if(!x)break;const ck=(i,t,on)=>`<label style="display:flex;gap:10px;align-items:center;margin:8px 0;font-size:16px"><input type="checkbox" id="${i}" ${on?'checked':''} style="width:22px;height:22px"> ${t}</label>`;modal(`<h3>Copy ${esc(title(x))}</h3><p class="muted">Choose what to bring into the new inspection. Today's date is used for the new report. You can edit everything afterward.</p>${ck('cp-info','Header info, serial numbers and swaps',1)}${ck('cp-ver','Version info (not mileage, engine hours or idle hours – enter those fresh)',1)}${ck('cp-items','Issues, checklist results, notes and consumed parts',1)}${ck('cp-photos','Photos (serial plates, issues, HMI)',1)}<button class="pri" data-act="copygo" data-rid="${x.id}">Create new inspection</button><button data-act="mclose">Cancel</button>`);break;}
@@ -13753,7 +13756,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
   if(v==='EMSCL'){r.hdr.ptype=v;emGear().forEach(x=>{if(!r.gear.some(g=>g.em&&g.t===x.t))r.gear.push(x);});r.gear=gOrd(r.gear);}
   else{const has=r.gear.filter(g=>g.em&&((g.s||'').trim()||(g.ph||[]).length));if(has.length&&!await ask('Switching to LVSS removes the eMSC-L devices you already filled in ('+has.map(g=>g.t).join(', ')+'). Continue?',{title:'Switch to LVSS?',ok:'Switch to LVSS',danger:1}))break;
    r.gear.filter(g=>g.em).forEach(g=>(g.ph||[]).forEach(p=>dbDel('photos',p)));const emIds=r.gear.filter(g=>g.em).map(g=>g.id);r.swap.list=r.swap.list.filter(e=>!emIds.includes(e.dev));r.gear=r.gear.filter(g=>!g.em);r.hdr.ptype=v;}
-  r.hdr.sn=v==='EMSCL'?emS(r.hdr.sn):String(r.hdr.sn||'').replace(/^e?msc[-\s_]*l[-\s_]*(.*)$/i,(m,x)=>x?'LVSS-'+x:'LVSS');markDirty();{const y=window.scrollY;renderRec();window.scrollTo(0,y);}break;}
+  r.hdr.sn=/^\d+$/.test(snDig(r.hdr.sn))?snMake(v==='EMSCL'?'E':'L',r.hdr.sn):v==='EMSCL'?emS(r.hdr.sn):String(r.hdr.sn||'').replace(/^e?msc[-\s_]*l[-\s_]*(.*)$/i,(m,x)=>x?'LVSS-'+x:'LVSS');markDirty();{const y=window.scrollY;renderRec();window.scrollTo(0,y);}break;}
  case 'serok':{r.serConf=serSig(r);markDirty();closeModal();if(!(r.ci&&r.ci.a)){ciDlg();break;}go(4);break;}
  case 'cinone':{ciEnsure(r).a=true;markDirty();closeModal();go(4);break;}
  case 'ciyes':{const c=ciEnsure(r);c.a=true;if(!c.items.length)c.items.push({id:uid(),area:'',t:''});markDirty();modal(ciEditHtml());break;}
@@ -14368,6 +14371,19 @@ const techNames=()=>Array.isArray(S.settings.techNames)?S.settings.techNames:[];
 function techChips(){const L=techNames().slice(0,5);return L.length?`<div class="muted" style="font-size:13px;margin:6px 0 2px">Recent names on this tablet - tap to reuse:</div><div class="row" style="gap:6px;flex-wrap:wrap">${L.map((n,i)=>`<button type="button" data-act="tech-pick" data-i="${i}" style="width:auto">${esc(n)}</button>`).join('')}</div>`:''}
 function techRemember(n){n=(n||'').trim();if(!n)return;const L=[n,...techNames().filter(x=>x.toLowerCase()!==n.toLowerCase())].slice(0,5);S.settings.techNames=L;setting('techNames',L);}
 function techPick(i){const n=techNames()[i],el=$('#n-te');if(n&&el){el.value=n;S.techDraft=n;}}
+/* shared platform-serial helpers: LVSS-099 / eMSC-L 0099 (prefix and number stay editable) */
+var SN_RX=/^\s*(?:(lvss)|(e?msc[-\s_]*l?))[-\s_]*/i;
+function snType(s){var m=SN_RX.exec(String(s||''));return !m?'':(m[1]?'L':'E');}
+function snDig(s){return String(s||'').replace(SN_RX,'').trim();}
+function snMake(t,s){var d=snDig(s);if(/^\d+$/.test(d)){d=d.replace(/^0+(?=\d)/,'');d=('0000'+d).slice(-Math.max(d.length,t==='L'?3:4));}if(!d)return t==='L'?'LVSS-':'eMSC-L ';return (t==='L'?'LVSS-':'eMSC-L ')+d;}
+/* display form of a stored serial: typed prefix wins; bare digits get dflt (default eMSC-L) */
+function snShow(s,dflt){s=String(s||'').trim();if(!s)return '';var t=snType(s);if(t){var d=snDig(s);return (t==='L'?'LVSS-':'eMSC-L ')+d;}if(/^[A-Za-z]/.test(s)||dflt===null)return s;return (dflt==='L'?'LVSS-':'eMSC-L ')+s;}
+function snFile(s,dflt){s=snShow(s,dflt);var t=snType(s);var n=snDig(s);var p=t==='L'?'LVSS':t==='E'?'eMSC-L':'';var raw=(p?p+'_':'')+(p?n:s);return raw.replace(/[^A-Za-z0-9._-]+/g,'-').replace(/^-+|-+$/g,'')||'no-serial';}
+function snTg(id,val){var t=snType(val);return '<span class="sntg" style="display:inline-flex;gap:4px;margin:4px 0 0">'+[['L','LVSS'],['E','eMSC-L']].map(function(x){return '<button type="button" class="sntb'+(t===x[0]?' on':'')+'" data-sn="'+x[0]+'" data-for="'+id+'" style="min-height:36px;padding:4px 12px;border-radius:8px;border:1.5px solid #8a94a6;background:'+(t===x[0]?'#1d3b6a':'#fff')+';color:'+(t===x[0]?'#fff':'#333')+';font:600 14px system-ui,sans-serif;cursor:pointer">'+x[1]+'</button>';}).join('')+'</span>';}
+function snPaint(inp){var w=inp.parentNode&&inp.parentNode.querySelector&&document.querySelectorAll('.sntg button[data-for="'+inp.id+'"]');if(!w)return;var t=snType(inp.value);[].forEach.call(w,function(b){var on=b.getAttribute('data-sn')===t;b.classList.toggle('on',on);b.style.background=on?'#1d3b6a':'#fff';b.style.color=on?'#fff':'#333';});}
+document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('button[data-sn]');if(!b)return;e.preventDefault();e.stopPropagation();var inp=document.getElementById(b.getAttribute('data-for'));if(!inp||inp.disabled)return;inp.value=snMake(b.getAttribute('data-sn'),inp.value);snPaint(inp);inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));inp.focus();},true);
+document.addEventListener('input',function(e){var t=e.target;if(t&&t.hasAttribute&&t.hasAttribute('data-snin'))snPaint(t);},true);
+document.addEventListener('change',function(e){var t=e.target;if(t&&t.hasAttribute&&t.hasAttribute('data-snin')){var v=String(t.value||'').trim();if(/^\d+$/.test(v)){t.value=snMake('E',v);snPaint(t);}}},true);
 
 /* ===== remembered entries: tap a field to pick from what was typed there before ===== */
 const HX={map:null,box:null,el:null,loading:null,max:15};
@@ -14427,7 +14443,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'10/21/2026'};
+const CREDIT={by:'Ravi Ramsundar',built:'10/22/2026'};
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}

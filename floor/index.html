@@ -12992,9 +12992,9 @@ const DB={db:null,
  get(st,k){return DB.tx(st,'readonly',s=>s.get(k));},put(st,o){return DB.tx(st,'readwrite',s=>s.put(o));},del(st,k){return DB.tx(st,'readwrite',s=>s.delete(k));},all(st){return DB.tx(st,'readonly',s=>s.getAll());}};
 async function setting(k,v){if(arguments.length>1){S.settings[k]=v;await DB.put('settings',{k,v});return v;}const o=await DB.get('settings',k);return o?o.v:undefined;}
 /* serial helpers: always "eMSC-L " + space + number */
-const snNum=s=>String(s||'').replace(/^\s*e?msc[\s-]*l?[\s-]*/i,'').trim();
-const snFull=s=>{const n=snNum(s);return n?PFX+n:PFX;};
-const recName=r=>{const n=snNum(r.hdr.sn);return n?PFX+n:'(no S/N)';};
+const snNum=s=>snDig(s);
+const snFull=s=>{s=String(s||'').trim();return s?snShow(s):PFX;};
+const recName=r=>{const n=snNum(r.hdr.sn);return n?snShow(r.hdr.sn):'(no S/N)';};
 const initialsOf=n=>String(n||'').trim().split(/\s+/).filter(Boolean).map(w=>w[0].toUpperCase()).slice(0,3).join('');
 function newRec(sn,tech,kind){return {id:'f-'+uid(),created:Date.now(),updated:Date.now(),archived:false,step:0,
  hdr:{sn:snFull(sn),old:'',kind:kind||'new',date:today(),tech:tech||''},f:{},ck:{},done:{notes:'',complete:false,incPh:''},ph:[]};}
@@ -13021,6 +13021,19 @@ const techNames=()=>Array.isArray(S.settings.techNames)?S.settings.techNames:[];
 function techChips(){const L=techNames().slice(0,5);return L.length?`<div class="muted" style="font-size:13px;margin:6px 0 2px">Recent names on this tablet - tap to reuse:</div><div class="row" style="gap:6px;flex-wrap:wrap">${L.map((n,i)=>`<button type="button" data-act="tech-pick" data-i="${i}" style="width:auto">${esc(n)}</button>`).join('')}</div>`:''}
 function techRemember(n){n=(n||'').trim();if(!n)return;const L=[n,...techNames().filter(x=>x.toLowerCase()!==n.toLowerCase())].slice(0,5);S.settings.techNames=L;setting('techNames',L);}
 function techPick(i){const n=techNames()[i],el=$('#n-te');if(n&&el){el.value=n;S.techDraft=n;}}
+/* shared platform-serial helpers: LVSS-099 / eMSC-L 0099 (prefix and number stay editable) */
+var SN_RX=/^\s*(?:(lvss)|(e?msc[-\s_]*l?))[-\s_]*/i;
+function snType(s){var m=SN_RX.exec(String(s||''));return !m?'':(m[1]?'L':'E');}
+function snDig(s){return String(s||'').replace(SN_RX,'').trim();}
+function snMake(t,s){var d=snDig(s);if(/^\d+$/.test(d)){d=d.replace(/^0+(?=\d)/,'');d=('0000'+d).slice(-Math.max(d.length,t==='L'?3:4));}if(!d)return t==='L'?'LVSS-':'eMSC-L ';return (t==='L'?'LVSS-':'eMSC-L ')+d;}
+/* display form of a stored serial: typed prefix wins; bare digits get dflt (default eMSC-L) */
+function snShow(s,dflt){s=String(s||'').trim();if(!s)return '';var t=snType(s);if(t){var d=snDig(s);return (t==='L'?'LVSS-':'eMSC-L ')+d;}if(/^[A-Za-z]/.test(s)||dflt===null)return s;return (dflt==='L'?'LVSS-':'eMSC-L ')+s;}
+function snFile(s,dflt){s=snShow(s,dflt);var t=snType(s);var n=snDig(s);var p=t==='L'?'LVSS':t==='E'?'eMSC-L':'';var raw=(p?p+'_':'')+(p?n:s);return raw.replace(/[^A-Za-z0-9._-]+/g,'-').replace(/^-+|-+$/g,'')||'no-serial';}
+function snTg(id,val){var t=snType(val);return '<span class="sntg" style="display:inline-flex;gap:4px;margin:4px 0 0">'+[['L','LVSS'],['E','eMSC-L']].map(function(x){return '<button type="button" class="sntb'+(t===x[0]?' on':'')+'" data-sn="'+x[0]+'" data-for="'+id+'" style="min-height:36px;padding:4px 12px;border-radius:8px;border:1.5px solid #8a94a6;background:'+(t===x[0]?'#1d3b6a':'#fff')+';color:'+(t===x[0]?'#fff':'#333')+';font:600 14px system-ui,sans-serif;cursor:pointer">'+x[1]+'</button>';}).join('')+'</span>';}
+function snPaint(inp){var w=inp.parentNode&&inp.parentNode.querySelector&&document.querySelectorAll('.sntg button[data-for="'+inp.id+'"]');if(!w)return;var t=snType(inp.value);[].forEach.call(w,function(b){var on=b.getAttribute('data-sn')===t;b.classList.toggle('on',on);b.style.background=on?'#1d3b6a':'#fff';b.style.color=on?'#fff':'#333';});}
+document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('button[data-sn]');if(!b)return;e.preventDefault();e.stopPropagation();var inp=document.getElementById(b.getAttribute('data-for'));if(!inp||inp.disabled)return;inp.value=snMake(b.getAttribute('data-sn'),inp.value);snPaint(inp);inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));inp.focus();},true);
+document.addEventListener('input',function(e){var t=e.target;if(t&&t.hasAttribute&&t.hasAttribute('data-snin'))snPaint(t);},true);
+document.addEventListener('change',function(e){var t=e.target;if(t&&t.hasAttribute&&t.hasAttribute('data-snin')){var v=String(t.value||'').trim();if(/^\d+$/.test(v)){t.value=snMake('E',v);snPaint(t);}}},true);
 const STEPS=['Truck details','Checklist','Complete'];
 const bar=(sub,right)=>`<div class="top"><div class="bar"><img src="${LOGO2}" alt="Teledyne FLIR"><div class="brand">${esc(TPL.title)}<small>${esc(sub||TPL.subtitle)}</small></div>${right||''}</div></div>`;
 function homeHtml(){const act=S.recs.filter(r=>!r.archived);
@@ -13034,8 +13047,8 @@ function stepDone(r,i){if(i===0)return !!snNum(r.hdr.sn)&&(r.hdr.kind!=='up'||!!
 function serHtml(r){const up=r.hdr.kind==='up';
  return `<div class="card"><h2>Truck details</h2>
  <label class="f">What is this?</label><div class="seg2"><button data-act="kind" data-v="new" class="${up?'':'on'}">New build</button><button data-act="kind" data-v="up" class="${up?'on':''}">Upfit</button></div>
- <label class="f">eMSC-L serial number (required)</label><input id="n-sn" data-b="hdr.sn" data-nohist value="${esc(r.hdr.sn)}" autocomplete="off" autocapitalize="off" inputmode="text">
- ${up?`<label class="f">Old serial number (required for an upfit)</label><input id="n-old" data-b="hdr.old" value="${esc(r.hdr.old)}" placeholder="Serial number of the old unit" autocomplete="off">`:''}
+ <label class="f">Platform serial number (required)</label>${snTg('n-sn',r.hdr.sn)}<input id="n-sn" data-snin="1" data-b="hdr.sn" data-nohist value="${esc(r.hdr.sn)}" autocomplete="off" autocapitalize="off" inputmode="text">
+ ${up?`<label class="f">Old serial number (required for an upfit)</label>${snTg('n-old',r.hdr.old)}<input id="n-old" data-snin="1" data-b="hdr.old" value="${esc(r.hdr.old)}" placeholder="Serial number of the old unit" autocomplete="off">`:''}
  <div class="grid"><div><label class="f">Completed by</label><input id="n-te" data-b="hdr.tech" value="${esc(r.hdr.tech)}" placeholder="Technician name" autocomplete="off"></div><div><label class="f">Date</label><input type="date" data-b="hdr.date" value="${esc(r.hdr.date)}"></div></div>${techChips()}</div>`;}
 const phCount=(r,k)=>(r.ph||[]).filter(p=>p.k===k).length;
 function ckRow(r,i){const c=ckOf(r,i.k),s=c.s||'',n=phCount(r,i.k);
@@ -13050,7 +13063,7 @@ function ckHtml(r){return `<div class="card"><h2>Verify wiring and comms for all
  <div class="card" style="padding:4px 10px">${TPL.items.map(i=>ckRow(r,i)).join('')}</div>`;}
 function updCk(k){const r=S.rec,i=TPL.items.find(x=>x.k===k),el=document.getElementById('ck-'+k);if(el&&i)el.outerHTML=ckRow(r,i);const p=$('#prog');if(p)p.innerHTML=progHtml(r);}
 function sumHtml(r){const c=ckCount(r),o=overall(r);
- return `<table class="t"><tr><th>Item</th><th>Status</th></tr><tr><td>eMSC-L S/N</td><td>${esc(recName(r))} (${r.hdr.kind==='up'?'upfit, old S/N '+esc(r.hdr.old||'-'):'new build'})</td></tr><tr><td>Checklist</td><td>${c.done} of ${c.total} answered - ${c.pass} pass, ${c.fail} fail, ${c.na} N/A${c.left?` <b style="color:var(--fail)">- ${c.left} left</b>`:''}</td></tr><tr><td>Result</td><td><span class="res ${o==='PASS'?'p':'f'}">${o}</span>${c.fail&&o==='PASS'?' <span class="muted">(all failures repaired and retested)</span>':''}</td></tr></table>`;}
+ return `<table class="t"><tr><th>Item</th><th>Status</th></tr><tr><td>S/N</td><td>${esc(recName(r))} (${r.hdr.kind==='up'?'upfit, old S/N '+esc(r.hdr.old||'-'):'new build'})</td></tr><tr><td>Checklist</td><td>${c.done} of ${c.total} answered - ${c.pass} pass, ${c.fail} fail, ${c.na} N/A${c.left?` <b style="color:var(--fail)">- ${c.left} left</b>`:''}</td></tr><tr><td>Result</td><td><span class="res ${o==='PASS'?'p':'f'}">${o}</span>${c.fail&&o==='PASS'?' <span class="muted">(all failures repaired and retested)</span>':''}</td></tr></table>`;}
 const subj=r=>'Floor Test - '+recName(r)+' - '+(r.done.partial&&overall(r)!=='FAIL'?'PARTIAL ('+ckCount(r).done+' of '+ckCount(r).total+')':overall(r));
 function doneHtml(r){const d=r.done;
  return `<div class="card"><h2>Completion</h2><div id="sumBox">${sumHtml(r)}</div><label class="f" style="margin-top:12px">Notes</label><textarea data-b="done.notes" rows="5" placeholder="Numbered notes, as on the sheet">${esc(d.notes)}</textarea>
@@ -13145,7 +13158,7 @@ function floorPdf(r){const d=pdfNew();let y;const ens=n=>{if(y+n>BOT){d.addPage(
  const up=r.hdr.kind==='up';
  d.setFont('helvetica','bold');d.setFontSize(10.5);d.setTextColor(0);
  const box=(a,b,x,w)=>{d.setDrawColor(150);d.setLineWidth(.6);d.rect(x,y,w,26);d.setFont('helvetica','normal');d.setFontSize(6.8);d.setTextColor(110);d.text(a,x+4,y+8);d.setFontSize(10.5);d.setTextColor(0);d.text(cl(b),x+4,y+20);};
- box('eMSC-L S/N',recName(r),MX,up?170:270);if(up)box('Old S/N (upfit)',r.hdr.old||'-',MX+170,150);else box('Type','New build',MX+270,120);
+ box('S/N',recName(r),MX,up?170:270);if(up)box('Old S/N (upfit)',r.hdr.old||'-',MX+170,150);else box('Type','New build',MX+270,120);
  box('Date',fmtD(r.hdr.date),MX+(up?320:390),90);box('Completed by',r.hdr.tech||'-',MX+(up?410:480),up?130:60);y+=26;
  if(!up){d.setFontSize(7);}
  y+=10;const c0=44,cw=CW-c0-110,rw=110;
@@ -13169,7 +13182,7 @@ function floorPdf(r){const d=pdfNew();let y;const ens=n=>{if(y+n>BOT){d.addPage(
 const fileOf=r=>recName(r).replace(/[^\w\-]+/g,'_');
 function floorPdfFile(r){const d=floorPdf(r);return {blob:d.output('blob'),name:'Floor_Test_'+fileOf(r)+'.pdf'};}
 /* ---- QR (pause) ---- */
-function floorPayload(r,notes){const ck={};Object.keys(r.ck||{}).forEach(k=>{const c=r.ck[k];ck[k]={s:c.s,rp:c.rep,sv:c.sev,rt:c.rt};});const o={a:'FLR',v:1,k:'P',id:r.id,u:r.updated,sn:r.hdr.sn,ol:r.hdr.old,kd:r.hdr.kind,d:r.hdr.date,t:r.hdr.tech,st:r.step||0,ck:ck,dn:{notes:r.done.notes,name:r.done.name,date:r.done.date}};if(notes)o.no=notes;return JSON.stringify(strip(o));}
+function floorPayload(r,notes){const ck={};Object.keys(r.ck||{}).forEach(k=>{const c=r.ck[k];ck[k]={s:c.s,rp:c.rep,sv:c.sev,rt:c.rt};});const o={a:'FLR',v:1,k:'P',rv:r.done.complete&&!r.done.partial?(overall(r)==='PASS'?'P':overall(r)==='FAIL'?'F':'I'):(overall(r)==='FAIL'?'F':'I'),id:r.id,u:r.updated,sn:r.hdr.sn,ol:r.hdr.old,kd:r.hdr.kind,d:r.hdr.date,t:r.hdr.tech,st:r.step||0,ck:ck,dn:{notes:r.done.notes,name:r.done.name,date:r.done.date}};if(notes)o.no=notes;return JSON.stringify(strip(o));}
 function sheetPdf(r,notes){const d=pdfNew();pdfHead(d,'Floor test - carry-over sheet');let y=92;d.setFont('helvetica','bold');d.setFontSize(13);d.setTextColor(0);d.text(cl(recName(r)),MX,y);y+=16;const c=ckCount(r);d.setFont('helvetica','normal');d.setFontSize(10);d.setTextColor(60);d.text(cl('Paused at: '+STEPS[r.step||0]+'   |   '+c.done+'/'+c.total+' answered   |   '+fmtD(r.hdr.date)+(r.hdr.tech?'   |   '+r.hdr.tech:'')),MX,y);y+=14;
  d.text(wrap(d,"To continue: open the Floor Test form on any tablet, tap Scan paused-test QR, and scan the code below.",CW),MX,y);y+=26;
  d.addImage(qrPng(floorPayload(r,notes),700),'PNG',MX+(CW-330)/2,y,330,330);y+=342;
@@ -13185,6 +13198,10 @@ async function emailReport(){const r=S.rec,f=floorPdfFile(r),c=ckCount(r),sj=sub
  const fl=new File([f.blob],f.name,{type:'application/pdf'}),z=(r.done.incPh==='1')?photoZipFile(r):null,fls=[fl].concat(z?[new File([z.blob],z.name,{type:'application/zip'})]:[]);try{if(navigator.canShare&&navigator.canShare({files:fls})){await navigator.share({files:fls,title:sj,text:body});return;}}catch(e){if(e&&e.name==='AbortError')return;}
  await notice('This browser cannot attach the PDF automatically, so the email will open without it. Use "Save PDF" and attach the file from Downloads.',{title:'PDF not attached'});location.href='mailto:'+WIP_MAIL+'?subject='+encodeURIComponent(sj)+'&body='+encodeURIComponent(body);}
 async function scanDone(txt){scanStop();let o=null;try{o=JSON.parse(txt);}catch(e){}
+ if(o&&(o.a==='ATP'||o.a==='LVSS'||o.a==='CAL')){closeModal();const frm=o.a==='ATP'?'ATP inspection':o.a==='LVSS'?'post-repair inspection':'calibration',sn0=snShow(o.sn);
+  if(o.rv!=='P'){await notice(o.rv==='F'?'The '+frm+(sn0?' for '+sn0:'')+' is FAILED. Its information can\u2019t be used until it passes.':o.rv==='I'?'The '+frm+(sn0?' for '+sn0:'')+' is INCOMPLETE. Its information can\u2019t be used until it is finished and passes.':'This QR code has no pass result in it. Open that report and scan the QR code from its latest version.',{title:'Not passed'});return;}
+  if(!await ask('The '+frm+(sn0?' for '+sn0:'')+' passed. Start a floor test with the serial number filled in?',{title:'Start from QR code?',ok:'Start floor test'}))return;
+  const r0=newRec(sn0,'');S.rec=r0;S.step=0;S.dirty=true;await save();S.view='rec';render();return;}
  if(!(o&&o.a==='FLR'&&o.k==='P')){const m=$('#scanMsg');if(m)m.textContent='That is not a paused floor-test QR code. Try again.';if($('#scanV')&&$('#scanV').style.display!=='none')scanDlg();return;}
  closeModal();await fromQr(o);}
 async function openRec(x){S.rec=x;S.step=x.step||0;S.view='rec';render();}
@@ -13196,7 +13213,7 @@ async function fromQr(o){
 /* ---- actions ---- */
 function goStep(i){S.step=Math.max(0,Math.min(2,i));S.rec.step=S.step;markDirty();render();}
 document.addEventListener('input',e=>{const t=e.target;if(t.dataset&&t.dataset.ph&&S.rec){const p=(S.rec.ph||[]).find(x=>x.id===t.dataset.ph);if(p){p.cap=t.value;markDirty();}return;}
- if(t.dataset&&t.dataset.b&&S.rec&&S.view==='rec'){let v=t.value;if(t.dataset.b==='hdr.sn'){v=snFull(v);if(t.value!==v){const keepEnd=true;t.value=v;try{t.setSelectionRange(v.length,v.length);}catch(x){}}}
+ if(t.dataset&&t.dataset.b&&S.rec&&S.view==='rec'){let v=t.value;
   setp(S.rec,t.dataset.b,v);markDirty();if(/^hdr\./.test(t.dataset.b)){refreshSum();if(t.dataset.b==='hdr.sn'){const x=document.querySelector('.brand small');if(x)x.textContent=recName(S.rec);}}}});
 document.addEventListener('change',e=>{const t=e.target,r=S.rec;if(!(t.dataset&&t.dataset.b&&r))return;if(t.dataset.b==='hdr.tech')techRemember(t.value);});
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,r=S.rec,id=b.dataset.id;
@@ -13226,7 +13243,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'phdel':{if(await ask('Remove this picture?',{title:'Remove picture?',ok:'Remove',danger:1})){r.ph=(r.ph||[]).filter(p=>p.id!==id);markDirty();phRefresh();}break;}
  case 'phinc':{r.done.incPh=b.dataset.v;markDirty();const bx=$('#phBox');if(bx)bx.innerHTML=photosInner(r);if(r.done.complete)render();break;}
  case 'phzip':{const z=photoZipFile(r);if(z)dlBlob(z.blob,z.name);break;}
- case 'finish':case 'finishpart':{const part=a==='finishpart';const m=[];if(!snNum(r.hdr.sn))m.push('eMSC-L serial number (Truck details)');if(r.hdr.kind==='up'&&!snNum(r.hdr.old))m.push('Old serial number (upfit)');if(!String(r.hdr.tech||'').trim())m.push('Completed by (Truck details)');if(!String(r.done.name||r.hdr.tech||'').trim())m.push('Print name');if(!r.done.sig)m.push('Technician signature');const c=ckCount(r);if(c.left&&!part)m.push(c.left+' checklist line'+(c.left===1?'':'s')+' not answered (Checklist page)');
+ case 'finish':case 'finishpart':{const part=a==='finishpart';const m=[];if(!snNum(r.hdr.sn))m.push('Platform serial number (Truck details)');if(r.hdr.kind==='up'&&!snNum(r.hdr.old))m.push('Old serial number (upfit)');if(!String(r.hdr.tech||'').trim())m.push('Completed by (Truck details)');if(!String(r.done.name||r.hdr.tech||'').trim())m.push('Print name');if(!r.done.sig)m.push('Technician signature');const c=ckCount(r);if(c.left&&!part)m.push(c.left+' checklist line'+(c.left===1?'':'s')+' not answered (Checklist page)');
   const nd=TPL.items.filter(i=>ckOf(r,i.k).s==='f'&&!String(ckOf(r,i.k).rep||'').trim());if(nd.length)m.push('Failure / repair details for '+nd.map(i=>i.n).join(', '));
   const n=$('#finNeed');if(m.length){n.innerHTML=`<div class="err"><b>Still needed:</b><ul style="margin:6px 0 0 18px;padding:0">${m.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;break;}
   if((r.ph||[]).length&&r.done.incPh===''){const inc=await ask('Include the '+r.ph.length+' picture'+(r.ph.length===1?'':'s')+' with this report? They are never put in the PDF - they are sent as a separate ZIP.',{title:'Include pictures?',ok:'Include (ZIP)',no:'Do not include'});r.done.incPh=inc?'1':'0';}
@@ -13245,7 +13262,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)save();});
 function curTpl(){return TPL}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'10/21/2026'};
+const CREDIT={by:'Ravi Ramsundar',built:'10/22/2026'};
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}

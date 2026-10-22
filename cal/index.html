@@ -12967,11 +12967,11 @@ async function setting(k,v){if(arguments.length>1){S.settings[k]=v;await DB.put(
 /* ---- template (admin edits are stored as an override) ---- */
 function mergeTpl(base,ov){if(!ov||typeof ov!=='object')return clone(base);const out=clone(base);Object.keys(ov).forEach(k=>{if(ov[k]&&typeof ov[k]==='object'&&!Array.isArray(ov[k])&&out[k]&&typeof out[k]==='object'&&!Array.isArray(out[k]))out[k]=mergeTpl(out[k],ov[k]);else out[k]=clone(ov[k]);});return out;}
 /* ---- records ---- */
-const recName=r=>((r.hdr.sn||'').trim()||'(no serial)')+((r.n||1)>1?'-'+r.n:'');
+const recName=r=>(snShow(r.hdr.sn)||'(no serial)')+((r.n||1)>1?'-'+r.n:'');
 function newRec(sn,tech,carry){const r={id:'c-'+uid(),n:1,created:Date.now(),updated:Date.now(),archived:false,step:0,
- hdr:{sn:sn||'',date:today(),tech:tech||''},setup:{v:{},cf:{}},roll:{},pitch:{},cam:{live:'',val:''},rad:{val:''},done:{notes:'',name:'',date:'',sig:'',ov:'',complete:false}};
+ hdr:{sn:snShow(sn),date:today(),tech:tech||''},setup:{v:{},cf:{}},roll:{},pitch:{},cam:{live:'',val:''},rad:{val:''},done:{notes:'',name:'',date:'',sig:'',ov:'',complete:false}};
  if(carry)Object.assign(r,carry);return r;}
-function activeFor(sn){return S.recs.find(x=>!x.archived&&String(x.hdr.sn||'').trim().toLowerCase()===String(sn||'').trim().toLowerCase());}
+function activeFor(sn){return S.recs.find(x=>!x.archived&&snShow(x.hdr.sn).toLowerCase()===snShow(sn).toLowerCase());}
 function markDirty(){S.dirty=true;if(S.rec)S.rec.updated=Date.now();paintSave();clearTimeout(S.saveTimer);S.saveTimer=setTimeout(save,700);}
 async function save(){const rec=S.rec;if(!rec||!S.dirty)return;S.dirty=false;clearTimeout(S.saveTimer);await DB.put('recs',clone(rec));const i=S.recs.findIndex(x=>x.id===rec.id);if(i<0)S.recs.push(rec);else S.recs[i]=rec;paintSave();}
 function paintSave(){const e=$('#saveInd');if(e)e.textContent=S.dirty?'Saving…':'✓ Saved';}
@@ -13004,6 +13004,19 @@ const techNames=()=>Array.isArray(S.settings.techNames)?S.settings.techNames:[];
 function techChips(){const L=techNames().slice(0,5);return L.length?`<div class="muted" style="font-size:13px;margin:6px 0 2px">Recent names on this tablet - tap to reuse:</div><div class="row" style="gap:6px;flex-wrap:wrap">${L.map((n,i)=>`<button type="button" data-act="tech-pick" data-i="${i}" style="width:auto">${esc(n)}</button>`).join('')}</div>`:''}
 function techRemember(n){n=(n||'').trim();if(!n)return;const L=[n,...techNames().filter(x=>x.toLowerCase()!==n.toLowerCase())].slice(0,5);S.settings.techNames=L;setting('techNames',L);}
 function techPick(i){const n=techNames()[i],el=$('#n-te');if(n&&el){el.value=n;S.techDraft=n;}}
+/* shared platform-serial helpers: LVSS-099 / eMSC-L 0099 (prefix and number stay editable) */
+var SN_RX=/^\s*(?:(lvss)|(e?msc[-\s_]*l?))[-\s_]*/i;
+function snType(s){var m=SN_RX.exec(String(s||''));return !m?'':(m[1]?'L':'E');}
+function snDig(s){return String(s||'').replace(SN_RX,'').trim();}
+function snMake(t,s){var d=snDig(s);if(/^\d+$/.test(d)){d=d.replace(/^0+(?=\d)/,'');d=('0000'+d).slice(-Math.max(d.length,t==='L'?3:4));}if(!d)return t==='L'?'LVSS-':'eMSC-L ';return (t==='L'?'LVSS-':'eMSC-L ')+d;}
+/* display form of a stored serial: typed prefix wins; bare digits get dflt (default eMSC-L) */
+function snShow(s,dflt){s=String(s||'').trim();if(!s)return '';var t=snType(s);if(t){var d=snDig(s);return (t==='L'?'LVSS-':'eMSC-L ')+d;}if(/^[A-Za-z]/.test(s)||dflt===null)return s;return (dflt==='L'?'LVSS-':'eMSC-L ')+s;}
+function snFile(s,dflt){s=snShow(s,dflt);var t=snType(s);var n=snDig(s);var p=t==='L'?'LVSS':t==='E'?'eMSC-L':'';var raw=(p?p+'_':'')+(p?n:s);return raw.replace(/[^A-Za-z0-9._-]+/g,'-').replace(/^-+|-+$/g,'')||'no-serial';}
+function snTg(id,val){var t=snType(val);return '<span class="sntg" style="display:inline-flex;gap:4px;margin:4px 0 0">'+[['L','LVSS'],['E','eMSC-L']].map(function(x){return '<button type="button" class="sntb'+(t===x[0]?' on':'')+'" data-sn="'+x[0]+'" data-for="'+id+'" style="min-height:36px;padding:4px 12px;border-radius:8px;border:1.5px solid #8a94a6;background:'+(t===x[0]?'#1d3b6a':'#fff')+';color:'+(t===x[0]?'#fff':'#333')+';font:600 14px system-ui,sans-serif;cursor:pointer">'+x[1]+'</button>';}).join('')+'</span>';}
+function snPaint(inp){var w=inp.parentNode&&inp.parentNode.querySelector&&document.querySelectorAll('.sntg button[data-for="'+inp.id+'"]');if(!w)return;var t=snType(inp.value);[].forEach.call(w,function(b){var on=b.getAttribute('data-sn')===t;b.classList.toggle('on',on);b.style.background=on?'#1d3b6a':'#fff';b.style.color=on?'#fff':'#333';});}
+document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('button[data-sn]');if(!b)return;e.preventDefault();e.stopPropagation();var inp=document.getElementById(b.getAttribute('data-for'));if(!inp||inp.disabled)return;inp.value=snMake(b.getAttribute('data-sn'),inp.value);snPaint(inp);inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));inp.focus();},true);
+document.addEventListener('input',function(e){var t=e.target;if(t&&t.hasAttribute&&t.hasAttribute('data-snin'))snPaint(t);},true);
+document.addEventListener('change',function(e){var t=e.target;if(t&&t.hasAttribute&&t.hasAttribute('data-snin')){var v=String(t.value||'').trim();if(/^\d+$/.test(v)){t.value=snMake('E',v);snPaint(t);}}},true);
 /* ---- UI ---- */
 const STEPS=['Setup','Roll','Pitch','Camera Az','Radar Az','Complete'];
 const T=k=>TPL.texts[k]||'';
@@ -13020,7 +13033,7 @@ function stepDone(r,i){if(i===0)return !!(r.hdr.sn||'').trim()&&setupIssues(r).l
 const mapBtn=k=>`<button data-act="img" data-k="${k}" style="margin:6px 0">🗺 Open reference picture (full screen)</button>`;
 const nIn=(p,v,ph)=>`<input data-b="${p}" data-nohist inputmode="decimal" value="${esc(v)}" placeholder="${esc(ph||'0.00')}" style="text-align:right;font-size:18px">`;
 function setupHtml(r){const iss=setupIssues(r);
- return `<div class="card"><h2>${STEPS[0]}</h2><div class="grid"><div><label class="f">Platform serial number (required)</label><input id="n-sn" data-b="hdr.sn" value="${esc(r.hdr.sn)}" placeholder="e.g. 0096"></div><div><label class="f">Date</label><input type="date" data-b="hdr.date" value="${esc(r.hdr.date)}"></div><div><label class="f">Technician</label><input id="n-te" data-b="hdr.tech" value="${esc(r.hdr.tech)}" placeholder="Technician name">${techChips()}</div></div></div>
+ return `<div class="card"><h2>${STEPS[0]}</h2><div class="grid"><div><label class="f">Platform serial number (required)</label>${snTg('n-sn',r.hdr.sn)}<input id="n-sn" data-snin="1" data-b="hdr.sn" value="${esc(r.hdr.sn)}" placeholder="e.g. eMSC-L 0096"></div><div><label class="f">Date</label><input type="date" data-b="hdr.date" value="${esc(r.hdr.date)}"></div><div><label class="f">Technician</label><input id="n-te" data-b="hdr.tech" value="${esc(r.hdr.tech)}" placeholder="Technician name">${techChips()}</div></div></div>
  <div class="card"><h3>Software versions</h3><p>${esc(T('setup_intro'))}</p><table class="t"><tr><th>Component</th><th>Minimum</th><th>Installed (record)</th><th></th></tr>${TPL.versions.map(v=>{const s=verState(r,v);return `<tr><td>${esc(v.label)}</td><td>${esc(v.min)}</td><td>${v.k==='dp'?`<button data-act="dpok" class="${r.setup.v.dp?'pri':''}" style="min-height:44px">${r.setup.v.dp?'☑':'☐'} Confirm driver pack ${esc(v.min)} or newer is installed</button>`:`<input data-b="setup.v.${v.k}" value="${esc(r.setup.v[v.k]||'')}" placeholder="Installed version">`}</td><td id="vs-${v.k}">${vsHtml(r,v,s)}</td></tr>`;}).join('')}</table><p class="muted" style="margin:6px 0 0">PMU and HMI versions recorded on the revisions page are filled in for you. Confirm them, or edit the version if it changed. The driver pack only needs the box ticked.</p>
  ${iss.filter(x=>/below/.test(x)).length?'<div class="warn"><b>Below the minimum.</b> The procedure needs the minimum version. Update the software, or confirm below to continue anyway.</div>':''}</div>
  <div class="card"><h3>Inclinometer and configuration</h3>${paras(T('setup_cmds')).map((p,i)=>/^TxS2/.test(p)?`<div class="cmd" style="margin:6px 0">${esc(p)}</div>`:`<p>${esc(p)}</p>`).join('')}<p>${esc(T('setup_park'))}</p><p>${esc(T('setup_tags'))}</p><img class="mapb" data-act="img" data-k="park" src="${IMG.park}" alt="Depot parking map">${mapBtn('park')}</div>`;}
@@ -13073,14 +13086,14 @@ const cl=s=>String(s==null?'':s).replace(/[‘’]/g,"'").replace(/[“”]/g,'"
 const hx=(d,k,h)=>{const n=parseInt(h.slice(1),16);d[k](n>>16,(n>>8)&255,n&255)};
 const pdfNew=()=>new window.jspdf.jsPDF({unit:'pt',format:'letter',compress:true});
 const wrap=(d,t,w)=>d.splitTextToSize(cl(t),w);
-function footers(d,r){const n=d.getNumberOfPages();for(let i=1;i<=n;i++){d.setPage(i);creditLine(d,TPL.revision);d.setFont('helvetica','normal');d.setFontSize(7.5);d.setTextColor(120);d.text(cl('SN '+(r.hdr.sn||'-')+'  |  '+TPL.title),PW/2,770,{align:'center'});d.text('Page '+i+' of '+n,PW-MX,770,{align:'right'});}}
+function footers(d,r){const n=d.getNumberOfPages();for(let i=1;i<=n;i++){d.setPage(i);creditLine(d,TPL.revision);d.setFont('helvetica','normal');d.setFontSize(7.5);d.setTextColor(120);d.text(cl('SN '+(snShow(r.hdr.sn)||'-')+'  |  '+TPL.title),PW/2,770,{align:'center'});d.text('Page '+i+' of '+n,PW-MX,770,{align:'right'});}}
 function pdfHead(d,sub){d.addImage(LOGO2,'JPEG',MX,28,120,27);d.setFont('helvetica','italic');d.setFontSize(18);d.setTextColor(30);d.text(cl(sub||TPL.title),MX+140,52);hx(d,'setFillColor','#5b8dd6');d.rect(MX,62,CW,8,'F');}
 function calPdf(r){const d=pdfNew();let y;const ens=n=>{if(y+n>BOT){d.addPage();y=TOP;}};
  pdfHead(d,TPL.title);d.setFont('helvetica','normal');d.setFontSize(10);d.setTextColor(90);d.text(cl(TPL.subtitle),MX+140,66+0,{baseline:'top'});y=88;
  const cell=(x,yy,w,hh,lab,val)=>{d.setDrawColor(170);d.setLineWidth(.6);d.rect(x,yy,w,hh);d.setFont('helvetica','normal');d.setFontSize(6.8);d.setTextColor(110);d.text(cl(lab),x+4,yy+8);d.setFontSize(9.5);d.setTextColor(0);d.text(wrap(d,val,w-8),x+4,yy+19);};
  const bar=t=>{y+=8;ens(40);hx(d,'setFillColor','#5b8dd6');d.rect(MX,y,CW,16,'F');d.setFont('helvetica','bold');d.setFontSize(10.5);d.setTextColor(255);d.text(cl(t),MX+6,y+11.5);y+=16;};
  const row2=(a,b,bold)=>{d.setFont('helvetica',bold?'bold':'normal');d.setFontSize(9.5);const l1=wrap(d,a,330),l2=wrap(d,b,190),hh=Math.max(18,6+Math.max(l1.length,l2.length)*11);ens(hh);d.setDrawColor(170);d.setLineWidth(.6);d.rect(MX,y,CW,hh);d.line(MX+340,y,MX+340,y+hh);d.setTextColor(0);d.text(l1,MX+6,y+12);d.text(l2,MX+346,y+12);y+=hh;};
- const w3=CW/3;[['Truck Serial Number',r.hdr.sn],['Date',fmtD(r.hdr.date)],['Technician',r.hdr.tech]].forEach((p,j)=>cell(MX+j*w3,y,w3,28,p[0],p[1]||''));y+=28;
+ const w3=CW/3;[['Truck Serial Number',snShow(r.hdr.sn)],['Date',fmtD(r.hdr.date)],['Technician',r.hdr.tech]].forEach((p,j)=>cell(MX+j*w3,y,w3,28,p[0],p[1]||''));y+=28;
  bar('1  Setup - software versions');row2('Component  (minimum required)','Installed version',true);
  TPL.versions.forEach(v=>{const s=verState(r,v),inst=String(r.setup.v[v.k]||'').trim();row2(v.label+'  (min. '+v.min+')',(inst||'Not entered')+(s==='confirmed'?'  (below minimum - confirmed)':s==='low'?'  (BELOW MINIMUM)':''));});
  const sec=(num,key)=>{const Tk=TPL[key],dd=r[key]||{};bar(num+'  '+Tk.title);row2('Reading','Value (deg)',true);
@@ -13102,7 +13115,7 @@ function calPdf(r){const d=pdfNew();let y;const ens=n=>{if(y+n>BOT){d.addPage();
 function calPdfFile(r){const d=calPdf(r);return {blob:d.output('blob'),name:'Calibration_'+recName(r).replace(/[^\w\-]+/g,'_')+'.pdf'};}
 /* ---- QR (pause / start later) ---- */
 function strip(o){if(Array.isArray(o))return o;if(o&&typeof o==='object'){const out={};Object.keys(o).forEach(k=>{const v=strip(o[k]);if(v===''||v==null||v===false)return;if(typeof v==='object'&&!Array.isArray(v)&&!Object.keys(v).length)return;out[k]=v;});return out;}return o;}
-function calPayload(r,notes){const o={a:'CAL',v:1,k:'P',id:r.id,n:r.n||1,u:r.updated,sn:r.hdr.sn,d:r.hdr.date,t:r.hdr.tech,st:r.step||0,sv:r.setup.v,sc:r.setup.cf,ro:r.roll,pi:r.pitch,ca:r.cam,ra:r.rad,dn:{notes:r.done.notes,name:r.done.name,date:r.done.date,ov:r.done.ov}};if(notes)o.no=notes;return JSON.stringify(strip(o));}
+function calPayload(r,notes){const o={a:'CAL',v:1,k:'P',rv:r.done.complete?(overall(r).res==='pass'?'P':overall(r).res==='fail'?'F':'I'):'I',id:r.id,n:r.n||1,u:r.updated,sn:snShow(r.hdr.sn),d:r.hdr.date,t:r.hdr.tech,st:r.step||0,sv:r.setup.v,sc:r.setup.cf,ro:r.roll,pi:r.pitch,ca:r.cam,ra:r.rad,dn:{notes:r.done.notes,name:r.done.name,date:r.done.date,ov:r.done.ov}};if(notes)o.no=notes;return JSON.stringify(strip(o));}
 function qrObj(t){const q=window.qrcode(0,'L');q.addData(t);q.make();return q;}
 function qrPng(t,px){const q=qrObj(t),n=q.getModuleCount(),m=4,sc=Math.max(2,Math.floor(px/(n+2*m))),c=document.createElement('canvas');c.width=c.height=(n+2*m)*sc;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.fillStyle='#000';for(let i=0;i<n;i++)for(let j=0;j<n;j++)if(q.isDark(i,j))g.fillRect((j+m)*sc,(i+m)*sc,sc,sc);return c.toDataURL('image/png');}
 function sheetPdf(r,notes){const d=pdfNew();pdfHead(d,'Calibration - carry-over sheet');let y=92;d.setFont('helvetica','bold');d.setFontSize(13);d.setTextColor(0);d.text(cl('Truck S/N '+recName(r)),MX,y);y+=16;d.setFont('helvetica','normal');d.setFontSize(10);d.setTextColor(60);d.text(cl('Paused at step: '+STEPS[r.step||0]+'   |   '+fmtD(r.hdr.date)+(r.hdr.tech?'   |   '+r.hdr.tech:'')),MX,y);y+=14;
@@ -13139,7 +13152,10 @@ function qrTry(im){const W=im.width,H=im.height;const one=(sx,sy,sw,sh,M)=>{cons
 function scanPhoto(cam){const i=document.createElement('input');i.type='file';i.accept='image/*';if(cam)i.capture='environment';i.style.cssText='position:fixed;left:-9999px;top:0;opacity:0';document.body.appendChild(i);
  i.onchange=()=>{const f=i.files&&i.files[0];setTimeout(()=>{try{i.remove()}catch(e){}},60000);if(!f)return;scanMsg('Reading the photo…');const url=URL.createObjectURL(f),im=new Image();
   im.onload=()=>setTimeout(()=>{let t=null;try{t=qrTry(im)}catch(e){}URL.revokeObjectURL(url);if(t)scanDone(t);else scanMsg('No QR code found in that photo. Get closer so the code fills about half the picture, keep it flat and in focus, avoid glare, and try again.');},30);im.onerror=()=>{URL.revokeObjectURL(url);scanMsg('That photo could not be read.');};im.src=url;};i.click();}
-async function scanDone(txt){scanStop();let o=null;try{o=JSON.parse(txt);}catch(e){}if(!o||o.a!=='CAL'){const m=$('#scanMsg');if(m)m.textContent='That is not a calibration QR code. Try again.';if($('#scanV')&&$('#scanV').style.display!=='none')scanDlg();return;}closeModal();await fromQr(o);}
+async function scanDone(txt){scanStop();let o=null;try{o=JSON.parse(txt);}catch(e){}if(o&&(o.a==='ATP'||o.a==='LVSS'||o.a==='FLR')){closeModal();const frm=o.a==='ATP'?'ATP inspection':o.a==='FLR'?'floor test':'LVSS / eMSC-L post-repair inspection',sn0=snShow(o.sn);
+  if(o.rv!=='P'){await notice(o.rv==='F'?'The '+frm+(sn0?' for truck '+sn0:'')+' is FAILED. Its information can\u2019t be used until the inspection passes.':o.rv==='I'?'The '+frm+(sn0?' for truck '+sn0:'')+' is INCOMPLETE. Its information can\u2019t be used until the inspection is finished and passes.':'This '+frm+' QR code has no pass result in it. Open that report and scan the QR code from its latest version.',{title:'Inspection not passed'});return;}
+  await fromQr({a:'CAL',k:'S',sn:sn0,t:''});return;}
+ if(!o||o.a!=='CAL'){const m=$('#scanMsg');if(m)m.textContent='That is not a calibration QR code. Try again.';if($('#scanV')&&$('#scanV').style.display!=='none')scanDlg();return;}closeModal();await fromQr(o);}
 async function fromQr(o){
  if(o.k==='S'){const ex=activeFor(o.sn);if(ex&&await ask('A calibration for truck '+recName(ex)+' is already on this tablet. Open it instead of starting a new one?',{title:'Already started',ok:'Open it',no:'Start a new one'})){S.rec=ex;S.step=ex.step||0;S.view='rec';render();return;}
   const r=newRec(o.sn||'',o.t||'');S.rec=r;S.step=0;S.dirty=true;await save();S.view='rec';render();return;}
@@ -13199,7 +13215,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'rstep':{if(!await ask('Clear everything entered on this page and start it again?',{title:'Restart this page?',ok:'Restart page',danger:1}))break;
   if(S.step===1)r.roll={};else if(S.step===2)r.pitch={};else if(S.step===3)r.cam={live:'',val:''};else if(S.step===4)r.rad={val:''};else if(S.step===5)r.done={notes:'',name:'',date:'',sig:'',ov:'',complete:false};else{await notice('The Setup page holds the serial number and software versions, which are kept. Use "Restart entire process" to start over.',{title:'Setup is kept'});break;}markDirty();render();break;}
  case 'rall':{if(!await ask('Restart the entire calibration?\n\nThis record is archived (kept for reference) and a new one is started. The serial number and software versions are kept; all readings are cleared.',{title:'Restart entire process?',ok:'Restart everything',danger:1}))break;
-  await save();const sn=String(r.hdr.sn||'').trim().toLowerCase();const mx=Math.max(r.n||1,...S.recs.filter(x=>String(x.hdr.sn||'').trim().toLowerCase()===sn).map(x=>x.n||1));
+  await save();const sn=snShow(r.hdr.sn).toLowerCase();const mx=Math.max(r.n||1,...S.recs.filter(x=>snShow(x.hdr.sn).toLowerCase()===sn).map(x=>x.n||1));
   r.archived=true;S.dirty=true;await save();const nr=newRec(r.hdr.sn,r.hdr.tech);nr.n=mx+1;nr.setup=clone(r.setup);S.rec=nr;S.step=0;S.dirty=true;await save();await loadAll();S.view='rec';render();break;}
  }});
 window.addEventListener('beforeunload',()=>{if(S.dirty)save();});
@@ -13212,7 +13228,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)save();});
 function curTpl(){return TPL}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'10/21/2026'};
+const CREDIT={by:'Ravi Ramsundar',built:'10/22/2026'};
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
