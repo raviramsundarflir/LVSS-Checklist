@@ -113,6 +113,7 @@ table.t th{background:#111;color:#fff;font-size:13px}
 .mapfab{position:fixed;right:12px;bottom:14px;z-index:30}
 .mapfab button{background:#fff;border:2px solid var(--blue);color:var(--blue);font-weight:800;box-shadow:0 3px 12px rgba(0,0,0,.3);border-radius:24px;padding:10px 16px}
 .optb button{flex:1 1 150px}
+.nin{display:flex;gap:4px;align-items:center}.nin input{flex:1;min-width:0}.negb{min-height:44px;min-width:44px;padding:0 10px;font-size:20px;font-weight:700;border-radius:10px}
 .pt{display:grid;grid-template-columns:1fr 150px;gap:8px;align-items:center;margin:6px 0}
 .pt .lb b{display:inline-block;min-width:22px}
 .sigc{border:2px dashed #98a4b6;border-radius:10px;background:#fff;touch-action:none;width:100%;height:150px;display:block}
@@ -12977,7 +12978,7 @@ async function save(){const rec=S.rec;if(!rec||!S.dirty)return;S.dirty=false;cle
 function paintSave(){const e=$('#saveInd');if(e)e.textContent=S.dirty?'Saving…':'✓ Saved';}
 async function loadAll(){S.recs=(await DB.all('recs'))||[];S.recs.sort((a,b)=>b.updated-a.updated);}
 /* ---- numbers & calculations ---- */
-const num=v=>{const s=String(v==null?'':v).trim().replace(',','.');if(s===''||!/^[-+]?(\d+\.?\d*|\.\d+)$/.test(s))return NaN;return parseFloat(s);};
+const num=v=>{const s=String(v==null?'':v).trim().replace(/[\u2212\u2012\u2013\u2014\uFE63\uFF0D]/g,'-').replace(',','.');if(s===''||!/^[-+]?(\d+\.?\d*|\.\d+)$/.test(s))return NaN;return parseFloat(s);};
 const fmtN=(v,dec)=>isFinite(v)?String(+v.toFixed(dec==null?TPL.dec:dec)):'—';
 function parseExpr(e){const t=String(e||'').replace(/\s+/g,'');if(!t||!/^[+-]?[a-z]([+-][a-z])*$/i.test(t))return null;const out=[];const re=/([+-]?)([a-z])/gi;let m;while((m=re.exec(t)))out.push({s:m[1]==='-'?-1:1,k:m[2].toLowerCase()});return out;}
 function secCalc(r,key){const T=TPL[key],d=r[key]||{},terms=parseExpr(T.expr);if(!terms)return {err:true,val:NaN};let sum=0,ok=true;terms.forEach(t=>{const v=num(d[t.k]);if(!isFinite(v))ok=false;else sum+=t.s*v;});const dv=+T.div||1;return {err:false,val:ok?sum/dv:NaN};}
@@ -13031,7 +13032,7 @@ function homeHtml(){const act=S.recs.filter(r=>!r.archived),arc=S.recs.filter(r=
 function stepsBar(r){return `<div class="steps">${STEPS.map((s,i)=>`<button class="${i===(S.step)?'on':''}${stepDone(r,i)?' dn':''}" data-act="step" data-i="${i}">${s}</button>`).join('')}</div>`;}
 function stepDone(r,i){if(i===0)return !!(r.hdr.sn||'').trim()&&setupIssues(r).length===0&&TPL.versions.some(v=>(r.setup.v[v.k]||'').trim());if(i===1)return !!secVerify(r,'roll').res;if(i===2)return !!secVerify(r,'pitch').res;if(i===3)return !!String(r.cam.val||'').trim();if(i===4)return !!String(r.rad.val||'').trim();return !!r.done.complete;}
 const mapBtn=k=>`<button data-act="img" data-k="${k}" style="margin:6px 0">🗺 Open reference picture (full screen)</button>`;
-const nIn=(p,v,ph)=>`<input data-b="${p}" data-nohist inputmode="decimal" value="${esc(v)}" placeholder="${esc(ph||'0.00')}" style="text-align:right;font-size:18px">`;
+const nIn=(p,v,ph)=>`<span class="nin"><button type="button" class="negb" data-act="neg" title="Change + / -">&plusmn;</button><input data-b="${p}" data-nohist inputmode="decimal" autocomplete="off" autocorrect="off" spellcheck="false" value="${esc(v)}" placeholder="${esc(ph||'0.00')}" style="text-align:right;font-size:18px"></span>`;
 function setupHtml(r){const iss=setupIssues(r);
  return `<div class="card"><h2>${STEPS[0]}</h2><div class="grid"><div><label class="f">Platform serial number (required)</label>${snTg('n-sn',r.hdr.sn)}<input id="n-sn" data-snin="1" data-b="hdr.sn" value="${esc(r.hdr.sn)}" placeholder="e.g. eMSC-L 0096"></div><div><label class="f">Date</label><input type="date" data-b="hdr.date" value="${esc(r.hdr.date)}"></div><div><label class="f">Technician</label><input id="n-te" data-b="hdr.tech" value="${esc(r.hdr.tech)}" placeholder="Technician name">${techChips()}</div></div></div>
  <div class="card"><h3>Software versions</h3><p>${esc(T('setup_intro'))}</p><table class="t"><tr><th>Component</th><th>Minimum</th><th>Installed (record)</th><th></th></tr>${TPL.versions.map(v=>{const s=verState(r,v);return `<tr><td>${esc(v.label)}</td><td>${esc(v.min)}</td><td>${v.k==='dp'?`<button data-act="dpok" class="${r.setup.v.dp?'pri':''}" style="min-height:44px">${r.setup.v.dp?'☑':'☐'} Confirm driver pack ${esc(v.min)} or newer is installed</button>`:`<input data-b="setup.v.${v.k}" value="${esc(r.setup.v[v.k]||'')}" placeholder="Installed version">`}</td><td id="vs-${v.k}">${vsHtml(r,v,s)}</td></tr>`;}).join('')}</table><p class="muted" style="margin:6px 0 0">PMU and HMI versions recorded on the revisions page are filled in for you. Confirm them, or edit the version if it changed. The driver pack only needs the box ticked.</p>
@@ -13181,6 +13182,7 @@ document.addEventListener('input',e=>{const t=e.target;if(t.dataset&&t.dataset.b
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.b==='hdr.tech'&&S.rec)techRemember(t.value);if(t.dataset&&t.dataset.ad&&S.adm){let v=t.value;if(t.dataset.t==='bool')v=v==='1';setp(S.adm,t.dataset.ad,v);}if(t.dataset&&t.dataset.b==='hdr.sn'&&S.rec){const x=document.querySelector('.brand');if(x)x.firstChild.textContent=recName(S.rec);}});
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,r=S.rec,id=b.dataset.id;
  switch(a){
+ case 'neg':{const i=b.parentNode.querySelector('input');if(i){let v=i.value.trim().replace(/[\u2212\u2012\u2013\u2014\uFE63\uFF0D]/g,'-');v=v.charAt(0)==='-'?v.slice(1):'-'+v;i.value=v;setp(S.rec,i.dataset.b,v);markDirty();refreshCalc();i.focus();}break;}
  case 'home':await save();await loadAll();S.view='home';S.rec=null;render();break;
  case 'save':await save();break;
  case 'new':{S.rec=newRec('','');S.step=0;S.view='rec';S.dirty=true;await save();render();break;}
