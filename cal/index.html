@@ -13005,6 +13005,67 @@ const techNames=()=>Array.isArray(S.settings.techNames)?S.settings.techNames:[];
 function techChips(){const L=techNames().slice(0,5);return L.length?`<div class="muted" style="font-size:13px;margin:6px 0 2px">Recent names on this tablet - tap to reuse:</div><div class="row" style="gap:6px;flex-wrap:wrap">${L.map((n,i)=>`<button type="button" data-act="tech-pick" data-i="${i}" style="width:auto">${esc(n)}</button>`).join('')}</div>`:''}
 function techRemember(n){n=(n||'').trim();if(!n)return;const L=[n,...techNames().filter(x=>x.toLowerCase()!==n.toLowerCase())].slice(0,5);S.settings.techNames=L;setting('techNames',L);}
 function techPick(i){const n=techNames()[i],el=$('#n-te');if(n&&el){el.value=n;S.techDraft=n;}}
+/* shared: ask at the start of each inspection whether the tech has a good connection; offline readiness check */
+(function(){
+var FORMS=[['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch']];
+var ME=(location.pathname.split('/').filter(Boolean).slice(-1)[0]||'').replace(/\.html?$/,'');
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
+if(!ls('off:since'))ls('off:since',String(Date.now()));
+var busy=false;
+function box(html){var o=document.getElementById('offBox');if(o)o.remove();o=document.createElement('div');o.id='offBox';o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:14px;font-family:system-ui,-apple-system,sans-serif';o.innerHTML='<div style="background:#fff;color:#222;border-radius:14px;padding:18px;width:100%;max-width:440px;max-height:90vh;overflow:auto;font-size:16px;line-height:1.4">'+html+'</div>';document.body.appendChild(o);return o;}
+function closeBox(){var o=document.getElementById('offBox');if(o)o.remove();busy=false;}
+var BTN='display:block;width:100%;min-height:48px;margin-top:8px;padding:10px;border-radius:10px;border:1.5px solid #8a94a6;background:#fff;font:600 16px system-ui,sans-serif;cursor:pointer';
+var PRI='background:#1d3b6a;color:#fff;border-color:#1d3b6a';
+async function status(){
+ var r={file:location.protocol==='file:',sw:false,cached:false,persist:null,forms:{}};
+ if(r.file)return r;
+ try{var reg=await navigator.serviceWorker.getRegistration();r.sw=!!(reg&&reg.active);}catch(e){}
+ try{var ks=await caches.keys();r.cached=ks.some(function(k){return k.indexOf(ME+'-')===0;});FORMS.forEach(function(f){r.forms[f[0]]=ks.some(function(k){return k.indexOf(f[0]+'-')===0;});});}catch(e){}
+ try{if(navigator.storage&&navigator.storage.persist){r.persist=(await navigator.storage.persisted())||(await navigator.storage.persist());}}catch(e){}
+ return r;}
+function line(ok,t){return '<div style="display:flex;gap:8px;margin:6px 0"><span style="font-weight:800;color:'+(ok?'#17632c':'#b36b00')+'">'+(ok?'✓':'⚠')+'</span><span>'+t+'</span></div>';}
+async function readiness(){
+ var o=box('<h3 style="margin:0 0 8px">Checking this tablet…</h3>');
+ var s=await status();var h='<h3 style="margin:0 0 8px">Working without a connection</h3>';
+ if(s.file){h+=line(true,'This form is a file on this tablet, so it does not need a connection to open or work.');}
+ else{
+  h+=line(s.sw&&s.cached,s.sw&&s.cached?'This form is saved on this tablet and will open with no signal.':'This form is <b>not saved for offline use yet</b>. Get a connection once, keep this page open for a few seconds, then tap Check again.');
+  h+=line(s.persist!==false,s.persist===false?'The browser may clear saved data if the tablet runs low on space. Keep free space on the tablet and send reports soon.':'Your inspection data is kept on this tablet and saves as you go.');
+  var miss=FORMS.filter(function(f){return !s.forms[f[0]];});
+  h+=miss.length?line(false,'Other forms not saved yet: <b>'+miss.map(function(f){return f[1];}).join(', ')+'</b>. If you may need them, tap Get all forms while you still have a connection.'):line(true,'All the other forms are saved for offline use too.');
+ }
+ h+='<div style="margin:10px 0 4px;font-size:14px;color:#444">With no signal you can still fill in everything, take photos, and make the PDF. Emailing, sharing, map pictures and the Docs videos need a connection. Make the PDF and save it, then send it when you are back online. Pause QR codes also work offline.</div>';
+ if(!s.file&&Object.keys(s.forms).some(function(k){return !s.forms[k];}))h+='<button id="offAll" style="'+BTN+'">Get all forms for offline use</button>';
+ h+='<button id="offAgain" style="'+BTN+'">Check again</button><button id="offDone" style="'+BTN+';'+PRI+'">Done</button>';
+ o=box(h);
+ document.getElementById('offDone').onclick=closeBox;document.getElementById('offAgain').onclick=readiness;
+ var a=document.getElementById('offAll');if(a)a.onclick=async function(){a.textContent='Getting forms… keep this open';a.disabled=true;
+  var base=location.pathname.replace(/[^\/]*\/[^\/]*$/,'');var fr=[];
+  FORMS.forEach(function(f){if(s.forms[f[0]])return;var i=document.createElement('iframe');i.style.cssText='position:absolute;width:1px;height:1px;opacity:0;border:0;left:-9999px';i.src=base+f[0]+'/';document.body.appendChild(i);fr.push(i);});
+  await new Promise(function(z){setTimeout(z,9000);});fr.forEach(function(i){i.remove();});readiness();};
+}
+function ask(rec){
+ busy=true;
+ var o=box('<h3 style="margin:0 0 8px">Do you have a good internet connection here?</h3><div style="color:#444;font-size:15px">If not, I will make sure this form and your work are kept on this tablet so you can finish with no signal.</div><button id="offYes" style="'+BTN+';'+PRI+'">Yes, good connection</button><button id="offNo" style="'+BTN+'">No, or it may drop</button>');
+ document.getElementById('offYes').onclick=function(){ls('off:'+rec,'good');closeBox();chip();};
+ document.getElementById('offNo').onclick=function(){ls('off:'+rec,'poor');chip();readiness();};
+}
+function chip(){var c=document.getElementById('offChip');if(!c){c=document.createElement('button');c.id='offChip';c.style.cssText='position:fixed;left:8px;bottom:8px;z-index:9998;border:1px solid #b9c0cf;background:#fffd;color:#444;border-radius:16px;padding:4px 10px;font:600 12px system-ui,sans-serif;cursor:pointer;opacity:.85';c.onclick=function(){readiness();};document.body.appendChild(c);}
+ var rec=cur(),mode=rec?ls('off:'+rec.id):null,on=navigator.onLine!==false;
+ c.textContent=!on?'📴 Offline – work saves on this tablet':mode==='poor'?'📶 Offline mode':'';c.style.display=c.textContent?'block':'none';c.style.background=!on?'#fdecc8':'#fffd';}
+function cur(){try{if(typeof S!=='undefined'&&S&&S.rec&&S.rec.id&&S.view&&!/^(home|new|admin|list)$/.test(S.view)&&!S.audit)return S.rec;}catch(e){}return null;}
+function toast(t){var d=document.createElement('div');d.style.cssText='position:fixed;left:50%;bottom:48px;transform:translateX(-50%);z-index:99998;background:#1d3b6a;color:#fff;border-radius:12px;padding:10px 14px;font:600 14px system-ui,sans-serif;max-width:90%;text-align:center';d.textContent=t;document.body.appendChild(d);setTimeout(function(){d.remove();},6000);}
+window.addEventListener('offline',function(){chip();toast('Connection lost. Keep going – everything saves on this tablet. Make the PDF and send it when you are back online.');});
+window.addEventListener('online',function(){chip();toast('Back online.');});
+setInterval(function(){
+ chip();if(busy)return;if(navigator.webdriver&&!window.__offTest)return;var rec=cur();if(!rec)return;
+ if(ls('off:'+rec.id))return;
+ var created=Date.parse(rec.created)||+rec.created||0,since=+ls('off:since')||0;
+ if(!created||created<since-1000){ls('off:'+rec.id,'good');return;}
+ if(document.getElementById('modalRoot')&&document.getElementById('modalRoot').innerHTML.trim())return;
+ ask(rec.id);},900);
+window.offReadiness=readiness;
+})();
 /* shared platform-serial helpers: LVSS-099 / eMSC-L 0099 (prefix and number stay editable) */
 var SN_RX=/^\s*(?:(lvss)|(e?msc[-\s_]*l?))[-\s_]*/i;
 function snType(s){var m=SN_RX.exec(String(s||''));return !m?'':(m[1]?'L':'E');}
@@ -13065,7 +13126,7 @@ function calSubj(r){return 'TFU & Radar Calibration - '+recName(r);}
 function doneActions(r){return `<div class="card" style="border:2px solid ${overall(r).res==='fail'?'var(--fail)':'var(--pass)'}"><h3>Calibration complete</h3><div class="row"><button class="emailbig" data-act="email">✉ Email report (PDF attached)<small>Recommended – opens your email app with the PDF attached</small></button><button data-act="pdf" style="flex:1">⬇ Save PDF</button><button data-act="copymail" style="flex:1">📋 Copy ${WIP_MAIL}</button><button data-act="copysubj" style="flex:1">📋 Copy subject</button><button data-act="reopen" style="flex:1">Edit again</button></div><p class="muted">Subject: ${esc(calSubj(r))}</p></div>`;}
 function optHtml(r){return `<div class="card"><h3>Pause or restart</h3><div class="row optb"><button data-act="pause">⏸ Pause – QR code to continue later</button>${S.step>0&&S.step<5?`<button data-act="rstep">↺ Restart this page</button>`:S.step===5?`<button data-act="rstep">↺ Restart this page</button>`:''}<button class="dng" data-act="rall">⟲ Restart entire process</button></div><p class="muted">Restarting the entire process archives this record and starts a new one (${esc(recName({hdr:r.hdr,n:(r.n||1)+1}))}). The serial number and installed versions are kept.</p></div>`;}
 function recHtml(r){const bdy=[setupHtml,r=>secHtml(r,'roll'),r=>secHtml(r,'pitch'),camHtml,radHtml,doneHtml][S.step](r);
- return bar(recName(r),`<button id="saveInd" class="save" data-act="save"></button><button data-act="home">Home</button>`)+stepsBar(r)+`<div class="wrap">${r.archived?'<div class="warn"><b>Archived record.</b> This calibration was restarted. It is kept for reference.</div>':''}${bdy}<div class="row" style="margin-bottom:12px"><button data-act="prev" ${S.step===0?'disabled':''} style="flex:1">← Back</button><button class="pri" data-act="next" ${S.step===5?'disabled':''} style="flex:1">Next →</button></div>${optHtml(r)}</div>`;}
+ return bar(recName(r),`<button id="saveInd" class="save" data-act="save"></button><button data-act="head">🧭 Heading</button><button data-act="home">Home</button>`)+stepsBar(r)+`<div class="wrap">${r.archived?'<div class="warn"><b>Archived record.</b> This calibration was restarted. It is kept for reference.</div>':''}${bdy}<div class="row" style="margin-bottom:12px"><button data-act="prev" ${S.step===0?'disabled':''} style="flex:1">← Back</button><button class="pri" data-act="next" ${S.step===5?'disabled':''} style="flex:1">Next →</button></div>${optHtml(r)}</div>`;}
 function render(){const app=$('#app');
  if(S.view==='home')app.innerHTML=homeHtml();else if(S.view==='admin')app.innerHTML=adminHtml();else app.innerHTML=recHtml(S.rec);
  paintSave();if(S.view==='rec'&&S.step===5&&!S.rec.done.complete)sigInit();window.scrollTo(0,0);}
@@ -13227,6 +13288,50 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)save();});
  await loadAll();const q=new URLSearchParams(location.search),sn=q.get('sn');
  if(sn){const ex=activeFor(sn);if(ex){S.rec=ex;S.step=ex.step||0;}else{S.rec=newRec(sn,q.get('tech')||'');S.step=0;S.dirty=true;await save();}S.view='rec';history.replaceState(null,'',location.pathname);}
  render();})();
+/* ---- live heading + map window ---- */
+const HD={hdg:null,mag:null,lat:null,lon:null,acc:null,tgt:null,decl:0,wid:null,on:false,tiles:0,bad:0};
+try{HD.decl=parseFloat(localStorage.getItem('cal_decl'))||0;}catch(e){}
+const HD_CARD=['N','NE','E','SE','S','SW','W','NW'];
+const hdName=d=>HD_CARD[Math.round(((d%360)+360)%360/45)%8];
+const hdDiff=(a,b)=>{let d=((a-b)%360+540)%360-180;return d;};
+function hdTiles(lat,lon,z){const n=Math.pow(2,z),lr=lat*Math.PI/180,xf=(lon+180)/360*n,yf=(1-Math.log(Math.tan(lr)+1/Math.cos(lr))/Math.PI)/2*n;return {x:Math.floor(xf),y:Math.floor(yf),px:(xf-Math.floor(xf))*256,py:(yf-Math.floor(yf))*256,z,n};}
+function headDlg(){
+ modal(`<h3 style="margin-top:0">Heading and position</h3>
+ <div id="hdMapW" style="position:relative;width:100%;height:230px;border-radius:12px;overflow:hidden;background:#e4e8ef;border:1px solid var(--line)"><div id="hdMap" style="position:absolute;left:0;top:0;width:768px;height:768px"></div><svg id="hdSvg" viewBox="-50 -50 100 100" style="position:absolute;left:50%;top:50%;width:90px;height:90px;margin:-45px 0 0 -45px;pointer-events:none"><g id="hdArrow"><circle r="40" fill="#7a3fb0" fill-opacity=".12" stroke="#7a3fb0" stroke-dasharray="3 3"/><path d="M0 -38 L11 -8 L0 -14 L-11 -8Z" fill="#7a3fb0" stroke="#fff" stroke-width="1.5"/><circle r="4" fill="#fff" stroke="#7a3fb0" stroke-width="2"/></g></svg><div id="hdMsg" style="position:absolute;left:0;right:0;bottom:0;background:#fffc;padding:4px 8px;font-size:12px;color:#444">Waiting for location…</div></div>
+ <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin:10px 0 2px"><svg viewBox="-60 -60 120 120" width="120" height="120"><g id="hdDial"><circle r="56" fill="#fff" stroke="#999" stroke-width="2"/><g font-size="11" font-weight="700" text-anchor="middle"><text y="-42" fill="#c8202a">N</text><text x="44" y="4">E</text><text y="49">S</text><text x="-44" y="4">W</text></g></g><path d="M0 -46 L7 -6 L-7 -6Z" fill="#7a3fb0"/><circle r="4" fill="#7a3fb0"/></svg>
+ <div style="text-align:center"><div id="hdNum" style="font-size:44px;font-weight:800;line-height:1">--</div><div id="hdCard" style="font-size:18px;color:#555">&nbsp;</div></div></div>
+ <div id="hdChk" class="muted" style="text-align:center;margin:6px 0;min-height:44px">Tap Start compass, then hold the tablet flat with its top edge pointing the way the truck faces.</div>
+ <button id="hdGo" class="pri">Start compass</button>
+ <div class="row" id="hdTg" style="flex-wrap:wrap;gap:4px;margin-top:8px"><span class="muted" style="width:100%;font-size:12px">Target direction (optional)</span>${HD_CARD.map((c,i)=>`<button data-tg="${i*45}" style="flex:1;width:auto;min-width:44px;padding:8px 0;margin:0">${c}</button>`).join('')}</div>
+ <div style="margin-top:10px;display:flex;align-items:center;gap:8px"><label class="f" style="margin:0;flex:1" for="hdDecl">Declination (° east of north)</label><input id="hdDecl" inputmode="decimal" value="${HD.decl}" style="width:80px;text-align:right"></div>
+ <p class="muted" style="font-size:12px;margin:6px 0 0">The compass reads <b>magnetic</b> north; adding the declination gives true north. Tucson is roughly 8° east – check your site on the NOAA declination calculator. A steel truck, mast or skid can pull the compass off by many degrees, so confirm against a known landmark. Map pictures need internet; the compass does not.</p>
+ <button id="hdX">Close</button>`);
+ HD.on=true;HD.tiles=0;HD.bad=0;
+ const alive=()=>!!document.getElementById('hdArrow');
+ const paint=()=>{if(!alive()){hdStop();return;}
+  const num=$('#hdNum'),card=$('#hdCard'),dial=$('#hdDial'),arr=$('#hdArrow'),chk=$('#hdChk');
+  if(HD.mag==null){return;}
+  const t=((HD.mag+HD.decl)%360+360)%360;HD.hdg=t;num.textContent=Math.round(t)+'°';card.textContent=hdName(t)+' (true)';dial.setAttribute('transform','rotate('+(-t)+')');arr.setAttribute('transform','rotate('+t+')');
+  if(HD.tgt!=null){const d=hdDiff(t,HD.tgt),ok=Math.abs(d)<=5;chk.innerHTML=`<div class="${ok?'ok':'warn'}" style="margin:0">${ok?'✓':'⚠'} ${ok?'Within ±5° of':'Off by '+Math.abs(Math.round(d))+'° from'} ${hdName(HD.tgt)} (${HD.tgt}°)${ok?'':' – turn '+(d>0?'left':'right')}</div>`;}
+  else chk.textContent='Pick a target direction below to check against it.';};
+ HD.paint=paint;
+ const onOri=e=>{let h=null;if(typeof e.webkitCompassHeading==='number')h=e.webkitCompassHeading;else if(e.absolute&&typeof e.alpha==='number')h=(360-e.alpha)%360;if(h==null)return;HD.mag=h;paint();};
+ HD.ori=onOri;
+ $('#hdGo').onclick=async()=>{
+  try{if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function'){const r=await DeviceOrientationEvent.requestPermission();if(r!=='granted'){$('#hdChk').textContent='Motion access was refused. Allow it in Settings > Safari > Motion & Orientation Access, then try again.';return;}}}catch(e){}
+  window.addEventListener('deviceorientationabsolute',onOri,true);window.addEventListener('deviceorientation',onOri,true);
+  $('#hdGo').textContent='Compass running';$('#hdChk').textContent='Waiting for compass readings… (If nothing appears, this tablet may not have a compass.)';
+  setTimeout(()=>{if(alive()&&HD.mag==null)$('#hdChk').textContent='No compass readings. This browser or tablet may not provide a compass.';},4000);};
+ document.querySelectorAll('#hdTg [data-tg]').forEach(b=>b.onclick=()=>{HD.tgt=+b.dataset.tg;document.querySelectorAll('#hdTg [data-tg]').forEach(x=>x.classList.toggle('pri',x===b));paint();});
+ $('#hdDecl').onchange=e=>{const v=parseFloat(String(e.target.value).replace(',','.').replace(/[−–]/g,'-'));HD.decl=isFinite(v)?v:0;try{localStorage.setItem('cal_decl',String(HD.decl));}catch(x){}paint();};
+ if(navigator.geolocation){HD.wid=navigator.geolocation.watchPosition(p=>{HD.lat=p.coords.latitude;HD.lon=p.coords.longitude;HD.acc=p.coords.accuracy;if(!alive()){hdStop();return;}hdMapDraw();},err=>{const m=$('#hdMsg');if(m)m.textContent='Location unavailable ('+(err.code===1?'permission refused':'no signal')+'). The compass still works.';},{enableHighAccuracy:true,maximumAge:5000,timeout:20000});}else{$('#hdMsg').textContent='This browser has no location service. The compass still works.';}
+}
+function hdMapDraw(){const m=$('#hdMap'),msg=$('#hdMsg');if(!m||HD.lat==null)return;const z=18,T=hdTiles(HD.lat,HD.lon,z);
+ const key=T.x+','+T.y;if(m.dataset.k!==key){m.dataset.k=key;m.innerHTML='';HD.tiles=0;HD.bad=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const i=new Image();i.alt='';i.style.cssText='position:absolute;width:256px;height:256px;left:'+((dx+1)*256)+'px;top:'+((dy+1)*256)+'px';i.onload=()=>{HD.tiles++;};i.onerror=()=>{i.style.display='none';HD.bad++;if(HD.bad>=3&&!HD.tiles){const mm=$('#hdMsg');if(mm)mm.textContent='Map picture needs internet. Position: '+HD.lat.toFixed(5)+', '+HD.lon.toFixed(5)+'. The compass still works.';}};i.src='https://tile.openstreetmap.org/'+z+'/'+(T.x+dx)+'/'+(T.y+dy)+'.png';m.appendChild(i);}}
+ const w=$('#hdMapW'),cx=w.clientWidth/2,cy=w.clientHeight/2;m.style.left=(cx-(256+T.px))+'px';m.style.top=(cy-(256+T.py))+'px';
+ if(msg&&(HD.tiles||!HD.bad))msg.textContent='Position '+HD.lat.toFixed(5)+', '+HD.lon.toFixed(5)+' (±'+Math.round(HD.acc)+' m) · map © OpenStreetMap';}
+function hdStop(){HD.on=false;if(HD.wid!=null){try{navigator.geolocation.clearWatch(HD.wid);}catch(e){}HD.wid=null;}if(HD.ori){window.removeEventListener('deviceorientationabsolute',HD.ori,true);window.removeEventListener('deviceorientation',HD.ori,true);HD.ori=null;}HD.mag=null;}
+document.addEventListener('click',e=>{const t=e.target;if(t&&t.id==='hdX'){hdStop();closeModal();return;}const b=t.closest&&t.closest('[data-act]');if(b&&b.dataset.act==='head'){headDlg();}},true);
 function curTpl(){return TPL}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
