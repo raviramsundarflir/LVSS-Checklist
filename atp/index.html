@@ -251,6 +251,33 @@ h2{font-size:21px}
 .ddin{display:flex;gap:6px;align-items:center}
 
 .stab{color:#c8202a;font-weight:700}
+/* rules: arrows, override, repaired, complete bars */
+.arw-slot:empty{display:none}
+.arw{display:inline-flex;align-items:center;gap:6px;color:#c8202a;font-weight:800;font-size:13px;margin-bottom:4px}
+.arw i{font-style:normal;font-size:22px;line-height:1;display:inline-block;animation:arwb .7s ease-in-out infinite alternate}
+@keyframes arwb{from{transform:translateX(0)}to{transform:translateX(9px)}}
+@media (prefers-reduced-motion:reduce){.arw i{animation:none}}
+.rx-opts{margin-top:8px;padding:8px;border:1px solid #d6dbe4;border-radius:8px;background:#fafbfd}
+.rx-lab{font-size:12.5px;font-weight:700;color:#4a5568;margin:4px 0 2px}
+.rx-chips{display:flex;flex-wrap:wrap;gap:6px}
+.rx-chips .chip{min-height:38px;padding:4px 12px;border:1px solid #b9c2d0;border-radius:18px;background:#fff;font:inherit;font-size:13.5px;cursor:pointer}
+.rx-chips .chip.on{background:#1d3b6a;color:#fff;border-color:#1d3b6a;font-weight:700}
+.rx-chips .chip.lv-dno.on{background:#000;color:#ff7a7a}
+.rx-pt{display:flex;gap:6px;margin:4px 0}
+.rx-pt input{flex:1;min-width:0;min-height:40px;font-size:15px;border:1px solid #b9c2d0;border-radius:6px;padding:4px 8px}
+.rx-ov{margin-top:6px;padding:8px;border:1px solid #9bbbe0;border-radius:8px;background:#eef5fd}
+.rx-ovbtn{min-height:38px;margin-top:6px;font-size:13px;border-color:#2b6cb0;color:#1d4f8a}
+.box.fixed{position:relative}
+.box.fixed::after{content:"\2713";position:absolute;right:-6px;top:-8px;width:22px;height:22px;border-radius:50%;background:#1faa4a;color:#fff;font-size:15px;font-weight:800;line-height:22px;text-align:center;box-shadow:0 0 0 2px #fff}
+.rx-bottom{position:sticky;bottom:0;z-index:15;display:flex;justify-content:center;padding:10px 12px;background:rgba(255,255,255,.95);border-top:1px solid #cfd6e2;margin:14px -12px -12px}
+.rx-bottom .btn{background:#177a3c;border-color:#177a3c;color:#fff;min-width:260px}
+.rx-sum{border:2px solid #1b8a3a;margin:12px 0}.rx-sum.bad{border-color:#c8202a}
+.rxl{list-style:none;margin:0;padding:0}
+.rxi{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 0;border-top:1px solid #e3e7ee}
+.rxi-t small{display:block;color:#5a6577}.rxi-b{display:flex;gap:6px;flex:none}
+.rxi.info .arw{display:none}
+.row.ovr{opacity:.8}
+.arw.ok{color:#177a3c}.arw.ok i{animation:none;font-size:20px;background:#1faa4a;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center}
 
 /* ---------- Print ---------- */
 @media print{
@@ -13238,21 +13265,21 @@ function analyze(rec){
   rows.forEach(function(r){
     var d=itemOf(rec, r.num); if(!counts(r,d)) return;
     c.total++; var s=d.s||0;
-    if(d.omit){ c.omit=(c.omit||0)+1; if(!(d.onote||'').trim()) issues.push({r:r, d:d, kind:'OMIT NOTE'}); return; }
+    if(d.omit){ c.omit=(c.omit||0)+1; issues.push({r:r, d:d, kind:'OMIT', info:true}); return; }
+    if(d.ovr){ c.ovr=(c.ovr||0)+1; c.na++; issues.push({r:r, d:d, kind:'OVERRIDDEN', info:true}); return; }
     if(s===1) c.pass++;
     else if(s===3) c.na++;
     else if(s===2){ c.fail++; issues.push({r:r, d:d, kind:'FAIL'}); }
-    else if(s===4){ c.awp++; issues.push({r:r, d:d, kind:'AWP'}); }
+    else if(s===4){ c.awp++; issues.push({r:r, d:d, kind:'AWP', info:true}); }
     else if(s===5){ c.blk++; issues.push({r:r, d:d, kind:'NOT TESTED'}); }
     else { c.ni++; issues.push({r:r, d:d, kind:'NOT INSPECTED'}); }
   });
   c.done=c.total-c.ni;
-  return {c:c, issues:issues, rows:rows};
+  return {c:c, issues:issues, rows:rows, blocking:issues.filter(function(i){ return !i.info; })};
 }
 function autoReason(c){
   var parts=[];
   if(c.fail) parts.push(c.fail+' failed');
-  if(c.awp) parts.push(c.awp+' awaiting parts (AWP)');
   if(c.blk) parts.push(c.blk+' not tested (blocked by another issue)');
   if(c.ni) parts.push(c.ni+' not inspected');
   return parts.length ? 'Nonconformances found: '+parts.join(', ')+'. See punch list.' : '';
@@ -13368,17 +13395,17 @@ function thumbHTML(p){ return '<button class="thumb" data-act="photo" data-pid="
 function rowHTML(r){
   var d=itemOf(S.rec, r.num), s=d.s||0, off=r.spare && !(d.text||'').trim();
   var ph=S.photos.filter(function(p){ return p.num===r.num; });
-  return '<li class="row '+STAT[s].cls+(r.spare?' spare':'')+'" id="r-'+r.num+'" data-num="'+r.num+'" data-sec="'+r.sec+'">'+
-    '<div class="num">'+r.num+'</div><div class="body">'+
+  return '<li class="row '+STAT[s].cls+(r.spare?' spare':'')+(d.ovr?' ovr':'')+'" id="r-'+r.num+'" data-num="'+r.num+'" data-sec="'+r.sec+'">'+
+    '<div class="num">'+r.num+'</div><div class="body"><div class="arw-slot">'+rxArrow(r,d)+'</div>'+
     (r.spare ? '<input class="spare-text" data-f="text" value="'+esc(d.text||'')+'" placeholder="Spare line: add an item only if needed">' : '<p class="desc">'+stabH(esc(r.text))+'</p>')+
     (!r.spare && /serial (number|plate)/i.test(r.text) ? '<p class="hint">New unit S/N: <b class="sn">'+esc(S.rec.header.newSerial||'(not entered)')+'</b></p>' : '')+
     (r.timed ? '<label class="timed"><span>'+esc(r.timed)+':</span><input data-f="time" value="'+esc(d.time||'')+'" placeholder="e.g. 1:45" autocomplete="off"></label>' : '')+
     '<textarea class="note" data-f="note" rows="2" placeholder="'+(s===4?'Parts awaited / what is missing':'Describe the failure')+'">'+esc(d.note||'')+'</textarea>'+
-    '<div class="blk-slot">'+blkHTML(r,d)+'</div>'+ddOmitHTML(r,d)+'<div class="thumbs">'+ph.map(thumbHTML).join('')+'</div></div>'+
+    '<div class="blk-slot">'+blkHTML(r,d)+'</div>'+ddOmitHTML(r,d)+'<div class="rx-slot">'+rxHTML(r,d)+'</div><div class="thumbs">'+ph.map(thumbHTML).join('')+'</div></div>'+
     '<button class="cam'+(off?' off':'')+'" data-act="cam" aria-label="Add photo to item '+r.num+'"'+(off?' disabled':'')+'>'+CAM+'<span class="cam-n">'+(ph.length||'')+'</span></button>'+
     '<input type="file" accept="image/*" capture="environment" data-f="photo" class="in-cam" hidden'+(off?' disabled':'')+'>'+
     '<input type="file" accept="image/*" multiple data-f="photo" class="in-lib" hidden'+(off?' disabled':'')+'>'+
-    '<button class="box" data-act="tap"'+(off?' disabled':'')+' aria-label="Item '+r.num+' status: '+STAT[s].label+'. Tap to change.">'+STAT[s].g+'</button>'+((r.spare&&off)?'':'<button class=\"tgl'+(s===5?' on':'')+'\" data-act=\"cnt\" role=\"switch\" aria-checked=\"'+(s===5?'true':'false')+'\"><span class=\"sw\"></span>Could not test</button>')+'</li>';
+    '<button class="box'+(d.rep&&(s===2||s===4)&&!d.ovr?' fixed':'')+'" data-act="tap"'+(off?' disabled':'')+' aria-label="Item '+r.num+' status: '+STAT[s].label+'. Tap to change.">'+STAT[s].g+'</button>'+((r.spare&&off)?'':'<button class=\"tgl'+(s===5?' on':'')+'\" data-act=\"cnt\" role=\"switch\" aria-checked=\"'+(s===5?'true':'false')+'\"><span class=\"sw\"></span>Could not test</button>')+'</li>';
 }
 function secCountText(si){
   var rows=buildRows(S.rec.tpl).filter(function(r){ return r.sec===si; }), t=0, d=0;
@@ -13401,14 +13428,14 @@ function renderInspection(){
     '<div class="brand"><strong>S/N <span id="barSerial">'+esc(h.newSerial)+'</span></strong><span id="barProg"></span></div>'+
     '<div class="bar-actions"><select id="jump" aria-label="Jump to section"><option value="">Jump to section\u2026</option><option value="unit">Unit information</option>'+
       tpl.sections.map(function(s,si){ return '<option value="'+si+'">'+esc(s.title)+'</option>'; }).join('')+'<option value="notes">General notes</option></select>'+
-    '<button class="btn light" data-act="wip-pause" title="Pause and move this inspection to another tablet">\u23f8 Pause</button><button class="save-ind" id="saveInd" data-act="save"></button><button class="btn primary" data-act="review">Review &amp; PDF</button></div></header>'+
+    '<button class="btn light" data-act="wip-pause" title="Pause and move this inspection to another tablet">\u23f8 Pause</button><button class="save-ind" id="saveInd" data-act="save"></button><button class="btn primary" data-act="review">Review</button><button class="btn primary" data-act="complete" style="background:#177a3c;border-color:#177a3c;color:#fff">✔ Complete report</button></div></header>'+
     storageBanner()+
     '<main><details class="card" id="sec-unit"'+(rec.lastSec==null?' open':'')+'><summary>Unit information</summary><div id="ddBox" style="margin-top:12px">'+ddHTML()+'</div><div id="swapUnit">'+swEntriesHTML()+'</div><div id="custInfo">'+custHTML()+'</div><p class="tools"><b>Required tools:</b> '+esc((tpl.requiredTools||[]).join(', '))+'</p></details>'+
     '<div class="legend"><span>Tap the box to cycle:</span><span><b class="lg-blank"></b>Blank</span><span><b class="lg-pass">1</b>Pass</span><span><b class="lg-fail">2</b>Fail</span><span><b class="lg-na">3</b>N/A</span><span><b class="lg-awp">4</b>AWP</span><span>5th tap clears it.</span><span>On a failed item, use \u201cCan\u2019t test yet\u201d if another issue blocks it.</span></div>'+
     secs+
     '<section class="card" id="sec-notes"><h2 style="margin:0">General notes</h2><label class="full">Anything else for the Notes / Comments / Findings page<textarea data-g="notes">'+esc(rec.notes||'')+'</textarea></label></section>'+
     '<section id="swapEnd">'+swapEndHTML()+'</section>'+
-    '<div class="end"><button class="btn primary big" data-act="review">Review &amp; PDF</button></div></main>';
+    '<div class="end"><button class="btn primary big" data-act="review">Review</button></div>'+rxBars()+'</main>';
   updateProgress(); setSaveInd(); measureBar(); wipBanner(app.querySelector('main'));
 }
 function updateProgress(){
@@ -13425,13 +13452,13 @@ function refreshRow(li){
   var b=li.querySelector('.box'); b.innerHTML=STAT[s].g; b.setAttribute('aria-label','Item '+num+' status: '+STAT[s].label+'. Tap to change.');
   li.querySelector('.note').placeholder = s===4 ? 'Parts awaited / what is missing' : 'Describe the failure';
   var tg=li.querySelector('.tgl'); if(tg){ tg.classList.toggle('on',s===5); tg.setAttribute('aria-checked',s===5?'true':'false'); }
-  var sl=li.querySelector('.blk-slot'); if(sl) sl.innerHTML=blkHTML(buildRows(S.rec.tpl).find(function(x){ return x.num===num; }),d);
+  var sl=li.querySelector('.blk-slot'); if(sl) sl.innerHTML=blkHTML(buildRows(S.rec.tpl).find(function(x){ return x.num===num; }),d); rxRefresh(li);
 }
 function tap(li){
   var num=+li.dataset.num, sec=+li.dataset.sec;
   enterSec(sec);
   var d=S.rec.items[num]||(S.rec.items[num]={});
-  d.s=(d.s===5)?0:(((d.s||0)+1)%5);
+  if(d.ovr){ d.s=d.os||0; d.ovr=false; d.os=0; } else d.s=(d.s===5)?0:(((d.s||0)+1)%5);
   markDirty(); refreshRow(li); updateSecCount(sec); updateProgress();
   var b=li.querySelector('.box'); b.classList.add('pop'); setTimeout(function(){ b.classList.remove('pop'); },120);
   if(sectionComplete(sec)) save();
@@ -13479,26 +13506,26 @@ function gotoRow(num){
 /* ---------------- Review ---------------- */
 async function renderReview(){
   if(dirty()) await save();
-  S.scrollY=window.scrollY; S.view='review';
-  var rec=S.rec, h=rec.header, a=analyze(rec), c=a.c, pass=!a.issues.length;
+  S.scrollY=window.scrollY; S.view='review'; S.showNI=true;
+  var rec=S.rec, h=rec.header, a=analyze(rec), c=a.c, pass=!a.blocking.length;
   var reason = rec.kpiReason!=null ? rec.kpiReason : autoReason(c);
   app.innerHTML=
     '<header class="bar"><button class="btn light" data-act="back">\u2039 Back to checklist</button><div class="brand"><strong>Review: S/N '+esc(h.newSerial)+'</strong><span>'+esc(h.inspector||'')+(h.date?', '+esc(fmtDate(h.date)):'')+'</span></div>'+
-    '<div class="bar-actions"><button class="save-ind" id="saveInd" data-act="save"></button></div></header>'+
+    '<div class="bar-actions"><button class="save-ind" id="saveInd" data-act="save"></button><button class="btn primary" data-act="complete" style="background:#177a3c;border-color:#177a3c;color:#fff">✔ Complete report</button></div></header>'+
     storageBanner()+
-    '<main><section class="kpi '+(pass?'pass':'fail')+'"><div class="stamp">KPI '+(pass?'PASS':'FAIL')+'</div><p>'+(pass?'No nonconformances found during unit inspection.':a.issues.length+' item'+(a.issues.length===1?'':'s')+' on the punch list. Unchecked items count as failed.')+'</p></section>'+
+    '<main><section class="kpi '+(pass?'pass':'fail')+'"><div class="stamp">KPI '+(pass?'PASS':'FAIL')+'</div><p>'+(pass?'No nonconformances found during unit inspection.':a.blocking.length+' open item'+(a.blocking.length===1?'':'s')+' (failed, not tested or not inspected). Fix them or override them below - you can still complete the report.')+'</p></section>'+
     '<ul class="tally"><li class="t-pass"><b>'+c.pass+'</b>Pass</li><li class="t-fail"><b>'+c.fail+'</b>Fail</li><li class="t-awp"><b>'+c.awp+'</b>AWP</li><li class="t-blk"><b>'+c.blk+'</b>Not tested</li><li class="t-na"><b>'+c.na+'</b>N/A</li><li class="t-ni"><b>'+c.ni+'</b>Not inspected</li></ul>'+
     (pass?'':'<label class="full">If KPI fail, state reason (printed in the sign-off block)<textarea data-g="kpiReason" rows="2">'+esc(reason)+'</textarea></label>'+
       (rec.kpiReason!=null?'<button class="linkish reset-reason" data-act="reset-reason">Use automatic wording</button>':''))+
-    '<h2>Punch List Items - SN: '+esc(h.newSerial||'')+'</h2>'+
+    rxReviewCard(rec)+'<h2>Punch List Items - SN: '+esc(h.newSerial||'')+'</h2>'+
     (a.issues.length ? '<ol class="punch">'+a.issues.map(function(it){
       var n=S.photos.filter(function(p){ return p.num===it.r.num; }).length;
       var desc = issueText(rec,it);
       var inl=revInline(it); if(inl) return inl;
       return '<li><button data-act="goto" data-num="'+it.r.num+'"><span class="pn">'+it.r.num+'</span><span class="pd"><b>'+esc(desc)+'</b><small>'+esc(lineText(it.r,it.d))+(n?' ('+n+' photo'+(n>1?'s':'')+')':'')+'</small></span><span class="tag tag-'+it.kind.split(' ')[0]+'">'+it.kind+'</span></button></li>';
     }).join('')+'</ol>' : '<p class="card">Nothing to rework. The punch list page will print as \u201cNo nonconformances found.\u201d</p>')+
-    fyiHTML(rec)+swRmaHTML(rec)+ddReviewCard(rec)+calAtpCard(rec)+finAtpCard(rec)+auQrCard(rec)+auEntryCard(rec)+'<h2>Report PDFs</h2><div class="actions"><button class="btn emailbig" data-act="pdf-share-full">\u2709 Email full report (PDF attached)<small>Recommended \u2013 opens your email app with the PDF attached</small></button><button class="btn light big" data-act="pdf-save-full">\u2b07 Save full report</button></div><div class="actions"><button class="btn primary big" data-act="pdf-share-punch" style="background:var(--navy-2)">\u2709 Email punch list (PDF attached)</button><button class="btn light big" data-act="pdf-save-punch">\u2b07 Save punch list</button><button class="btn light big" data-act="backup-cur">Backup file</button><button class="btn light big" data-act="wip-copy">\ud83d\udccb Copy '+WIP_MAIL+'</button></div>'+
-    '<p class="tip">PDFs are named eMSC-L_'+esc(safeName(snNum(h.newSerial)))+'_ATP / _PunchList. Tap an item above to jump back to it.</p></main>';
+    fyiHTML(rec)+swRmaHTML(rec)+ddReviewCard(rec)+calAtpCard(rec)+finAtpCard(rec)+auQrCard(rec)+auEntryCard(rec)+'<h2>Report PDFs</h2><div class="actions"><button class="btn emailbig" data-act="pdf-share-full">\u2709 Email full report (PDF attached)<small>Recommended \u2013 opens your email app with the PDF attached</small></button><button class="btn light big" data-act="pdf-save-full">\u2b07 Save report PDF</button></div><div class="actions"><button class="btn light big" data-act="backup-cur">Backup file</button><button class="btn light big" data-act="wip-copy">\ud83d\udccb Copy '+WIP_MAIL+'</button></div>'+
+    '<p class="tip">PDFs are named eMSC-L_'+esc(safeName(snNum(h.newSerial)))+'_ATP / _PunchList. Tap an item above to jump back to it.</p>'+rxBars()+'</main>';
   setSaveInd(); measureBar(); window.scrollTo(0,0);
 }
 
@@ -13509,7 +13536,7 @@ function mark(s, included){
   return 'X<small>not inspected</small>';
 }
 function buildPrint(mode){
-  var rec=S.rec, t=rec.tpl, h=rec.header, a=analyze(rec), pass=!a.issues.length, full=mode==='full';
+  var rec=S.rec, t=rec.tpl, h=rec.header, a=analyze(rec), pass=!a.blocking.length, full=mode==='full';
   var reason = pass ? '' : (rec.kpiReason!=null ? rec.kpiReason : autoReason(a.c));
   var photoCount={}; S.photos.forEach(function(p){ photoCount[p.num]=(photoCount[p.num]||0)+1; });
   var unit='<table class="p-unit"><tbody>';
@@ -13687,17 +13714,20 @@ function footers(d,rec,title,skip){
   }
 }
 function kindLabel(it){ return it.kind; }
+function rxPdfArrow(d,x,y){ d.setFillColor(200,32,42); d.triangle(x,y,x,y+10,x+8,y+5,'F'); }
+function rxPdfCheck(d,x,y,w){ d.setDrawColor(23,170,70); d.setLineWidth(2.2); d.line(x+w*.12,y+w*.55,x+w*.4,y+w*.85); d.line(x+w*.4,y+w*.85,x+w*.95,y+w*.08); d.setDrawColor(0); d.setLineWidth(.6); }
 function issueText(rec,it){
   var d=it.d;
   if(it.kind==='NOT TESTED') return blkTxt(rec,d);
-  if(it.kind==='OMIT NOTE') return 'Omitted - a note explaining why is required';
+  if(it.kind==='OMIT') return (d.onote||'').trim()||'Omitted';
+  if(it.kind==='OVERRIDDEN') return 'Overridden to N/A by inspector'+((d.ovn||'').trim()?': '+d.ovn.trim():'');
   return (d.note||'').trim() || (it.kind==='NOT INSPECTED'?'Not inspected':'No failure description entered');
 }
 function sName(r){ return r.sec; }
 
 /* ---- full report / punch list PDF ---- */
 function atpPdf(mode){
-  var rec=S.rec, t=rec.tpl, h=rec.header, a=analyze(rec), pass=!a.issues.length, full=mode==='full';
+  var rec=S.rec, t=rec.tpl, h=rec.header, a=analyze(rec), pass=!a.blocking.length, full=mode==='full';
   var d=pdfNew(), skip=new Set([1]), y;
   var ens=function(n){ if(y+n>BOT){ d.addPage(); y=TOP; } };
   var photoCount={}; S.photos.forEach(function(p){ if(typeof p.num==='number') photoCount[p.num]=(photoCount[p.num]||0)+1; });
@@ -13737,6 +13767,8 @@ function atpPdf(mode){
         if((s2===2||s2===4)&&(dd.note||'').trim()) extra.push((s2===4?'AWP: ':'Finding: ')+dd.note.trim());
         if(s2===5) extra.push(blkTxt(rec,dd)+((dd.note||'').trim()?' Note: '+dd.note.trim():''));
         if(dd.omit) extra.push('OMITTED: '+((dd.onote||'').trim()||'(no note)'));
+        if(dd.ovr) extra.push('OVERRIDDEN by inspector (was '+(dd.os===2?'FAIL':dd.os===5?'NOT TESTED':'NOT INSPECTED')+')'+((dd.ovn||'').trim()?': '+dd.ovn.trim():''));
+        if((s2===2||s2===4)&&dd.lvl) extra.push('Concern level: '+rxLvName(dd.lvl)+(rxCov(dd)?'  |  '+rxCov(dd):'')+(dd.rep?'  |  REPAIRED':''));
         if(photoCount[r.num]) extra.push('['+photoCount[r.num]+' photo'+(photoCount[r.num]>1?'s':'')+' - see photo pages]');
         d.setFontSize(8); var el=[]; extra.forEach(function(x){ el=el.concat(wrap(d,x,CW-38-100)); });
         var hh=Math.max((s2===0||s2===5)?23:17,6+tl.length*10.5+el.length*9.5); ens(hh);
@@ -13744,14 +13776,15 @@ function atpPdf(mode){
         if(s2===5){ hx(d,'setFillColor','#fff8e0'); d.rect(MX,y,CW,hh,'F'); } else if(bad){ hx(d,'setFillColor','#fff1f1'); d.rect(MX,y,CW,hh,'F'); }
         d.setDrawColor(220); d.setLineWidth(.4); d.line(MX,y+hh,MX+CW,y+hh);
         d.setFont('helvetica','bold'); d.setFontSize(8.8); d.setTextColor(60); d.text(String(r.num),MX+30,y+11,{align:'right'});
+        if(bad&&(s2===2||s2===5||s2===0)) rxPdfArrow(d,MX+2,y+3);
         d.setFont('helvetica','normal'); d.setTextColor(0); stabTxt(d,tl,MX+38,y+11,d.getLineHeight());
         if(el.length){ d.setFont('helvetica','italic'); d.setFontSize(8); d.setTextColor(90); d.text(el,MX+38,y+11+tl.length*10.5-1); }
         d.setFont('helvetica','bold'); d.setFontSize(9);
         var rx=MX+CW-48;
         if(dd.omit){ hx(d,'setTextColor','#6b3fa0'); d.text('OMIT',rx,y+11,{align:'center'}); }
         else if(s2===1){ hx(d,'setTextColor','#177a3c'); d.text('PASS',rx,y+11,{align:'center'}); }
-        else if(s2===2){ hx(d,'setTextColor','#c8202a'); d.text('FAIL',rx,y+11,{align:'center'}); }
-        else if(s2===3){ d.setTextColor(110); d.text('N/A',rx,y+11,{align:'center'}); }
+        else if(s2===2){ hx(d,'setTextColor','#c8202a'); d.text('FAIL',rx,y+11,{align:'center'}); if(dd.rep) rxPdfCheck(d,rx+16,y+3,7); }
+        else if(s2===3){ d.setTextColor(110); d.text(dd.ovr?'N/A':'N/A',rx,y+11,{align:'center'}); if(dd.ovr){ d.setFontSize(6.5); d.text('(overridden)',rx,y+20,{align:'center'}); } }
         else if(s2===4){ hx(d,'setTextColor','#b56a00'); d.text('AWP',rx,y+11,{align:'center'}); }
         else if(s2===5){ hx(d,'setTextColor','#8a6d00'); d.setFontSize(7.5); d.text(dd.pend?'PENDING RETEST':'NOT TESTED',rx,y+11,{align:'center'}); d.setFontSize(7); d.text('(blocked)',rx,y+21,{align:'center'}); }
         else { hx(d,'setTextColor','#c8202a'); d.setFontSize(7.5); d.text('NOT',rx,y+9,{align:'center'}); d.text('INSPECTED',rx,y+18,{align:'center'}); }
@@ -13773,15 +13806,19 @@ function atpPdf(mode){
     a.issues.forEach(function(it){
       var dd=it.d; d.setFont('helvetica','bold'); d.setFontSize(8.8); var dl=wrap(d,issueText(rec,it),256);
       d.setFont('helvetica','normal'); d.setFontSize(7.8); var sl=wrap(d,lineText(it.r,dd)+(photoCount[it.r.num]?' ('+photoCount[it.r.num]+' photo'+(photoCount[it.r.num]>1?'s':'')+' attached)':''),256);
-      var hh=Math.max(30,8+dl.length*10.5+sl.length*9+4); if(y+hh>BOT){ d.addPage(); y=TOP; ph(); }
+      var det=[]; if(dd.lvl&&(it.kind==='FAIL'||it.kind==='AWP')) det.push('Concern level: '+rxLvName(dd.lvl)); if(rxCov(dd)&&(it.kind==='FAIL'||it.kind==='AWP')) det.push(rxCov(dd)); (dd.parts||[]).forEach(function(p){ if((p.pn||p.desc||'').toString().trim()) det.push('Part '+(p.pn||'')+' '+(p.desc||'')+(p.qty?' x'+p.qty:'')); }); d.setFont('helvetica','italic'); d.setFontSize(7.6); var ql=det.length?wrap(d,det.join('  |  '),256):[];
+      var hh=Math.max(30,8+dl.length*10.5+sl.length*9+ql.length*9+4); if(y+hh>BOT){ d.addPage(); y=TOP; ph(); }
       if(it.kind==='NOT TESTED'){ hx(d,'setFillColor','#fff8e0'); d.rect(MX,y,CW,hh,'F'); }
       d.setDrawColor(190); d.setLineWidth(.5); d.rect(MX,y,CW,hh); pc.slice(1).forEach(function(c){ d.line(MX+c[0],y,MX+c[0],y+hh); });
-      d.setFont('helvetica','bold'); d.setFontSize(10); d.setTextColor(0); d.text(String(it.r.num),MX+8,y+13);
+      d.setFont('helvetica','bold'); d.setFontSize(10); d.setTextColor(0); d.text(String(it.r.num),MX+4,y+13);
+      if(!it.info&&!dd.rep) rxPdfArrow(d,MX+25,y+5);
       d.setFontSize(8.8); d.text(dl,MX+pc[1][0]+4,y+11);
       d.setFont('helvetica','normal'); d.setFontSize(7.8); d.setTextColor(100); stabTxt(d,sl,MX+pc[1][0]+4,y+11+dl.length*10.5,d.getLineHeight());
-      d.setFont('helvetica','bold'); d.setFontSize(8); var col=it.kind==='FAIL'?'#c8202a':it.kind==='AWP'?'#b56a00':it.kind==='NOT TESTED'?'#8a6d00':'#6f7b8a'; hx(d,'setTextColor',col);
+      if(ql.length){ d.setFont('helvetica','italic'); d.setFontSize(7.6); d.setTextColor(60); d.text(ql,MX+pc[1][0]+4,y+11+dl.length*10.5+sl.length*9+1); }
+      d.setFont('helvetica','bold'); d.setFontSize(8); var col=it.kind==='FAIL'?'#c8202a':it.kind==='AWP'?'#b56a00':it.kind==='NOT TESTED'?'#8a6d00':it.kind==='OVERRIDDEN'?'#2b6cb0':it.kind==='OMIT'?'#6b3fa0':'#6f7b8a'; hx(d,'setTextColor',col);
       var stl=it.kind==='NOT TESTED'&&dd.pend?'PENDING RETEST':it.kind; d.text(wrap(d,stl,72),MX+pc[2][0]+4,y+12);
       d.setDrawColor(0); d.setLineWidth(.8); d.rect(MX+pc[3][0]+34,y+hh/2-6,12,12); d.rect(MX+pc[4][0]+34,y+hh/2-6,12,12);
+      if(dd.rep&&(it.kind==='FAIL'||it.kind==='AWP')) rxPdfCheck(d,MX+pc[3][0]+34,y+hh/2-6,12);
       y+=hh;
     });
     y+=8;
@@ -13828,12 +13865,13 @@ function atpPdf(mode){
       for(var i2=0;i2<n;i2++) for(var j2=0;j2<n;j2++) if(q.isDark(i2,j2)) d.rect(x0+(j2+qz)*cs,y+(i2+qz)*cs,cs+.15,cs+.15,'F');
       d.setDrawColor(150); d.setLineWidth(.6); d.rect(x0,y,sz,sz); }catch(e){ d.setTextColor(200,0,0); d.text('Could not generate the audit QR code: '+cl(e.message),MX,y+10); }
   }
+  if(full){ skip.add(d.getNumberOfPages()+1); ddPdf(rec,d); }
   wipNotePage(d,rec,TOP);
   footers(d,rec,(t.title||'ATP')+(full?'':' Punch List'),skip);
   return d;
 }
 function atpEmail(rec){
-  var h=rec.header, a=analyze(rec), I=a.issues, pass=!I.length;
+  var h=rec.header, a=analyze(rec), I=a.blocking, pass=!I.length;
   var L=['Attached is the eMSC-L ATP inspection report for '+(snD(h)||'this unit')+'.','','Unit S/N: '+(snD(h)||'-')+'  |  VIN '+(h.vin||'-')+'  |  Plate '+(h.plate||'-'),'Inspector: '+(h.inspector||'-')+'  |  Date: '+(fmtDate(h.date)||'-'),'Result: '+(pass?'KPI PASS - no nonconformances found':'KPI FAIL - '+I.length+' item'+(I.length===1?'':'s')+' on the punch list')];
   if(!pass){ L.push('','Punch list:'); I.slice(0,20).forEach(function(it){ var t=lineText(it.r,it.d); L.push('  #'+it.r.num+' '+(t.length>110?t.slice(0,107)+'...':t)); }); if(I.length>20) L.push('  ... and '+(I.length-20)+' more - see the attached report.'); }
   L.push('','Thank you,',h.inspector||'');
@@ -13945,15 +13983,15 @@ function setHeaderVal(k,v){
 /* ---- audit QR (punch list for the auditor) ---- */
 var AUQ_MAX=2700;
 function tplHash(tpl){ var s=''; tpl.sections.forEach(function(x){ x.items.forEach(function(i){ s+=i.text+'|'; }); }); var h=5381; for(var i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))|0; return (h>>>0).toString(36); }
-function auCode(kind){ return kind==='FAIL'?'F':kind==='AWP'?'W':kind==='NOT TESTED'?'B':'N'; }
+function auCode(kind){ return kind==='FAIL'?'F':kind==='AWP'?'W':kind==='NOT TESTED'?'B':kind==='OMIT'?'O':kind==='OVERRIDDEN'?'V':'N'; }
 function auQrPayload(rec){
   var a=analyze(rec);
   var T=function(x,n){ return n?cl(x||'').trim().slice(0,n):''; };
   var levels=[[90,60],[45,40],[25,0],[0,0]], out=null;
   for(var li=0;li<levels.length;li++){
     var nn=levels[li][0], wn=levels[li][1];
-    var f=a.issues.filter(function(it){ return !(it.kind==='NOT INSPECTED'&&!it.r.spare); }).map(function(it){ var d=it.d; var row=[it.r.num,auCode(it.kind),T(d.note,nn),T(d.why,wn),(d.by||[]).join(','),d.pend?1:0]; if(it.r.spare) row.push(T(d.text,70)); return row; });
-    var h=rec.header, rvv=!a.issues.length?'P':(a.issues.some(function(it){ return it.kind==='FAIL'||it.kind==='AWP'; })?'F':'I'), o={a:'ATP',k:'A',v:1,rv:rvv,tr:cl((rec.tpl&&rec.tpl.revision)||''),th:tplHash(rec.tpl),sn:cl(snShow(h.newSerial)),ins:cl(h.inspector||''),d:h.date||'',vin:cl(h.vin||''),pl:cl(h.plate||''),kl:cl(h.kilo||''),cs:cl(h.cameraSerial||''),rs:cl(h.radarSerial||''),ls:(/^\s*PDX\s*$/i.test(h.lcuSerial||'')?'':cl(h.lcuSerial||'')),f:f,ni:a.issues.filter(function(it){ return it.kind==='NOT INSPECTED'&&!it.r.spare; }).map(function(it){ return it.r.num; }).join(',')};
+    var f=a.issues.filter(function(it){ return !(it.kind==='NOT INSPECTED'&&!it.r.spare); }).map(function(it){ var d=it.d; var row=[it.r.num,auCode(it.kind),T(it.kind==='OMIT'?d.onote:it.kind==='OVERRIDDEN'?d.ovn:d.note,nn),T(d.why,wn),(d.by||[]).join(','),d.pend?1:0]; if(it.r.spare) row.push(T(d.text,70)); return row; });
+    var h=rec.header, rvv=!a.blocking.length?'P':(a.blocking.some(function(it){ return it.kind==='FAIL'; })?'F':'I'), o={a:'ATP',k:'A',v:1,rv:rvv,tr:cl((rec.tpl&&rec.tpl.revision)||''),th:tplHash(rec.tpl),sn:cl(snShow(h.newSerial)),ins:cl(h.inspector||''),d:h.date||'',vin:cl(h.vin||''),pl:cl(h.plate||''),kl:cl(h.kilo||''),cs:cl(h.cameraSerial||''),rs:cl(h.radarSerial||''),ls:(/^\s*PDX\s*$/i.test(h.lcuSerial||'')?'':cl(h.lcuSerial||'')),f:f,ni:a.issues.filter(function(it){ return it.kind==='NOT INSPECTED'&&!it.r.spare; }).map(function(it){ return it.r.num; }).join(',')};
     var j=JSON.stringify(o), bytes=new TextEncoder().encode(j).length; out={json:j,level:li,n:a.issues.length,bytes:bytes,ok:bytes<=AUQ_MAX}; if(out.ok) break;
   }
   return out;
@@ -13972,7 +14010,7 @@ function auFromQr(o){
   var rec={id:uid('insp-'),app:'emscl-atp',created:now,updated:now,tpl:clone(S.tpl),header:{newSerial:o.sn||'',oldSerial:'',inspector:o.ins||'',date:o.d||today(),cameraSerial:o.cs||'',radarSerial:o.rs||'',lcuSerial:o.ls||'',vin:o.vin||'',plate:o.pl||'',kilo:o.kl||'',auditor:S.lastAuditor||''},items:{},notes:'',kpiReason:null,lastSec:null,reviewed:Date.now(),fromQr:'audit'};
   buildRows(rec.tpl).forEach(function(r){ if(!r.spare) rec.items[r.num]={s:1}; });
   if(o.ni) String(o.ni).split(',').forEach(function(x){ if(x) rec.items[+x]={s:0}; });
-  o.f.forEach(function(a){ var num=+a[0], code=a[1]; var d={s:code==='F'?2:code==='W'?4:code==='B'?5:0,note:a[2]||'',why:a[3]||'',by:a[4]?String(a[4]).split(',').map(Number):[],pend:!!a[5]}; if(a[6]) d.text=a[6]; rec.items[num]=d; });
+  o.f.forEach(function(a){ var num=+a[0], code=a[1]; var d={s:code==='F'?2:code==='W'?4:code==='B'?5:code==='V'?3:0,note:a[2]||'',why:a[3]||'',by:a[4]?String(a[4]).split(',').map(Number):[],pend:!!a[5]}; if(code==='O'){ d.omit=true; d.onote=a[2]||''; d.note=''; } if(code==='V'){ d.ovr=true; d.os=2; d.ovn=a[2]||''; d.note=''; } if(a[6]) d.text=a[6]; rec.items[num]=d; });
   return rec;
 }
 /* ---- QR scanning ---- */
@@ -14052,7 +14090,7 @@ function auCard(it){
 function auNeedHTML(){ var m=auMissing(S.rec); return '<div id="auNeed">'+(m.length?'<div class="banner" style="margin-top:10px"><b>Still needed before you can submit:</b><ul style="margin:6px 0 0 18px;padding:0">'+m.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul></div>':'')+'<button class="btn primary big" data-act="au-submit" style="width:100%;margin-top:10px;background:#6b3fa0;border-color:#6b3fa0"'+(m.length?' disabled':'')+'>Submit audit report</button></div>'; }
 function auSummary(rec){
   var au=rec.audit, I=analyze(rec).issues, h=rec.header, v=au.verdict==='pass'?'PASSED':'FAILED', a=analyze(rec);
-  var L=['eMSC-L ATP Audit - '+v,(snD(h)||'-')+'  |  VIN '+(h.vin||'-')+'  |  Plate '+(h.plate||'-'),'Auditor: '+au.name+'  ('+fmtDate(au.date)+')','Inspector: '+(h.inspector||'-')+'  |  Inspection KPI: '+(a.issues.length?'FAIL':'PASS'),'','Punch list items reviewed: '+I.length];
+  var L=['eMSC-L ATP Audit - '+v,(snD(h)||'-')+'  |  VIN '+(h.vin||'-')+'  |  Plate '+(h.plate||'-'),'Auditor: '+au.name+'  ('+fmtDate(au.date)+')','Inspector: '+(h.inspector||'-')+'  |  Inspection KPI: '+(a.blocking.length?'FAIL':'PASS'),'','Punch list items reviewed: '+I.length];
   I.forEach(function(it){ var q=au.items[it.r.num]||{}; L.push('  #'+it.r.num+' '+lineText(it.r,it.d)+' - '+(q.r==='ok'?'VERIFIED':q.r==='no'?'NOT ACCEPTABLE':'not reviewed')+(q.n?' ('+q.n+')':'')); });
   if((au.find||'').trim()) L.push('','Additional audit findings: '+au.find.trim()); if((au.note||'').trim()) L.push('','Auditor comments: '+au.note.trim());
   L.push('','The audit report PDF is attached.');
@@ -14516,7 +14554,7 @@ window.offReadiness=readiness;
 })();
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'10/22/2026'};
+const CREDIT={by:'Ravi Ramsundar',built:'10/23/2026'};
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14796,7 +14834,7 @@ function ddMissing(rec){ var x=DD(rec), h=rec.header||{}, m=[];
   DD_REV.forEach(function(f){ var k=f[0]; if(x.rvna[k]) return; if(!String(x.rev[k]||'').trim()) m.push({k:k,label:f[1],what:'revision'}); if(DD_SHARED[k]) dash=true; else if(!ddRevPhotos(k).length) m.push({k:k,label:f[1],what:'photo'}); });
   if(dash&&!ddRevPhotos('v7').length) m.push({k:'dash',label:'Dashboard (mileage / engine / idle hours)',what:'photo'});
   return m; }
-function ddPassed(rec){ return !analyze(rec).issues.length || !!String(DD(rec).ov||'').trim(); }
+function ddPassed(rec){ return true; }
 function ddCap(rec,p){ var k=String(p.num); if(k.indexOf('dd:s:')===0){ var kk=k.slice(5); return 'Serial photo - '+(DD_LBL[kk]||kk)+' '+ddSerial(rec,kk); } var rk=k.slice(5); if(rk==='dash') return 'Dashboard - mileage / engine / idle hours'; var f=DD_REV.filter(function(z){ return z[0]===rk; })[0]; return 'Revision photo - '+(f?f[1]:rk); }
 
 /* ---- UI ---- */
@@ -14832,13 +14870,11 @@ document.addEventListener('change',function(e){ var t=e.target; if(t&&t.dataset&
 function ddOmitHTML(r,d){ if(r.spare&&!(d.text||'').trim()) return ''; var on=!!d.omit;
   return '<div class="omit-slot" data-num="'+r.num+'" style="margin-top:6px"><button type="button" class="btn '+(on?'primary':'light')+' omitbtn" data-act="dd-omit" style="min-height:38px;font-size:13px">'+(on?'✓ Omitted':'Omit this item')+'</button>'+(on?'<label class="full" style="margin-top:6px">Why is this item omitted? (required – printed on the report and checksheet)<textarea data-f="onote" rows="2">'+esc(d.onote||'')+'</textarea></label>':'')+'</div>'; }
 /* ---- ATP passed / override ---- */
-function ddReviewCard(rec){ var x=DD(rec), a=analyze(rec), open=a.issues.length, ov=String(x.ov||'').trim(), ms=ddMissing(rec), ok=ddPassed(rec), om=omitList(rec);
-  return '<section class="card" id="ddCard" style="border:2px solid '+(ok?'#1b8a3a':'#b58900')+';margin-top:12px"><h2 style="margin:0 0 6px">DD1149 base serial checksheet</h2>'+
-   (ok?'<p style="margin:0 0 6px"><b>✓ ATP passed'+(open&&ov?' by override':'')+'.</b></p>':'<p style="margin:0 0 6px"><b>The ATP is not passed yet</b> – '+open+' item'+(open===1?'':'s')+' still open. Fix them, or use Override and explain why.</p>')+
-   (ov?'<div class="card" style="background:#fff7e0;margin:6px 0"><b>Override reason:</b> '+esc(ov)+'<div class="row2"><button class="btn light" data-act="dd-ov">Edit</button><button class="btn light" data-act="dd-ovclear">Remove override</button></div></div>':(open?'<div class="row2"><button class="btn light big" data-act="dd-ov">Override – explain</button></div>':''))+
-   (om.length?'<p class="muted" style="margin:6px 0 0">'+om.length+' omitted item'+(om.length===1?'':'s')+' (acknowledged, with notes).</p>':'')+
-   (ms.length?'<p style="color:#c8202a;margin:8px 0 0"><b>'+ms.length+' serial / photo / revision item'+(ms.length===1?'':'s')+' missing</b> – these print in red on the report and checksheet. <button class="linkish" data-act="dd-gotoser">Go to them</button></p>':'')+
-   (ok?'<div class="actions" style="margin-top:8px"><button class="btn emailbig" data-act="dd-share" style="order:0">✉ Email checksheet (PDF attached)<small>Signatures can be added first</small></button><button class="btn light big" data-act="dd-save">⬇ Save checksheet PDF</button><button class="btn light big" data-act="dd-sign">✍ Signatures'+(x.flirSig||x.custSig?' ✓':'')+'</button></div>':'')+'</section>'; }
+function ddReviewCard(rec){ var x=DD(rec), ms=ddMissing(rec), om=omitList(rec);
+  return '<section class="card" id="ddCard" style="border:2px solid #1b8a3a;margin-top:12px"><h2 style="margin:0 0 6px">DD1149 base serial attachment</h2>'+
+   '<p class="muted" style="margin:0 0 6px">The DD1149 page (final serial numbers and photo index) is printed at the end of the report PDF, whether or not the ATP passes. It has no pass/fail marking.</p>'+
+   (ms.length?'<p style="color:#c8202a;margin:8px 0 0"><b>'+ms.length+' serial / photo / revision item'+(ms.length===1?'':'s')+' missing</b> - these print in red on the report. <button class="linkish" data-act="dd-gotoser">Go to them</button></p>':'')+
+   '<div class="actions" style="margin-top:8px"><button class="btn light big" data-act="dd-sign">\u270d Signatures'+(x.flirSig||x.custSig?' \u2713':'')+'</button></div></section>'; }
 function omitList(rec){ var o=[]; buildRows(rec.tpl).forEach(function(r){ var d=itemOf(rec,r.num); if(counts(r,d)&&d.omit) o.push({r:r,d:d}); }); return o; }
 /* ---- signature dialog ---- */
 function ddSigPad(id){ var c=document.getElementById(id); if(!c) return; var g=c.getContext('2d'), dn=false, lx=0, ly=0; g.lineWidth=2.4; g.lineCap='round'; g.strokeStyle='#000';
@@ -14921,8 +14957,8 @@ function ddReportPdf(d,rec,y,ens0,cell){
   return y; }
 
 /* ---- DD1149 checksheet PDF ---- */
-function ddPdf(rec){
-  var x=DD(rec), h=rec.header, d=pdfNew(), y=TOP;
+function ddPdf(rec,dIn){
+  var x=DD(rec), h=rec.header, d=dIn||pdfNew(), y=TOP; if(dIn) d.addPage();
   var ld=function(){ };
   d.setFont('helvetica','bold'); d.setFontSize(14); d.setTextColor(0);
   d.text('RE: DD1149 Attachment',MX,y+8); y+=22;
@@ -14953,9 +14989,7 @@ function ddPdf(rec){
     d.setFont('helvetica','normal'); d.setFontSize(9); d.setTextColor(80); d.text('Printed name: '+cl(nm||''),MX+170,y+43); y+=62; };
   sg('FLIR Signature:',x.flirName||h.inspector,x.flirDate,x.flirSig); sg('Receiving (GOV Employee):',x.custName,x.custDate,x.custSig);
   var om=omitList(rec);
-  if(om.length){ y+=6; if(y>BOT-40){ d.addPage(); y=TOP; } d.setFontSize(9); d.setFont('helvetica','bold'); d.text('Omitted ATP items (acknowledged):',MX,y); d.setFont('helvetica','normal'); y+=11; om.forEach(function(o){ wrap(d,'#'+o.r.num+' '+lineText(o.r,o.d)+' - '+(o.d.onote||''),CW).forEach(function(l){ if(y>BOT){ d.addPage(); y=TOP; } d.text(l,MX,y); y+=10.5; }); }); }
-  var ovr=String(x.ov||'').trim();
-  if(ovr){ y+=8; if(y>BOT-40){ d.addPage(); y=TOP; } d.setFont('helvetica','bold'); d.setFontSize(9); ddRed(d); d.text('ATP passed by override - reason:',MX,y); y+=11; d.setFont('helvetica','normal'); wrap(d,ovr,CW).forEach(function(l){ if(y>BOT){ d.addPage(); y=TOP; } d.text(l,MX,y); y+=10.5; }); }
+  if(om.length){ y+=6; if(y>BOT-40){ d.addPage(); y=TOP; } d.setFontSize(9); d.setFont('helvetica','bold'); d.text('Omitted ATP items (acknowledged):',MX,y); d.setFont('helvetica','normal'); y+=11; om.forEach(function(o){ wrap(d,'#'+o.r.num+' '+lineText(o.r,o.d)+' - '+(o.d.onote||'(no note)'),CW).forEach(function(l){ if(y>BOT){ d.addPage(); y=TOP; } d.text(l,MX,y); y+=10.5; }); }); }
   /* photo index */
   var items=[['Platform (New Upfit) Serial','newSerial']].concat(DD_DEVS.map(function(z){ return [z[1],z[0]]; })); items.splice(1,0,['Vehicle VIN','vin']);
   var BW=(CW-12)/2, BH=218, per=6, ix=0;
@@ -14973,12 +15007,11 @@ function ddPdf(rec){
       try{ var pr=d.getImageProperties(p.data), kk=Math.min((pw-2)/pr.width,(phh-2)/pr.height), w=pr.width*kk, hh=pr.height*kk; d.addImage(p.data,'JPEG',px+(pw-w)/2,py+(phh-hh)/2,w,hh); }catch(e){} });
     if(ph.length>4){ d.setFont('helvetica','normal'); d.setFontSize(8); d.setTextColor(90); d.text('+'+(ph.length-4)+' more photo(s) in the ATP report',bx+6,by+BH-5); }
   });
-  footers(d,rec,'DD1149 Base Serial Checksheet',new Set([1]));
+  if(!dIn) footers(d,rec,'DD1149 Base Serial Checksheet',new Set([1]));
   return d;
 }
 async function ddOut(how){
   if(dirty()) await save();
-  if(!ddPassed(S.rec)){ notice('The ATP is not passed yet. Finish the open items, or use Override – explain.','ATP not passed'); return; }
   toast('Preparing checksheet...'); await new Promise(function(z){ setTimeout(z,40); });
   var d; try{ d=ddPdf(S.rec); }catch(e){ console.error(e); alert('Could not create the PDF: '+(e.message||e)); return; }
   var blob=d.output('blob'), name=snFile(S.rec.header.newSerial)+'_DD1149_Checksheet.pdf';
@@ -14986,6 +15019,152 @@ async function ddOut(how){
     try{ if(navigator.canShare&&navigator.canShare(data)){ await navigator.share(data); return; } }catch(e){ if(e&&e.name==='AbortError') return; }
     downloadBlob(name,blob); toast('This browser cannot attach files from a page. The PDF was saved to Downloads - attach it from there.');
   } else { downloadBlob(name,blob); toast('PDF saved: '+name); }
+}
+/* ================= ATP rules: override, repaired/level/coverage/parts, red arrows, Complete report ================= */
+var RX_LV=[['low','Low'],['med','Medium'],['high','High'],['dno','Do Not Operate']];
+function rxLvName(k){ var f=RX_LV.filter(function(z){ return z[0]===k; })[0]; return f?f[1]:''; }
+function rxCov(d){ return d.war==='w'?'Warranty':d.war==='nw'?(d.courtesy?'Non-warranty (courtesy repair)':'Non-warranty'):''; }
+/* which kind of attention does this row need? '' | 'fail' | 'blk' | 'ni' */
+function rxFlag(r,d){
+  if(!counts(r,d)||d.omit||d.ovr) return '';
+  var s=d.s||0;
+  if(s===2) return 'fail';
+  if(s===5) return 'blk';
+  if(s===0&&S.showNI) return 'ni';
+  return '';
+}
+function rxArrow(r,d){
+  var f=rxFlag(r,d); if(!f) return '';
+  if(f==='fail'&&d.rep) return '<span class="arw ok" title="Repaired"><i>&#10003;</i> Repaired - retest it (or override) to clear the FAIL</span>';
+  var t=f==='fail'?(d.rep?'Repaired - retest it, or override':'Failed - fix it, or override'):f==='blk'?'Not tested - retest, or override':'Not inspected - inspect it, or override';
+  return '<span class="arw" title="'+esc(t)+'"><i>&#10140;</i> '+esc(t)+'</span>';
+}
+function rxPartsHTML(d){
+  var L=d.parts||[];
+  return '<div class="rx-parts"><div class="muted" style="font-size:13px">Consumed parts for this item (optional)</div>'+L.map(function(p,i){
+    return '<div class="rx-pt"><input data-rxp="'+i+'.pn" value="'+esc(p.pn||'')+'" placeholder="Consumed P/N" autocomplete="off"><input data-rxp="'+i+'.desc" value="'+esc(p.desc||'')+'" placeholder="Description" autocomplete="off"><input data-rxp="'+i+'.qty" value="'+esc(p.qty||'')+'" placeholder="Qty" inputmode="numeric" autocomplete="off" style="width:60px;flex:none"><button type="button" class="btn light" data-act="rx-rmpt" data-i="'+i+'" style="min-height:40px">&#10005;</button></div>';
+  }).join('')+'<button type="button" class="btn light" data-act="rx-addpt" style="min-height:40px">&#65291; Add consumed part</button></div>';
+}
+function rxHTML(r,d){
+  if(r.spare&&!(d.text||'').trim()) return '';
+  var s=d.s||0, h='', fl=rxFlag(r,d);
+  if(d.ovr){
+    h+='<div class="rx-ov"><b>N/A - overridden by inspector</b> <small>(was '+(d.os===2?'FAIL':d.os===5?'NOT TESTED':'NOT INSPECTED')+')</small>'+
+       '<label class="full">Note (optional)<textarea data-f="ovn" rows="2" placeholder="Why is this being overridden?">'+esc(d.ovn||'')+'</textarea></label>'+
+       '<button type="button" class="btn light" data-act="rx-ovr-undo" style="min-height:38px">&#8617; Undo override</button></div>';
+    return h;
+  }
+  if(s===2||s===4){
+    h+='<div class="rx-opts"><div class="rx-lab">Concern level</div><div class="rx-chips">'+RX_LV.map(function(l){ return '<button type="button" class="chip lv-'+l[0]+(d.lvl===l[0]?' on':'')+'" data-act="rx-lvl" data-l="'+l[0]+'">'+l[1]+'</button>'; }).join('')+'</div>'+
+       '<div class="rx-lab">Coverage</div><div class="rx-chips"><button type="button" class="chip'+(d.war==='w'?' on':'')+'" data-act="rx-war" data-w="w">Warranty</button><button type="button" class="chip'+(d.war==='nw'?' on':'')+'" data-act="rx-war" data-w="nw">Non-warranty</button>'+(d.war==='nw'?'<button type="button" class="chip'+(d.courtesy?' on':'')+'" data-act="rx-cour">'+(d.courtesy?'&#10003; ':'')+'Courtesy repair performed</button>':'')+'</div>'+
+       '<button type="button" class="btn '+(d.rep?'pass':'light')+'" data-act="rx-rep" style="min-height:40px;margin-top:6px">'+(d.rep?'&#10003; Repaired':'&#9744; Mark repaired')+'</button>'+rxPartsHTML(d)+'</div>';
+  }
+  if(fl||s===4&&false) h+='';
+  if(fl) h+='<button type="button" class="btn light rx-ovbtn" data-act="rx-ovr">Override - mark N/A</button>';
+  return h;
+}
+function rxRefresh(li){
+  if(!li) return; var num=+li.dataset.num, r=buildRows(S.rec.tpl).filter(function(q){ return q.num===num; })[0], d=itemOf(S.rec,num);
+  var sl=li.querySelector('.rx-slot'); if(sl) sl.innerHTML=rxHTML(r,d);
+  var ar=li.querySelector('.arw-slot'); if(ar) ar.innerHTML=rxArrow(r,d);
+  var bx=li.querySelector('.box'); if(bx){ bx.classList.toggle('fixed',!!(d.rep&&(d.s===2||d.s===4)&&!d.ovr)); if(d.ovr){ bx.innerHTML='N/A'; } }
+  li.classList.toggle('ovr',!!d.ovr);
+}
+function rxRefreshAllNI(){ document.querySelectorAll('li.row').forEach(function(li){ rxRefresh(li); }); }
+
+/* ---- actions on a row ---- */
+async function rxAct(act,el){
+  if(act==='rx-ovr1') return rxOvrOne(+el.dataset.num);
+  if(act.indexOf('rx-')===0&&act!=='rx-ovr-all'&&act!=='rx-final'&&act!=='rx-showni'){
+    var li=el.closest('li.row'); if(!li) return true;
+    var num=+li.dataset.num, d=S.rec.items[num]||(S.rec.items[num]={});
+    switch(act){
+      case 'rx-lvl': d.lvl=(d.lvl===el.dataset.l?'':el.dataset.l); break;
+      case 'rx-war': d.war=(d.war===el.dataset.w?'':el.dataset.w); if(d.war!=='nw') d.courtesy=false; break;
+      case 'rx-cour': d.courtesy=!d.courtesy; break;
+      case 'rx-rep': d.rep=!d.rep; break;
+      case 'rx-addpt': (d.parts=d.parts||[]).push({pn:'',desc:'',qty:''}); break;
+      case 'rx-rmpt': (d.parts||[]).splice(+el.dataset.i,1); break;
+      case 'rx-ovr': d.os=d.s||0; d.s=3; d.ovr=true; break;
+      case 'rx-ovr-undo': d.s=d.os||0; d.ovr=false; d.os=0; break;
+      default: return false;
+    }
+    markDirty();
+    if(act==='rx-ovr'||act==='rx-ovr-undo'){ refreshRow(li); updateSecCount(+li.dataset.sec); updateProgress(); }
+    rxRefresh(li);
+    if(act==='rx-ovr'){ var t=li.querySelector('textarea[data-f="ovn"]'); if(t) t.focus({preventScroll:true}); }
+    return true;
+  }
+  switch(act){
+    case 'rx-ovr-all': return rxOvrAll();
+    case 'complete': return rxComplete(el);
+    case 'rx-final': return rxFinal();
+    case 'rx-showni': S.showNI=true; renderInspection(); return true;
+  }
+  return false;
+}
+function rxPartSet(el){
+  var p=el.dataset.rxp.split('.'), li=el.closest('li.row'); if(!li) return;
+  var d=S.rec.items[+li.dataset.num]; if(!d||!d.parts) return; var o=d.parts[+p[0]]; if(!o) return; o[p[1]]=el.value; markDirty();
+}
+
+/* ---- counts for dialogs / summary ---- */
+function rxSummary(rec){
+  var a=analyze(rec), B=a.blocking, k={fail:0,blk:0,ni:0}; B.forEach(function(it){ if(it.kind==='FAIL') k.fail++; else if(it.kind==='NOT TESTED') k.blk++; else k.ni++; });
+  return {a:a,B:B,k:k,awp:a.issues.filter(function(i){ return i.kind==='AWP'; }).length,omit:a.issues.filter(function(i){ return i.kind==='OMIT'; }).length,ovr:a.issues.filter(function(i){ return i.kind==='OVERRIDDEN'; }).length};
+}
+function rxLine(k){ var p=[]; if(k.fail) p.push(k.fail+' failed'); if(k.blk) p.push(k.blk+' not tested'); if(k.ni) p.push(k.ni+' not inspected'); return p.join(', '); }
+
+/* ---- Complete report ---- */
+async function rxComplete(el){
+  var rec=S.rec; if(!rec) return true;
+  if(dirty()) await save();
+  var sm=rxSummary(rec), onReview=S.view==='review';
+  var msg=sm.B.length ? ('Open items: '+rxLine(sm.k)+'.\nThe report will show KPI FAIL unless you override them (they become N/A). You can still complete it.') : 'No failed or unchecked items. The report will show KPI PASS.';
+  var btns=[{t:onReview?'Yes - complete the report':'Yes - go to the final page',v:'yes',c:'primary'}];
+  if(sm.B.length&&!onReview) btns.push({t:'Show me the open items',v:'show'});
+  btns.push({t:'Keep working',v:'no'});
+  var v=await choose('Complete the report?',msg,btns);
+  if(v==='yes'){ if(onReview) return rxFinal(); S.showNI=true; reviewGate(); return true; }
+  if(v==='show'){ S.showNI=true; if(S.view==='insp'||S.view==='inspection') renderInspection(); var f=sm.B[0]; if(f) setTimeout(function(){ gotoRow(f.r.num); },60); }
+  return true;
+}
+async function rxFinal(){
+  var rec=S.rec; rec.completed=new Date().toISOString(); markDirty(); await save();
+  pdfOut('full','save'); return true;
+}
+async function rxOvrAll(){
+  var rec=S.rec, sm=rxSummary(rec), L=sm.B.filter(function(it){ return it.kind==='NOT INSPECTED'; });
+  if(!L.length) return true;
+  var v=await choose('Override all not-inspected items?',L.length+' item'+(L.length===1?'':'s')+' not inspected will be marked N/A (overridden) and listed on the report. Failed items are not touched.',[{t:'Yes - mark them N/A',v:'yes',c:'primary'},{t:'Cancel',v:'no'}]);
+  if(v!=='yes') return true;
+  L.forEach(function(it){ var d=S.rec.items[it.r.num]||(S.rec.items[it.r.num]={}); d.os=0; d.s=3; d.ovr=true; });
+  markDirty(); await save(); renderReview(); return true;
+}
+async function rxOvrOne(num){
+  var d=S.rec.items[num]||(S.rec.items[num]={}); d.os=d.s||0; d.s=3; d.ovr=true; markDirty(); await save(); renderReview(); return true;
+}
+
+/* ---- review-page summary ---- */
+function rxReviewCard(rec){
+  var sm=rxSummary(rec), I=sm.a.issues;
+  var row=function(it,btn){
+    var d=it.d, lab=it.kind==='NOT INSPECTED'?'Not inspected':it.kind==='NOT TESTED'?'Not tested':it.kind==='FAIL'?'Failed':it.kind==='AWP'?'AWP':it.kind==='OMIT'?'Omitted':'Overridden';
+    return '<li class="rxi"><div class="rxi-t"><span class="arw"><i>&#10140;</i></span><b>#'+it.r.num+'</b> '+esc(lineText(it.r,d).slice(0,110))+'<small> - '+lab+((d.note||'').trim()&&it.kind==='FAIL'?': '+esc(d.note.trim().slice(0,80)):'')+'</small></div><div class="rxi-b"><button class="btn primary" data-act="goto" data-num="'+it.r.num+'">Go to item</button>'+(btn?'<button class="btn light" data-act="rx-ovr1" data-num="'+it.r.num+'">Override</button>':'')+'</div></li>';
+  };
+  var info=function(it){ var d=it.d, lab=it.kind==='AWP'?'AWP (does not affect the result)':it.kind==='OMIT'?'Omitted':'Overridden to N/A'; return '<li class="rxi info"><div class="rxi-t"><b>#'+it.r.num+'</b> '+esc(lineText(it.r,d).slice(0,110))+'<small> - '+lab+(it.kind==='OMIT'&&d.onote?': '+esc(d.onote):it.kind==='OVERRIDDEN'&&d.ovn?': '+esc(d.ovn):'')+'</small></div><div class="rxi-b"><button class="btn light" data-act="goto" data-num="'+it.r.num+'">Go to item</button></div></li>'; };
+  var inf=I.filter(function(i){ return i.info; });
+  var h='<section class="card rx-sum '+(sm.B.length?'bad':'ok')+'" id="rxSum"><h2 style="margin:0 0 6px">'+(sm.B.length?'What is affecting the result ('+sm.B.length+')':'Nothing is affecting the result')+'</h2>';
+  if(sm.B.length){
+    h+='<p class="muted" style="margin:0 0 6px">'+esc(rxLine(sm.k))+'. None of this stops you from completing the report - fix it, or override it (it becomes N/A on the report).</p><ul class="rxl">'+sm.B.map(function(it){ return row(it,true); }).join('')+'</ul>';
+    if(sm.k.ni>1) h+='<button class="btn light" data-act="rx-ovr-all" style="margin-top:6px">Override all '+sm.k.ni+' not-inspected items to N/A</button>';
+  } else h+='<p style="margin:0">&#10003; No failed, untested or unchecked items.</p>';
+  if(inf.length) h+='<h3 style="margin:12px 0 4px">Listed on the report - does not affect the result</h3><ul class="rxl">'+inf.map(info).join('')+'</ul>';
+  h+='</section>';
+  return h;
+}
+function rxBars(){
+  return '<div class="rx-bottom"><button class="btn primary big" data-act="complete">&#10004; Complete report</button></div>';
 }
 
 function secScroll(si){ var el=document.getElementById(si==='unit'?'sec-unit':si==='notes'?'sec-notes':'sec-'+si); if(!el) return; if(el.tagName==='DETAILS') el.open=true; el.scrollIntoView({block:'start'}); }
@@ -14998,13 +15177,14 @@ async function appAct(act,el){
   if(await swAppAct(act,el)) return true;
   if(act.indexOf('wip-')===0){ await wipAct(act,el); return true; }
   if(await ddAct(act,el)) return true;
+  if(await rxAct(act,el)) return true;
   var rowEl=el.closest('.row'), num=rowEl?+rowEl.dataset.num:+el.dataset.num;
   var getD=function(){ return S.rec.items[num]||(S.rec.items[num]={}); };
   var refresh=function(){ markDirty(); refreshRow(rowEl); updateSecCount(+rowEl.dataset.sec); updateProgress(); };
   switch(act){
     case 'tech-pick': { var ti=document.getElementById('nf-inspector'); if(ti) ti.value=el.dataset.n; return true; }
     case 'blk': getD().s=5; refresh(); return true;
-    case 'cnt': var cd=getD(); cd.s=(cd.s===5)?0:5; refresh(); return true;
+    case 'cnt': var cd=getD(); cd.ovr=false; cd.s=(cd.s===5)?0:5; refresh(); return true;
     case 'unblk': getD().s=2; refresh(); return true;
     case 'blk-by': var d=getD(), b=+el.dataset.by; d.by=d.by||[]; var k=d.by.indexOf(b); if(k>=0) d.by.splice(k,1); else d.by.push(b); refresh(); return true;
     case 'blk-pend': var d2=getD(); d2.pend=!d2.pend; refresh(); return true;
@@ -15158,6 +15338,7 @@ app.addEventListener('input', function(e){
     S.draftDirty=true; return;
   }
   if(!S.rec) return;
+  if(el.dataset.rxp){ rxPartSet(el); return; }
   if(el.dataset.au){ auSet(el); return; }
   if(el.dataset.dd){ ddSet(el); return; }
   if(el.dataset.sw){ swSet(el); return; }
