@@ -278,6 +278,7 @@ h2{font-size:21px}
 .rxi.info .arw{display:none}
 .row.ovr{opacity:.8}
 .arw.ok{color:#177a3c}.arw.ok i{animation:none;font-size:20px;background:#1faa4a;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center}
+.arw.grn{color:#177a3c;margin:0}.arw.grn i{font-size:30px}
 
 /* ---------- Print ---------- */
 @media print{
@@ -13991,7 +13992,7 @@ function auQrPayload(rec){
   for(var li=0;li<levels.length;li++){
     var nn=levels[li][0], wn=levels[li][1];
     var f=a.issues.filter(function(it){ return !(it.kind==='NOT INSPECTED'&&!it.r.spare); }).map(function(it){ var d=it.d; var row=[it.r.num,auCode(it.kind),T(it.kind==='OMIT'?d.onote:it.kind==='OVERRIDDEN'?d.ovn:d.note,nn),T(d.why,wn),(d.by||[]).join(','),d.pend?1:0]; if(it.r.spare) row.push(T(d.text,70)); return row; });
-    var h=rec.header, rvv=!a.blocking.length?'P':(a.blocking.some(function(it){ return it.kind==='FAIL'; })?'F':'I'), o={a:'ATP',k:'A',v:1,rv:rvv,id:rec.id,tr:cl((rec.tpl&&rec.tpl.revision)||''),th:tplHash(rec.tpl),sn:cl(snShow(h.newSerial)),ins:cl(h.inspector||''),d:h.date||'',vin:cl(h.vin||''),pl:cl(h.plate||''),kl:cl(h.kilo||''),cs:cl(h.cameraSerial||''),rs:cl(h.radarSerial||''),ls:(/^\s*PDX\s*$/i.test(h.lcuSerial||'')?'':cl(h.lcuSerial||'')),f:f,ni:a.issues.filter(function(it){ return it.kind==='NOT INSPECTED'&&!it.r.spare; }).map(function(it){ return it.r.num; }).join(',')};
+    var h=rec.header, xx=qrExtras(rec), rvv=!a.blocking.length?'P':(a.blocking.some(function(it){ return it.kind==='FAIL'; })?'F':'I'), o=Object.assign({a:'ATP',k:'A',v:1,rv:rvv,id:rec.id,tr:cl((rec.tpl&&rec.tpl.revision)||''),th:tplHash(rec.tpl),sn:cl(snShow(h.newSerial)),ins:cl(h.inspector||''),d:h.date||'',vin:cl(h.vin||''),pl:cl(h.plate||''),kl:cl(h.kilo||''),cs:cl(h.cameraSerial||''),rs:cl(h.radarSerial||''),ls:(/^\s*PDX\s*$/i.test(h.lcuSerial||'')?'':cl(h.lcuSerial||'')),f:f,ni:a.issues.filter(function(it){ return it.kind==='NOT INSPECTED'&&!it.r.spare; }).map(function(it){ return it.r.num; }).join(',')},xx);
     var j=JSON.stringify(o), bytes=new TextEncoder().encode(j).length; out={json:j,level:li,n:a.issues.length,bytes:bytes,ok:bytes<=AUQ_MAX}; if(out.ok) break;
   }
   return out;
@@ -14013,6 +14014,28 @@ function auFromQr(o){
   o.f.forEach(function(a){ var num=+a[0], code=a[1]; var d={s:code==='F'?2:code==='W'?4:code==='B'?5:code==='V'?3:0,note:a[2]||'',why:a[3]||'',by:a[4]?String(a[4]).split(',').map(Number):[],pend:!!a[5]}; if(code==='O'){ d.omit=true; d.onote=a[2]||''; d.note=''; } if(code==='V'){ d.ovr=true; d.os=2; d.ovn=a[2]||''; d.note=''; } if(a[6]) d.text=a[6]; rec.items[num]=d; });
   return rec;
 }
+/* ---- serials, revisions, swaps carried in the QR ---- */
+function qrExtras(rec){
+  var h=rec.header||{}, x=DD(rec), w=SW(rec), e={}, T=function(v){ return cl(v==null?'':v).trim(); };
+  var sv=SWD.map(function(d){ return T(h[d[0]]); }); if(sv.some(Boolean)) e.sv=sv;
+  var rr=DD_REV.map(function(f){ return T(x.rev[f[0]]); }); if(rr.some(Boolean)) e.rr=rr;
+  var rn=DD_REV.filter(function(f){ return x.rvna[f[0]]; }).map(function(f){ return f[0]; }); if(rn.length) e.rn=rn;
+  var dn=Object.keys(x.na).filter(function(k){ return x.na[k]; }); if(dn.length) e.dn=dn;
+  var dt=[x.rcvd,x.retro,x.skid,x.deliv].map(T); if(dt.some(Boolean)||x.delivTbd) e.dt=dt.concat([x.delivTbd?1:0]);
+  if(T(h.oldSerial)) e.os=T(h.oldSerial); if(x.oldNa) e.on=1;
+  var wk=w.list.map(function(s){ return [s.dev||'',T(s.t),T(s.old),T(s.nw),T(s.rma)]; }); if(wk.length) e.wk=wk; if(w.chk) e.sc=1;
+  return e;
+}
+function qrApplyExtras(rec,o){
+  var h=rec.header, x=DD(rec), w=SW(rec);
+  if(o.sv) SWD.forEach(function(d,i){ if(o.sv[i]) h[d[0]]=o.sv[i]; });
+  if(o.rr) DD_REV.forEach(function(f,i){ if(o.rr[i]) x.rev[f[0]]=o.rr[i]; });
+  (o.rn||[]).forEach(function(k){ x.rvna[k]=true; }); (o.dn||[]).forEach(function(k){ x.na[k]=true; });
+  if(o.dt){ x.rcvd=o.dt[0]||''; x.retro=o.dt[1]||''; x.skid=o.dt[2]||''; x.deliv=o.dt[3]||''; if(o.dt[4]) x.delivTbd=true; }
+  if(o.os) h.oldSerial=o.os; if(o.on) x.oldNa=true;
+  (o.wk||[]).forEach(function(s){ w.list.push({id:'sw'+uid(''),dev:s[0]||null,t:s[1]||(s[0]?swName(s[0]):''),old:s[2]||'',nw:s[3]||'',reason:'',rma:s[4]||'',mid:[]}); });
+  if(o.sc) w.chk='done';
+}
 /* ---- new inspection from a scanned ATP QR ---- */
 async function qrNewInspection(o){
   var local=null; if(o.id){ try{ local=await DB.get('inspections',o.id); }catch(e){} }
@@ -14023,7 +14046,7 @@ async function qrNewInspection(o){
     var old=await DB.photosFor(oldId); photos=old.map(function(p){ var q=clone(p); q.id=uid('ph-'); q.inspId=rec.id; return q; });
     return {rec:rec,photos:photos,copied:true};
   }
-  rec=auFromQr(o); rec.fromQr=null; rec.header.inspector=''; rec.header.auditor=''; rec.header.date=today();
+  rec=auFromQr(o); qrApplyExtras(rec,o); rec.fromQr=null; rec.header.inspector=''; rec.header.auditor=''; rec.header.date=today();
   var keep={}; o.f.forEach(function(a){ keep[+a[0]]=1; });
   Object.keys(rec.items).forEach(function(k){ if(!keep[+k]) delete rec.items[k]; });
   return {rec:rec,photos:[],copied:false};
@@ -14616,7 +14639,7 @@ function swapEndHTML(){
   '<p style="margin:10px 0 4px"><b>'+(L.length?'Were any other devices swapped?':'Were any devices swapped?')+'</b></p><p class="muted" style="margin:0 0 6px">Tap a device to record its swap (the old serial is kept – then enter the new serial # and photo), or add one that isn’t listed. To swap a device again, change its new serial # in the card above.</p>'+
   '<div class="row2" style="margin:0 0 8px">'+SWD.filter(function(d){ return !swFor(rec,d[0]); }).map(function(d){ return '<button class="btn light" data-act="sw-lcsel" data-key="'+d[0]+'">'+esc(d[1])+'</button>'; }).join('')+'</div>'+
   '<div class="row2"><input id="swNew" placeholder="Device not in the list – type its name" style="flex:1;min-width:200px;min-height:44px;font-size:16px;padding:6px 10px;border:2px solid var(--line);border-radius:8px"><button class="btn light" data-act="sw-add">＋ Add unlisted device</button></div>'+
-  '<button class="btn'+(w.chk?' primary':' light')+' big" data-act="sw-lcno" style="width:100%;margin-top:10px">'+(w.chk?'✓ ':'')+(L.length?'No, nothing else swapped':'No, nothing was swapped')+'</button></div>';
+  '<div style="display:flex;align-items:center;gap:10px;margin-top:10px">'+((w.chk||L.length)?'':'<span class="arw grn"><i>&#10140;</i></span>')+'<button class="btn'+(w.chk?' primary':' light')+' big" data-act="sw-lcno" style="flex:1">'+(w.chk?'✓ ':'')+(L.length?'No, nothing else swapped':'No, nothing was swapped')+'</button></div></div>';
 }
 function swGate(rec){ var m=[], w=SW(rec); if(!w.chk) m.push('"One last check" on swapped devices (bottom of the checklist)'); return m; }
 function failedUnits(rec){ var o=[]; SW(rec).list.forEach(function(e,i){ e.mid.forEach(function(m,j){ o.push({e:e,i:i,m:m,j:j}); }); }); return o; }
