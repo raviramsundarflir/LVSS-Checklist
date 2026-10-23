@@ -14859,6 +14859,8 @@ function DD(rec){ rec=rec||S.rec; var x=rec.dd; if(!x||typeof x!=='object') x=re
   ['na','rev','rvna'].forEach(function(k){ if(!x[k]||typeof x[k]!=='object') x[k]={}; });
   ['rcvd','retro','skid','deliv','ov','flirName','flirDate','flirSig','custName','custDate','custSig'].forEach(function(k){ if(x[k]==null) x[k]=''; });
   if(x.loc==null) x.loc='Tucson'; return x; }
+var PT_MIN=9, PT_NOTE='Record the long-form serial number (at least 9 characters), not the 4-digit serial.';
+function ddShort(k,v){ return k==='radarPtSerial'&&!!String(v||'').trim()&&String(v).trim().length<PT_MIN; }
 function ddSerial(rec,k){ var e=swFor(rec,k), nv=e&&String(e.nw||'').trim(); return nv?nv:String((rec.header||{})[k]||'').trim(); }
 function ddPhotos(rec,k){ var e=swFor(rec,k), out=S.photos.filter(function(p){ return p.num==='dd:s:'+k || (e&&p.num==='swn:'+e.id); });
   if(k==='newSerial'&&S.rec===rec){ var rows=buildRows(rec.tpl).filter(function(r){ return !r.spare&&/serial (number|plate)/i.test(r.text); }).map(function(r){ return r.num; }); out=out.concat(S.photos.filter(function(p){ return typeof p.num==='number'&&rows.indexOf(p.num)>=0; })); }
@@ -14867,7 +14869,7 @@ function ddRevPhotos(k){ return S.photos.filter(function(p){ return p.num==='dd:
 function ddOldTxt(rec){ var x=DD(rec); return x.oldNa?'N/A':String((rec.header||{}).oldSerial||'').trim(); }
 /* missing list: {k,label,what} */
 function ddMissing(rec){ var x=DD(rec), h=rec.header||{}, m=[];
-  var chk=function(k,lbl){ if(x.na[k]) return; if(!ddSerial(rec,k)) m.push({k:k,label:lbl,what:'serial'}); if(!ddPhotos(rec,k).length) m.push({k:k,label:lbl,what:'photo'}); };
+  var chk=function(k,lbl){ if(x.na[k]) return; if(!ddSerial(rec,k)) m.push({k:k,label:lbl,what:'serial'}); else if(ddShort(k,ddSerial(rec,k))) m.push({k:k,label:lbl+' (long-form serial, at least 9 characters)',what:'serial'}); if(!ddPhotos(rec,k).length) m.push({k:k,label:lbl,what:'photo'}); };
   chk('newSerial',DD_LBL.newSerial); DD_DEVS.forEach(function(d){ chk(d[0],d[1]); }); chk('vin','Vehicle VIN');
   if(!x.oldNa&&!String(h.oldSerial||'').trim()) m.push({k:'oldSerial',label:'Replaces old serial',what:'serial'});
   var dash=false;
@@ -14880,9 +14882,9 @@ function ddCap(rec,p){ var k=String(p.num); if(k.indexOf('dd:s:')===0){ var kk=k
 /* ---- UI ---- */
 function ddThumbs(key){ return swThumbs(key); }
 function ddCamBtn(key,n){ return '<button class="btn light" data-act="sw-cam" data-key="'+key+'" style="min-height:44px" title="Photo">📷'+(n?' <b>'+n+'</b>':'')+'</button>'; }
-function ddSerRow(k,lbl,opts){ opts=opts||{}; var x=DD(), na=!!x.na[k], v=S.rec.header[k]||'', key='dd:s:'+k, n=ddPhotos(S.rec,k).length, miss=!na&&(!ddSerial(S.rec,k)||!n);
-  return '<div class="ddrow'+(miss?' ddmiss':'')+'"><label class="fld">'+esc(lbl)+(opts.loc?'<span class="muted" style="display:block;font-size:13px;font-weight:400">Location: '+esc(opts.loc)+'</span>':'')+'<span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center"><input data-h="'+k+'" value="'+esc(na?'':v)+'"'+(na?' disabled placeholder="N/A"':'')+' autocomplete="off" autocapitalize="characters" style="flex:1;min-width:0">'+
-    (opts.noNa?'':'<button type="button" class="btn '+(na?'primary':'light')+'" data-act="dd-na" data-k="'+k+'" style="min-height:44px">'+(na?'✓ ':'')+'N/A</button>')+(na?'':ddCamBtn(key,n))+'</span></label>'+(na?'':ddThumbs(key))+(miss&&!na?'<small class="ddwarn">'+(!ddSerial(S.rec,k)?'Serial # missing. ':'')+(!n?'Photo missing.':'')+'</small>':'')+'</div>'; }
+function ddSerRow(k,lbl,opts){ opts=opts||{}; var x=DD(), na=!!x.na[k], v=S.rec.header[k]||'', key='dd:s:'+k, n=ddPhotos(S.rec,k).length, miss=!na&&(!ddSerial(S.rec,k)||!n||ddShort(k,ddSerial(S.rec,k)));
+  return '<div class="ddrow'+(miss?' ddmiss':'')+'"><label class="fld">'+esc(lbl)+(k==='radarPtSerial'?'<span style="display:block;font-size:13px;font-weight:700;color:#c8202a">'+PT_NOTE+'</span>':'')+(opts.loc?'<span class="muted" style="display:block;font-size:13px;font-weight:400">Location: '+esc(opts.loc)+'</span>':'')+'<span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center"><input data-h="'+k+'" value="'+esc(na?'':v)+'"'+(na?' disabled placeholder="N/A"':'')+' autocomplete="off" autocapitalize="characters" style="flex:1;min-width:0">'+
+    (opts.noNa?'':'<button type="button" class="btn '+(na?'primary':'light')+'" data-act="dd-na" data-k="'+k+'" style="min-height:44px">'+(na?'✓ ':'')+'N/A</button>')+(na?'':ddCamBtn(key,n))+'</span></label>'+(na?'':ddThumbs(key))+(miss&&!na?'<small class="ddwarn">'+(!ddSerial(S.rec,k)?'Serial # missing. ':ddShort(k,ddSerial(S.rec,k))?'Too short - record the long-form serial (at least 9 characters). ':'')+(!n?'Photo missing.':'')+'</small>':'')+'</div>'; }
 function ddRevRow(f){ var k=f[0], x=DD(), na=!!x.rvna[k], v=x.rev[k]||'', sh=!!DD_SHARED[k], n=sh?0:ddRevPhotos(k).length, miss=!na&&(!String(v).trim()||(!sh&&!n));
   return '<div class="ddrow'+(miss?' ddmiss':'')+'"><label class="fld">'+esc(f[1])+'<span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center"><input data-dd="rev.'+k+'" value="'+esc(na?'':v)+'"'+(na?' disabled placeholder="N/A"':'')+' autocomplete="off" style="flex:1;min-width:0"><button type="button" class="btn '+(na?'primary':'light')+'" data-act="dd-rna" data-k="'+k+'" style="min-height:44px">'+(na?'✓ ':'')+'N/A</button>'+((na||sh)?'':ddCamBtn('dd:r:'+k,n))+'</span></label>'+((na||sh)?'':ddThumbs('dd:r:'+k))+(miss&&!na?'<small class="ddwarn">'+(!String(v).trim()?'Revision missing. ':'')+((!sh&&!n)?'Photo missing.':'')+'</small>':'')+'</div>'; }
 function ddHTML(){ var rec=S.rec, h=rec.header, x=DD(), ms=ddMissing(rec), nSer=ms.filter(function(m){ return m.what!=='revision'&&!/^v\d|dash/.test(m.k); }).length;
@@ -15003,7 +15005,7 @@ function ddPdf(rec,dIn){
   d.setFont('helvetica','bold'); d.setFontSize(14); d.setTextColor(0);
   d.text('RE: DD1149 Attachment',MX,y+8); y+=22;
   var dl=x.delivTbd?'TBD':fmtDate(x.deliv), at=fmtDate(x.retro), sk=fmtDate(x.skid), rc=fmtDate(x.rcvd);
-  var sv=function(k){ var na=x.na[k], v=ddSerial(rec,k), n=ddPhotos(rec,k).length; return na?{t:'N/A'}:{t:v?v:'MISSING',bad:!v||!n,note:(!v?'':(!n?' (no photo)':''))}; };
+  var sv=function(k){ var na=x.na[k], v=ddSerial(rec,k), n=ddPhotos(rec,k).length; return na?{t:'N/A'}:{t:v?v:'MISSING',bad:!v||!n||ddShort(k,v),note:(!v?'':(ddShort(k,v)?' (too short - long-form serial needed)':!n?' (no photo)':''))}; };
   var plat=ddSerial(rec,'newSerial'), oldS=x.oldNa?'':String(h.oldSerial||'').trim();
   var cellx=function(cx,cy,w,hh,lab,v){ d.setDrawColor(120); d.setLineWidth(.7); d.rect(cx,cy,w,hh); d.setFont('helvetica','normal'); d.setFontSize(7.5); d.setTextColor(95); d.text(cl(lab),cx+5,cy+9);
     d.setFont('helvetica','bold'); d.setFontSize(11); if(!v||!String(v.t||'').trim()||v.bad) ddRed(d); else d.setTextColor(0); d.text(cl(((v&&v.t)||'MISSING')+((v&&v.note)||'')),cx+5,cy+23); };
@@ -15171,7 +15173,41 @@ async function rxComplete(el){
 }
 async function rxFinal(){
   var rec=S.rec; rec.completed=new Date().toISOString(); markDirty(); await save();
-  pdfOut('full','save'); return true;
+  await pdfOut('full','save');
+  try{ await rxZipOut(); }catch(e){ console.error(e); notice('The photo zip could not be created: '+(e.message||e),'Photo zip'); }
+  return true;
+}
+/* ---- zip of every photo + the DD1149 attachment (stored, no compression: JPEGs are already compressed) ---- */
+var RX_CRC=null;
+function rxCrc(u8){ if(!RX_CRC){ RX_CRC=new Uint32Array(256); for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); RX_CRC[n]=c>>>0; } } var c2=0xFFFFFFFF; for(var i=0;i<u8.length;i++) c2=RX_CRC[(c2^u8[i])&255]^(c2>>>8); return (c2^0xFFFFFFFF)>>>0; }
+function rxZip(files){
+  var enc=new TextEncoder(), parts=[], cen=[], off=0, dt=new Date(), dosT=(dt.getHours()<<11)|(dt.getMinutes()<<5)|(dt.getSeconds()>>1), dosD=((dt.getFullYear()-1980)<<9)|((dt.getMonth()+1)<<5)|dt.getDate();
+  files.forEach(function(f){
+    var nm=enc.encode(f.name), crc=rxCrc(f.data), h=new DataView(new ArrayBuffer(30)); 
+    h.setUint32(0,0x04034b50,true); h.setUint16(4,20,true); h.setUint16(6,0x0800,true); h.setUint16(8,0,true); h.setUint16(10,dosT,true); h.setUint16(12,dosD,true); h.setUint32(14,crc,true); h.setUint32(18,f.data.length,true); h.setUint32(22,f.data.length,true); h.setUint16(26,nm.length,true); h.setUint16(28,0,true);
+    parts.push(h.buffer,nm,f.data);
+    var c=new DataView(new ArrayBuffer(46)); c.setUint32(0,0x02014b50,true); c.setUint16(4,20,true); c.setUint16(6,20,true); c.setUint16(8,0x0800,true); c.setUint16(10,0,true); c.setUint16(12,dosT,true); c.setUint16(14,dosD,true); c.setUint32(16,crc,true); c.setUint32(20,f.data.length,true); c.setUint32(24,f.data.length,true); c.setUint16(28,nm.length,true); c.setUint32(42,off,true);
+    cen.push(c.buffer,nm); off+=30+nm.length+f.data.length;
+  });
+  var csz=0; cen.forEach(function(b){ csz+=(b.byteLength!=null?b.byteLength:b.length); });
+  var e=new DataView(new ArrayBuffer(22)); e.setUint32(0,0x06054b50,true); e.setUint16(8,files.length,true); e.setUint16(10,files.length,true); e.setUint32(12,csz,true); e.setUint32(16,off,true);
+  return new Blob(parts.concat(cen,[e.buffer]),{type:'application/zip'});
+}
+function rxDataBytes(uri){ var b=atob(String(uri).split(',')[1]||''), u=new Uint8Array(b.length); for(var i=0;i<b.length;i++) u[i]=b.charCodeAt(i); return u; }
+function rxPhotoName(rec,p,n){
+  var k=String(p.num), sfx=' ('+n+').jpg', safe=function(t){ return String(t||'').replace(/[^A-Za-z0-9 ._-]+/g,'').trim().slice(0,60); };
+  if(typeof p.num==='number'){ var r=buildRows(rec.tpl).filter(function(q){ return q.num===p.num; })[0]; return 'Checklist items/Item '+p.num+(r&&r.text?' - '+safe(r.text).slice(0,40):'')+sfx; }
+  if(k.indexOf('dd:s:')===0) return 'DD1149 serial photos/'+safe(DD_LBL[k.slice(5)]||k.slice(5))+sfx;
+  if(k.indexOf('dd:r:')===0){ var rk=k.slice(5), f=DD_REV.filter(function(z){ return z[0]===rk; })[0]; return 'DD1149 revision photos/'+safe(rk==='dash'?'Dashboard':(f?f[1]:rk))+sfx; }
+  if(k.indexOf('sw')===0) return 'Swapped devices/'+safe(k)+sfx;
+  return 'Other photos/'+safe(k)+sfx;
+}
+async function rxZipOut(){
+  var rec=S.rec, h=rec.header, files=[], used={}, cnt={};
+  var pdf=ddPdf(rec).output('arraybuffer'); files.push({name:'DD1149_Attachment_'+snFile(h.newSerial)+'.pdf',data:new Uint8Array(pdf)});
+  S.photos.forEach(function(p){ if(!p.data) return; var base=rxPhotoName(rec,p,1).replace(/ \(1\)\.jpg$/,''); cnt[base]=(cnt[base]||0)+1; var nm=base+' ('+cnt[base]+').jpg'; if(used[nm]) nm=base+' ('+cnt[base]+'b).jpg'; used[nm]=1; try{ files.push({name:nm,data:rxDataBytes(p.data)}); }catch(e){} });
+  var blob=rxZip(files), name=snFile(h.newSerial)+'_Photos_and_DD1149.zip';
+  downloadBlob(name,blob); toast('Saved '+name+' ('+(files.length-1)+' photo'+(files.length===2?'':'s')+' + DD1149 attachment)');
 }
 async function rxOvrAll(){
   var rec=S.rec, sm=rxSummary(rec), L=sm.B.filter(function(it){ return it.kind==='NOT INSPECTED'; });
