@@ -13991,7 +13991,7 @@ function auQrPayload(rec){
   for(var li=0;li<levels.length;li++){
     var nn=levels[li][0], wn=levels[li][1];
     var f=a.issues.filter(function(it){ return !(it.kind==='NOT INSPECTED'&&!it.r.spare); }).map(function(it){ var d=it.d; var row=[it.r.num,auCode(it.kind),T(it.kind==='OMIT'?d.onote:it.kind==='OVERRIDDEN'?d.ovn:d.note,nn),T(d.why,wn),(d.by||[]).join(','),d.pend?1:0]; if(it.r.spare) row.push(T(d.text,70)); return row; });
-    var h=rec.header, rvv=!a.blocking.length?'P':(a.blocking.some(function(it){ return it.kind==='FAIL'; })?'F':'I'), o={a:'ATP',k:'A',v:1,rv:rvv,tr:cl((rec.tpl&&rec.tpl.revision)||''),th:tplHash(rec.tpl),sn:cl(snShow(h.newSerial)),ins:cl(h.inspector||''),d:h.date||'',vin:cl(h.vin||''),pl:cl(h.plate||''),kl:cl(h.kilo||''),cs:cl(h.cameraSerial||''),rs:cl(h.radarSerial||''),ls:(/^\s*PDX\s*$/i.test(h.lcuSerial||'')?'':cl(h.lcuSerial||'')),f:f,ni:a.issues.filter(function(it){ return it.kind==='NOT INSPECTED'&&!it.r.spare; }).map(function(it){ return it.r.num; }).join(',')};
+    var h=rec.header, rvv=!a.blocking.length?'P':(a.blocking.some(function(it){ return it.kind==='FAIL'; })?'F':'I'), o={a:'ATP',k:'A',v:1,rv:rvv,id:rec.id,tr:cl((rec.tpl&&rec.tpl.revision)||''),th:tplHash(rec.tpl),sn:cl(snShow(h.newSerial)),ins:cl(h.inspector||''),d:h.date||'',vin:cl(h.vin||''),pl:cl(h.plate||''),kl:cl(h.kilo||''),cs:cl(h.cameraSerial||''),rs:cl(h.radarSerial||''),ls:(/^\s*PDX\s*$/i.test(h.lcuSerial||'')?'':cl(h.lcuSerial||'')),f:f,ni:a.issues.filter(function(it){ return it.kind==='NOT INSPECTED'&&!it.r.spare; }).map(function(it){ return it.r.num; }).join(',')};
     var j=JSON.stringify(o), bytes=new TextEncoder().encode(j).length; out={json:j,level:li,n:a.issues.length,bytes:bytes,ok:bytes<=AUQ_MAX}; if(out.ok) break;
   }
   return out;
@@ -14012,6 +14012,21 @@ function auFromQr(o){
   if(o.ni) String(o.ni).split(',').forEach(function(x){ if(x) rec.items[+x]={s:0}; });
   o.f.forEach(function(a){ var num=+a[0], code=a[1]; var d={s:code==='F'?2:code==='W'?4:code==='B'?5:code==='V'?3:0,note:a[2]||'',why:a[3]||'',by:a[4]?String(a[4]).split(',').map(Number):[],pend:!!a[5]}; if(code==='O'){ d.omit=true; d.onote=a[2]||''; d.note=''; } if(code==='V'){ d.ovr=true; d.os=2; d.ovn=a[2]||''; d.note=''; } if(a[6]) d.text=a[6]; rec.items[num]=d; });
   return rec;
+}
+/* ---- new inspection from a scanned ATP QR ---- */
+async function qrNewInspection(o){
+  var local=null; if(o.id){ try{ local=await DB.get('inspections',o.id); }catch(e){} }
+  var now=new Date().toISOString(), rec, photos=[];
+  if(local){
+    rec=clone(local); var oldId=local.id; rec.id=uid('insp-'); rec.created=now; rec.updated=now; rec.completed=null; rec.audit=null; rec.fromQr=null; rec.kpiReason=null; rec.lastSec=null;
+    rec.header.inspector=''; rec.header.date=today(); rec.header.auditor='';
+    var old=await DB.photosFor(oldId); photos=old.map(function(p){ var q=clone(p); q.id=uid('ph-'); q.inspId=rec.id; return q; });
+    return {rec:rec,photos:photos,copied:true};
+  }
+  rec=auFromQr(o); rec.fromQr=null; rec.header.inspector=''; rec.header.auditor=''; rec.header.date=today();
+  var keep={}; o.f.forEach(function(a){ keep[+a[0]]=1; });
+  Object.keys(rec.items).forEach(function(k){ if(!keep[+k]) delete rec.items[k]; });
+  return {rec:rec,photos:[],copied:false};
 }
 /* ---- QR scanning ---- */
 var scanStream=null, scanOn=false;
@@ -14060,7 +14075,9 @@ async function scanDone(txt){
   }
   if(!o){ scanMsg('That is not an eMSC-L ATP audit QR code. Try again.'); return; }
   modalRoot.innerHTML=''; var n=o.f.length+(o.ni?String(o.ni).split(',').filter(Boolean).length:0), same=(o.th===tplHash(S.tpl));
-  if(!await ask('Start an audit of '+(o.sn?'S/N '+o.sn:'this unit')+(o.vin?' (VIN '+o.vin+')':'')+' with '+n+' punch list item'+(n===1?'':'s')+' from the tech’s report?'+(same?'':'\n\nNote: this tablet has a different checklist version (rev. '+(S.tpl.revision||'?')+' vs rev. '+(o.tr||'?')+'), so item wording may differ. Check the item numbers against the report.')+'\n\nThe tech’s photos are not in the QR code. Mark each item Verified or Not acceptable, add your own photos and details, then submit the audit.',{title:'Start audit from QR code?',ok:'Start audit'})) return;
+  var pick=await choose('ATP QR code scanned','Start an audit of '+(o.sn?'S/N '+o.sn:'this unit')+(o.vin?' (VIN '+o.vin+')':'')+' with '+n+' punch list item'+(n===1?'':'s')+' from the tech’s report?'+(same?'':'\n\nNote: this tablet has a different checklist version (rev. '+(S.tpl.revision||'?')+' vs rev. '+(o.tr||'?')+'), so item wording may differ. Check the item numbers against the report.')+'\n\nThe tech’s photos are not in the QR code. Mark each item Verified or Not acceptable, add your own photos and details, then submit the audit.'+'\n\nNew inspection: starts a new ATP with the serials, VIN, plate and punch list from this report'+(o.id?'. If the original report is on this tablet, everything is copied, including all photos.':'.'),[{t:'Start a new inspection',v:'new',c:'primary'},{t:'Start an audit',v:'audit'},{t:'Cancel',v:'no'}]);
+  if(pick==='new'){ var nr=await qrNewInspection(o); await DB.put('inspections',nr.rec); for(var pi=0;pi<nr.photos.length;pi++) await DB.put('photos',nr.photos[pi]); toast(nr.copied?'Copied from the report on this tablet ('+nr.photos.length+' photo'+(nr.photos.length===1?'':'s')+').':'Started from the QR code. Photos are not in the QR.'); await openInspection(nr.rec.id); return; }
+  if(pick!=='audit') return;
   var rec=auFromQr(o); await DB.put('inspections',rec); S.rec=rec; S.photos=[]; S.audit=true; S.rev=0; S.savedRev=0; renderAudit();
 }
 
