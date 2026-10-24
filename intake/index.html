@@ -13523,11 +13523,22 @@ const hx=(d,k,h)=>{const n=parseInt(h.slice(1),16);d[k](n>>16,(n>>8)&255,n&255)}
 const pdfNew=()=>new window.jspdf.jsPDF({unit:'pt',format:'letter',compress:true});
 function wrap(d,t,w){return d.splitTextToSize(cl(t),w)}
 function idLine(r,full){const h=r.hdr||{},v=x=>String(x||'').trim()||'-';return cl(`${snD(r)||'-'}  |  RMA ${v(h.rma)}  |  SVO ${v(h.so)}  |  Acct ${v(h.acct)}`);}
-function footers(d,r,running,skip){const n=d.getNumberOfPages();for(let i=1;i<=n;i++){d.setPage(i);creditLine(d,r.tpl&&r.tpl.revision);d.setFont('helvetica','normal');d.setFontSize(7.5);d.setTextColor(120);
+function binPage(d,r){const h=r.hdr,up=h.purpose==='upfit'&&(h.nsn||'').trim();d.addPage('letter','landscape');const W=d.internal.pageSize.getWidth(),CWL=W-2*MX,T=50;
+ const fit=(txt,max,fs0)=>{let fs=fs0;d.setFont('helvetica','bold');d.setFontSize(fs);while(d.getTextWidth(txt)>max&&fs>14){fs-=2;d.setFontSize(fs);}return fs;};
+ hx(d,'setFillColor','#3d8a12');d.rect(MX,T,CWL,84,'F');d.setFont('helvetica','bold');d.setTextColor(255);fit('CUSTOMER PROPERTY',CWL-24,50);d.text('CUSTOMER PROPERTY',W/2,T+52,{align:'center'});
+ d.setFontSize(12);d.text('Bin label - keep this sheet in the sleeve on the bin',W/2,T+72,{align:'center'});
+ let y=T+110;d.setTextColor(90);d.setFont('helvetica','bold');d.setFontSize(13);d.text(up?'INCOMING SERIAL NUMBER':'SERIAL NUMBER',W/2,y,{align:'center'});y+=10;
+ const bh=up?88:120,sn=cl(snD(r)||'________');d.setDrawColor(0);d.setLineWidth(3);d.rect(MX,y,CWL,bh);d.setTextColor(0);fit(sn,CWL-30,up?64:80);d.text(sn,W/2,y+bh/2+(up?22:28),{align:'center'});y+=bh+14;
+ if(up){hx(d,'setFillColor','#3d8a12');d.triangle(W/2-20,y,W/2+20,y,W/2,y+22,'F');y+=36;d.setTextColor(90);d.setFont('helvetica','bold');d.setFontSize(13);d.text('NEW SERIAL NUMBER AFTER UPFIT / UPGRADE',W/2,y,{align:'center'});y+=10;
+  const ns=cl(h.nsn);d.setDrawColor(0);d.setLineWidth(3);d.rect(MX,y,CWL,88);d.setTextColor(0);fit(ns,CWL-30,64);d.text(ns,W/2,y+88/2+22,{align:'center'});y+=88+16;}
+ const rows=[['RMA',h.rma],['SVO',h.so],['Date received',h.date?fmtD(h.date):''],['Truck VIN',h.vin],['License plate',h.plate],['Kilo #',h.kilo],['Intake tech',h.tech]].filter(x=>String(x[1]||'').trim());
+ const half=Math.ceil(rows.length/2);d.setFontSize(10.5);rows.forEach((x,k)=>{const cx=MX+10+(k<half?0:CWL/2),cy=y+8+(k%half)*15;d.setFont('helvetica','bold');d.setTextColor(90);d.text(x[0],cx,cy);d.setFont('helvetica','normal');d.setTextColor(0);d.text(cl(String(x[1])),cx+105,cy);});
+}
+function footers(d,r,running,skip){const n=d.getNumberOfPages();for(let i=1;i<=n;i++){d.setPage(i);const W=d.internal.pageSize.getWidth(),H=d.internal.pageSize.getHeight(),PW=W;creditLine(d,r.tpl&&r.tpl.revision);d.setFont('helvetica','normal');d.setFontSize(7.5);d.setTextColor(120);
  const conf='Teledyne Confidential; Commercially Sensitive Business Data',pg='Page '+i+' of '+n,id='SN '+idLine(r);
- d.text(conf,MX,772);d.text(pg,PW-MX,772,{align:'right'});
+ d.text(conf,MX,(H-20));d.text(pg,PW-MX,(H-20),{align:'right'});
  const lx=MX+d.getTextWidth(conf)+10,rx=PW-MX-d.getTextWidth(pg)-10,w=d.getTextWidth(id);
- if(PW/2-w/2>=lx&&PW/2+w/2<=rx)d.text(id,PW/2,772,{align:'center'});else d.text(id,PW/2,762,{align:'center'});
+ if(PW/2-w/2>=lx&&PW/2+w/2<=rx)d.text(id,PW/2,(H-20),{align:'center'});else d.text(id,PW/2,(H-30),{align:'center'});
  if(running&&i>1&&!(skip&&skip.has(i))){d.text(cl(`${r.hdr.ptype==='EMSCL'?'eMSC-L':'LVSS'} ${isAud(r)?'Intake Audit Report':'Intake Inspection Report'}  |  SN ${idLine(r)}`),MX,32);d.setDrawColor(200);d.line(MX,38,PW-MX,38);}
  else if(running&&i>1){d.setFontSize(8.5);d.setTextColor(90);d.text(id,PW-MX,64,{align:'right'});}}}
 function ckMark(d,cx,cy,k,lw){d.setLineCap('round');d.setLineJoin('round');[['#000000',lw+4],['#22d65f',lw]].forEach(c=>{hx(d,'setDrawColor',c[0]);d.setLineWidth(c[1]);d.lines([[10*k,12*k],[26*k,-30*k]],cx-18*k,cy+2*k,[1,1],'S');});d.setLineWidth(1);d.setLineCap('butt');}
@@ -13715,6 +13726,7 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
  fs.forEach(x=>{ens(18);d.setDrawColor(0);d.setLineWidth(.5);d.rect(MX,y,CW,17);d.line(MX+190,y,MX+190,y+17);d.line(MX+410,y,MX+410,y+17);d.setFont('helvetica','bold');d.setFontSize(9);d.setTextColor(0);d.text(cl(x.n),MX+8,y+12);d.setFont('helvetica','normal');d.text(cl(x.s),MX+200,y+12);d.setFontSize(8.5);d.text(x.swapped?'Swapped - new':'',MX+420,y+12);y+=17;});
  const qv=qrVerFields(r).filter(f=>((r.ver||{})[f.key]||'').trim());if(qv.length){ens(40);d.setFillColor(240,240,240);d.rect(MX,y,CW,17,'F');d.setDrawColor(0);d.setLineWidth(.5);d.rect(MX,y,CW,17);d.setFont('helvetica','bold');d.setFontSize(9);d.setTextColor(0);d.text('Software / version info',MX+8,y+12);d.setFont('helvetica','normal');d.setFontSize(8);d.setTextColor(90);d.text('(also in the QR code)',MX+200,y+12);y+=17;
   qv.forEach(f=>{ens(18);d.setDrawColor(0);d.setLineWidth(.5);d.rect(MX,y,CW,17);d.line(MX+190,y,MX+190,y+17);d.line(MX+410,y,MX+410,y+17);d.setFont('helvetica','bold');d.setFontSize(9);d.setTextColor(0);d.text(wrap(d,f.label,178)[0]||'',MX+8,y+12);d.setFont('helvetica','normal');d.text(wrap(d,(r.ver||{})[f.key]||'',200)[0]||'',MX+200,y+12);y+=17;});}
+ if(!isAud(r))binPage(d,r);
  // ---- audit QR page: punch list for the auditor
  {const ap=auQrPayload(r);if(ap&&ap.ok){d.addPage();y=TOP;d.setFont('helvetica','bold');d.setFontSize(15);d.setTextColor(0);d.text('Punch list items repair completion audit - Auditor QR Code',MX,y+12);y+=22;
   d.setFont('helvetica','normal');d.setFontSize(9.5);d.setTextColor(90);d.text(wrap(d,`${lv(h.sn||'')} - ${fmtD(h.date)} - ${ap.n} fault${ap.n===1?'':'s'}. For the auditor: scan this code in the ${PLN(r)} Post-Repair Checklist app (Scan QR to start) to open an audit of this inspection's punch list. ${auQrNote(ap)} The tech's photos are not included in the code.`,CW),MX,y+8);y+=40;
@@ -14534,7 +14546,7 @@ const CREDIT={by:'Ravi Ramsundar',built:'10/24/2026'};
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
-function creditLine(d,rev){d.setFont('helvetica','normal');d.setFontSize(6.5);d.setTextColor(150);d.text(creditText(rev).replace(/[^\x20-\x7E]/g,'-'),306,784,{align:'center'});}
+function creditLine(d,rev){d.setFont('helvetica','normal');d.setFontSize(6.5);d.setTextColor(150);d.text(creditText(rev).replace(/[^\x20-\x7E]/g,'-'),d.internal.pageSize.getWidth()/2,d.internal.pageSize.getHeight()-8,{align:'center'});}
 function ensureCredit(){
   let el=document.getElementById('credit');
   if(!el||el.parentNode!==document.body){el=document.createElement('div');el.id='credit';document.body.appendChild(el);}
