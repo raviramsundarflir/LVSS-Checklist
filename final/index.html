@@ -13233,12 +13233,12 @@ function finalPdfFile(r){const d=finalPdf(r);return {blob:d.output('blob'),name:
 function finPayload(r,notes){const ck={};Object.keys(r.ck||{}).forEach(k=>{const c=r.ck[k];ck[k]=c.n?{n:1}:c.x?{x:1,d:c.d,i:c.i,u:c.u?1:null,rv:c.rev,nt:c.nt}:null;});const o={a:'FIN',v:1,k:'P',id:r.id,u:r.updated,sn:r.hdr.sn,d:r.hdr.date,t:r.hdr.tech,ii:r.hdr.ini,sr:r.hdr.src,st:r.step||0,f:r.f,ck:ck,dn:{notes:r.done.notes,name:r.done.name,date:r.done.date}};if(notes)o.no=notes;return JSON.stringify(strip(o));}
 function sheetPdf(r,notes){const d=pdfNew();pdfHead(d,'Final inspection - carry-over sheet');let y=92;d.setFont('helvetica','bold');d.setFontSize(13);d.setTextColor(0);d.text(cl('Skid S/N '+recName(r)),MX,y);y+=16;const c=ckCount(r);d.setFont('helvetica','normal');d.setFontSize(10);d.setTextColor(60);d.text(cl('Paused at: '+STEPS[r.step||0]+'   |   checklist '+(c.done+c.na)+'/'+c.total+'   |   '+fmtD(r.hdr.date)+(r.hdr.tech?'   |   '+r.hdr.tech:'')),MX,y);y+=14;
  d.text(wrap(d,"To continue: open Jake's New Build Final Inspection Form on any tablet, tap Scan QR, and scan the code below.",CW),MX,y);y+=26;
- d.addImage(qrPng(finPayload(r,notes),700),'PNG',MX+(CW-330)/2,y,330,330);y+=342;
+ y=qrBigPdf(d,612,y-8,recName(r),MX);d.addImage(qrPng(finPayload(r,notes),700),'PNG',MX+(CW-330)/2,y,330,330);y+=342;
  d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(0);d.text('Hand-off notes',MX,y);y+=6;d.setDrawColor(150);d.rect(MX,y,CW,130);d.setFont('helvetica','normal');d.setFontSize(10);d.text(wrap(d,(notes||'').trim()||'',CW-12),MX+6,y+14);
  creditLine(d,TPL.revision);return d;}
 function pauseDlg(){modal(`<h3 style="margin-top:0">Pause final inspection</h3><p class="muted">Add notes for whoever continues (optional), then make the QR code. The code carries everything entered so far (pictures stay on this tablet and are not in the code).</p><textarea id="pNotes" rows="4" placeholder="e.g. Serials done, checklist stopped at item 12 - waiting on the radar update."></textarea><button class="pri" id="pGo">Make QR code</button><button id="pX">Cancel</button>`);$('#pX').onclick=closeModal;$('#pGo').onclick=()=>qrDlg(($('#pNotes').value||'').trim());}
 function qrDlg(notes){const r=S.rec;let t=finPayload(r,notes),svg='';try{const q=qrObj(t);svg=q.createSvgTag({cellSize:4,margin:4,scalable:true});}catch(e){svg='<div class="err">Could not make the QR code: '+esc(e.message)+' (too much data for one code).</div>';}
- modal(`<h3 style="margin-top:0">Carry-over QR – Skid ${esc(recName(r))}</h3><div style="background:#fff;border:1px solid var(--line);padding:6px;max-width:320px;margin:0 auto">${svg}</div>${notes?`<p><b>Notes:</b> ${esc(notes)}</p>`:''}<p class="muted">On any tablet: open this form → Scan QR. Save or print the sheet to leave with the unit.</p><button class="pri" id="qSheet">⬇ Save carry-over sheet (PDF)</button><button id="qX">Close</button>`);
+ modal(`<h3 style="margin-top:0">Carry-over QR – Skid ${esc(recName(r))}</h3>${qrBigHtml(recName(r))}<div style="background:#fff;border:1px solid var(--line);padding:6px;max-width:320px;margin:0 auto">${svg}</div>${notes?`<p><b>Notes:</b> ${esc(notes)}</p>`:''}<p class="muted">On any tablet: open this form → Scan QR. Save or print the sheet to leave with the unit.</p><button class="pri" id="qSheet">⬇ Save carry-over sheet (PDF)</button><button id="qX">Close</button>`);
  $('#qX').onclick=closeModal;$('#qSheet').onclick=()=>{const d=sheetPdf(r,notes);dlBlob(d.output('blob'),'CarryOver_Final_Inspection_'+recName(r).replace(/[^\w\-]+/g,'_')+'.pdf');};}
 /* ---- e-mail ---- */
 async function emailReport(){const r=S.rec,f=finalPdfFile(r),c=ckCount(r),subj=jakeSubj(r);
@@ -13336,6 +13336,11 @@ function ensureCredit(){
   const t=creditText(creditCurRev());if(el.textContent!==t)el.textContent=t;
   el.style.cssText='display:block;visibility:visible;opacity:.8;text-align:center;font:11px/1.3 system-ui,sans-serif;color:#8a94a3;padding:18px 12px 30px;position:static;height:auto;clip:auto;';}
 ensureCredit();new MutationObserver(ensureCredit).observe(document.body,{childList:true});setInterval(ensureCredit,2500);
+
+/* ---- big serial number shown next to every QR code ---- */
+function qrSnText(sn){return String(sn==null?'':sn).replace(/[^\x20-\x7E]/g,'-').trim();}
+function qrBigHtml(sn){var t=qrSnText(sn);if(!t)return '';return '<div style="font-weight:900;font-size:clamp(28px,8vw,44px);line-height:1.1;text-align:center;margin:6px 0 8px;letter-spacing:.5px;color:#000;word-break:break-word">'+t.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</div>';}
+function qrBigPdf(d,pw,y,sn,mx){var t=qrSnText(sn);if(!t)return y;var W=pw-2*(mx||36),fs=34;d.setFont('helvetica','bold');d.setTextColor(0);while(fs>14){d.setFontSize(fs);if(d.getTextWidth(t)<=W)break;fs-=2;}d.setFontSize(fs);d.text(t,pw/2,y+fs*0.85,{align:'center'});return y+fs+8;}
 
 /* ===== remembered entries: tap a field to pick from what was typed there before ===== */
 const HX={map:null,box:null,el:null,loading:null,max:15};

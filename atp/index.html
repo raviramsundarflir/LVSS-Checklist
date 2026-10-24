@@ -13863,7 +13863,7 @@ function atpPdf(mode){
     d.addPage(); y=TOP; d.setFont('helvetica','bold'); d.setFontSize(15); d.setTextColor(0); d.text(ap.n?'Auditor QR Code - Punch List':'QR Code - Final Inspection / Audit',MX,y+12); y+=22;
     d.setFont('helvetica','normal'); d.setFontSize(9.5); d.setTextColor(90);
     d.text(wrap(d,(snD(h)||'')+' - '+fmtDate(h.date)+' - '+ap.n+' punch list item'+(ap.n===1?'':'s')+'. FINAL INSPECTION: scan this code in Jake\'s New Build Final Inspection Form (Scan QR) to start the final inspection with the skid S/N, VIN and serial numbers filled in. AUDITOR: scan it in the eMSC-L ATP Inspection app (Scan QR to audit) to open an audit of this inspection\'s punch list. '+(ap.n?auQrNote(ap)+' ':'')+'The tech\'s photos are not included in the code.',CW),MX,y+8); y+=52;
-    try{ var q=auQrMake(rec), n=q.getModuleCount(), qz=4, sz=330, cs=sz/(n+2*qz), x0=(PW-sz)/2; d.setFillColor(255,255,255); d.rect(x0,y,sz,sz,'F'); d.setFillColor(0,0,0);
+    y=qrBigPdf(d,PW,y,snD(h),MX); try{ var q=auQrMake(rec), n=q.getModuleCount(), qz=4, sz=330, cs=sz/(n+2*qz), x0=(PW-sz)/2; d.setFillColor(255,255,255); d.rect(x0,y,sz,sz,'F'); d.setFillColor(0,0,0);
       for(var i2=0;i2<n;i2++) for(var j2=0;j2<n;j2++) if(q.isDark(i2,j2)) d.rect(x0+(j2+qz)*cs,y+(i2+qz)*cs,cs+.15,cs+.15,'F');
       d.setDrawColor(150); d.setLineWidth(.6); d.rect(x0,y,sz,sz); }catch(e){ d.setTextColor(200,0,0); d.text('Could not generate the audit QR code: '+cl(e.message),MX,y+10); }
   }
@@ -14003,9 +14003,9 @@ function auQrMake(rec){ var p=auQrPayload(rec); if(!p||!p.ok) return null; var q
 function auQrNote(p){ return p.level===0?'Full detail (item, status, tech notes and blocker reasons).':p.level===1?'Tech notes shortened to fit the code.':p.level===2?'Only short tech notes fit in the code.':'Too many items for notes - the code carries the item list and status only.'; }
 function auQrCard(rec){
   var p=auQrPayload(rec); if(!p) return '';
-  if(!p.n){ var q0=''; if(p.ok){ try{ q0=auQrMake(rec).createSvgTag({cellSize:4,margin:4,scalable:true}); }catch(e){ q0=''; } } return '<section class="card" style="border:2px solid #6b3fa0"><h2 style="margin:0 0 6px">QR code – final inspection</h2><p class="muted">Printed on the last page of the PDF. Scan it in <b>Jake\'s New Build Final Inspection Form</b> (Scan QR) to start the final inspection with the S/N, VIN and serials filled in. No punch-list items, so nothing to audit.</p>'+(q0?'<div style="width:260px;max-width:100%;background:#fff;border:1px solid var(--line);padding:6px">'+q0+'</div>':'')+'</section>'; }
+  if(!p.n){ var q0=''; if(p.ok){ try{ q0=auQrMake(rec).createSvgTag({cellSize:4,margin:4,scalable:true}); }catch(e){ q0=''; } } return '<section class="card" style="border:2px solid #6b3fa0"><h2 style="margin:0 0 6px">QR code – final inspection</h2><p class="muted">Printed on the last page of the PDF. Scan it in <b>Jake\'s New Build Final Inspection Form</b> (Scan QR) to start the final inspection with the S/N, VIN and serials filled in. No punch-list items, so nothing to audit.</p>'+qrBigHtml(snD(rec.header))+(q0?'<div style="width:260px;max-width:100%;background:#fff;border:1px solid var(--line);padding:6px">'+q0+'</div>':'')+'</section>'; }
   var qs=''; if(p.ok){ try{ qs=auQrMake(rec).createSvgTag({cellSize:4,margin:4,scalable:true}); }catch(e){ qs=''; } }
-  return '<section class="card" style="border:2px solid #6b3fa0"><h2 style="margin:0 0 6px">Auditor QR code – punch list</h2>'+(qs?'<p class="muted">Printed on the last page of the PDF. The auditor taps <b>Scan QR to audit</b> on the home screen of their tablet and a ready-to-audit review opens with these '+p.n+' item'+(p.n===1?'':'s')+'. '+esc(auQrNote(p))+' Tech photos are not in the code.</p><div style="width:260px;max-width:100%;background:#fff;border:1px solid var(--line);padding:6px">'+qs+'</div>':'<div class="banner">The punch list is too large to fit in a QR code ('+p.bytes+' bytes). The auditor can still open the saved report on this tablet.</div>')+'</section>';
+  return '<section class="card" style="border:2px solid #6b3fa0"><h2 style="margin:0 0 6px">Auditor QR code – punch list</h2>'+(qs?'<p class="muted">Printed on the last page of the PDF. The auditor taps <b>Scan QR to audit</b> on the home screen of their tablet and a ready-to-audit review opens with these '+p.n+' item'+(p.n===1?'':'s')+'. '+esc(auQrNote(p))+' Tech photos are not in the code.</p>'+qrBigHtml(snD(rec.header))+'<div style="width:260px;max-width:100%;background:#fff;border:1px solid var(--line);padding:6px">'+qs+'</div>':'<div class="banner">The punch list is too large to fit in a QR code ('+p.bytes+' bytes). The auditor can still open the saved report on this tablet.</div>')+'</section>';
 }
 function qrParse(t){ try{ var o=JSON.parse(t); if(o&&o.a==='ATP'&&o.k==='A'&&Array.isArray(o.f)) return o; }catch(e){} return null; }
 function auFromQr(o){
@@ -14313,7 +14313,7 @@ function wipShow(){
   const {p,i}=S.wip,n=p.parts.length,rec=WA.rec(),pg=p.pg||{};
   const svg=wipQrSvg(p.parts[i]);
   WA.dlg(`<h3>⏸ Pause – continue on another tablet</h3>
-  <p class="muted" style="margin:0 0 8px">${esc(WA.sn(rec)||'This inspection')} · ${pg.done!=null?pg.done+' of '+pg.total+' items checked':''}. Everything typed so far is in ${n===1?'this code':'these '+n+' codes'}. <b>Photos can't go in a QR code</b> – the other tablet will ask which ones to retake.</p>
+  ${qrBigHtml(WA.sn(rec))}<p class="muted" style="margin:0 0 8px">${esc(WA.sn(rec)||'This inspection')} · ${pg.done!=null?pg.done+' of '+pg.total+' items checked':''}. Everything typed so far is in ${n===1?'this code':'these '+n+' codes'}. <b>Photos can't go in a QR code</b> – the other tablet will ask which ones to retake.</p>
   <div style="background:#fff;border:1px solid #ccd;padding:6px;margin:0 auto;box-sizing:border-box;width:min(100%,60vh,560px)">${svg||'<p>The code could not be drawn.</p>'}</div>
   <div style="display:flex;gap:8px;align-items:center;justify-content:center;margin:8px 0">${n>1?wipBtn('wip-prev','‹ Previous','',i===0?'disabled':''):''}<b style="font-size:18px;white-space:nowrap">Code ${i+1} of ${n}</b>${n>1?wipBtn('wip-next','Next ›','pri',i===n-1?'disabled':''):''}</div>
   <p class="muted" style="margin:0 0 8px">On the other tablet: Home → <b>Scan QR</b> → take a photo of ${n>1?'each code (any order)':'the code'}. Turn the screen brightness up and hold steady.</p>
@@ -14335,7 +14335,7 @@ function wipBuildPdf(){
     d.setTextColor(0);let y=92;
     const row=(a,b)=>{d.setFont('helvetica','bold');d.setFontSize(11);d.text(a,36,y);d.setFont('helvetica','normal');d.text(String(b),150,y);y+=17;};
     row('Serial / unit:',sn);row('Paused:',ts);if(tech)row('Paused by:',tech);if(pg.done!=null)row('Progress:',pg.done+' of '+pg.total+' items checked');row('This code:',(k+1)+' of '+n+(n>1?'  (all codes are needed)':''));
-    try{const q=qrcode(0,'L');q.addData(t);q.make();const m=q.getModuleCount(),qz=4,sz=420,x0=(612-sz)/2,y0=y+8,px=Math.max(4,Math.floor(1400/(m+2*qz))),W=(m+2*qz)*px,cv=document.createElement('canvas');cv.width=cv.height=W;const g=cv.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,W,W);g.fillStyle='#000';
+    y=qrBigPdf(d,612,y-6,sn,36)+2;try{const q=qrcode(0,'L');q.addData(t);q.make();const m=q.getModuleCount(),qz=4,sz=380,x0=(612-sz)/2,y0=y+4,px=Math.max(4,Math.floor(1400/(m+2*qz))),W=(m+2*qz)*px,cv=document.createElement('canvas');cv.width=cv.height=W;const g=cv.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,W,W);g.fillStyle='#000';
       for(let a=0;a<m;a++)for(let b=0;b<m;b++)if(q.isDark(a,b))g.fillRect((b+qz)*px,(a+qz)*px,px,px);
       d.addImage(cv.toDataURL('image/png'),'PNG',x0,y0,sz,sz);d.setDrawColor(150);d.rect(x0,y0,sz,sz);y=y0+sz+22;}catch(e){y+=380;}
     d.setFont('helvetica','bold');d.setFontSize(11);d.text('Next technician - to continue this inspection:',36,y);y+=15;d.setFont('helvetica','normal');d.setFontSize(10);
@@ -14615,6 +14615,11 @@ function ensureCredit(){
   const t=creditText(creditCurRev());if(el.textContent!==t)el.textContent=t;
   el.style.cssText='display:block;visibility:visible;opacity:.8;text-align:center;font:11px/1.3 system-ui,sans-serif;color:#8a94a3;padding:18px 12px 30px;position:static;height:auto;clip:auto;';}
 ensureCredit();new MutationObserver(ensureCredit).observe(document.body,{childList:true});setInterval(ensureCredit,2500);
+
+/* ---- big serial number shown next to every QR code ---- */
+function qrSnText(sn){return String(sn==null?'':sn).replace(/[^\x20-\x7E]/g,'-').trim();}
+function qrBigHtml(sn){var t=qrSnText(sn);if(!t)return '';return '<div style="font-weight:900;font-size:clamp(28px,8vw,44px);line-height:1.1;text-align:center;margin:6px 0 8px;letter-spacing:.5px;color:#000;word-break:break-word">'+t.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</div>';}
+function qrBigPdf(d,pw,y,sn,mx){var t=qrSnText(sn);if(!t)return y;var W=pw-2*(mx||36),fs=34;d.setFont('helvetica','bold');d.setTextColor(0);while(fs>14){d.setFontSize(fs);if(d.getTextWidth(t)<=W)break;fs-=2;}d.setFontSize(fs);d.text(t,pw/2,y+fs*0.85,{align:'center'});return y+fs+8;}
 
 /* ===== swap chain / serial-edit prompt / last check / failed-unit RMA / review inline controls (ATP) ===== */
 var SWD=[['newSerial','New unit'],['cameraSerial','Camera'],['radarSerial','Radar'],['lcuSerial','LCU'],['radarPtSerial','Pan Tilt Unit'],['starlinkSerial','Starlink'],['ciscoEnclSerial','Cisco Switch'],['ciscoModSerial','Cisco WiFi Module'],['pimSerial','Cisco PIM / LTE Module'],['serverSerial','Server'],['ciscoRtrSerial','Cisco Receiver'],['smuSerial','HMI/SMU'],['gpsSerial','Trimble GPS']];

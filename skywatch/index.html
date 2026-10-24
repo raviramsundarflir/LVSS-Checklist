@@ -13368,7 +13368,7 @@ function auQrMake(r){const p=auQrPayload(r);if(!p||!p.ok)return null;const q=win
 function auQrNote(p){return p.level===0?'Full detail (fault, severity, warranty, tech notes and resolution).':p.level===1?'Tech notes shortened to fit the code.':p.level===2?'Only short tech notes fit in the code.':'Too many faults for notes - the code carries the fault list, severity and status only.';}
 function auQrCard(r){if(!r.verdict||!auF(r).length)return '';const p=auQrPayload(r);let qs='';
  if(p&&p.ok){try{qs=auQrMake(r).createSvgTag({cellSize:4,margin:4,scalable:true})}catch(e){qs=''}}
- return `<div class="card" style="border:2px solid #6b3fa0"><h3>Auditor QR code – punch list</h3>${qs?`<p class="muted">Printed on the last page of the PDF. The auditor taps <b>Scan QR to audit</b> on the home screen of their tablet and a ready-to-audit review opens with these ${p.n} fault${p.n===1?'':'s'}. ${esc(auQrNote(p))} Tech photos are not in the code.</p><div style="width:260px;max-width:100%;background:#fff;border:1px solid var(--line);padding:6px">${qs}</div>`:`<div class="err">The punch list is too large to fit in a QR code (${p?p.bytes:0} bytes). The auditor can still open the saved report on this tablet.</div>`}</div>`;}
+ return `<div class="card" style="border:2px solid #6b3fa0"><h3>Auditor QR code – punch list</h3>${qs?`<p class="muted">Printed on the last page of the PDF. The auditor taps <b>Scan QR to audit</b> on the home screen of their tablet and a ready-to-audit review opens with these ${p.n} fault${p.n===1?'':'s'}. ${esc(auQrNote(p))} Tech photos are not in the code.</p>${qrBigHtml(r.hdr.towerSerial)}<div style="width:260px;max-width:100%;background:#fff;border:1px solid var(--line);padding:6px">${qs}</div>`:`<div class="err">The punch list is too large to fit in a QR code (${p?p.bytes:0} bytes). The auditor can still open the saved report on this tablet.</div>`}</div>`;}
 function auFromQr(o){const r=newRec({towerSerial:o.sn||'',customer:o.cu||'',rma:o.rma||'',serviceOrder:o.so||'',salesOrder:o.sa||'',tech:o.t||'',date:o.d||today()});
  r.genType=o.gt||'';r.legacy=!!o.lg;r.verdict=o.vd==='p'?'pass':'fail';r.fromQr='audit';r.signed=true;
  const ids=new Set();r.tpl.sections.forEach(sc=>sc.groups.forEach(g=>g.items.forEach(it=>ids.add(it.id))));
@@ -13563,7 +13563,7 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
  // ---- last page: auditor QR (punch list)
  {const ap=auQrPayload(r);if(ap&&ap.ok){d.addPage();y=TOP;d.setFont('helvetica','bold');d.setFontSize(15);d.setTextColor(0);d.text('Auditor QR Code - Punch List',MX,y+12);y+=22;
   d.setFont('helvetica','normal');d.setFontSize(9.5);d.setTextColor(90);d.text(wrap(d,`Tower S/N ${cl(h.towerSerial||'')} - ${fmtD(h.date)} - ${ap.n} fault${ap.n===1?'':'s'}. For the auditor: scan this code in the SkyWatch Inspection app (Scan QR to audit) to open an audit of this inspection's punch list. ${auQrNote(ap)} The tech's photos are not included in the code.`,CW),MX,y+8);y+=40;
-  try{const q=auQrMake(r),n=q.getModuleCount(),qz=4,sz=330,cs=sz/(n+2*qz),x0=(PW-sz)/2;d.setFillColor(255,255,255);d.rect(x0,y,sz,sz,'F');d.setFillColor(0,0,0);
+  y=qrBigPdf(d,PW,y,h.towerSerial,MX);try{const q=auQrMake(r),n=q.getModuleCount(),qz=4,sz=330,cs=sz/(n+2*qz),x0=(PW-sz)/2;d.setFillColor(255,255,255);d.rect(x0,y,sz,sz,'F');d.setFillColor(0,0,0);
    for(let i=0;i<n;i++)for(let j=0;j<n;j++)if(q.isDark(i,j))d.rect(x0+(j+qz)*cs,y+(i+qz)*cs,cs+.15,cs+.15,'F');
    d.setDrawColor(150);d.setLineWidth(.6);d.rect(x0,y,sz,sz);y+=sz+14;}catch(e){d.setTextColor(200,0,0);d.text('Could not generate the audit QR code: '+cl(e.message),MX,y+10);y+=24;}}}
  wipNotePage(d,r,TOP);footers(d,r,true,skip);return d;}
@@ -14007,7 +14007,7 @@ function wipShow(){
   const {p,i}=S.wip,n=p.parts.length,rec=WA.rec(),pg=p.pg||{};
   const svg=wipQrSvg(p.parts[i]);
   WA.dlg(`<h3>⏸ Pause – continue on another tablet</h3>
-  <p class="muted" style="margin:0 0 8px">${esc(WA.sn(rec)||'This inspection')} · ${pg.done!=null?pg.done+' of '+pg.total+' items checked':''}. Everything typed so far is in ${n===1?'this code':'these '+n+' codes'}. <b>Photos can't go in a QR code</b> – the other tablet will ask which ones to retake.</p>
+  ${qrBigHtml(WA.sn(rec))}<p class="muted" style="margin:0 0 8px">${esc(WA.sn(rec)||'This inspection')} · ${pg.done!=null?pg.done+' of '+pg.total+' items checked':''}. Everything typed so far is in ${n===1?'this code':'these '+n+' codes'}. <b>Photos can't go in a QR code</b> – the other tablet will ask which ones to retake.</p>
   <div style="background:#fff;border:1px solid #ccd;padding:6px;margin:0 auto;box-sizing:border-box;width:min(100%,60vh,560px)">${svg||'<p>The code could not be drawn.</p>'}</div>
   <div style="display:flex;gap:8px;align-items:center;justify-content:center;margin:8px 0">${n>1?wipBtn('wip-prev','‹ Previous','',i===0?'disabled':''):''}<b style="font-size:18px;white-space:nowrap">Code ${i+1} of ${n}</b>${n>1?wipBtn('wip-next','Next ›','pri',i===n-1?'disabled':''):''}</div>
   <p class="muted" style="margin:0 0 8px">On the other tablet: Home → <b>Scan QR</b> → take a photo of ${n>1?'each code (any order)':'the code'}. Turn the screen brightness up and hold steady.</p>
@@ -14029,7 +14029,7 @@ function wipBuildPdf(){
     d.setTextColor(0);let y=92;
     const row=(a,b)=>{d.setFont('helvetica','bold');d.setFontSize(11);d.text(a,36,y);d.setFont('helvetica','normal');d.text(String(b),150,y);y+=17;};
     row('Serial / unit:',sn);row('Paused:',ts);if(tech)row('Paused by:',tech);if(pg.done!=null)row('Progress:',pg.done+' of '+pg.total+' items checked');row('This code:',(k+1)+' of '+n+(n>1?'  (all codes are needed)':''));
-    try{const q=qrcode(0,'L');q.addData(t);q.make();const m=q.getModuleCount(),qz=4,sz=420,x0=(612-sz)/2,y0=y+8,px=Math.max(4,Math.floor(1400/(m+2*qz))),W=(m+2*qz)*px,cv=document.createElement('canvas');cv.width=cv.height=W;const g=cv.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,W,W);g.fillStyle='#000';
+    y=qrBigPdf(d,612,y-6,sn,36)+2;try{const q=qrcode(0,'L');q.addData(t);q.make();const m=q.getModuleCount(),qz=4,sz=380,x0=(612-sz)/2,y0=y+4,px=Math.max(4,Math.floor(1400/(m+2*qz))),W=(m+2*qz)*px,cv=document.createElement('canvas');cv.width=cv.height=W;const g=cv.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,W,W);g.fillStyle='#000';
       for(let a=0;a<m;a++)for(let b=0;b<m;b++)if(q.isDark(a,b))g.fillRect((b+qz)*px,(a+qz)*px,px,px);
       d.addImage(cv.toDataURL('image/png'),'PNG',x0,y0,sz,sz);d.setDrawColor(150);d.rect(x0,y0,sz,sz);y=y0+sz+22;}catch(e){y+=380;}
     d.setFont('helvetica','bold');d.setFontSize(11);d.text('Next technician - to continue this inspection:',36,y);y+=15;d.setFont('helvetica','normal');d.setFontSize(10);
@@ -14178,7 +14178,7 @@ function techRemember(n){n=(n||'').trim();if(!n)return;const L=[n,...techNames()
 function techPick(i){const n=techNames()[i],el=$('#n-te');if(n&&el){el.value=n;S.techDraft=n;}}
 /* shared: ask at the start of each inspection whether the tech has a good connection; offline readiness check */
 (function(){
-var FORMS=[['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch']];
+var FORMS=[['intake','Truck Intake'],['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch']];
 var ME=(location.pathname.split('/').filter(Boolean).slice(-1)[0]||'').replace(/\.html?$/,'');
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
 if(!ls('off:since'))ls('off:since',String(Date.now()));
@@ -14296,16 +14296,21 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'10/22/2026'};
+const CREDIT={by:'Ravi Ramsundar',built:'10/24/2026'};
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
-function creditLine(d,rev){d.setFont('helvetica','normal');d.setFontSize(6.5);d.setTextColor(150);d.text(creditText(rev).replace(/[^\x20-\x7E]/g,'-'),306,784,{align:'center'});}
+function creditLine(d,rev){d.setFont('helvetica','normal');d.setFontSize(6.5);d.setTextColor(150);d.text(creditText(rev).replace(/[^\x20-\x7E]/g,'-'),d.internal.pageSize.getWidth()/2,d.internal.pageSize.getHeight()-8,{align:'center'});}
 function ensureCredit(){
   let el=document.getElementById('credit');
   if(!el||el.parentNode!==document.body){el=document.createElement('div');el.id='credit';document.body.appendChild(el);}
   const t=creditText(creditCurRev());if(el.textContent!==t)el.textContent=t;
   el.style.cssText='display:block;visibility:visible;opacity:.8;text-align:center;font:11px/1.3 system-ui,sans-serif;color:#8a94a3;padding:18px 12px 30px;position:static;height:auto;clip:auto;';}
 ensureCredit();new MutationObserver(ensureCredit).observe(document.body,{childList:true});setInterval(ensureCredit,2500);
+
+/* ---- big serial number shown next to every QR code ---- */
+function qrSnText(sn){return String(sn==null?'':sn).replace(/[^\x20-\x7E]/g,'-').trim();}
+function qrBigHtml(sn){var t=qrSnText(sn);if(!t)return '';return '<div style="font-weight:900;font-size:clamp(28px,8vw,44px);line-height:1.1;text-align:center;margin:6px 0 8px;letter-spacing:.5px;color:#000;word-break:break-word">'+t.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</div>';}
+function qrBigPdf(d,pw,y,sn,mx){var t=qrSnText(sn);if(!t)return y;var W=pw-2*(mx||36),fs=34;d.setFont('helvetica','bold');d.setTextColor(0);while(fs>14){d.setFontSize(fs);if(d.getTextWidth(t)<=W)break;fs-=2;}d.setFontSize(fs);d.text(t,pw/2,y+fs*0.85,{align:'center'});return y+fs+8;}
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script></body></html>
