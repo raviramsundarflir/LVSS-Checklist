@@ -13110,7 +13110,7 @@ function serHtml(r){const up=r.hdr.kind==='up';
  <label class="f">What is this?</label><div class="seg2"><button data-act="kind" data-v="new" class="${up?'':'on'}">New build</button><button data-act="kind" data-v="up" class="${up?'on':''}">Upfit</button></div>
  <label class="f">Platform serial number (required)</label>${snTg('n-sn',r.hdr.sn)}<input id="n-sn" data-snin="1" data-b="hdr.sn" data-nohist value="${esc(r.hdr.sn)}" autocomplete="off" autocapitalize="off" inputmode="text">
  ${up?`<label class="f">Old serial number (required for an upfit)</label>${snTg('n-old',r.hdr.old)}<input id="n-old" data-snin="1" data-b="hdr.old" value="${esc(r.hdr.old)}" placeholder="Serial number of the old unit" autocomplete="off">`:''}
- <div class="grid"><div><label class="f">Completed by</label><input id="n-te" data-b="hdr.tech" value="${esc(r.hdr.tech)}" placeholder="Technician name" autocomplete="off"></div><div><label class="f">Date</label><input type="date" data-b="hdr.date" value="${esc(r.hdr.date)}"></div></div>${techChips()}</div>`;}
+ ${tkIdHtml(r)}<div class="grid"><div><label class="f">Completed by</label><input id="n-te" data-b="hdr.tech" value="${esc(r.hdr.tech)}" placeholder="Technician name" autocomplete="off"></div><div><label class="f">Date</label><input type="date" data-b="hdr.date" value="${esc(r.hdr.date)}"></div></div>${techChips()}</div>`;}
 const phCount=(r,k)=>(r.ph||[]).filter(p=>p.k===k).length;
 function ckRow(r,i){const c=ckOf(r,i.k),s=c.s||'',n=phCount(r,i.k);
  const cam=`<button class="fcam" data-act="ckcam" data-k="${i.k}" title="Add a picture to this line">📷${n?' '+n:''}</button>`;
@@ -13219,8 +13219,8 @@ function floorPdf(r){const d=pdfNew();let y;const ens=n=>{if(y+n>BOT){d.addPage(
  const up=r.hdr.kind==='up';
  d.setFont('helvetica','bold');d.setFontSize(10.5);d.setTextColor(0);
  const box=(a,b,x,w)=>{d.setDrawColor(150);d.setLineWidth(.6);d.rect(x,y,w,26);d.setFont('helvetica','normal');d.setFontSize(6.8);d.setTextColor(110);d.text(a,x+4,y+8);d.setFontSize(10.5);d.setTextColor(0);d.text(cl(b),x+4,y+20);};
- box('S/N',recName(r),MX,up?170:270);if(up)box('Old S/N (upfit)',r.hdr.old||'-',MX+170,150);else box('Type','New build',MX+270,120);
- box('Date',fmtD(r.hdr.date),MX+(up?320:390),90);box('Completed by',r.hdr.tech||'-',MX+(up?410:480),up?130:60);y+=26;
+ box('S/N',recName(r)+(isOldSn(r)?' (old S/N)':''),MX,up?170:270);if(up)box('Old S/N (upfit)',r.hdr.old||'-',MX+170,150);else box('Type','New build',MX+270,120);
+ box('Date',fmtD(r.hdr.date),MX+(up?320:390),90);box('Completed by',r.hdr.tech||'-',MX+(up?410:480),up?130:60);y+=26;y=tkIdPdf(d,r,MX,CW,y+4)+4;
  if(!up){d.setFontSize(7);}
  y+=10;const c0=44,cw=CW-c0-110,rw=110;
  const hd=()=>{d.setFillColor(17,17,17);d.rect(MX,y,CW,15,'F');d.setFont('helvetica','bold');d.setFontSize(9);d.setTextColor(255);d.text('Item',MX+5,y+10.5);d.text('Verify wiring and comms for all subcomponents',MX+c0+5,y+10.5);d.text('Pass/Fail',MX+c0+cw+5,y+10.5);y+=15;};
@@ -13243,15 +13243,15 @@ function floorPdf(r){const d=pdfNew();let y;const ens=n=>{if(y+n>BOT){d.addPage(
 const fileOf=r=>recName(r).replace(/[^\w\-]+/g,'_');
 function floorPdfFile(r){const d=floorPdf(r);return {blob:d.output('blob'),name:'Floor_Test_'+fileOf(r)+'.pdf'};}
 /* ---- QR (pause) ---- */
-function floorPayload(r,notes){const ck={};Object.keys(r.ck||{}).forEach(k=>{const c=r.ck[k];ck[k]={s:c.s,rp:c.rep,sv:c.sev,rt:c.rt};});const o={a:'FLR',v:1,k:'P',rv:r.done.complete&&!r.done.partial?(overall(r)==='PASS'?'P':overall(r)==='FAIL'?'F':'I'):(overall(r)==='FAIL'?'F':'I'),id:r.id,u:r.updated,sn:r.hdr.sn,ol:r.hdr.old,kd:r.hdr.kind,d:r.hdr.date,t:r.hdr.tech,st:r.step||0,ck:ck,dn:{notes:r.done.notes,name:r.done.name,date:r.done.date}};if(notes)o.no=notes;return JSON.stringify(strip(o));}
-function sheetPdf(r,notes){const d=pdfNew();pdfHead(d,'Floor test - carry-over sheet');let y=92;d.setFont('helvetica','bold');d.setFontSize(13);d.setTextColor(0);d.text(cl(recName(r)),MX,y);y+=16;const c=ckCount(r);d.setFont('helvetica','normal');d.setFontSize(10);d.setTextColor(60);d.text(cl('Paused at: '+STEPS[r.step||0]+'   |   '+c.done+'/'+c.total+' answered   |   '+fmtD(r.hdr.date)+(r.hdr.tech?'   |   '+r.hdr.tech:'')),MX,y);y+=14;
+function floorPayload(r,notes){const ck={};Object.keys(r.ck||{}).forEach(k=>{const c=r.ck[k];ck[k]={s:c.s,rp:c.rep,sv:c.sev,rt:c.rt};});const o={a:'FLR',v:1,k:'P',rv:r.done.complete&&!r.done.partial?(overall(r)==='PASS'?'P':overall(r)==='FAIL'?'F':'I'):(overall(r)==='FAIL'?'F':'I'),id:r.id,u:r.updated,sn:r.hdr.sn,vin:r.hdr.vin,pl:r.hdr.plate,kl:r.hdr.kilo,os:isOldSn(r)?1:0,ol:r.hdr.old,kd:r.hdr.kind,d:r.hdr.date,t:r.hdr.tech,st:r.step||0,ck:ck,dn:{notes:r.done.notes,name:r.done.name,date:r.done.date}};if(notes)o.no=notes;return JSON.stringify(strip(o));}
+function sheetPdf(r,notes){const d=pdfNew();pdfHead(d,'Paused Floor Test QR Code');let y=92;d.setFont('helvetica','bold');d.setFontSize(13);d.setTextColor(0);d.text(cl(recName(r)),MX,y);y+=16;const c=ckCount(r);d.setFont('helvetica','normal');d.setFontSize(10);d.setTextColor(60);d.text(cl('Paused at: '+STEPS[r.step||0]+'   |   '+c.done+'/'+c.total+' answered   |   '+fmtD(r.hdr.date)+(r.hdr.tech?'   |   '+r.hdr.tech:'')),MX,y);y+=14;
  d.text(wrap(d,"To continue: open the Floor Test form on any tablet, tap Scan paused-test QR, and scan the code below.",CW),MX,y);y+=26;
  y=qrBigPdf(d,612,y-8,recName(r),MX);d.addImage(qrPng(floorPayload(r,notes),700),'PNG',MX+(CW-330)/2,y,330,330);y+=342;
  d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(0);d.text('Hand-off notes',MX,y);y+=6;d.setDrawColor(150);d.rect(MX,y,CW,130);d.setFont('helvetica','normal');d.setFontSize(10);d.text(wrap(d,(notes||'').trim()||'',CW-12),MX+6,y+14);
  creditLine(d,TPL.revision);return d;}
 function pauseDlg(){modal(`<h3 style="margin-top:0">Pause floor test</h3><p class="muted">Add notes for whoever continues (optional), then make the QR code. The code carries everything entered so far (pictures stay on this tablet).</p><textarea id="pNotes" rows="4" placeholder="e.g. Stopped at 0.012 - waiting on PSB."></textarea><button class="pri" id="pGo">Make QR code</button><button id="pX">Cancel</button>`);$('#pX').onclick=closeModal;$('#pGo').onclick=()=>qrDlg(($('#pNotes').value||'').trim());}
 function qrDlg(notes){const r=S.rec;let t=floorPayload(r,notes),svg='';try{const q=qrObj(t);svg=q.createSvgTag({cellSize:4,margin:4,scalable:true});}catch(e){svg='<div class="err">Could not make the QR code: '+esc(e.message)+' (too much data for one code).</div>';}
- modal(`<h3 style="margin-top:0">Carry-over QR – ${esc(recName(r))}</h3>${qrBigHtml(recName(r))}<div style="background:#fff;border:1px solid var(--line);padding:6px;max-width:320px;margin:0 auto">${svg}</div>${notes?`<p><b>Notes:</b> ${esc(notes)}</p>`:''}<p class="muted">On any tablet: open this form → Scan paused-test QR.</p><button class="pri" id="qSheet">⬇ Save carry-over sheet (PDF)</button><button id="qX">Close</button>`);
+ modal(`<h3 style="margin-top:0">Paused Floor Test QR Code – ${esc(recName(r))}</h3>${qrBigHtml(recName(r))}<div style="background:#fff;border:1px solid var(--line);padding:6px;max-width:320px;margin:0 auto">${svg}</div>${notes?`<p><b>Notes:</b> ${esc(notes)}</p>`:''}<p class="muted">On any tablet: open this form → Scan paused-test QR.</p><button class="pri" id="qSheet">⬇ Save carry-over sheet (PDF)</button><button id="qX">Close</button>`);
  $('#qX').onclick=closeModal;$('#qSheet').onclick=()=>{const d=sheetPdf(r,notes);dlBlob(d.output('blob'),'CarryOver_Floor_Test_'+fileOf(r)+'.pdf');};}
 /* ---- e-mail ---- */
 async function emailReport(){const r=S.rec,f=floorPdfFile(r),c=ckCount(r),sj=subj(r);
@@ -13262,13 +13262,13 @@ async function scanDone(txt){scanStop();let o=null;try{o=JSON.parse(txt);}catch(
  if(o&&(o.a==='ATP'||o.a==='LVSS'||o.a==='CAL')){closeModal();const frm=o.a==='ATP'?'ATP inspection':o.a==='LVSS'?(o.it?'truck intake inspection':'post-repair inspection'):'calibration',sn0=snShow(o.a==='LVSS'&&o.up&&o.nsn?o.nsn:o.sn);
   if(o.rv!=='P'){await notice(o.rv==='F'?'The '+frm+(sn0?' for '+sn0:'')+' is FAILED. Its information can\u2019t be used until it passes.':o.rv==='I'?'The '+frm+(sn0?' for '+sn0:'')+' is INCOMPLETE. Its information can\u2019t be used until it is finished and passes.':'This QR code has no pass result in it. Open that report and scan the QR code from its latest version.',{title:'Not passed'});return;}
   if(!await ask('The '+frm+(sn0?' for '+sn0:'')+' passed. Start a floor test with the serial number filled in?',{title:'Start from QR code?',ok:'Start floor test'}))return;
-  const upf=o.a==='LVSS'&&o.up&&o.nsn;const r0=newRec(sn0,'',upf?'upfit':'');if(upf)r0.hdr.old=snShow(o.sn);S.rec=r0;S.step=0;S.dirty=true;await save();S.view='rec';render();return;}
+  const upf=o.a==='LVSS'&&o.up&&o.nsn;const r0=newRec(sn0,'',upf?'up':'');if(upf)r0.hdr.old=snShow(o.sn);r0.hdr.vin=o.vin||'';r0.hdr.plate=o.pl||'';r0.hdr.kilo=o.kl||'';if(o.a==='LVSS'&&!upf)r0.hdr.osn=r0.hdr.sn;S.rec=r0;S.step=0;S.dirty=true;await save();S.view='rec';render();return;}
  if(!(o&&o.a==='FLR'&&o.k==='P')){const m=$('#scanMsg');if(m)m.textContent='That is not a paused floor-test QR code. Try again.';if($('#scanV')&&$('#scanV').style.display!=='none')scanDlg();return;}
  closeModal();await fromQr(o);}
 async function openRec(x){S.rec=x;S.step=x.step||0;S.view='rec';render();}
 async function fromQr(o){
  const ex=S.recs.find(x=>x.id===o.id);if(ex&&!await ask('This floor test ('+(o.sn||'')+') is already on this tablet. Replace it with the version from the QR code?',{title:'Replace?',ok:'Replace',danger:1}))return;
- const r=newRec(o.sn||'',o.t||'',o.kd);r.id=o.id||r.id;r.updated=Date.now();r.hdr.date=o.d||r.hdr.date;r.hdr.old=o.ol||'';
+ const r=newRec(o.sn||'',o.t||'',o.kd);r.id=o.id||r.id;r.updated=Date.now();r.hdr.date=o.d||r.hdr.date;r.hdr.old=o.ol||'';r.hdr.vin=o.vin||'';r.hdr.plate=o.pl||'';r.hdr.kilo=o.kl||'';if(o.os)r.hdr.osn=r.hdr.sn;
  Object.keys(o.ck||{}).forEach(k=>{const c=o.ck[k];if(c&&c.s)r.ck[k]={s:c.s,rep:c.rp||'',sev:c.sv||'',rt:c.rt||''};});r.done.notes=(o.dn&&o.dn.notes)||'';if(o.dn){r.done.name=o.dn.name||'';r.done.date=o.dn.date||'';}
  S.rec=r;S.step=o.st||0;r.step=S.step;S.dirty=true;await save();S.view='rec';render();if(o.no)await notice(o.no,{title:'Hand-off notes from the previous tech'});}
 /* ---- actions ---- */
@@ -13344,6 +13344,47 @@ function qrBigPdf(d,pw,y,sn,mx){var t=qrSnText(sn);if(!t)return y;var W=pw-2*(mx
 (function(){try{var raw=localStorage.getItem('qrHandoff');if(!raw)return;var o=JSON.parse(raw);localStorage.removeItem('qrHandoff');if(!o||!o.q||Date.now()-o.t>600000)return;
  var tries=0,go=function(){var f=window.__sd||window.scanDone;if(typeof f!=='function'||!document.body||tries++>40){if(tries<=40)setTimeout(go,300);return;}try{f(o.q);}catch(e){}};
  window.addEventListener('load',function(){setTimeout(go,1600);});}catch(e){}})();
+
+/* ---- section navigation buttons: Next = purple, Previous = white (all forms) ---- */
+(function(){try{var s=document.createElement('style');s.textContent='button[data-act=nextsec]{background:#6b3fa0!important;border-color:#6b3fa0!important;color:#fff!important;font-weight:700}button[data-act=prevsec]{background:#fff!important;border-color:#c7ccd4!important;color:#222!important}';(document.head||document.documentElement).appendChild(s);}catch(e){}})();
+
+/* ---- shared QR page header: coloured title bar, instruction line, QR left, big serial(s) right ----
+   o={MX,CW,y,color:'#rrggbb',title,line,drawQr:function(x,y,sz),sn,nsn,nsnLabel,warn} -> returns y below the block */
+function qrPageTop(d,o){
+  var MX=o.MX,CW=o.CW,y=o.y,rgb=function(h){h=String(h||'#333').replace('#','');return [parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)];},c=rgb(o.color),cc=function(t){return qrSnText(t);};
+  d.setFillColor(c[0],c[1],c[2]);d.rect(MX,y,CW,40,'F');d.setFont('helvetica','bold');d.setFontSize(21);d.setTextColor(255);d.text(cc(o.title),MX+12,y+27);y+=52;
+  d.setFont('helvetica','bold');d.setFontSize(15);d.setTextColor(0);d.text('Scan QR code to start a form',MX,y+4);
+  d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(90);var ll=d.splitTextToSize(cc(o.line||''),CW);d.text(ll,MX,y+17);y+=Math.max(34,12+ll.length*11);
+  var sz=232,RX=MX+sz+16,RW=CW-sz-16;
+  try{o.drawQr(MX,y,sz);}catch(e){d.setTextColor(200,0,0);d.text('Could not generate the QR code: '+cc(e.message),MX,y+10);}
+  var fit=function(t,max,f0){var f=f0;d.setFont('helvetica','bold');d.setFontSize(f);while(d.getTextWidth(t)>max&&f>12){f-=2;d.setFontSize(f);}return f;};
+  var box=function(lab,val,yy,bh){d.setFont('helvetica','bold');d.setFontSize(10.5);d.setTextColor(90);d.text(lab,RX+RW/2,yy,{align:'center'});d.setDrawColor(0);d.setLineWidth(2.5);d.rect(RX,yy+6,RW,bh);d.setTextColor(0);fit(val,RW-16,40);d.text(val,RX+RW/2,yy+6+bh/2+14,{align:'center'});};
+  var sn=cc(o.sn)||'________',yy=y+10,nsn=cc(o.nsn);
+  if(nsn){box('INCOMING SERIAL NUMBER',sn,yy,76);yy+=76+22;d.setFillColor(c[0],c[1],c[2]);d.triangle(RX+RW/2-18,yy,RX+RW/2+18,yy,RX+RW/2,yy+20,'F');yy+=36;box(o.nsnLabel||'NEW SERIAL NUMBER AFTER UPFIT / UPGRADE',nsn,yy,76);yy+=76+14;}
+  else{box(o.snLabel||'SERIAL NUMBER',sn,yy+(o.warn?0:40),o.warn?90:110);yy+=(o.warn?90:150)+14;}
+  var by=y+sz+16;if(o.warn)by+=tbdBox(d,MX,by,CW,o.warn)+14;
+  return by;
+}
+
+/* orange "to do" box with a blank check box and an initials line; returns its height */
+function tbdBox(d,x,yy,w,txt){d.setFont('helvetica','bold');d.setFontSize(10);d.setFillColor(255,243,224);d.setDrawColor(230,120,0);d.setLineWidth(1.5);var wl=d.splitTextToSize(qrSnText(txt),w-70);var wh=Math.max(46,wl.length*12+16);d.rect(x,yy,w,wh,'FD');d.setDrawColor(230,120,0);d.setLineWidth(1.5);d.rect(x+8,yy+8,14,14);d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(200,90,0);d.text(wl,x+30,yy+19);d.setFont('helvetica','normal');d.setFontSize(8.5);d.setTextColor(120);d.text('Initials:',x+w-110,yy+wh-8);d.setDrawColor(120);d.setLineWidth(.6);d.line(x+w-72,yy+wh-8,x+w-8,yy+wh-8);return wh;}
+
+/* ---- photo viewer layout: green Done on top, zoom row, rotate row, then title/tip/serial, photo last ---- */
+function pvReorder(){try{var zs=document.getElementById('zs'),zo=document.getElementById('zbOut'),rv=document.getElementById('rv1');if(!zs||!zo||!rv)return;var col=zs.parentNode,zoom=zo.parentNode,rot=rv.parentNode;var done=col.querySelector('[data-act=ocrskip],[data-act=close-modal]'),del=col.querySelector('[data-act=del-photo]');if(!done)return;
+ var doneHost=done.parentNode;done.style.cssText+=';width:100%;flex:none;margin:0 0 8px;min-height:52px;font-size:19px;font-weight:800;background:#1b8a3a;color:#fff;border:2px solid #14692b';
+ col.insertBefore(done,col.firstChild);if(doneHost!==col){if(del){doneHost.innerHTML='';doneHost.appendChild(del);del.style.flex='1';doneHost.style.marginTop='8px';col.appendChild(doneHost);}else doneHost.remove();}
+ zoom.style.margin='0 0 6px';rot.style.margin='0 0 8px';col.insertBefore(zoom,done.nextSibling);col.insertBefore(rot,zoom.nextSibling);
+ col.querySelectorAll('h2,h3').forEach(function(h){h.style.marginTop='0';});}catch(e){}}
+
+/* ---- truck identification (VIN / plate / kilo) + "old S/N" handling for Calibration and Floor Test ---- */
+function isOldSn(r){var h=(r&&r.hdr)||{};return !!(h.osn&&String(h.sn||'').trim()===String(h.osn).trim());}
+function tkIdHtml(r){var h=r.hdr||{},e=function(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');};
+ return '<div class="grid" style="margin-top:10px"><div><label class="f">Truck VIN</label><input data-b="hdr.vin" value="'+e(h.vin)+'" autocomplete="off"></div><div><label class="f">License plate #</label><input data-b="hdr.plate" value="'+e(h.plate)+'" autocomplete="off"></div><div><label class="f">Kilo #</label><input data-b="hdr.kilo" value="'+e(h.kilo)+'" autocomplete="off"></div></div>'+
+ (isOldSn(r)?'<p style="margin:8px 0 0;color:#c25a00;font-size:14px"><b>Old S/N.</b> This is the OLD serial number that came in the QR code. Replace it with the new eMSC-L serial number when it is available – otherwise the PDF leaves a blank line to write it in.</p>':'');}
+function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/3,cl2=function(t){return qrSnText(t);};
+ [['Truck VIN',h.vin],['License plate #',h.plate],['Kilo #',h.kilo]].forEach(function(p,j){var x=MX+j*w3;d.setDrawColor(0);d.setLineWidth(.6);d.rect(x,y,w3,28);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text(p[0],x+5,y+9);d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(0);d.text(cl2(p[1])||'-',x+5,y+22);});y+=28;
+ if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New eMSC-L serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
+ return y;}
 
 /* ===== remembered entries: tap a field to pick from what was typed there before ===== */
 const HX={map:null,box:null,el:null,loading:null,max:15};
