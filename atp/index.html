@@ -13272,7 +13272,7 @@ function analyze(rec){
     else if(s===3) c.na++;
     else if(s===2){ c.fail++; issues.push({r:r, d:d, kind:'FAIL'}); }
     else if(s===4){ c.awp++; issues.push({r:r, d:d, kind:'AWP', info:true}); }
-    else if(s===5){ c.blk++; issues.push({r:r, d:d, kind:'NOT TESTED'}); }
+    else if(s===5){ c.blk++; issues.push({r:r, d:d, kind:'NOT TESTED', info:!!d.later}); }
     else { c.ni++; issues.push({r:r, d:d, kind:'NOT INSPECTED'}); }
   });
   c.done=c.total-c.ni;
@@ -13380,6 +13380,7 @@ async function startInspection(){
   var rec={id:uid('insp-'), app:'emscl-atp', created:now, updated:now, tpl:clone(S.tpl), header:h, items:{}, notes:'', kpiReason:null, lastSec:null, dd:{conf:true,na:{},rev:{},rvna:{},loc:'Tucson'}};
   await DB.put('inspections', rec);
   try{ if(h.inspector){ var on=await DB.get('settings','inspectorNames'); var ol=(on&&on.v)||[]; ol=[h.inspector].concat(ol.filter(function(x){ return x.toLowerCase()!==h.inspector.toLowerCase(); })).slice(0,5); await DB.put('settings',{k:'inspectorNames', v:ol}); } }catch(e){}
+  if(S.pendQr){ try{ qrApplyLvss(rec,S.pendQr); await DB.put('inspections', rec); }catch(e){} S.pendQr=null; }
   toast('Saved as S/N '+h.newSerial);
   openInspection(rec.id);
 }
@@ -13907,7 +13908,7 @@ function serConfirmDlg(){
 
 /* ---- not tested / pending retest ---- */
 function blkBy(rec,d){ return (d.by||[]).map(function(n){ return '#'+n; }); }
-function blkTxt(rec,d){ var b=blkBy(rec,d), why=(d.why||'').trim(); if(d.pend) return 'PENDING RETEST - to be tested once '+(b.length?b.join(', ')+' (suspected cause) is':'the suspected cause is')+' resolved'+(why?'. '+why:'')+'.'; return 'NOT TESTED'+(b.length?' - blocked by '+b.join(', '):'')+(why?'. '+why:'')+'.'; }
+function blkTxt(rec,d){ var b=blkBy(rec,d), why=(d.why||'').trim(); if(d.later&&!b.length) return 'TO BE TESTED LATER'+(why?'. '+why:'')+'.'; if(d.pend) return 'PENDING RETEST - to be tested once '+(b.length?b.join(', ')+' (suspected cause) is':'the suspected cause is')+' resolved'+(why?'. '+why:'')+'.'; return 'NOT TESTED'+(b.length?' - blocked by '+b.join(', '):'')+(why?'. '+why:'')+'.'; }
 function blkHTML(r,d){
   var s=d.s||0;
   if(s!==5&&r.spare&&!(d.text||'').trim()) return '';
@@ -13917,6 +13918,7 @@ function blkHTML(r,d){
     '<div class="muted" style="margin-top:6px">Blocked by (tap the failed item(s))</div>'+
     (cands.length ? '<div class="chipcol">'+cands.map(function(it){ var on=(d.by||[]).indexOf(it.r.num)>=0; return '<button class="chip'+(on?' on':'')+'" data-act="blk-by" data-by="'+it.r.num+'">'+(on?'✓ ':'')+'#'+it.r.num+' '+esc(lineText(it.r,it.d).slice(0,70))+'</button>'; }).join('')+'</div>' : '<p class="muted">No failed items yet – describe what is blocking it below.</p>')+
     '<label class="full">What is blocking it? (required if no item is picked)<textarea data-f="why" rows="2" placeholder="e.g. mast won’t raise until the hydraulic fault is fixed">'+esc(d.why||'')+'</textarea></label>'+
+    '<button class="btn pendbtn'+(d.later?' on':'')+'" data-act="blk-later">'+(d.later?'✓ ':'⏳ ')+'To be tested later – no details needed, does not stop the report</button>'+
     '<button class="btn pendbtn'+(d.pend?' on':'')+'" data-act="blk-pend">'+(d.pend?'✓ ':'⏳ ')+'Pending retest – test after the suspected cause is fixed</button>'+
     '<div class="row2"><button class="btn light" data-act="unblk">↩ It can be tested now – back to failed</button><button class="btn pass" data-act="blk-pass">✓ Retested – it passes</button><button class="btn fail" data-act="blk-fail">✗ Retested – it fails</button></div></div>';
 }
@@ -14026,6 +14028,14 @@ function qrExtras(rec){
   var wk=w.list.map(function(s){ return [s.dev||'',T(s.t),T(s.old),T(s.nw),T(s.rma)]; }); if(wk.length) e.wk=wk; if(w.chk) e.sc=1;
   return e;
 }
+var QR_DEV={'server':'serverSerial','cisco switch':'ciscoEnclSerial','starlink':'starlinkSerial','radar':'radarSerial','pan/tilt':'radarPtSerial','pan tilt':'radarPtSerial','camera':'cameraSerial','trimble gps':'gpsSerial','trimble':'gpsSerial','cisco receiver':'ciscoRtrSerial','cisco wifi module':'ciscoModSerial','cisco pim / lte module':'pimSerial','laptop control unit':'lcuSerial','lcu':'lcuSerial','hmi/smu':'smuSerial','vin':'vin','truck vin':'vin','lic plate':'plate','license plate':'plate','license plate #':'plate','kilo':'kilo','kilo #':'kilo'};
+function qrApplyLvss(rec,o){
+  var h=rec.header, x=DD(rec); x.rev=x.rev||{};
+  (o.s||[]).forEach(function(p){ var k=QR_DEV[String((p&&p[0])||'').trim().toLowerCase()], v=String((p&&p[1])||'').trim(); if(k&&v&&(!h[k]||h[k]==='PDX')) h[k]=v; });
+  if(o.vin) h.vin=o.vin; if(o.pl) h.plate=o.pl; if(o.kl) h.kilo=o.kl;
+  var iv=o.i||{}; DD_REV.forEach(function(f){ if(iv[f[0]]) x.rev[f[0]]=String(iv[f[0]]); });
+  if(o.up&&o.nsn){ h.newSerial=snShow(o.nsn); h.oldSerial=snShow(o.sn); } else if(o.sn&&!h.newSerial) h.newSerial=snShow(o.sn);
+}
 function qrApplyExtras(rec,o){
   var h=rec.header, x=DD(rec), w=SW(rec);
   if(o.sv) SWD.forEach(function(d,i){ if(o.sv[i]) h[d[0]]=o.sv[i]; });
@@ -14094,7 +14104,7 @@ async function scanDone(txt){
     modalRoot.innerHTML=''; var csn=snShow(xo.sn);
     if(xo.rv!=='P'){ await notice('The '+(xo.a==='FLR'?'floor test':xo.a==='LVSS'?(xo.it?'truck intake':'post-repair inspection'):'calibration')+(csn?' for truck '+csn:'')+' is '+(xo.rv==='F'?'FAILED':'not finished')+'. Its information can\u2019t be used here until the calibration passes.','Calibration not passed'); return; }
     if(!await ask('The '+(xo.a==='FLR'?'floor test':xo.a==='LVSS'?(xo.it?'truck intake':'post-repair inspection'):'calibration')+(csn?' for truck '+csn:'')+' passed. Start a new ATP inspection with the serial number filled in?',{title:'Start from calibration QR?',ok:'Start inspection'})) return;
-    await renderNew(); var ne=document.getElementById('nf-newSerial'); if(ne){ ne.value=csn; if(typeof snPaint==='function') snPaint(ne); } return;
+    await renderNew(); var ne=document.getElementById('nf-newSerial'); S.pendQr=(xo.a==='LVSS')?xo:null; var up=xo.a==='LVSS'&&xo.it&&xo.up&&xo.nsn; if(ne){ ne.value=up?snShow(xo.nsn):csn; if(typeof snPaint==='function') snPaint(ne); } if(xo.a==='LVSS'&&xo.it){ var sf=function(k,v){ var e2=document.getElementById('nf-'+k); if(e2&&v) e2.value=v; }; sf('vin',xo.vin); sf('plate',xo.pl); sf('kilo',xo.kl); if(up) sf('oldSerial',csn); } return;
   }
   if(!o){ scanMsg('That is not an eMSC-L ATP audit QR code. Try again.'); return; }
   modalRoot.innerHTML=''; var n=o.f.length+(o.ni?String(o.ni).split(',').filter(Boolean).length:0), same=(o.th===tplHash(S.tpl));
@@ -14639,7 +14649,7 @@ function swapEndHTML(){
   '<p style="margin:10px 0 4px"><b>'+(L.length?'Were any other devices swapped?':'Were any devices swapped?')+'</b></p><p class="muted" style="margin:0 0 6px">Tap a device to record its swap (the old serial is kept – then enter the new serial # and photo), or add one that isn’t listed. To swap a device again, change its new serial # in the card above.</p>'+
   '<div class="row2" style="margin:0 0 8px">'+SWD.filter(function(d){ return !swFor(rec,d[0]); }).map(function(d){ return '<button class="btn light" data-act="sw-lcsel" data-key="'+d[0]+'">'+esc(d[1])+'</button>'; }).join('')+'</div>'+
   '<div class="row2"><input id="swNew" placeholder="Device not in the list – type its name" style="flex:1;min-width:200px;min-height:44px;font-size:16px;padding:6px 10px;border:2px solid var(--line);border-radius:8px"><button class="btn light" data-act="sw-add">＋ Add unlisted device</button></div>'+
-  '<div style="display:flex;align-items:center;gap:10px;margin-top:10px">'+((w.chk||L.length)?'':'<span class="arw grn"><i>&#10140;</i></span>')+'<button class="btn'+(w.chk?' primary':' light')+' big" data-act="sw-lcno" style="flex:1">'+(w.chk?'✓ ':'')+(L.length?'No, nothing else swapped':'No, nothing was swapped')+'</button></div></div>';
+  '<div style="display:flex;align-items:center;gap:10px;margin-top:10px">'+((w.chk||L.length)?'':'<span class="arw grn"><i>&#10140;</i></span>')+'<button class="btn big" data-act="sw-lcno" style="flex:1;background:#6b3fa0;color:#fff;border:2px solid #4d2a78;font-weight:800">'+(w.chk?'✓ ':'')+(L.length?'No, nothing else swapped':'No, nothing was swapped')+'</button></div></div>';
 }
 function swGate(rec){ var m=[], w=SW(rec); if(!w.chk) m.push('"One last check" on swapped devices (bottom of the checklist)'); return m; }
 function failedUnits(rec){ var o=[]; SW(rec).list.forEach(function(e,i){ e.mid.forEach(function(m,j){ o.push({e:e,i:i,m:m,j:j}); }); }); return o; }
@@ -15123,8 +15133,8 @@ async function rxAct(act,el){
     switch(act){
       case 'rx-lvl': d.lvl=(d.lvl===el.dataset.l?'':el.dataset.l); break;
       case 'rx-war': d.war=(d.war===el.dataset.w?'':el.dataset.w); if(d.war!=='nw') d.courtesy=false; break;
-      case 'rx-cour': d.courtesy=!d.courtesy; break;
-      case 'rx-rep': d.rep=!d.rep; break;
+      case 'rx-cour': if(!d.courtesy){ var cv=await choose('Save this change?','Item #'+num+' will be marked Courtesy repair performed. Update and save this?',[{t:'Save',v:'save',c:'primary'},{t:'Cancel',v:'no'}]); if(cv!=='save') return true; } d.courtesy=!d.courtesy; break;
+      case 'rx-rep': if(!d.rep){ var cv=await choose('Save this change?','Item #'+num+' will be marked Repaired. Update and save this?',[{t:'Save',v:'save',c:'primary'},{t:'Cancel',v:'no'}]); if(cv!=='save') return true; } d.rep=!d.rep; break;
       case 'rx-addpt': (d.parts=d.parts||[]).push({pn:'',desc:'',qty:''}); break;
       case 'rx-rmpt': (d.parts||[]).splice(+el.dataset.i,1); break;
       case 'rx-ovr': d.os=d.s||0; d.s=3; d.ovr=true; break;
@@ -15263,6 +15273,7 @@ async function appAct(act,el){
     case 'cnt': var cd=getD(); cd.ovr=false; cd.s=(cd.s===5)?0:5; refresh(); return true;
     case 'unblk': getD().s=2; refresh(); return true;
     case 'blk-by': var d=getD(), b=+el.dataset.by; d.by=d.by||[]; var k=d.by.indexOf(b); if(k>=0) d.by.splice(k,1); else d.by.push(b); refresh(); return true;
+    case 'blk-later': var dl=getD(); dl.later=!dl.later; if(dl.later&&!(dl.why||'').trim()&&!(dl.by||[]).length) dl.why=''; refresh(); return true;
     case 'blk-pend': var d2=getD(); d2.pend=!d2.pend; refresh(); return true;
     case 'blk-pass': getD().s=1; refresh(); return true;
     case 'blk-fail': getD().s=2; refresh(); return true;

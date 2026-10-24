@@ -13031,7 +13031,7 @@ function flat(rec){ // ordered list of every item incl. added line items, with n
  return out;}
 const blockedList=rec=>flat(rec).filter(x=>(rec.items[x.id]||{}).st==='blk');
 const blkBy=(rec,q)=>(q.by||[]).map(id=>{const x=flat(rec).find(y=>y.id===id);return x?'#'+x.label:''}).filter(Boolean);
-const blkTxt=(rec,q)=>{const b=blkBy(rec,q);if(q.pend)return 'PENDING RETEST - to be tested once '+(b.length?b.join(', ')+' (suspected cause) is':'the suspected cause is')+' resolved'+((q.why||'').trim()?'. '+q.why.trim():'')+'.';return 'NOT TESTED'+(b.length?' - blocked by '+b.join(', '):'')+((q.why||'').trim()?'. '+q.why.trim():'')+'.';};
+const blkTxt=(rec,q)=>{const b=blkBy(rec,q);if(q.later&&!b.length)return 'TO BE TESTED LATER'+((q.why||'').trim()&&q.why.trim()!=='To be tested later'?'. '+q.why.trim():'')+'.';if(q.pend)return 'PENDING RETEST - to be tested once '+(b.length?b.join(', ')+' (suspected cause) is':'the suspected cause is')+' resolved'+((q.why||'').trim()?'. '+q.why.trim():'')+'.';return 'NOT TESTED'+(b.length?' - blocked by '+b.join(', '):'')+((q.why||'').trim()?'. '+q.why.trim():'')+'.';};
 const fails=rec=>flat(rec).filter(x=>(rec.items[x.id]||{}).st==='fail');
 const lvRank=l=>l?LVK[l].r:9;
 function punch(rec){return fails(rec).sort((a,b)=>lvRank((rec.items[a.id]||{}).lvl)-lvRank((rec.items[b.id]||{}).lvl)||0);}
@@ -13800,6 +13800,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'pblk':{openBlkDlg(id);break;}
  case 'cnt':{const q=itm(id);if(q.st==='blk'){q.st='';markDirty();if($('#finalQ')||$('#pl-'+id))repunch();else rerenderRow(id);}else openBlkDlg(id);break;}
  case 'blkdby':{const q=itm(id);q.by=q.by||[];const k=b.dataset.by,i=q.by.indexOf(k);if(i>=0)q.by.splice(i,1);else q.by.push(k);markDirty();modal(blkDlgHtml(id));break;}
+ case 'blklater':{const q=itm(id);q.later=true;if(!(q.why||'').trim())q.why='To be tested later';q.st='blk';q.rep=false;S.blkBak=null;markDirty();closeModal();if($('#finalQ')||$('#pl-'+id))repunch();else rerenderRow(id);break;}
  case 'blksave':{const q=itm(id);if(!(q.by||[]).length&&!(q.why||'').trim()){modal(blkDlgHtml(id,1));break;}q.st='blk';q.rep=false;S.blkBak=null;markDirty();closeModal();if($('#finalQ')||$('#pl-'+id))repunch();else rerenderRow(id);break;}
  case 'blkcancel':{const bk=S.blkBak;if(bk&&bk.id===id){const q=itm(id);q.by=bk.by;q.why=bk.why;}S.blkBak=null;closeModal();break;}
  case 'fset':{const q=itm(id);q.st=b.dataset.v;if(q.st==='fail'){S.fkeep=S.fkeep||{};S.fkeep[id]=1;}markDirty();repunch();break;}
@@ -13810,7 +13811,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'pindone':{S.pin=null;repunch(S.lastPin);break;}
  case 'gotoneed':{const e=$('#'+(S.need==='final'?'finalQ':'pl-'+S.need));e&&e.scrollIntoView({behavior:'smooth',block:'center'});break;}
  case 'war':{const onP=!!$('#pl-'+id);if(onP)pinCard(id);const q=itm(id);q.war=q.war===b.dataset.w?'':b.dataset.w;if(q.war!=='nw'){if(q.courtesy&&q.repAuto){q.rep=false;q.repAuto=false}q.courtesy=false}markDirty();if(onP)repunch();else rerenderRow(id);break;}
- case 'courtesy':{const onP=!!$('#pl-'+id);if(onP)pinCard(id);const q=itm(id);const wasRep=q.rep;q.courtesy=!q.courtesy;if(q.courtesy){if(!q.rep){q.rep=true;q.repAuto=true}}else if(q.repAuto){q.rep=false;q.repAuto=false}markDirty();if(onP)repunch();else rerenderRow(id);if(q.courtesy&&q.rep&&!wasRep&&q.st==='fail')await afterResolve(id);break;}
+ case 'courtesy':{if(!itm(id).courtesy&&!await cfmDisp(id,'Courtesy repair performed'))break;const onP=!!$('#pl-'+id);if(onP)pinCard(id);const q=itm(id);const wasRep=q.rep;q.courtesy=!q.courtesy;if(q.courtesy){if(!q.rep){q.rep=true;q.repAuto=true}}else if(q.repAuto){q.rep=false;q.repAuto=false}markDirty();if(onP)repunch();else rerenderRow(id);if(q.courtesy&&q.rep&&!wasRep&&q.st==='fail')await afterResolve(id);break;}
  case 'verdict':{const v=b.dataset.v;if(r.verdict===v)r.verdict='';else{if(v==='pass'&&stats(r).openDno&&!await ask('Do Not Operate item(s) are still open. Mark the '+PLN(r)+' as PASSED anyway?',{title:'Do Not Operate items open',ok:'Mark PASSED anyway',danger:1}))break;r.verdict=v;}markDirty();repunch();break;}
  case 'blk':{if($('#finalQ')){openBlkDlg(id);break;}const q=itm(id);q.st='blk';q.by=q.by||[];markDirty();rerenderRow(id);break;}
  case 'unblk':{const q=itm(id);q.st='fail';q.pend=false;markDirty();rerenderRow(id);break;}
@@ -13821,8 +13822,8 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'tog':{const q=itm(id);q.st=q.st==='blk'?'na':STS[(STS.indexOf(q.st)+1)%4];markDirty();rerenderRow(id);break;}
  case 'lvl':{const q=itm(id);q.lvl=q.lvl===b.dataset.l?'':b.dataset.l;markDirty();rerenderRow(id);break;}
  case 'plvl':{pinCard(id);const q=itm(id);q.lvl=q.lvl===b.dataset.l?'':b.dataset.l;markDirty();repunch();break;}
- case 'tbd':{if($('#pl-'+id)&&!b.dataset.fin)pinCard(id);const q=itm(id);q.tbd=!q.tbd;markDirty();if($('#pl-'+id))repunch();else rerenderRow(id);break;}
- case 'adv':{if($('#pl-'+id)&&!b.dataset.fin)pinCard(id);const q=itm(id);q.adv=!q.adv;markDirty();if($('#pl-'+id))repunch();else rerenderRow(id);break;}
+ case 'tbd':{if(!itm(id).tbd&&!await cfmDisp(id,'TBD (decide later)'))break;if($('#pl-'+id)&&!b.dataset.fin)pinCard(id);const q=itm(id);q.tbd=!q.tbd;markDirty();if($('#pl-'+id))repunch();else rerenderRow(id);break;}
+ case 'adv':{if(!itm(id).adv&&!await cfmDisp(id,'Advised'))break;if($('#pl-'+id)&&!b.dataset.fin)pinCard(id);const q=itm(id);q.adv=!q.adv;markDirty();if($('#pl-'+id))repunch();else rerenderRow(id);break;}
  case 'addpt':{if($('#pl-'+id))pinCard(id);const q=itm(id);(q.parts=q.parts||[]).push({pn:'',desc:'',qty:''});markDirty();if($('#pl-'+id))repunch();else rerenderRow(id);break;}
  case 'rmpt':{if($('#pl-'+id))pinCard(id);const q=itm(id);(q.parts||[]).splice(+b.dataset.i,1);markDirty();if($('#pl-'+id))repunch();else rerenderRow(id);break;}
  case 'relopen':{itm(id);modal(relDlgHtml(id));break;}
@@ -13903,6 +13904,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  default:adminClick(a,b);}
 });
 function firstVis(){const l=[...document.querySelectorAll('#body .pl')].find(e=>e.getBoundingClientRect().bottom>60);return l?l.id.slice(3):null}
+async function cfmDisp(id,what){const v=await choose('Save this change?',labOf(id)+' will be marked '+what+'. Update and save this?',[{v:'save',t:'Save',c:'pri'},{v:'cancel',t:'Cancel'}]);return v==='save';}
 function repunch(aid){const id=aid||(S.pin&&S.pin.id)||firstVis();if(S.pin)S.lastPin=S.pin.id;const a=id?$('#pl-'+id):null,t0=a?a.getBoundingClientRect().top:0,y=window.scrollY;$('#body').innerHTML=punchHtml();const b=id?$('#pl-'+id):null;window.scrollTo(0,b&&a?y+(b.getBoundingClientRect().top-t0):y);}
 let pinTick=false;window.addEventListener('scroll',()=>{if(pinTick||!S.pin||!S.rec||S.rec.step!==3)return;pinTick=true;requestAnimationFrame(()=>{pinTick=false;if(!S.pin)return;const e=$('#pl-'+S.pin.id);if(!e){S.pin=null;return}const q=e.getBoundingClientRect();if(q.bottom<0||q.top>window.innerHeight){const f=firstVis();S.pin=null;repunch(f);}});},{passive:true});
 function resec(si){if(S.rec.tpl.sections[si]&&S.rec.tpl.sections[si].kind==='new')si=repIdx(S.rec);const w=$('#sec-'+si);if(!w)return;const n=S.rec.tpl.sections.length;const t=si===n?'Additional Comments, Parts & Equipment':S.rec.tpl.sections[si].title;w.innerHTML=secHeadHtml(si,t,si===n?null:secStats(si))+(si===n?commentsHtml():secBodyHtml(si));}
@@ -14041,7 +14043,7 @@ function swapHtml(){const r=S.rec,w=r.swap,L=w.list,fs=finalSerials(r);
  <label class="f" style="margin-top:10px">${L.length?'Were any other devices swapped?':'Were any devices swapped?'}</label><p class="muted" style="margin:2px 0 6px">Tap a device to record its swap (old serial is kept, then enter the new serial # and photo), or add one that isn't listed. To swap a device again, change its new serial # in the card above.</p>
  <div class="row">${devs.filter(g=>!L.some(e=>e.dev===g.id)).map(g=>`<button data-act="lcsel" data-id="${g.id}">${esc(g.t)}</button>`).join('')}</div>
  <div class="row" style="margin-top:8px"><input id="swNew" placeholder="Device not in the list – type its name" style="flex:1;min-width:220px"><button data-act="swadd">＋ Add unlisted device</button></div>
- <div class="row" style="margin-top:10px"><button class="${w.chk?'pri':''}" data-act="lcno" style="flex:1">${w.chk?'✓ ':''}${L.length?'No, nothing else swapped':'No, nothing was swapped'}</button></div></div></div>`;}
+ <div class="row" style="margin-top:10px"><button data-act="lcno" style="flex:1;background:#6b3fa0;color:#fff;border:2px solid #4d2a78;font-weight:800">${w.chk?'✓ ':''}${L.length?'No, nothing else swapped':'No, nothing was swapped'}</button></div></div></div>`;}
 function failedUnits(r){const o=[];r.swap.list.forEach((e,i)=>(e.mid||[]).forEach((m,j)=>o.push({e,i,m,j})));return o;}
 function rmaCard(u){const {e,i,m,j}=u,tbd=m.rma==='TBD';
  return `<div class="card pl" style="border-left:6px solid #c62828"><div class="row"><b style="font-size:17px">${esc(e.t)} ${esc(m.s)}</b><span class="tag" style="background:#fbd0d0">Removed – failed – RMA required</span></div>
@@ -14054,7 +14056,7 @@ function blkDlgHtml(id,err){const r=S.rec,d=itm(id),x=flat(r).find(y=>y.id===id)
  return `<h3>Could not test #${x.label}</h3><p class="muted" style="margin:0 0 6px">${esc(x.t)}</p><p class="muted">Link it to the open issue(s) that block the test and/or describe what happened. It is listed as <b>Not tested</b> and needs a retest.</p>${err?'<div class="err">Pick at least one open issue or describe the problem.</div>':''}
  <label class="f">Blocked by (tap the open issue(s))</label>${cands.length?`<div class="chips" style="flex-direction:column;align-items:stretch">${cands.map(y=>`<button class="chip ${d.by.includes(y.id)?'on':''}" data-act="blkdby" data-id="${id}" data-by="${y.id}" style="text-align:left;white-space:normal">${d.by.includes(y.id)?'✓ ':''}#${y.label} ${esc(String(y.t||'').slice(0,70))}</button>`).join('')}</div>`:'<p class="muted">No other open issues to link.</p>'}
  <label class="f">Or describe it (add your own line)</label><textarea data-b="items.${id}.why" placeholder="e.g. mast won't raise until the hydraulic fault is fixed">${esc(d.why||'')}</textarea>
- <button class="pri" data-act="blksave" data-id="${id}" style="width:100%;margin-top:8px">Save – could not test</button><button data-act="blkcancel" data-id="${id}" style="width:100%;margin-top:6px">Cancel</button>`;}
+ <button class="pri" data-act="blksave" data-id="${id}" style="width:100%;margin-top:8px">Save – could not test</button><button data-act="blklater" data-id="${id}" style="width:100%;margin-top:6px;border-color:#b58900;color:#7a5c00;font-weight:700">⏳ To be tested later (no details needed)</button><button data-act="blkcancel" data-id="${id}" style="width:100%;margin-top:6px">Cancel</button>`;}
 function openBlkDlg(id){const d=itm(id);S.blkBak={id,by:(d.by||[]).slice(),why:d.why||'',st:d.st};modal(blkDlgHtml(id));}
 function finInlineHtml(){const r=S.rec;if(S.fkeepRid!==r.id){S.fkeepRid=r.id;S.fkeep={};S.fdone={};}
  const bl=flat(r).filter(x=>{const d=r.items[x.id]||{};const blank=!d.st&&(!x.extra||x.sec.kind==='rep');if(blank)S.fkeep[x.id]=1;return blank||(S.fkeep[x.id]&&d.st==='fail'&&!S.fdone[x.id]);});

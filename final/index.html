@@ -13252,10 +13252,10 @@ async function scanDone(txt){scanStop();let o=null;try{o=JSON.parse(txt);}catch(
 async function openRec(x){S.rec=x;S.step=x.step||0;S.view='rec';render();}
 async function fromQr(o){
  if(o.a==='ATP'&&o.rv&&o.rv!=='P'){await notice('The ATP inspection'+(o.sn?' for '+snShow(o.sn):'')+' is '+(o.rv==='F'?'FAILED':'INCOMPLETE')+'. Its information can\u2019t be used until the inspection passes.',{title:'Inspection not passed'});return;}
- if(o.a==='FLR'||o.a==='CAL'||o.a==='LVSS'){const frm=o.a==='FLR'?'floor test':o.a==='CAL'?'calibration':(o.it?'truck intake inspection':'post-repair inspection'),sn0=snShow(o.sn);
+ if(o.a==='FLR'||o.a==='CAL'||o.a==='LVSS'){const frm=o.a==='FLR'?'floor test':o.a==='CAL'?'calibration':(o.it?'truck intake inspection':'post-repair inspection'),sn0=snShow(o.a==='LVSS'&&o.up&&o.nsn?o.nsn:o.sn);
   if(o.rv!=='P'){await notice(o.rv==='F'?'The '+frm+(sn0?' for '+sn0:'')+' is FAILED. Its information can\u2019t be used until it passes.':o.rv==='I'?'The '+frm+(sn0?' for '+sn0:'')+' is INCOMPLETE. Its information can\u2019t be used until it is finished and passes.':'This QR code has no pass result in it. Open that report and scan the QR code from its latest version.',{title:'Not passed'});return;}
   const ex0=activeFor(sn0);if(ex0&&await ask('A final inspection for '+recName(ex0)+' is already on this tablet. Open it instead of starting a new one?',{title:'Already started',ok:'Open it',no:'Start a new one'})){await openRec(ex0);return;}
-  const r0=newRec(sn0,'');S.rec=r0;S.step=0;S.dirty=true;await save();S.view='rec';render();return;}
+  const sm={};(o.s||[]).forEach(p=>{sm[String((p&&p[0])||'').toLowerCase()]=(p&&p[1])||'';});const r0=newRec(sn0,'',o.a==='LVSS'?{vin:o.vin||sm['vin']||'',cam:sm['camera'],radar:sm['radar'],lcu:sm['laptop control unit']}:null);S.rec=r0;S.step=0;S.dirty=true;await save();S.view='rec';render();return;}
  if(o.a==='ATP'){const ex=activeFor(o.sn);
   if(ex&&await ask('A final inspection for skid '+recName(ex)+' is already on this tablet. Open it instead of starting a new one?',{title:'Already started',ok:'Open it',no:'Start a new one'})){await openRec(ex);return;}
   const r=newRec(o.sn||'','',{vin:o.vin,cam:o.cs,radar:o.rs,lcu:o.ls});r.hdr.src='ATP '+fmtD(o.d||'')+(o.ins?', inspector '+o.ins:'');
