@@ -13162,8 +13162,8 @@ async function scanDone(txt){if(String(txt).startsWith('WIP1~')){wipChunk(txt);r
  if(!o){const m=$('#scanMsg');if(m)m.textContent='That is not an LVSS QR code. Try again.';if($('#scanV')&&$('#scanV').style.display!=='none')scanDlg();return;}
  closeModal();if(o.k==='A'){const n=o.f.length;if(!await ask(`Start an audit of ${o.sn?lv(o.sn):'this platform'} (RMA ${o.rma||'-'}) with ${n} fault${n===1?'':'s'} from the tech's punch list?\n\nThe tech's photos are not in the QR code. Mark each fault Verified or Not acceptable, add your own photos and details, then submit the audit.`,{title:'Start audit from QR code?',ok:'Start audit'}))return;
   S.rec=auFromQr(o);S.photos={};S.view='rec';S.audit=true;S.open=-1;S.detail={};S.dirty=true;await save();render();return;}
- const n=o.s.length;if(!await ask(`Start a new inspection for ${o.sn?lv(o.sn):'LVSS (no serial)'} with ${n} serial number${n===1?'':'s'} filled in from the QR code?\n\nYou still take a fresh photo of each serial plate. Last-recorded version info is shown for reference.`,{title:'Start from QR code?',ok:'Start inspection'}))return;
- S.rec=newRec({sn:o.sn||'',tech:'',ptype:o.p==='E'?'EMSCL':'LVSS'});if(o.i&&typeof o.i==='object')S.rec.prev=o.i;const used=new Set();
+ const n=o.s.length;if(!await ask(`Start a new inspection for ${o.sn?lv(o.sn):'LVSS (no serial)'} with ${n} serial number${n===1?'':'s'}${o.it?', RMA, SVO and account':''} filled in from the ${o.it?'truck intake ':''}QR code?\n\nYou still take a fresh photo of each serial plate. Last-recorded version info is shown for reference.`,{title:'Start from QR code?',ok:'Start inspection'}))return;
+ S.rec=newRec({sn:o.sn||'',tech:'',ptype:o.p==='E'?'EMSCL':'LVSS'});if(o.it){Object.assign(S.rec.hdr,{rma:o.rma||'',so:o.so||'',acct:o.ac||''});}if(o.i&&typeof o.i==='object')S.rec.prev=o.i;const used=new Set();
  o.s.forEach(p=>{const nm=String(p[0]||''),val=String(p[1]||'');const g=S.rec.gear.find(x=>!used.has(x.id)&&gKey(x.t)===gKey(nm));if(g){g.s=val;used.add(g.id);}else{const x={id:'eq'+uid(),t:nm||'Other device',s:val,ph:[],na:false,custom:true};S.rec.gear.push(x);used.add(x.id);}});
  S.photos={};S.view='rec';S.open=-1;S.dirty=true;await save();render();}
 
@@ -14395,7 +14395,7 @@ function techRemember(n){n=(n||'').trim();if(!n)return;const L=[n,...techNames()
 function techPick(i){const n=techNames()[i],el=$('#n-te');if(n&&el){el.value=n;S.techDraft=n;}}
 /* shared: ask at the start of each inspection whether the tech has a good connection; offline readiness check */
 (function(){
-var FORMS=[['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch']];
+var FORMS=[['intake','Truck Intake'],['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch']];
 var ME=(location.pathname.split('/').filter(Boolean).slice(-1)[0]||'').replace(/\.html?$/,'');
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
 if(!ls('off:since'))ls('off:since',String(Date.now()));
@@ -14526,7 +14526,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'10/23/2026'};
+const CREDIT={by:'Ravi Ramsundar',built:'10/24/2026'};
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}

@@ -13013,7 +13013,7 @@ function techRemember(n){n=(n||'').trim();if(!n)return;const L=[n,...techNames()
 function techPick(i){const n=techNames()[i],el=$('#n-te');if(n&&el){el.value=n;S.techDraft=n;}}
 /* shared: ask at the start of each inspection whether the tech has a good connection; offline readiness check */
 (function(){
-var FORMS=[['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch']];
+var FORMS=[['intake','Truck Intake'],['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch']];
 var ME=(location.pathname.split('/').filter(Boolean).slice(-1)[0]||'').replace(/\.html?$/,'');
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
 if(!ls('off:since'))ls('off:since',String(Date.now()));
@@ -13252,7 +13252,7 @@ async function scanDone(txt){scanStop();let o=null;try{o=JSON.parse(txt);}catch(
 async function openRec(x){S.rec=x;S.step=x.step||0;S.view='rec';render();}
 async function fromQr(o){
  if(o.a==='ATP'&&o.rv&&o.rv!=='P'){await notice('The ATP inspection'+(o.sn?' for '+snShow(o.sn):'')+' is '+(o.rv==='F'?'FAILED':'INCOMPLETE')+'. Its information can\u2019t be used until the inspection passes.',{title:'Inspection not passed'});return;}
- if(o.a==='FLR'||o.a==='CAL'||o.a==='LVSS'){const frm=o.a==='FLR'?'floor test':o.a==='CAL'?'calibration':'post-repair inspection',sn0=snShow(o.sn);
+ if(o.a==='FLR'||o.a==='CAL'||o.a==='LVSS'){const frm=o.a==='FLR'?'floor test':o.a==='CAL'?'calibration':(o.it?'truck intake inspection':'post-repair inspection'),sn0=snShow(o.sn);
   if(o.rv!=='P'){await notice(o.rv==='F'?'The '+frm+(sn0?' for '+sn0:'')+' is FAILED. Its information can\u2019t be used until it passes.':o.rv==='I'?'The '+frm+(sn0?' for '+sn0:'')+' is INCOMPLETE. Its information can\u2019t be used until it is finished and passes.':'This QR code has no pass result in it. Open that report and scan the QR code from its latest version.',{title:'Not passed'});return;}
   const ex0=activeFor(sn0);if(ex0&&await ask('A final inspection for '+recName(ex0)+' is already on this tablet. Open it instead of starting a new one?',{title:'Already started',ok:'Open it',no:'Start a new one'})){await openRec(ex0);return;}
   const r0=newRec(sn0,'');S.rec=r0;S.step=0;S.dirty=true;await save();S.view='rec';render();return;}
@@ -13325,7 +13325,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)save();});
 function curTpl(){return TPL}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'10/22/2026'};
+const CREDIT={by:'Ravi Ramsundar',built:'10/24/2026'};
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}

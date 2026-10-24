@@ -14090,10 +14090,10 @@ async function scanDone(txt){
   if(String(txt).indexOf('WIP1~')===0){ wipChunk(txt); return; }
   scanStop(); var o=qrParse(txt);
   var xo=null; try{ xo=JSON.parse(txt); }catch(e){}
-  if(!o&&xo&&(xo.a==='CAL'||xo.a==='FLR')){
+  if(!o&&xo&&(xo.a==='CAL'||xo.a==='FLR'||xo.a==='LVSS')){
     modalRoot.innerHTML=''; var csn=snShow(xo.sn);
-    if(xo.rv!=='P'){ await notice('The '+(xo.a==='FLR'?'floor test':'calibration')+(csn?' for truck '+csn:'')+' is '+(xo.rv==='F'?'FAILED':'not finished')+'. Its information can\u2019t be used here until the calibration passes.','Calibration not passed'); return; }
-    if(!await ask('The '+(xo.a==='FLR'?'floor test':'calibration')+(csn?' for truck '+csn:'')+' passed. Start a new ATP inspection with the serial number filled in?',{title:'Start from calibration QR?',ok:'Start inspection'})) return;
+    if(xo.rv!=='P'){ await notice('The '+(xo.a==='FLR'?'floor test':xo.a==='LVSS'?(xo.it?'truck intake':'post-repair inspection'):'calibration')+(csn?' for truck '+csn:'')+' is '+(xo.rv==='F'?'FAILED':'not finished')+'. Its information can\u2019t be used here until the calibration passes.','Calibration not passed'); return; }
+    if(!await ask('The '+(xo.a==='FLR'?'floor test':xo.a==='LVSS'?(xo.it?'truck intake':'post-repair inspection'):'calibration')+(csn?' for truck '+csn:'')+' passed. Start a new ATP inspection with the serial number filled in?',{title:'Start from calibration QR?',ok:'Start inspection'})) return;
     await renderNew(); var ne=document.getElementById('nf-newSerial'); if(ne){ ne.value=csn; if(typeof snPaint==='function') snPaint(ne); } return;
   }
   if(!o){ scanMsg('That is not an eMSC-L ATP audit QR code. Try again.'); return; }
@@ -14533,7 +14533,7 @@ document.addEventListener('input',function(e){var t=e.target;if(t&&t.hasAttribut
 document.addEventListener('change',function(e){var t=e.target;if(t&&t.hasAttribute&&t.hasAttribute('data-snin')){var v=String(t.value||'').trim();if(/^\d+$/.test(v)){t.value=snMake('E',v);snPaint(t);}}},true);
 /* shared: ask at the start of each inspection whether the tech has a good connection; offline readiness check */
 (function(){
-var FORMS=[['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch']];
+var FORMS=[['intake','Truck Intake'],['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch']];
 var ME=(location.pathname.split('/').filter(Boolean).slice(-1)[0]||'').replace(/\.html?$/,'');
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
 if(!ls('off:since'))ls('off:since',String(Date.now()));
@@ -14594,7 +14594,7 @@ window.offReadiness=readiness;
 })();
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'10/23/2026'};
+const CREDIT={by:'Ravi Ramsundar',built:'10/24/2026'};
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
