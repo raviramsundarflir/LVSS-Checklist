@@ -13028,6 +13028,13 @@ function pickPhoto(id,cam){const i=document.createElement('input');i.type='file'
   markDirty();rerenderPh(id);};i.click();}
 async function loadPhotos(rec){S.photos={};const ids=new Set();(rec.rmaPh||[]).forEach(p=>ids.add(p));Object.values(rec.items).forEach(d=>(d.ph||[]).forEach(p=>ids.add(p)));(rec.gear||[]).forEach(e=>(e.ph||[]).forEach(p=>ids.add(p)));Object.values(rec.serPh||{}).forEach(l=>l.forEach(p=>ids.add(p)));((rec.swap||{}).list||[]).forEach(e=>{(e.oldPh||[]).forEach(p=>ids.add(p));(e.newPh||[]).forEach(p=>ids.add(p));(e.mid||[]).forEach(m=>(m.ph||[]).forEach(p=>ids.add(p)));});if(rec.audit){(rec.audit.ph||[]).forEach(p=>ids.add(p));Object.values(rec.audit.items||{}).forEach(q=>(q.ph||[]).forEach(p=>ids.add(p)));}
  for(const id of ids){const r=await dbGet('photos',id);if(r)S.photos[id]=r;}}
+
+/* uniform report/zip file name: RMA (or X) - serial - report type - MM-DD-YY */
+function stdName(rma,sn,type,d){var cl2=function(t){return String(t==null?'':t).replace(/[\\\/:*?"<>|]+/g,'-').replace(/\s+/g,' ').trim();};
+ var r=cl2(rma).replace(/^rma[\s#:\-]*/i,'').replace(/\s+/g,''),s=cl2(sn)||'no-serial',m=/^(\d{4})-(\d\d)-(\d\d)/.exec(d||''),dt;
+ r=r?'RMA '+r:'X';
+ if(m)dt=m[2]+'-'+m[3]+'-'+m[1].slice(2);else{var n=new Date(),p2=function(x){return String(x).padStart(2,'0')};dt=p2(n.getMonth()+1)+'-'+p2(n.getDate())+'-'+String(n.getFullYear()).slice(2);}
+ return r+'-'+s+'-'+type+'-'+dt;}
 /* ---------- UI ---------- */
 const app=$('#app');
 function lvlChip(l,rep){if(l&&rep)return `<span class="lvl ${l} resolved" title="Resolved"><span class="lt">${LVK[l].n}</span><span class="ck">✓</span></span>`;return l?`<span class="lvl ${l}">${LVK[l].n}</span>`:'<span class="lvl none">No level</span>'}
@@ -13427,7 +13434,7 @@ function sendHtml(){const r=S.rec,md=mailDefaults(r),m=r.mail;const st=stats(r);
  <div class="row"><button data-act="step" data-s="4">← Certificate</button></div></div>`;}
 async function prepPdfs(){const r=S.rec;S.pdf=null;const el=()=>$('#pdfst');
  try{await new Promise(z=>setTimeout(z,30));const d=isAud(r)?buildAuditPdf(r):buildPdf(r);const sn=safeName(r.hdr.towerSerial||r.hdr.customer);
-  S.pdf={blob:d.output('blob'),name:isAud(r)?`SkyWatch_Inspection_AUDIT_${sn}.pdf`:`SkyWatch_Inspection_and_Completion_Certificate_${sn}.pdf`};
+  S.pdf={blob:d.output('blob'),name:stdName(r.hdr.rma,r.hdr.towerSerial||r.hdr.customer||'',isAud(r)?'SKYWATCH-AUDIT':'SKYWATCH',r.hdr.date)+'.pdf'};
   if(el())el().innerHTML=`📄 <b>${esc(S.pdf.name)}</b> (${Math.round(S.pdf.blob.size/1024)} KB) – ${isAud(r)?'one-page audit results':'certificate, punch list, items to quote, full checklist, auditor QR code'}`;}
  catch(e){if(el())el().innerHTML='<span style="color:#c62828">Could not create the PDF: '+esc(e.message||e)+'</span>';console.error(e)}}
 function pdfFiles(){return [new File([S.pdf.blob],S.pdf.name,{type:'application/pdf'})];}
@@ -14040,7 +14047,7 @@ function wipBuildPdf(){
       const L=d.splitTextToSize(String(rec.carryNotes).replace(/[^\x20-\x7E\n]/g,'?'),540);let cut=false;
       for(const l of L){if(y>748){cut=true;break;}d.text(l,36,y);y+=11.5;}if(cut)d.text('(more in the app - scan the codes)',36,y);}
     creditLine(d,creditCurRev());});
-  return {blob:d.output('blob'),name:'CarryOver_'+String(WA.sn(rec)||'inspection').replace(/[^\w.\-]+/g,'_')+'.pdf',n,pg,FN,tech,sn,ts};}
+  return {blob:d.output('blob'),name:stdName((rec.hdr||rec.header||{}).rma,String(WA.sn(rec)||'inspection'),'CARRYOVER',(rec.hdr||rec.header||{}).date)+'.pdf',n,pg,FN,tech,sn,ts};}
 function wipCodesPdf(){const o=wipBuildPdf();WA.dl(o.blob,o.name);}
 async function wipCopyMail(b){
   let ok=false;try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(WIP_MAIL);ok=true;}}catch(e){}
@@ -14353,11 +14360,62 @@ function pvReorder(){try{var zs=document.getElementById('zs'),zo=document.getEle
 /* ---- truck identification (VIN / plate / kilo) + "old S/N" handling for Calibration and Floor Test ---- */
 function isOldSn(r){var h=(r&&r.hdr)||{};return !!(h.osn&&String(h.sn||'').trim()===String(h.osn).trim());}
 function tkIdHtml(r){var h=r.hdr||{},e=function(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');};
- return '<div class="grid" style="margin-top:10px"><div><label class="f">Truck VIN</label><input data-b="hdr.vin" value="'+e(h.vin)+'" autocomplete="off"></div><div><label class="f">License plate #</label><input data-b="hdr.plate" value="'+e(h.plate)+'" autocomplete="off"></div><div><label class="f">Kilo #</label><input data-b="hdr.kilo" value="'+e(h.kilo)+'" autocomplete="off"></div></div>'+
+ return '<div class="grid" style="margin-top:10px"><div><label class="f">RMA number (optional)</label><input data-b="hdr.rma" value="'+e(h.rma)+'" autocomplete="off"></div><div><label class="f">Truck VIN</label><input data-b="hdr.vin" value="'+e(h.vin)+'" autocomplete="off"></div><div><label class="f">License plate #</label><input data-b="hdr.plate" value="'+e(h.plate)+'" autocomplete="off"></div><div><label class="f">Kilo #</label><input data-b="hdr.kilo" value="'+e(h.kilo)+'" autocomplete="off"></div></div>'+
  (isOldSn(r)?'<p style="margin:8px 0 0;color:#c25a00;font-size:14px"><b>Old S/N.</b> This is the OLD serial number that came in the QR code. Replace it with the new eMSC-L serial number when it is available – otherwise the PDF leaves a blank line to write it in.</p>':'');}
-function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/3,cl2=function(t){return qrSnText(t);};
- [['Truck VIN',h.vin],['License plate #',h.plate],['Kilo #',h.kilo]].forEach(function(p,j){var x=MX+j*w3;d.setDrawColor(0);d.setLineWidth(.6);d.rect(x,y,w3,28);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text(p[0],x+5,y+9);d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(0);d.text(cl2(p[1])||'-',x+5,y+22);});y+=28;
+function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrSnText(t);};
+ [['RMA number',h.rma],['Truck VIN',h.vin],['License plate #',h.plate],['Kilo #',h.kilo]].forEach(function(p,j){var x=MX+j*w3;d.setDrawColor(0);d.setLineWidth(.6);d.rect(x,y,w3,28);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text(p[0],x+5,y+9);d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(0);d.text(cl2(p[1])||'-',x+5,y+22);});y+=28;
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New eMSC-L serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script></body></html>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='15870b97b4';window.__BUILD=B;var shown=false,last=0;
+function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
+d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
+d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
+document.body.appendChild(d);
+document.getElementById('newVerX').onclick=function(){d.remove();shown=false;};
+document.getElementById('newVerBtn').onclick=function(){var b=this;b.disabled=true;b.textContent='Updating...';
+fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});};}
+function chk(){if(navigator.onLine===false)return;if(Date.now()-last<30000)return;last=Date.now();
+fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(j){if(j&&j.build&&j.build!==B)bar();}).catch(function(){});}
+window.addEventListener('load',function(){setTimeout(chk,1500);});
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')chk();});
+window.addEventListener('online',chk);
+})();</script><script>(function(){var S='d4d154';window.__SUITE=S;var last='',lt=0;
+function warn(t){if(!document.body||document.getElementById('qrVerWarn'))return;var d=document.createElement('div');d.id='qrVerWarn';d.setAttribute('role','alert');
+d.style.cssText='position:fixed;left:8px;right:8px;top:64px;z-index:2147483001;background:#8a4b00;color:#fff;font:600 15px/1.35 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
+d.innerHTML='<span style="flex:1">'+t+'</span><button id="qrVerX" style="background:#fff;color:#8a4b00;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">OK</button>';
+document.body.appendChild(d);document.getElementById('qrVerX').onclick=function(){d.remove();};}
+function chk(txt){if(typeof txt!=='string'||txt.charAt(0)!=='{')return;var now=Date.now();if(txt===last&&now-lt<8000)return;last=txt;lt=now;var o;try{o=JSON.parse(txt);}catch(e){return;}
+if(!o||typeof o!=='object'||Array.isArray(o)||!('a' in o||'sn' in o))return;
+if(o.bv!==S)warn('Heads up: this QR code was made by a different version of the forms'+(o.bv?'':' (an older one)')+'. Some data may not carry over correctly.');}
+var qc=window.qrcode;if(typeof qc==='function'){var w=function(t,e){var q=qc(t,e),ad=q.addData;q.addData=function(d,m){try{if(typeof d==='string'&&d.charAt(0)==='{'&&d.indexOf('"bv"')<0){var o=JSON.parse(d);if(o&&typeof o==='object'&&!Array.isArray(o)&&('a' in o||'sn' in o)){o.bv=S;d=JSON.stringify(o);}}}catch(e2){}return ad.call(q,d,m);};return q;};for(var k in qc)w[k]=qc[k];window.qrcode=w;}
+var jq=window.jsQR;if(typeof jq==='function'){var wj=function(){var r=jq.apply(this,arguments);try{if(r&&r.data)chk(r.data);}catch(e3){}return r;};for(var k2 in jq)wj[k2]=jq[k2];window.jsQR=wj;}
+window.__qrChk=chk;})();</script><script>(function(){var KEY='serialCaps',mem=true;
+function on(){try{var v=localStorage.getItem(KEY);return v===null?mem:v!=='0';}catch(e){return mem;}}
+function set(v){mem=v;try{localStorage.setItem(KEY,v?'1':'0');}catch(e){}}
+var DB=[/^gear\.\d+\.s$/,/\.serial$/,/^swap\.list\.\d+\.(old|nw)$/];
+function isSer(el){if(!el||el.tagName!=='INPUT')return false;var t=(el.getAttribute('type')||'text').toLowerCase();if(t!=='text'&&t!=='search')return false;
+if(el.hasAttribute('data-snin')||el.hasAttribute('data-nocaps')||el.id==='n-sn'||el.id==='n-nsn')return false;
+if(el.id==='zsSer')return true;if(el.getAttribute('data-h')==='winKey')return true;var b=el.getAttribute('data-b')||'';for(var i=0;i<DB.length;i++)if(DB[i].test(b))return true;
+var ph=el.getAttribute('placeholder')||'';return /^serial number$/i.test(ph);}
+function mark(el){try{el.setAttribute('autocapitalize',on()?'characters':'none');el.setAttribute('autocorrect','off');el.setAttribute('spellcheck','false');}catch(e){}}
+function markAll(){var l=document.querySelectorAll('input');for(var i=0;i<l.length;i++)if(isSer(l[i]))mark(l[i]);}
+function up(el){var v=el.value,u=v.toUpperCase();if(u===v)return false;var a=el.selectionStart,z=el.selectionEnd;el.value=u;try{el.setSelectionRange(a,z);}catch(e){}return true;}
+document.addEventListener('input',function(e){var el=e.target;if(on()&&isSer(el))up(el);},true);
+document.addEventListener('pointerdown',function(e){if(isSer(e.target))mark(e.target);},true);
+var pill=null,cur=null;
+function ensure(){if(pill||!document.body)return;pill=document.createElement('div');pill.id='capsPill';
+pill.style.cssText='position:fixed;z-index:2147483000;display:none;font:700 14px/1 system-ui,sans-serif';
+pill.innerHTML='<button type="button" id="capsBtn" style="border:0;border-radius:18px;padding:10px 14px;min-height:40px;background:#0b3d6b;color:#fff;font:700 14px system-ui,sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.3)"></button>';
+document.body.appendChild(pill);
+pill.addEventListener('pointerdown',function(e){e.preventDefault();});pill.addEventListener('mousedown',function(e){e.preventDefault();});
+document.getElementById('capsBtn').addEventListener('click',function(){var v=!on();set(v);if(cur){mark(cur);if(v&&up(cur))cur.dispatchEvent(new Event('input',{bubbles:true}));}label();place();});}
+function label(){var b=document.getElementById('capsBtn');if(b)b.textContent=on()?'CAPS ON - tap for lowercase':'caps off - tap for CAPS';}
+function place(){if(!pill||!cur)return;var r=cur.getBoundingClientRect(),w=pill.offsetWidth||200,x=Math.max(8,Math.min(r.right-w,window.innerWidth-w-8)),y=r.top-46;if(y<4)y=r.bottom+6;pill.style.left=x+'px';pill.style.top=y+'px';}
+document.addEventListener('focusin',function(e){var el=e.target;if(!isSer(el))return;ensure();if(!pill)return;cur=el;mark(el);label();pill.style.display='block';place();},true);
+document.addEventListener('focusout',function(e){if(!isSer(e.target))return;setTimeout(function(){var a=document.activeElement;if(pill&&!isSer(a)){pill.style.display='none';cur=null;}},120);},true);
+window.addEventListener('scroll',place,true);window.addEventListener('resize',place);if(window.visualViewport)window.visualViewport.addEventListener('resize',place);
+var t=null;function sched(){if(t)return;t=setTimeout(function(){t=null;markAll();},150);}
+function boot(){markAll();if(window.MutationObserver)new MutationObserver(sched).observe(document.documentElement,{childList:true,subtree:true});}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+window.__isSerialInput=isSer;})();</script></body></html>
