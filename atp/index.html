@@ -245,7 +245,7 @@ h2{font-size:21px}
 .emailbig{order:-1;flex:1 1 100%!important;width:100%;min-height:64px;font-size:19px;font-weight:800;background:#1b8a3a!important;border:2px solid #14702d!important;color:#fff!important;border-radius:12px;box-shadow:0 3px 10px rgba(27,138,58,.4);padding:12px 16px}
 .emailbig small{display:block;font-size:12px;font-weight:600;opacity:.92;margin-top:2px}
 .ddrow{padding:8px 0;border-top:1px solid var(--line)}.ddrow:first-child{border-top:0}
-.ddmiss{border-left:4px solid #c8202a;padding-left:8px}.ddwarn{display:block;color:#c8202a;font-weight:700;margin-top:2px}
+.ddmiss,.ddna{border-left:4px solid #e0a800;background:#fff6c7;padding-left:8px}.ddwarn{display:block;color:#6b4e00;font-weight:700;margin-top:2px}.ddgone{border-left:4px solid #9aa3b2;background:#eef0f4;padding:8px;color:#4a5361;font-size:15px}
 .omit-slot .omitbtn{border-color:#6b3fa0;color:#6b3fa0}.omit-slot .omitbtn.primary{background:#6b3fa0;color:#fff}
 .row.omitted{border-left-color:#6b3fa0;background:#f5f0fb}
 .ddin{display:flex;gap:6px;align-items:center}
@@ -14031,10 +14031,10 @@ function qrExtras(rec){
   var wk=w.list.map(function(s){ return [s.dev||'',T(s.t),T(s.old),T(s.nw),T(s.rma)]; }); if(wk.length) e.wk=wk; if(w.chk) e.sc=1;
   return e;
 }
-var QR_DEV={'server':'serverSerial','cisco switch':'ciscoEnclSerial','starlink':'starlinkSerial','radar':'radarSerial','pan/tilt':'radarPtSerial','pan tilt':'radarPtSerial','camera':'cameraSerial','trimble gps':'gpsSerial','trimble':'gpsSerial','cisco receiver':'ciscoRtrSerial','cisco wifi module':'ciscoModSerial','cisco pim / lte module':'pimSerial','laptop control unit':'lcuSerial','lcu':'lcuSerial','hmi/smu':'smuSerial','vin':'vin','truck vin':'vin','lic plate':'plate','license plate':'plate','license plate #':'plate','kilo':'kilo','kilo #':'kilo'};
+var QR_DEV={'server':'serverSerial','cisco switch':'ciscoEnclSerial','starlink':'starlinkSerial','radar':'radarSerial','pan/tilt':'radarPtSerial','pan tilt':'radarPtSerial','camera':'cameraSerial','gear box':'gearSerial','gearbox':'gearSerial','trimble gps':'gpsSerial','trimble':'gpsSerial','cisco receiver':'ciscoRtrSerial','cisco wifi module':'ciscoModSerial','cisco pim / lte module':'pimSerial','laptop control unit':'lcuSerial','lcu':'lcuSerial','client':'clientSerial','hmi/smu':'smuSerial','vin':'vin','truck vin':'vin','lic plate':'plate','license plate':'plate','license plate #':'plate','kilo':'kilo','kilo #':'kilo'};
 function qrApplyLvss(rec,o){
   var h=rec.header, x=DD(rec); x.rev=x.rev||{};
-  var cs=[]; (o.s||[]).forEach(function(p){ var k=QR_DEV[String((p&&p[0])||'').trim().toLowerCase()], v=String((p&&p[1])||'').trim(); if(k&&v&&(!h[k]||h[k]==='PDX'||h[k]===v)){ h[k]=v; if(k!=='vin'&&k!=='plate'&&k!=='kilo') cs.push(k); } });
+  var cs=[]; (o.s||[]).forEach(function(p){ var k=QR_DEV[String((p&&p[0])||'').trim().toLowerCase()], v=String((p&&p[1])||'').trim(); if(k&&v&&(!h[k]||h[k]==='PDX'||h[k]===v)){ h[k]=v; if(k!=='vin'&&k!=='plate'&&k!=='kilo'&&k!=='clientSerial') cs.push(k); } });
   if(o.rma) h.rma=o.rma; if(o.vin) h.vin=o.vin; if(o.pl) h.plate=o.pl; if(o.kl) h.kilo=o.kl;
   var iv=o.i||{}, cr=[]; DD_REV.forEach(function(f){ if(iv[f[0]]){ x.rev[f[0]]=String(iv[f[0]]); cr.push(f[0]); } });
   if(h.newSerial&&(o.sn||o.nsn)) cs.push('newSerial'); x.carry={s:cs,r:cr};
@@ -14586,6 +14586,25 @@ function stdName(rma,sn,type,d){var cl2=function(t){return String(t==null?'':t).
  r=r?'RMA '+r:'X';
  if(m)dt=m[2]+'-'+m[3]+'-'+m[1].slice(2);else{var n=new Date(),p2=function(x){return String(x).padStart(2,'0')};dt=p2(n.getMonth()+1)+'-'+p2(n.getDate())+'-'+String(n.getFullYear()).slice(2);}
  return r+'-'+s+'-'+type+'-'+dt;}
+
+/* ---- master walk order of the devices on a truck (Ravi, 2026-10-24) ----
+   DISPLAY / PRINT ORDER AND NAMES ONLY. Storage keys, QR positions and saved records are untouched.
+   Walk: front end (plate, kilo, VIN last), cab roof Starlink, driver-side network enclosure (Server, Cisco Switch),
+   control box (Trimble GPS), skid rear to front (Radar, Pan Tilt, Camera, Gearbox), passenger-side network enclosure
+   (Cisco Receiver with its WiFi module and PIM/LTE), then the cab (LCU, HMI/SMU, Client if applicable).
+   ADD A DEVICE = add its standard name here (and an alias line if forms spell it differently). */
+var DEV_ORDER=['starlink','server','cisco switch','trimble gps','radar','pan tilt','camera','gearbox','cisco receiver','cisco wifi module','cisco pim / lte module','laptop control unit','hmi/smu','client'];
+var DEV_ALIAS={'starlink antenna':'starlink','cisco switch (driver side)':'cisco switch','network encl. cisco serial number':'cisco switch','cisco serial number':'cisco switch','trimble':'trimble gps','trimble gps serial number':'trimble gps',
+ 'radar serial number':'radar','pan/tilt':'pan tilt','pan tilt unit':'pan tilt','radar pan tilt':'pan tilt','pan-tilt':'pan tilt','radar pan tilt serial number':'pan tilt','camera serial number':'camera',
+ 'gear box':'gearbox','gearbox serial number':'gearbox','network encl. cisco router serial number':'cisco receiver','cisco router':'cisco receiver','cisco receiver serial number':'cisco receiver',
+ 'network encl. cisco module sn':'cisco wifi module','cisco module':'cisco wifi module','wifi module':'cisco wifi module','cisco wifi module serial number':'cisco wifi module',
+ 'pim sn':'cisco pim / lte module','pim':'cisco pim / lte module','cisco pim/lte':'cisco pim / lte module','lte module':'cisco pim / lte module','pim module':'cisco pim / lte module',
+ 'lcu':'laptop control unit','laptop control unit serial number':'laptop control unit','smu':'hmi/smu','system management unit serial number':'hmi/smu','hmi':'hmi/smu','server serial number':'server','starlink serial number':'starlink'};
+function devKey(name){var k=String(name||'').trim().toLowerCase();return DEV_ALIAS[k]||k;}
+/* position in the walk order (unknown devices go just before the cab devices) */
+function devRank(name){var i=DEV_ORDER.indexOf(devKey(name));return i<0?DEV_ORDER.indexOf('laptop control unit')-.5:i;}
+/* stable sort of any list by the walk order; nameOf(item) gives the device name */
+function devSort(list,nameOf){return list.map(function(x,i){return [x,i];}).sort(function(a,b){return (devRank(nameOf(a[0]))-devRank(nameOf(b[0])))||(a[1]-b[1]);}).map(function(p){return p[0];});}
 /* shared: ask at the start of each inspection whether the tech has a good connection; offline readiness check */
 (function(){
 var FORMS=[['intake','Truck Intake'],['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch']];
@@ -14713,7 +14732,8 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  return y;}
 
 /* ===== swap chain / serial-edit prompt / last check / failed-unit RMA / review inline controls (ATP) ===== */
-var SWD=[['newSerial','New unit'],['cameraSerial','Camera'],['radarSerial','Radar'],['lcuSerial','LCU'],['radarPtSerial','Pan Tilt Unit'],['starlinkSerial','Starlink'],['ciscoEnclSerial','Cisco Switch'],['ciscoModSerial','Cisco WiFi Module'],['pimSerial','Cisco PIM / LTE Module'],['serverSerial','Server'],['ciscoRtrSerial','Cisco Receiver'],['smuSerial','HMI/SMU'],['gpsSerial','Trimble GPS']];
+var SWD=[['newSerial','New unit'],['cameraSerial','Camera'],['radarSerial','Radar'],['lcuSerial','LCU'],['radarPtSerial','Pan Tilt Unit'],['starlinkSerial','Starlink'],['ciscoEnclSerial','Cisco Switch'],['ciscoModSerial','Cisco WiFi Module'],['pimSerial','Cisco PIM / LTE Module'],['serverSerial','Server'],['ciscoRtrSerial','Cisco Receiver'],['smuSerial','HMI/SMU'],['gpsSerial','Trimble GPS'],['gearSerial','Gearbox']];
+/* NOTE: the ATP QR carries serials by POSITION in SWD (qrExtras sv). Only ever append here; never reorder. */
 function SW(rec){ rec=rec||S.rec; if(!rec.swap) rec.swap={a:'',chk:'',list:[]}; rec.swap.list.forEach(function(e){ e.mid=e.mid||[]; }); return rec.swap; }
 function swFor(rec,k){ var w=SW(rec); for(var i=0;i<w.list.length;i++){ if(w.list[i].dev===k) return w.list[i]; } return null; }
 function rmaOk(v){ v=String(v||'').trim(); return (v&&v.toUpperCase()!=='TBD')?v:''; }
@@ -14756,7 +14776,7 @@ function swRmaHTML(rec){ var FU=failedUnits(rec); if(!FU.length) return '';
      '<button class="btn'+(tbd?' primary':' light')+'" data-act="sw-tbd2" data-i="'+u.i+'" data-j="'+u.j+'" style="margin-top:6px">'+(tbd?'✓ ':'')+'RMA TBD</button><p class="muted" style="font-size:13px;margin:4px 0 0">RMA TBD is a reminder for you only. The RMA only appears on the report once a number is entered.</p></div>'; }).join(''); }
 function swSet(el){ var p=el.dataset.sw.split('.'), w=SW(); if(p[0]==='m'){ var e=w.list[+p[1]]; if(e&&e.mid[+p[2]]) e.mid[+p[2]].rma=el.value; } else { var e2=w.list[+p[0]]; if(e2) e2[p[1]]=el.value; } markDirty(); }
 /* ---- serial edit prompt ---- */
-var SER_KEYS={newSerial:1,cameraSerial:1,radarSerial:1,lcuSerial:1,radarPtSerial:1,starlinkSerial:1,ciscoEnclSerial:1,ciscoModSerial:1,pimSerial:1,serverSerial:1,ciscoRtrSerial:1,smuSerial:1,gpsSerial:1};
+var SER_KEYS={newSerial:1,cameraSerial:1,radarSerial:1,lcuSerial:1,radarPtSerial:1,starlinkSerial:1,ciscoEnclSerial:1,ciscoModSerial:1,pimSerial:1,serverSerial:1,ciscoRtrSerial:1,smuSerial:1,gpsSerial:1,gearSerial:1};
 document.addEventListener('focusin',function(e){ var t=e.target, k=t.dataset&&t.dataset.h, p=t.dataset&&t.dataset.sw; if(!S.rec) return; if(k&&SER_KEYS[k]) S.serOrig={p:'h:'+k,v:String(S.rec.header[k]||'')}; else if(p&&/^\d+\.nw$/.test(p)){ var e2=SW().list[+p.split('.')[0]]; S.serOrig={p:'sw:'+p,v:String((e2&&e2.nw)||'')}; } });
 document.addEventListener('change',function(e){ swSerEdit(e.target); });
 async function swSerEdit(t){
@@ -14958,7 +14978,8 @@ function custHTML(){ var c=CU(), n=swPhotos('rmaf').length;
 function cuSet(el){ var p=el.dataset.cu, c=CU(); if(p==='date') c.date=el.value; else { var q=p.split('.'), it=c.list[+q[0]]; if(it) it[q[1]]=el.value; } markDirty(); }
 function custRefresh(){ var e=document.getElementById('custInfo'); if(e) e.innerHTML=custHTML(); }
 /* ===== ATP: DD1149 base serial checksheet, serial/revision/date capture, Omit, Override ===== */
-var DD_DEVS=[['serverSerial','Server','network enclosure, driver side'],['ciscoEnclSerial','Cisco Switch','network enclosure, driver side'],['starlinkSerial','Starlink','cab rooftop'],['radarSerial','Radar','rear of skid'],['radarPtSerial','Pan Tilt Unit','rear of skid'],['cameraSerial','Camera','middle of skid'],['gpsSerial','Trimble GPS','control enclosure'],['ciscoRtrSerial','Cisco Receiver','network enclosure, passenger side'],['ciscoModSerial','Cisco WiFi Module','installed in the Cisco receiver, passenger side','4 TNC connectors'],['pimSerial','Cisco PIM / LTE Module','installed in the Cisco receiver, passenger side','3 TNC connectors'],['lcuSerial','Laptop Control Unit','inside the truck cab'],['smuSerial','HMI/SMU','in the truck cab']];
+var DD_DEVS=devSort([['serverSerial','Server','network enclosure, driver side'],['ciscoEnclSerial','Cisco Switch','network enclosure, driver side'],['starlinkSerial','Starlink','cab rooftop'],['radarSerial','Radar','rear of skid'],['radarPtSerial','Pan Tilt Unit','rear of skid'],['cameraSerial','Camera','middle of skid'],['gearSerial','Gearbox','front-middle of skid, behind the network enclosure with the inverter'],['gpsSerial','Trimble GPS','control enclosure'],['ciscoRtrSerial','Cisco Receiver','network enclosure, passenger side'],['ciscoModSerial','Cisco WiFi Module','installed in the Cisco receiver, passenger side','4 TNC connectors'],['pimSerial','Cisco PIM / LTE Module','installed in the Cisco receiver, passenger side','3 TNC connectors'],['lcuSerial','Laptop Control Unit','inside the truck cab'],['smuSerial','HMI/SMU','in the truck cab']],function(d){ return d[1]; });
+/* walk order (shared/sn.js DEV_ORDER): Starlink, Server, Cisco Switch, Trimble GPS, Radar, Pan Tilt, Camera, Gearbox, Cisco Receiver, WiFi Module, PIM/LTE, LCU, HMI/SMU */
 var DD_REV=[['v0s','Server Image (created date)'],['v0c','Client Image (created date)'],['v1','PMU Version'],['v2','PCM Version'],['v3','HMI Version'],['v4','PSR Version'],['v5','Rim 1 Version'],['v6','Rim 2 Version'],['v7','Vehicle Mileage'],['v8','Engine Hours'],['v9','Idle Hours']];
 var DD_SHARED={v7:1,v8:1,v9:1};
 var DD_LBL={newSerial:'Platform (New Upfit) Serial',vin:'Vehicle VIN'}; DD_DEVS.forEach(function(d){ DD_LBL[d[0]]=d[1]; });
@@ -14966,7 +14987,7 @@ function DD(rec){ rec=rec||S.rec; var x=rec.dd; if(!x||typeof x!=='object') x=re
   ['na','rev','rvna','tkOm'].forEach(function(k){ if(!x[k]||typeof x[k]!=='object') x[k]={}; });
   ['rcvd','retro','skid','deliv','ov','flirName','flirDate','flirSig','custName','custDate','custSig'].forEach(function(k){ if(x[k]==null) x[k]=''; });
   if(x.loc==null) x.loc='Tucson'; return x; }
-var TK_L=[['vin','Truck VIN'],['plate','License plate #'],['kilo','Kilo #']];
+var TK_L=[['plate','License plate #'],['kilo','Kilo #'],['vin','Truck VIN']];
 var PT_MIN=9, PT_NOTE='Record the long-form serial number (at least 9 characters), not the 4-digit serial.';
 function ddShort(k,v){ return k==='radarPtSerial'&&!!String(v||'').trim()&&String(v).trim().length<PT_MIN; }
 function ddSerial(rec,k){ var e=swFor(rec,k), nv=e&&String(e.nw||'').trim(); return nv?nv:String((rec.header||{})[k]||'').trim(); }
@@ -14974,6 +14995,7 @@ function ddPhotos(rec,k){ var e=swFor(rec,k), out=S.photos.filter(function(p){ r
   if(k==='newSerial'&&S.rec===rec){ var rows=buildRows(rec.tpl).filter(function(r){ return !r.spare&&/serial (number|plate)/i.test(r.text); }).map(function(r){ return r.num; }); out=out.concat(S.photos.filter(function(p){ return typeof p.num==='number'&&rows.indexOf(p.num)>=0; })); }
   return out; }
 function ddRevPhotos(k){ return S.photos.filter(function(p){ return p.num==='dd:r:'+(DD_SHARED[k]?'dash':k); }); }
+function ddUpfit(rec){ var h=rec.header||{}; return !DD(rec).oldNa&&!!String(h.oldSerial||'').trim(); }
 function ddOldTxt(rec){ var x=DD(rec); return x.oldNa?'N/A':String((rec.header||{}).oldSerial||'').trim(); }
 /* missing list: {k,label,what} */
 function ddMissing(rec){ var x=DD(rec), h=rec.header||{}, m=[];
@@ -14981,7 +15003,7 @@ function ddMissing(rec){ var x=DD(rec), h=rec.header||{}, m=[];
   chk('newSerial',DD_LBL.newSerial); DD_DEVS.forEach(function(d){ chk(d[0],d[1]); }); TK_L.forEach(function(t){ if(!ddSerial(rec,t[0])) m.push({k:t[0],label:t[1],what:'serial'}); if(!ddPhotos(rec,t[0]).length&&!x.tkOm[t[0]]) m.push({k:t[0],label:t[1],what:'photo'}); });
   if(!x.oldNa&&!String(h.oldSerial||'').trim()) m.push({k:'oldSerial',label:'Replaces old serial',what:'serial'});
   var dash=false;
-  DD_REV.forEach(function(f){ var k=f[0]; if(x.rvna[k]) return; if(!String(x.rev[k]||'').trim()) m.push({k:k,label:f[1],what:'revision'}); if(DD_SHARED[k]) dash=true; else if(!ddRevPhotos(k).length) m.push({k:k,label:f[1],what:'photo'}); });
+  DD_REV.forEach(function(f){ var k=f[0]; if(k==='v0c') return; if(x.rvna[k]) return; if(!String(x.rev[k]||'').trim()) m.push({k:k,label:f[1],what:'revision'}); if(DD_SHARED[k]) dash=true; else if(!ddRevPhotos(k).length) m.push({k:k,label:f[1],what:'photo'}); });
   if(dash&&!ddRevPhotos('v7').length) m.push({k:'dash',label:'Dashboard (mileage / engine / idle hours)',what:'photo'});
   return m; }
 function ddPassed(rec){ return true; }
@@ -14991,7 +15013,7 @@ function ddCap(rec,p){ var k=String(p.num); if(k.indexOf('dd:s:')===0){ var kk=k
 function ddThumbs(key){ return swThumbs(key); }
 function ddCamBtn(key,n){ return '<button class="btn light" data-act="sw-cam" data-key="'+key+'" style="min-height:44px" title="Photo">📷'+(n?' <b>'+n+'</b>':'')+'</button>'; }
 function ddSerRow(k,lbl,opts){ opts=opts||{}; var x=DD(), na=!!x.na[k], v=S.rec.header[k]||'', key='dd:s:'+k, n=ddPhotos(S.rec,k).length, om=!!(x.tkOm&&x.tkOm[k]&&!n), miss=!na&&(!ddSerial(S.rec,k)||(!n&&!om)||ddShort(k,ddSerial(S.rec,k)));
-  return '<div class="ddrow'+(miss?' ddmiss':'')+'"><label class="fld">'+esc(lbl)+(k==='radarPtSerial'?'<span style="display:block;font-size:13px;font-weight:700;color:#c8202a">'+PT_NOTE+'</span>':'')+(opts.loc?'<span class="muted" style="display:block;font-size:13px;font-weight:400">Location: '+esc(opts.loc)+'</span>':'')+'<span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center"><input data-h="'+k+'" value="'+esc(na?'':v)+'"'+(na?' disabled placeholder="N/A"':'')+' autocomplete="off" autocapitalize="characters" style="flex:1;min-width:0">'+
+  return '<div class="ddrow'+(miss?' ddmiss':'')+(na?' ddna':'')+'"><label class="fld">'+esc(lbl)+(k==='radarPtSerial'?'<span style="display:block;font-size:13px;font-weight:700;color:#c8202a">'+PT_NOTE+'</span>':'')+(opts.loc?'<span class="muted" style="display:block;font-size:13px;font-weight:400">Location: '+esc(opts.loc)+'</span>':'')+'<span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center"><input data-h="'+k+'" value="'+esc(na?'':v)+'"'+(na?' disabled placeholder="N/A"':'')+' autocomplete="off" autocapitalize="characters" style="flex:1;min-width:0">'+
     (opts.noNa?'':'<button type="button" class="btn '+(na?'primary':'light')+'" data-act="dd-na" data-k="'+k+'" style="min-height:44px">'+(na?'✓ ':'')+'N/A</button>')+(na?'':ddCamBtn(key,n))+'</span></label>'+(na?'':ddThumbs(key))+(miss&&!na?'<small class="ddwarn">'+(!ddSerial(S.rec,k)?'Serial # missing. ':ddShort(k,ddSerial(S.rec,k))?'Too short - record the long-form serial (at least 9 characters). ':'')+((!n&&!om)?(ddCarried(k)&&ddSerial(S.rec,k)?'From the QR code - check it against the truck and take a photo.':'Photo missing.'):'')+'</small>':'')+(om&&!na?'<small class="muted">Photo omitted.</small>':'')+'</div>'; }
 function ddWinRow(){ var v=String((S.rec.header||{}).winKey||''), miss=!v.trim();
   return '<div class="ddrow'+(miss?' ddmiss':'')+'"><label class="fld">Server Windows activation key<span class="muted" style="display:block;font-size:13px;font-weight:400">Product key on the server label or in Windows (Settings, Activation)</span><span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center"><input data-h="winKey" value="'+esc(v)+'" placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" style="flex:1;min-width:0"></span></label>'+(miss?'<small class="ddwarn">Windows key missing.</small>':'')+'</div>'; }
@@ -15002,12 +15024,13 @@ function ddTkPrompt(then){ var m=ddTkNeed(); if(!m.length){ modalRoot.innerHTML=
   dlg('<h2 style="margin-top:0">Truck photos needed</h2><p class="muted">Take a photo of each one, or omit it (no reason needed).</p>'+m.map(function(t){ var v=ddSerial(S.rec,t[0]); return "<div class='card' style='margin:6px 0'><b>"+esc(t[1])+'</b>'+(v?' \u2013 '+esc(v):'')+'<div class="sheet-btns" style="margin-top:6px"><button class="btn primary big" data-act="dd-tktake" data-k="'+t[0]+'">\ud83d\udcf7 Take the photo</button><button class="btn light big" data-act="dd-tkomit" data-k="'+t[0]+'">Omit</button></div></div>'; }).join('')+'<div class="sheet-btns"><button class="btn big" data-act="close-modal">Close</button></div>','sheet'); }
 function ddCarried(k,rev){ var c=DD().carry; return !!(c&&(rev?c.r:c.s)&&(rev?c.r:c.s).indexOf(k)>=0); }
 function ddCarryCount(rec){ var x=DD(rec), c=x.carry; if(!c) return null; var s=(c.s||[]).filter(function(k){ return !x.na[k]&&ddSerial(rec,k); }), r=(c.r||[]).filter(function(k){ return !x.rvna[k]&&String(x.rev[k]||'').trim(); }); var us=s.filter(function(k){ return !ddPhotos(rec,k).length; }), ur=r.filter(function(k){ return !DD_SHARED[k]&&!ddRevPhotos(k).length; }); return {n:s.length+r.length,ns:s.length,nr:r.length,left:us.length+ur.length}; }
-function ddRevRow(f){ var k=f[0], x=DD(), na=!!x.rvna[k], v=x.rev[k]||'', sh=!!DD_SHARED[k], n=sh?0:ddRevPhotos(k).length, miss=!na&&(!String(v).trim()||(!sh&&!n));
-  return '<div class="ddrow'+(miss?' ddmiss':'')+'"><label class="fld">'+esc(f[1])+'<span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center"><input data-dd="rev.'+k+'" value="'+esc(na?'':v)+'"'+(na?' disabled placeholder="N/A"':'')+' autocomplete="off" style="flex:1;min-width:0"><button type="button" class="btn '+(na?'primary':'light')+'" data-act="dd-rna" data-k="'+k+'" style="min-height:44px">'+(na?'✓ ':'')+'N/A</button>'+((na||sh)?'':ddCamBtn('dd:r:'+k,n))+'</span></label>'+((na||sh)?'':ddThumbs('dd:r:'+k))+(miss&&!na?'<small class="ddwarn">'+(!String(v).trim()?'Revision missing. ':'')+((!sh&&!n)?(ddCarried(k,1)&&String(v).trim()?'From the QR code - check it against the truck and take a photo.':'Photo missing.'):'')+'</small>':'')+'</div>'; }
+function ddGoneRow(lbl,old){ return '<div class="ddrow ddgone"><b>'+esc(lbl)+'</b> \u2013 Removed (upfit)'+(old?' <span class="muted">(was '+esc(old)+')</span>':'')+'</div>'; }
+function ddRevRow(f){ if(f[0]==='v0c') return ddUpfit(S.rec)?ddGoneRow(f[1],String(DD().rev.v0c||'').trim()):''; var k=f[0], x=DD(), na=!!x.rvna[k], v=x.rev[k]||'', sh=!!DD_SHARED[k], n=sh?0:ddRevPhotos(k).length, miss=!na&&(!String(v).trim()||(!sh&&!n));
+  return '<div class="ddrow'+(miss?' ddmiss':'')+(na?' ddna':'')+'"><label class="fld">'+esc(f[1])+'<span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center"><input data-dd="rev.'+k+'" value="'+esc(na?'':v)+'"'+(na?' disabled placeholder="N/A"':'')+' autocomplete="off" style="flex:1;min-width:0"><button type="button" class="btn '+(na?'primary':'light')+'" data-act="dd-rna" data-k="'+k+'" style="min-height:44px">'+(na?'✓ ':'')+'N/A</button>'+((na||sh)?'':ddCamBtn('dd:r:'+k,n))+'</span></label>'+((na||sh)?'':ddThumbs('dd:r:'+k))+(miss&&!na?'<small class="ddwarn">'+(!String(v).trim()?'Revision missing. ':'')+((!sh&&!n)?(ddCarried(k,1)&&String(v).trim()?'From the QR code - check it against the truck and take a photo.':'Photo missing.'):'')+'</small>':'')+'</div>'; }
 function ddHTML(){ var rec=S.rec, h=rec.header, x=DD(), ms=ddMissing(rec), nSer=ms.filter(function(m){ return m.what!=='revision'&&!/^v\d|dash/.test(m.k); }).length;
   var pn=ddPhotos(rec,'newSerial').length;
-  var top='<div class="ddrow'+(!String(h.newSerial||'').trim()||!pn?' ddmiss':'')+'"><label class="fld req">Platform serial number (new upfit S/N)'+snTg('ddi-newSerial',h.newSerial||'')+'<span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center"><input id="ddi-newSerial" data-snin="1" data-h="newSerial" value="'+esc(h.newSerial||'')+'" autocomplete="off" autocapitalize="characters" style="flex:1;min-width:0">'+ddCamBtn('dd:s:newSerial',pn)+'</span></label>'+ddThumbs('dd:s:newSerial')+
-    '<label class="fld" style="margin-top:8px"><span class="muted" style="font-size:14px">Replaces old serial:</span>'+(x.oldNa?'':snTg('ddi-oldSerial',h.oldSerial||''))+'<span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center"><input id="ddi-oldSerial" data-snin="1" data-h="oldSerial" value="'+esc(x.oldNa?'':(h.oldSerial||''))+'"'+(x.oldNa?' disabled placeholder="N/A"':'')+' autocomplete="off" autocapitalize="characters" style="flex:1;min-width:0"><button type="button" class="btn '+(x.oldNa?'primary':'light')+'" data-act="dd-oldna" style="min-height:44px">'+(x.oldNa?'✓ ':'')+'N/A</button></span></label></div>';
+  var top='<div class="ddrow'+(!String(h.newSerial||'').trim()||!pn?' ddmiss':'')+'"><label class="fld req">Platform serial number (new upfit S/N)'+'<span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center"><input id="ddi-newSerial" data-snin="1" data-h="newSerial" value="'+esc(h.newSerial||'')+'" autocomplete="off" autocapitalize="characters" style="flex:1;min-width:0">'+ddCamBtn('dd:s:newSerial',pn)+'</span>'+snTg('ddi-newSerial',h.newSerial||'')+'</label>'+ddThumbs('dd:s:newSerial')+
+    '<label class="fld" style="margin-top:8px"><span class="muted" style="font-size:14px">Replaces old serial:</span>'+'<span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center"><input id="ddi-oldSerial" data-snin="1" data-h="oldSerial" value="'+esc(x.oldNa?'':(h.oldSerial||''))+'"'+(x.oldNa?' disabled placeholder="N/A"':'')+' autocomplete="off" autocapitalize="characters" style="flex:1;min-width:0"><button type="button" class="btn '+(x.oldNa?'primary':'light')+'" data-act="dd-oldna" style="min-height:44px">'+(x.oldNa?'✓ ':'')+'N/A</button></span>'+(x.oldNa?'':snTg('ddi-oldSerial',h.oldSerial||''))+'</label></div>';
   var rest=['inspector','date'].map(function(k){ var f=HF.filter(function(z){ return z[0]===k; })[0]; return f?'<label class="fld">'+esc(f[1])+'<input data-h="'+k+'" type="'+(f[2]||'text')+'" value="'+esc(h[k]||'')+'" autocomplete="off"></label>':''; }).join('');
   var dates='<h3 style="margin:14px 0 6px">Dates &amp; location</h3><div class="grid">'+
     '<label class="fld">Date truck received at TSC<input type="date" data-dd="rcvd" value="'+esc(x.rcvd)+'"></label>'+
@@ -15016,10 +15039,10 @@ function ddHTML(){ var rec=S.rec, h=rec.header, x=DD(), ms=ddMissing(rec), nSer=
     '<label class="fld">Delivery date<span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap"><input type="date" data-dd="deliv" value="'+esc(x.deliv)+'"'+(x.delivTbd?' disabled':'')+' style="flex:1;min-width:0"><button type="button" class="btn '+(x.delivTbd?'primary':'light')+'" data-act="dd-tbd" style="min-height:44px">'+(x.delivTbd?'✓ ':'')+'TBD</button></span></label>'+
     '<label class="fld">Location<input data-dd="loc" value="'+esc(x.loc)+'" autocomplete="off"></label></div>';
   var cc=ddCarryCount(rec), ccB=(cc&&cc.n)?'<div class="warn" style="margin:8px 0;padding:10px;background:#fff3cd;border-left:5px solid #e0a800"><b>Confirm the serial numbers and revisions that came from the QR code.</b> '+cc.ns+' serial number'+(cc.ns===1?'':'s')+' and '+cc.nr+' revision'+(cc.nr===1?'':'s')+' were filled in for you. Check each against the truck and take a photo of it'+(cc.left?' - <b>'+cc.left+' still need'+(cc.left===1?'s':'')+' a photo</b>.':'. <b>All confirmed with photos.</b>')+'</div>':'';
-  var sers='<div class="card" style="margin:14px 0 0;border:2px solid #1d3b6a"><h3 style="margin:0 0 2px">Serial number details'+(nSer?' <span class="tag" style="background:#c8202a">'+nSer+' missing</span>':'')+'</h3><p class="muted" style="margin:0 0 8px">Record each serial number with a photo of its plate, or tap N/A if the device is not on this truck. You can keep going if something is missing – it shows in red on the report.</p>'+ccB+
-    ddSerRow('vin','Truck VIN',{noNa:true})+ddPlateRow()+ddSerRow('kilo','Kilo #',{noNa:true})+DD_DEVS.map(function(d,i){ return ddSerRow(d[0],(i+1)+'. '+d[1]+' serial number'+(d[3]?' \u00b7 '+d[3]:''),{loc:d[2]})+(d[0]==='serverSerial'?ddWinRow():''); }).join('')+'</div>';
+  var sers='<div class="card" style="margin:14px 0 0;border:2px solid #1d3b6a"><h3 style="margin:0 0 2px">Serial number details'+(nSer?' <span class="tag" style="background:#b58900">'+nSer+' missing</span>':'')+'</h3><p class="muted" style="margin:0 0 8px">Record each serial number with a photo of its plate, or tap N/A if the device is not on this truck. You can keep going if something is missing – it is highlighted in yellow on the report, and so is anything marked N/A.</p>'+ccB+
+    ddPlateRow()+ddSerRow('kilo','Kilo #',{noNa:true})+ddSerRow('vin','Truck VIN',{noNa:true})+DD_DEVS.map(function(d,i){ return ddSerRow(d[0],(i+1)+'. '+d[1]+' serial number'+(d[3]?' \u00b7 '+d[3]:''),{loc:d[2]})+(d[0]==='serverSerial'?ddWinRow():''); }).join('')+(ddUpfit(rec)?ddGoneRow('Client',String(h.clientSerial||'').trim()):'')+'</div>';
   var nRev=ms.filter(function(m){ return m.what==='revision'||/^v\d|dash/.test(m.k); }).length;
-  var revs='<div class="card" style="margin:14px 0 0;border:2px solid #1d3b6a"><h3 style="margin:0 0 2px">Revisions'+(nRev?' <span class="tag" style="background:#c8202a">'+nRev+' missing</span>':'')+'</h3><p class="muted" style="margin:0 0 8px">Software / image revisions and the vehicle readings. Printed on the ATP report only.</p>'+
+  var revs='<div class="card" style="margin:14px 0 0;border:2px solid #1d3b6a"><h3 style="margin:0 0 2px">Revisions'+(nRev?' <span class="tag" style="background:#b58900">'+nRev+' missing</span>':'')+'</h3><p class="muted" style="margin:0 0 8px">Software / image revisions and the vehicle readings. Printed on the ATP report only.</p>'+
     DD_REV.map(ddRevRow).join('')+'<div class="ddrow'+(ddRevPhotos('v7').length||DD_REV.slice(8).every(function(f){ return x.rvna[f[0]]; })?'':' ddmiss')+'"><label class="fld">Photo(s) of the dashboard – vehicle mileage, engine hours and idle hours<span class="muted" style="font-size:13px">One set of photos covers all three readings.</span></label><div class="au-cam">'+ddCamBtn('dd:r:dash',ddRevPhotos('v7').length)+'</div>'+ddThumbs('dd:r:dash')+'</div></div>';
   return top+'<div class="grid" style="margin-top:10px">'+rest+'</div>'+dates+sers+revs; }
 function ddRefresh(){ var e=document.getElementById('ddBox'); if(!e) return; var f=document.activeElement, id=f&&f.dataset&&(f.dataset.h||f.dataset.dd), pos=f&&f.selectionStart; var y=window.scrollY; e.innerHTML=ddHTML(); window.scrollTo(0,y); if(id){ var n=e.querySelector('[data-h="'+id+'"],[data-dd="'+id+'"]'); if(n&&!n.disabled){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } } }
@@ -15032,7 +15055,7 @@ function ddOmitHTML(r,d){ if(r.spare&&!(d.text||'').trim()) return ''; var on=!!
 function ddReviewCard(rec){ var x=DD(rec), ms=ddMissing(rec), om=omitList(rec);
   return '<section class="card" id="ddCard" style="border:2px solid #1b8a3a;margin-top:12px"><h2 style="margin:0 0 6px">DD1149 base serial attachment</h2>'+
    '<p class="muted" style="margin:0 0 6px">The DD1149 page (final serial numbers and photo index) is printed at the end of the report PDF, whether or not the ATP passes. It has no pass/fail marking.</p>'+
-   (ms.length?'<p style="color:#c8202a;margin:8px 0 0"><b>'+ms.length+' serial / photo / revision item'+(ms.length===1?'':'s')+' missing</b> - these print in red on the report. <button class="linkish" data-act="dd-gotoser">Go to them</button></p>':'')+
+   (ms.length?'<p style="color:#6b4e00;margin:8px 0 0"><b>'+ms.length+' serial / photo / revision item'+(ms.length===1?'':'s')+' missing</b> - these are highlighted in yellow on the report. <button class="linkish" data-act="dd-gotoser">Go to them</button></p>':'')+
    '<div class="actions" style="margin-top:8px"><button class="btn light big" data-act="dd-sign">\u270d Signatures'+(x.flirSig||x.custSig?' \u2713':'')+'</button></div></section>'; }
 function omitList(rec){ var o=[]; buildRows(rec.tpl).forEach(function(r){ var d=itemOf(rec,r.num); if(counts(r,d)&&d.omit) o.push({r:r,d:d}); }); return o; }
 /* ---- signature dialog ---- */
@@ -15087,6 +15110,8 @@ async function ddModalAct(act,el){
 
 /* ---- PDF pieces for the ATP report ---- */
 function ddRed(d){ d.setTextColor(200,0,0); }
+function ddWarn(d){ d.setTextColor(70,45,0); }
+function ddYel(d,x,y,w,h){ d.setFillColor(255,236,153); d.rect(x,y,w,h,'F'); d.setFillColor(0); }
 function ddReportPdf(d,rec,y,ens0,cell){
   var x=DD(rec), h=rec.header, ens=function(n){ if(y+n>BOT){ d.addPage(); y=TOP; } };
   var half=function(a,b){ ens(28); cell(MX,y,CW/2,28,a[0],a[1]); cell(MX+CW/2,y,CW/2,28,b?b[0]:'',b?b[1]:''); y+=28; };
@@ -15097,7 +15122,7 @@ function ddReportPdf(d,rec,y,ens0,cell){
   var tbl=function(title,rows){ ens(60); hx(d,'setFillColor','#dbe6f6'); d.rect(MX,y,CW,15,'F'); d.setFont('helvetica','bold'); d.setFontSize(9); d.setTextColor(30); d.text(cl(title),MX+4,y+10.5); y+=15;
     rows.forEach(function(r){ ens(18); d.setDrawColor(170); d.setLineWidth(.6); d.rect(MX,y,CW,17); d.line(MX+170,y,MX+170,y+17); d.line(MX+400,y,MX+400,y+17);
       d.setFont('helvetica','normal'); d.setFontSize(8.8); d.setTextColor(0); d.text(cl(r.l),MX+4,y+11.5);
-      var f=function(txt,bad,xx){ if(bad) ddRed(d); else d.setTextColor(0); d.setFont('helvetica',bad?'bold':'normal'); d.text(wrap(d,txt,xx).slice(0,1),xx===226?MX+174:MX+404,y+11.5); };
+      var f=function(txt,bad,xx){ var hl=bad||txt==='N/A'; if(r.gone){ d.setTextColor(90); } else if(hl){ if(xx===226) ddYel(d,MX+171,y+.5,228,16); else ddYel(d,MX+401,y+.5,CW-402,16); ddWarn(d); } else d.setTextColor(0); d.setFont('helvetica',(hl&&!r.gone)?'bold':'normal'); d.text(wrap(d,txt,xx).slice(0,1),xx===226?MX+174:MX+404,y+11.5); };
       f(r.v,r.vbad,226); f(r.p,r.pbad,130); y+=17; }); };
   var srows=[]; var oldv=ddOldTxt(rec);
   srows.push({l:'Platform (new upfit) serial',v:ddSerial(rec,'newSerial')||'MISSING',vbad:!ddSerial(rec,'newSerial'),p:ddPhotos(rec,'newSerial').length?ddPhotos(rec,'newSerial').length+' photo(s)':'NO PHOTO',pbad:!ddPhotos(rec,'newSerial').length});
@@ -15105,9 +15130,10 @@ function ddReportPdf(d,rec,y,ens0,cell){
   TK_L.slice().reverse().forEach(function(t){ var k=t[0], sv=ddSerial(rec,k), n=ddPhotos(rec,k).length; srows.unshift({l:t[1],v:sv||'MISSING',vbad:!sv,p:n?n+' photo(s)':(x.tkOm[k]?'Photo omitted':'NO PHOTO'),pbad:!n&&!x.tkOm[k]}); });
   DD_DEVS.forEach(function(dv){ var k=dv[0], na=x.na[k], sv=ddSerial(rec,k), n=ddPhotos(rec,k).length, e=swFor(rec,k);
     srows.push({l:dv[1],v:na?'N/A':(sv||'MISSING')+(e&&e.nw?' (old: '+e.old+')':''),vbad:!na&&!sv,p:na?'-':(n?n+' photo(s)':'NO PHOTO'),pbad:!na&&!n}); if(k==='serverSerial'){ var wk=String(h.winKey||'').trim(); srows.push({l:'Server Windows activation key',v:wk||'MISSING',vbad:!wk,p:'-'}); } });
+  if(ddUpfit(rec)) srows.push({l:'Client',v:'Removed (upfit)'+(String(h.clientSerial||'').trim()?' (was '+String(h.clientSerial).trim()+')':''),vbad:false,p:'-',gone:true});
   tbl('Serial Numbers',srows);
   y+=8;
-  var rrows=DD_REV.map(function(f){ var k=f[0], na=x.rvna[k], v=String(x.rev[k]||'').trim(), sh=DD_SHARED[k], n=ddRevPhotos(k).length;
+  var rrows=DD_REV.filter(function(f){ return f[0]!=='v0c'||ddUpfit(rec); }).map(function(f){ var k=f[0]; if(k==='v0c'){ var cv=String(x.rev.v0c||'').trim(); return {l:f[1],v:'Removed (upfit)'+(cv?' (was '+cv+')':''),vbad:false,p:'-',gone:true}; } var na=x.rvna[k], v=String(x.rev[k]||'').trim(), sh=DD_SHARED[k], n=ddRevPhotos(k).length;
     return {l:f[1],v:na?'N/A':(v||'MISSING'),vbad:!na&&!v,p:na?'-':(sh?(n?'dashboard photo':'NO DASH PHOTO'):(n?n+' photo(s)':'NO PHOTO')),pbad:!na&&!n}; });
   tbl('Revisions',rrows);
   y+=8;
@@ -15127,8 +15153,8 @@ function ddPdf(rec,dIn){
   var dl=x.delivTbd?'TBD':fmtDate(x.deliv), at=fmtDate(x.retro), sk=fmtDate(x.skid), rc=fmtDate(x.rcvd);
   var sv=function(k){ if(k==='winKey'){ var wk=String(h.winKey||'').trim(); return {t:wk||'MISSING',bad:!wk}; } var na=x.na[k], v=ddSerial(rec,k), n=ddPhotos(rec,k).length; return na?{t:'N/A'}:{t:v?v:'MISSING',bad:!v||!n||ddShort(k,v),note:(!v?'':(ddShort(k,v)?' (too short - long-form serial needed)':!n?' (no photo)':''))}; };
   var plat=ddSerial(rec,'newSerial'), oldS=x.oldNa?'':String(h.oldSerial||'').trim();
-  var cellx=function(cx,cy,w,hh,lab,v){ d.setDrawColor(120); d.setLineWidth(.7); d.rect(cx,cy,w,hh); d.setFont('helvetica','normal'); d.setFontSize(7.5); d.setTextColor(95); d.text(cl(lab),cx+5,cy+9);
-    d.setFont('helvetica','bold'); d.setFontSize(11); if(!v||!String(v.t||'').trim()||v.bad) ddRed(d); else d.setTextColor(0); d.text(cl(((v&&v.t)||'MISSING')+((v&&v.note)||'')),cx+5,cy+23); };
+  var cellx=function(cx,cy,w,hh,lab,v){ if(!v||!String(v.t||'').trim()||v.bad||v.t==='N/A') ddYel(d,cx+.5,cy+.5,w-1,hh-1); d.setDrawColor(120); d.setLineWidth(.7); d.rect(cx,cy,w,hh); d.setFont('helvetica','normal'); d.setFontSize(7.5); d.setTextColor(95); d.text(cl(lab),cx+5,cy+9);
+    d.setFont('helvetica','bold'); d.setFontSize(11); if(!v||!String(v.t||'').trim()||v.bad) ddWarn(d); else d.setTextColor(0); d.text(cl(((v&&v.t)||'MISSING')+((v&&v.note)||'')),cx+5,cy+23); };
   var pv=plat?{t:plat,bad:!ddPhotos(rec,'newSerial').length,note:ddPhotos(rec,'newSerial').length?'':' (no photo)'}:{t:'MISSING',bad:true};
   var HW=CW/2, RH2=30;
   cellx(MX,y,CW,oldS?40:RH2,'PLATFORM',pv); if(oldS){ d.setFont('helvetica','normal'); d.setFontSize(9.5); d.setTextColor(105); d.text(cl('(old serial: '+oldS+')'),MX+5,y+35); } y+=oldS?40:RH2;
@@ -15140,11 +15166,11 @@ function ddPdf(rec,dIn){
   pair(['KILO #',{t:String(h.kilo||'').trim()||'-'}],['DHS LICENSE PLATE #',{t:String(h.plate||'').trim()||'-'}]);
   y+=16;
   var rows=[];
-  [['serverSerial','Server Serial Number'],['winKey','Server Windows Activation Key'],['ciscoEnclSerial','Cisco Switch Serial Number'],['ciscoRtrSerial','Cisco Receiver Serial Number'],['ciscoModSerial','Cisco WiFi Module Serial Number'],['pimSerial','Cisco PIM / LTE Module Serial Number'],['starlinkSerial','Starlink Serial Number'],['radarSerial','Radar Serial Number'],['radarPtSerial','Pan Tilt Unit Serial Number'],['cameraSerial','Camera Serial Number'],['gpsSerial','Trimble GPS Serial Number'],['lcuSerial','Laptop Control Unit Serial Number'],['smuSerial','HMI/SMU Serial Number']].forEach(function(r){ rows.push([r[1],sv(r[0])]); });
+  [['serverSerial','Server Serial Number'],['winKey','Server Windows Activation Key'],['ciscoEnclSerial','Cisco Switch Serial Number'],['ciscoRtrSerial','Cisco Receiver Serial Number'],['ciscoModSerial','Cisco WiFi Module Serial Number'],['pimSerial','Cisco PIM / LTE Module Serial Number'],['starlinkSerial','Starlink Serial Number'],['radarSerial','Radar Serial Number'],['radarPtSerial','Pan Tilt Unit Serial Number'],['cameraSerial','Camera Serial Number'],['gearSerial','Gearbox Serial Number'],['gpsSerial','Trimble GPS Serial Number'],['lcuSerial','Laptop Control Unit Serial Number'],['smuSerial','HMI/SMU Serial Number']].forEach(function(r){ rows.push([r[1],sv(r[0])]); });
   var C1=250, RH=21;
   d.setFillColor(0); d.rect(MX,y,CW,RH,'F'); d.setFont('helvetica','bold'); d.setFontSize(10.5); d.setTextColor(255); d.text('CBP Component',MX+6,y+14); d.text('Serial Numbers',MX+C1+6,y+14); y+=RH;
   rows.forEach(function(r){ d.setDrawColor(120); d.setLineWidth(.7); d.rect(MX,y,CW,RH); d.line(MX+C1,y,MX+C1,y+RH); d.setFont('helvetica','bold'); d.setFontSize(10); d.setTextColor(0); d.text(cl(r[0]),MX+6,y+14);
-    var v=r[1]; d.setFont('helvetica',v.bad?'bold':'normal'); if(v.bad) ddRed(d); else d.setTextColor(0); d.text(cl(v.t+(v.note||'')),MX+C1+6,y+14); y+=RH; });
+    var v=r[1]; if(v.bad||v.t==='N/A') ddYel(d,MX+C1+1,y+.5,CW-C1-2,RH-1); d.setFont('helvetica',v.bad?'bold':'normal'); if(v.bad) ddWarn(d); else d.setTextColor(0); d.text(cl(v.t+(v.note||'')),MX+C1+6,y+14); y+=RH; });
   y+=26;
   var sg=function(lbl,nm,dt,img){ d.setFont('helvetica','bold'); d.setFontSize(12); d.setTextColor(0); d.text(lbl,MX,y+12); d.setDrawColor(0); d.setLineWidth(.8); d.line(MX+170,y+30,MX+390,y+30); if(img){ try{ d.addImage(img,'PNG',MX+175,y-8,210,40); }catch(e){} }
     d.text('Date:',MX+405,y+12); d.setFont('helvetica','normal'); d.setFontSize(11); d.text(cl(fmtDate(dt)),MX+440,y+12); d.line(MX+438,y+14,MX+540,y+14);
@@ -15158,12 +15184,12 @@ function ddPdf(rec,dIn){
   items.forEach(function(it,i){
     if(i%per===0){ d.addPage(); y=TOP; d.setFont('helvetica','bold'); d.setFontSize(14); d.setTextColor(0); d.text('Photo Index'+(i?' (cont.)':''),MX,y+10); y+=24; }
     var pos=i%per, col=pos%2, rw=Math.floor(pos/2), bx=MX+col*(BW+12), by=y+rw*(BH+8), k=it[1], na=x.na[k], v=ddSerial(rec,k), ph=ddPhotos(rec,k);
-    d.setDrawColor(150); d.setLineWidth(.8); d.rect(bx,by,BW,BH);
+    if(na||!v||!ph.length) ddYel(d,bx,by,BW,BH); d.setDrawColor(150); d.setLineWidth(.8); d.rect(bx,by,BW,BH);
     d.setFont('helvetica','bold'); d.setFontSize(9.5); d.setTextColor(0); d.text(cl(it[0]),bx+6,by+13);
     d.setFont('helvetica','normal'); d.setFontSize(9.5);
-    if(na){ d.setFontSize(26); d.setTextColor(120); d.text('N/A',bx+BW/2,by+BH/2+10,{align:'center'}); return; }
-    if(v) d.setTextColor(0); else ddRed(d); d.text(cl(v||'MISSING'),bx+6,by+26);
-    if(!ph.length){ ddRed(d); d.setFont('helvetica','bold'); d.setFontSize(14); d.text('NO PHOTO',bx+BW/2,by+BH/2+12,{align:'center'}); return; }
+    if(na){ d.setFontSize(26); d.setTextColor(70,45,0); d.text('N/A',bx+BW/2,by+BH/2+10,{align:'center'}); return; }
+    if(v) d.setTextColor(0); else ddWarn(d); d.text(cl(v||'MISSING'),bx+6,by+26);
+    if(!ph.length){ ddWarn(d); d.setFont('helvetica','bold'); d.setFontSize(14); d.text('NO PHOTO',bx+BW/2,by+BH/2+12,{align:'center'}); return; }
     var show=ph.slice(0,4), cols=show.length===1?1:2, rws=show.length<=2?1:2, pw=(BW-12-(cols-1)*6)/cols, phh=(BH-48-(rws-1)*4)/rws;
     show.forEach(function(p,j){ var px=bx+6+(j%cols)*(pw+6), py=by+34+Math.floor(j/cols)*(phh+4); d.setDrawColor(200); d.rect(px,py,pw,phh);
       try{ var pr=d.getImageProperties(p.data), kk=Math.min((pw-2)/pr.width,(phh-2)/pr.height), w=pr.width*kk, hh=pr.height*kk; d.addImage(p.data,'JPEG',px+(pw-w)/2,py+(phh-hh)/2,w,hh); }catch(e){} });
@@ -15592,7 +15618,7 @@ window.addEventListener('beforeunload', function(e){ if(S.view==='admin' && S.dr
 })();
 
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='a781a980ba';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='80190a5aea';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
@@ -15605,7 +15631,7 @@ fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r
 window.addEventListener('load',function(){setTimeout(chk,1500);});
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')chk();});
 window.addEventListener('online',chk);
-})();</script><script>(function(){var S='d4d154';window.__SUITE=S;var last='',lt=0;
+})();</script><script>(function(){var S='370e5a';window.__SUITE=S;var last='',lt=0;
 function warn(t){if(!document.body||document.getElementById('qrVerWarn'))return;var d=document.createElement('div');d.id='qrVerWarn';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:64px;z-index:2147483001;background:#8a4b00;color:#fff;font:600 15px/1.35 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">'+t+'</span><button id="qrVerX" style="background:#fff;color:#8a4b00;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">OK</button>';

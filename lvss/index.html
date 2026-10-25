@@ -12969,16 +12969,16 @@ const fmtD=s=>{if(!s)return'';const m=/^(\d{4})-(\d\d)-(\d\d)/.exec(s);return m?
 /* ---------- record helpers ---------- */
 const DEVS=(EMBED.devices||[]);
 const GL_L='control enclosure, driver side of the platform bed',GL_R='installed in the Cisco receiver, passenger side';
-const GMASTER={LVSS:[['Server',GL_L],['Radar','rear of skid'],['Pan/Tilt','rear of skid'],['Camera','middle of skid'],['Trimble GPS',GL_L],['Gear box','front of skid'],['Laptop Control Unit',''],['Client','']],
-EMSCL:[['Server','network enclosure, driver side'],['Cisco Switch','network enclosure, driver side'],['Starlink','cab rooftop'],['Gear box','front of skid'],['Radar','rear of skid'],['Pan/Tilt','rear of skid'],['Camera','middle of skid'],['Trimble GPS',''],['Cisco Receiver','network enclosure, passenger side'],['Cisco WiFi Module',GL_R,'4 TNC connectors'],['Cisco PIM / LTE Module',GL_R,'3 TNC connectors'],['Laptop Control Unit',''],['Client','']]};
+const GMASTER={LVSS:[['Server',GL_L],['Trimble GPS',GL_L],['Radar','rear of skid'],['Pan/Tilt','rear of skid'],['Camera','middle of skid'],['Gear box','front of skid'],['Laptop Control Unit',''],['HMI/SMU',''],['Client','']],
+EMSCL:[['Starlink','cab rooftop'],['Server','network enclosure, driver side'],['Cisco Switch','network enclosure, driver side'],['Trimble GPS','control enclosure'],['Radar','rear of skid'],['Pan/Tilt','rear of skid'],['Camera','middle of skid'],['Gear box','front of skid'],['Cisco Receiver','network enclosure, passenger side'],['Cisco WiFi Module',GL_R,'4 TNC connectors'],['Cisco PIM / LTE Module',GL_R,'3 TNC connectors'],['Laptop Control Unit',''],['HMI/SMU','']]};
 const GEM=['cisco switch','starlink','cisco receiver','cisco wifi module','cisco pim / lte module'];
-const GALIAS={'pan tilt':'Pan/Tilt','radar pan tilt':'Pan/Tilt','pan-tilt':'Pan/Tilt','trimble':'Trimble GPS','lcu':'Laptop Control Unit','cisco switch (driver side)':'Cisco Switch','starlink antenna':'Starlink','lte module':'Cisco PIM / LTE Module','pim module':'Cisco PIM / LTE Module','wifi module':'Cisco WiFi Module'};
+const GALIAS={'pan tilt':'Pan/Tilt','radar pan tilt':'Pan/Tilt','pan-tilt':'Pan/Tilt','trimble':'Trimble GPS','lcu':'Laptop Control Unit','cisco switch (driver side)':'Cisco Switch','starlink antenna':'Starlink','lte module':'Cisco PIM / LTE Module','pim module':'Cisco PIM / LTE Module','wifi module':'Cisco WiFi Module','hmi':'HMI/SMU','smu':'HMI/SMU','system management unit':'HMI/SMU','gearbox':'Gear box'};
 const gNorm=t=>{const k=String(t||'').trim().toLowerCase();return GALIAS[k]||String(t||'').trim();};
 const gKey=t=>gNorm(t).toLowerCase();
 const gList=pt=>GMASTER[isEm(pt)?'EMSCL':'LVSS'];
 const gInfo=(r,g)=>{if(!g||g.custom)return null;const L=gList(r.hdr&&r.hdr.ptype),i=L.findIndex(x=>x[0].toLowerCase()===gKey(g.t));return i<0?null:{n:i+1,loc:L[i][1],note:L[i][2]||''};};
 const gearSort=(g,pt)=>{const L=gList(pt),lcu=L.findIndex(x=>x[0]==='Laptop Control Unit'),idx=x=>{if(x.tk)return -10+TKD.findIndex(z=>z[0]===x.tk);if(x.custom)return lcu-.5;const i=L.findIndex(y=>y[0].toLowerCase()===gKey(x.t));return i<0?lcu-.5:i;};return g.map((x,i)=>[x,i]).sort((a,b)=>(idx(a[0])-idx(b[0]))||(a[1]-b[1])).map(p=>p[0]);};
-const TKD=[['vin','Truck VIN'],['plate','License plate #'],['kilo','Kilo #']];
+const TKD=[['plate','License plate #'],['kilo','Kilo #'],['vin','Truck VIN']];
 const mkTruck=()=>TKD.map(x=>({id:'tk'+x[0],t:x[1],tk:x[0],v:'',s:'',ph:[],na:false}));
 function ensureTruck(r){r.gear=r.gear||[];TKD.forEach(x=>{if(!r.gear.some(e=>e.tk===x[0]))r.gear.push(mkTruck().find(e=>e.tk===x[0]));});r.gear.forEach(g=>{if(g.tk&&!g.v&&r.hdr&&r.hdr[g.tk])g.v=r.hdr[g.tk];});r.gear=TKD.map(x=>r.gear.find(e=>e.tk===x[0])).concat(r.gear.filter(e=>!e.tk));}
 const tv=(r,k)=>String((((r&&r.gear)||[]).find(g=>g.tk===k)||{}).v||(r&&r.hdr&&r.hdr[k])||'').trim();
@@ -13041,8 +13041,8 @@ const fails=rec=>flat(rec).filter(x=>(rec.items[x.id]||{}).st==='fail');
 const lvRank=l=>l?LVK[l].r:9;
 function punch(rec){return fails(rec).sort((a,b)=>lvRank((rec.items[a.id]||{}).lvl)-lvRank((rec.items[b.id]||{}).lvl)||0);}
 function stats(rec){const all=flat(rec);let blk=0,p=0,f=0,na=0,bl=0,dno=0,open=0,nolv=0,nowar=0,quote=0,nwun=0,undis=0;
- all.forEach(x=>{const d=rec.items[x.id]||{};if(d.st==='pass')p++;else if(d.st==='fail'){f++;if(d.lvl==='dno')dno++;if(!d.rep)open++;if(!d.lvl&&!(d.rep||d.adv||d.courtesy||d.tbd))nolv++;if(!d.war&&!(d.rep||d.adv||d.courtesy||d.tbd))nowar++;if(!(d.rep||d.adv||d.courtesy||d.tbd))undis++;if(d.war==='nw'&&!d.courtesy){quote++;if(!d.rep&&!d.adv)nwun++}}else if(d.st==='blk')blk++;else if(d.st==='na')na++;else if(!x.extra||x.sec.kind==='rep')bl++;});
- return {blk,total:all.filter(x=>!x.extra).length,p,f,na,bl,dno,open,nolv,nowar,quote,nwun,undis,openDno:all.filter(x=>{const d=rec.items[x.id]||{};return d.st==='fail'&&d.lvl==='dno'&&!d.rep}).length};}
+ all.forEach(x=>{const d=rec.items[x.id]||{};if(d.st==='pass')p++;else if(d.st==='fail'){f++;if(d.lvl==='dno')dno++;if(!d.rep&&!d.na)open++;if(!d.lvl&&!(d.rep||d.adv||d.courtesy||d.tbd||d.na))nolv++;if(!d.war&&!(d.rep||d.adv||d.courtesy||d.tbd||d.na))nowar++;if(!(d.rep||d.adv||d.courtesy||d.tbd||d.na))undis++;if(d.war==='nw'&&!d.courtesy){quote++;if(!d.rep&&!d.adv)nwun++}}else if(d.st==='blk')blk++;else if(d.st==='na')na++;else if(!x.extra||x.sec.kind==='rep')bl++;});
+ return {blk,total:all.filter(x=>!x.extra).length,p,f,na,bl,dno,open,nolv,nowar,quote,nwun,undis,openDno:all.filter(x=>{const d=rec.items[x.id]||{};return d.st==='fail'&&d.lvl==='dno'&&!d.rep&&!d.na}).length};}
 const title=rec=>rec.hdr.sn||'Untitled';
 const LLr=(r,s)=>(r&&r.hdr&&isEm(r.hdr.ptype))?String(s).replace(/\bLVSS\b/g,platLabel(r.hdr.ptype)):s;
 const LL=s=>LLr(typeof S!=='undefined'?S.rec:null,s);
@@ -13326,8 +13326,8 @@ function blkCard(x,inl){const r=S.rec,d=r.items[x.id],by=(d.by||[]).map(id=>({id
  <div class="row" style="margin-top:8px"><button data-act="pblk" data-id="${x.id}" style="flex:1;border-color:#b58900;color:#7a5c00;font-weight:700">✎ Change blocker</button></div><div class="row" style="margin-top:8px"><button data-act="blkpass" data-id="${x.id}" style="flex:1;border-color:#1b8a3a;color:#1b8a3a;font-weight:700">✓ Retested – it passes</button><button data-act="blkfail" data-id="${x.id}" style="flex:1;border-color:#c62828;color:#c62828;font-weight:700">✗ Retested – it fails</button></div><p class="muted" style="margin:6px 0 0;font-size:13px">Retest it on the unit once the blocker is fixed, then choose the result. A failed retest moves it to the punch list for a concern level and coverage.</p></div>`;}
 function finalCardHtml(){const r=S.rec,st=stats(r),P0=punch(r),kr=x=>x.sec.kind==='rep'?0:x.sec.kind==='new'?1:2,P=[...P0].sort((a,b)=>kr(a)-kr(b));
  const noted=flat(r).filter(x=>{const q=r.items[x.id]||{};return q.st!=='fail'&&q.st!=='blk'&&(q.note||'').trim()});
- const stt=x=>{const q=r.items[x.id];return (q.courtesy?'Courtesy repair performed':q.rep?'Repaired':q.war==='nw'?'Open – to be quoted':'Open')+(q.adv?' · Advised':'')+(q.tbd?' · TBD':'')};
- const l=P.map(x=>{const q=r.items[x.id];const miss=!dispo(q);return `<div class="row" style="padding:6px 0;border-bottom:1px solid var(--line);${miss?'background:#fff3cd;border-left:4px solid #e0a800;padding-left:6px':''}"><b>#${x.label}</b>${lvlChip(q.lvl,q.rep)}<span style="flex:1;min-width:180px">${esc(x.t)}${q.note?`<br><span class="muted">${esc(q.note)}</span>`:''}</span><span class="tag">${miss?'Select Repaired, Advised or TBD':stt(x)}</span><button class="${q.adv?'pri':''}" data-act="adv" data-id="${x.id}" data-fin="1" style="min-height:38px;padding:4px 12px">${q.adv?'✓ ':''}Advised</button><button class="${q.rep?'pri':''}" data-act="rep" data-id="${x.id}" data-fin="1" style="min-height:38px;padding:4px 12px">${q.rep?'✓ ':''}Repaired</button><button class="${q.tbd?'pri':''}" data-act="tbd" data-id="${x.id}" data-fin="1" style="min-height:38px;padding:4px 12px">${q.tbd?'✓ ':''}TBD</button></div>`}).join('')
+ const stt=x=>{const q=r.items[x.id];return (q.na?'N/A':q.courtesy?'Courtesy repair performed':q.rep?'Repaired':q.war==='nw'?'Open – to be quoted':'Open')+(q.adv?' · Advised':'')+(q.tbd?' · TBD':'')};
+ const l=P.map(x=>{const q=r.items[x.id];const miss=!dispo(q);return `<div class="row" style="padding:6px 0;border-bottom:1px solid var(--line);${miss?'background:#fff3cd;border-left:4px solid #e0a800;padding-left:6px':''}"><b>#${x.label}</b>${lvlChip(q.lvl,q.rep)}<span style="flex:1;min-width:180px">${esc(x.t)}${q.note?`<br><span class="muted">${esc(q.note)}</span>`:''}</span><span class="tag">${miss?'Select Repaired, Advised or TBD':stt(x)}</span><button class="${q.adv?'pri':''}" data-act="adv" data-id="${x.id}" data-fin="1" style="min-height:38px;padding:4px 12px">${q.adv?'✓ ':''}Advised</button><button class="${q.rep?'pri':''}" data-act="rep" data-id="${x.id}" data-fin="1" style="min-height:38px;padding:4px 12px">${q.rep?'✓ ':''}Repaired</button><button class="${q.tbd?'pri':''}" data-act="tbd" data-id="${x.id}" data-fin="1" style="min-height:38px;padding:4px 12px">${q.tbd?'✓ ':''}TBD</button>${q.fromIntake?`<button class="${q.na?'pri':''}" data-act="na" data-id="${x.id}" data-fin="1" style="min-height:38px;padding:4px 12px">${q.na?'✓ ':''}N/A</button>`:''}</div>`}).join('')
   +noted.map(x=>`<div class="row" style="padding:6px 0;border-bottom:1px solid var(--line)"><b>#${x.label}</b><span class="tag">Note</span><span style="flex:1;min-width:180px">${esc(x.t)}<br><span class="muted">${esc(r.items[x.id].note)}</span></span></div>`).join('');
  return `<div class="card ${S.need==='final'?'target':''}" id="finalQ" style="border:2px solid var(--blue);margin-top:14px">${S.need==='final'?`<div class="garrow">${GARW}<span>${st.undis?'Mark each highlighted item Repaired, Advised or TBD':st.bl?'Answer the blank items above':'Answer this to continue'}</span></div>`:''}<h2>Final question: did the ${PLN(r)} pass the post-repair check?</h2><p class="muted">Review the failed and noted items below with the customer and mark each one <b>Advised</b> or <b>Repaired</b> as appropriate, then decide. Your answer is the tech's call – it isn't set automatically.</p>
  ${st.undis?`<div class="err"><b>${st.undis} failed item${st.undis>1?'s need':' needs'} Repaired, Advised or TBD.</b> Review with the customer and select one (or both) for each highlighted item.</div>`:''}${st.openDno?`<div class="err"><b>${st.openDno} Do Not Operate item${st.openDno>1?'s are':' is'} still open.</b></div>`:''}${st.bl?`<div class="err"><b>${st.bl} checklist item${st.bl>1?'s are':' is'} still blank.</b> Answer ${st.bl>1?'them':'it'} below (Pass, Fail, N/A or Could not test).</div>`:''}${st.blk?`<div class="warn"><b>${st.blk} item${st.blk>1?'s are':' is'} waiting below to be tested.</b> ${st.blk>1?'They are':'It is'} blocked by other issues. This won't stop the report – it can still be marked PASSED or FAILED, and ${st.blk>1?'they print':'it prints'} as Not tested / Pending retest. <button data-act="gotoid" data-t="finInl" style="min-height:36px;padding:4px 12px">↓ Show me</button></div>`:''}
@@ -13400,7 +13400,7 @@ function emailText(r){const all=flat(r);
   if(q.st==='blk')act=blkTxt(r,q)+(q.pend?'':' Retest required once the blocking issue is resolved.');
   else if(q.st!=='fail')act='Repaired - verified resolved during the post-repair inspection.';
   else{cov=q.war==='w'?'Warranty':q.war==='nw'?(q.courtesy?'Non-warranty (courtesy)':'Non-warranty'):'Not set';
-   if(q.rep)act=(q.courtesy?'Courtesy repair performed':'Repaired')+(one(q.res)?': '+e(one(q.res)):'.');
+   if(q.na&&!q.rep)act='N/A - not applicable to this unit.';else if(q.rep)act=(q.courtesy?'Courtesy repair performed':'Repaired')+(one(q.res)?': '+e(one(q.res)):'.');
    else if(q.war==='nw')act='Repair to be quoted'+(one(q.quote)?': '+e(one(q.quote)):'.');
    else act='Repair pending'+(one(q.res)?': '+e(one(q.res)):'.');
    parts=(q.parts||[]).filter(p=>p.pn||p.desc).map(p=>(p.pn||'')+(p.desc?' ('+p.desc+')':'')+(p.qty?' x'+p.qty:'')).join('; ');
@@ -13695,7 +13695,7 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
    if(nl.length){d.setFont('helvetica','italic');d.setFontSize(8);d.setTextColor(90);d.text(nl,MX+38,yy);}
    d.setFont('helvetica','bold');d.setFontSize(9);
    if(q.st==='pass'){hx(d,'setTextColor','#1b8a3a');d.text(isIss(sec)?'RESOLVED':'PASS',MX+387,y+11,{align:'center'});}
-   else if(q.st==='fail'){hx(d,'setTextColor',q.rep?'#e7a3a3':'#c62828');d.setFontSize(isIss(sec)?7.5:9);d.text(isIss(sec)?'NOT RESOLVED':'FAIL',MX+387,y+11,{align:'center'});d.setFontSize(9);if(q.rep){ckMark(d,MX+387,y+7,.34,2.2);hx(d,'setTextColor','#1b8a3a');d.setFontSize(7);d.text('REPAIRED',MX+387,y+24,{align:'center'});d.setFontSize(9);}if(q.lvl)levelChip(d,MX+422,y+2,110,q.lvl,q.rep);else{d.setFontSize(7.5);d.text('LEVEL NOT SET',MX+477,y+11,{align:'center'});}if(q.adv){d.setFont('helvetica','bold');d.setFontSize(7);hx(d,'setTextColor','#1f5fae');d.text('ADVISED',MX+477,y+24,{align:'center'});}if(q.tbd){d.setFont('helvetica','bold');d.setFontSize(7);hx(d,'setTextColor','#7a5c00');d.text('TBD',MX+387,y+(q.rep?33:24),{align:'center'});}}
+   else if(q.st==='fail'){hx(d,'setTextColor',(q.rep||q.na)?'#e7a3a3':'#c62828');d.setFontSize(isIss(sec)?7.5:9);d.text(isIss(sec)?'NOT RESOLVED':'FAIL',MX+387,y+11,{align:'center'});d.setFontSize(9);if(q.rep){ckMark(d,MX+387,y+7,.34,2.2);hx(d,'setTextColor','#1b8a3a');d.setFontSize(7);d.text('REPAIRED',MX+387,y+24,{align:'center'});d.setFontSize(9);}if(q.lvl)levelChip(d,MX+422,y+2,110,q.lvl,q.rep);else{d.setFontSize(7.5);d.text('LEVEL NOT SET',MX+477,y+11,{align:'center'});}if(q.adv){d.setFont('helvetica','bold');d.setFontSize(7);hx(d,'setTextColor','#1f5fae');d.text('ADVISED',MX+477,y+24,{align:'center'});}if(q.tbd){d.setFont('helvetica','bold');d.setFontSize(7);hx(d,'setTextColor','#7a5c00');d.text('TBD',MX+387,y+(q.rep?33:24),{align:'center'});}}
    else if(q.st==='blk'){hx(d,'setTextColor','#8a6d00');d.setFontSize(7.5);d.text('NOT TESTED',MX+387,y+11,{align:'center'});d.setFontSize(7);d.text('(blocked)',MX+387,y+21,{align:'center'});}
    else if(q.st==='na'){d.setTextColor(110);d.text('N/A',MX+387,y+11,{align:'center'});}
    else{d.setTextColor(160);d.text('-',MX+387,y+11,{align:'center'});}
@@ -13840,8 +13840,9 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'tog':{const q=itm(id);q.st=q.st==='blk'?'na':STS[(STS.indexOf(q.st)+1)%4];markDirty();rerenderRow(id);break;}
  case 'lvl':{const q=itm(id);q.lvl=q.lvl===b.dataset.l?'':b.dataset.l;markDirty();rerenderRow(id);break;}
  case 'plvl':{pinCard(id);const q=itm(id);q.lvl=q.lvl===b.dataset.l?'':b.dataset.l;markDirty();repunch();break;}
- case 'tbd':{if(!itm(id).tbd&&!await cfmDisp(id,'TBD (decide later)'))break;if($('#pl-'+id)&&!b.dataset.fin)pinCard(id);const q=itm(id);q.tbd=!q.tbd;markDirty();if($('#pl-'+id))repunch();else rerenderRow(id);break;}
- case 'adv':{if(!itm(id).adv&&!await cfmDisp(id,'Advised'))break;if($('#pl-'+id)&&!b.dataset.fin)pinCard(id);const q=itm(id);q.adv=!q.adv;markDirty();if($('#pl-'+id))repunch();else rerenderRow(id);break;}
+ case 'na':{const q=itm(id);q.na=!q.na;if(q.na){q.rep=false;q.adv=false;q.tbd=false;}markDirty();if($('#pl-'+id)&&!b.dataset.fin)repunch();else rerenderRow(id);break;}
+ case 'tbd':{if(!itm(id).tbd&&!await cfmDisp(id,'TBD (decide later)'))break;if($('#pl-'+id)&&!b.dataset.fin)pinCard(id);const q=itm(id);q.tbd=!q.tbd;if(q.tbd)q.na=false;markDirty();if($('#pl-'+id))repunch();else rerenderRow(id);break;}
+ case 'adv':{if(!itm(id).adv&&!await cfmDisp(id,'Advised'))break;if($('#pl-'+id)&&!b.dataset.fin)pinCard(id);const q=itm(id);q.adv=!q.adv;if(q.adv)q.na=false;markDirty();if($('#pl-'+id))repunch();else rerenderRow(id);break;}
  case 'addpt':{if($('#pl-'+id))pinCard(id);const q=itm(id);(q.parts=q.parts||[]).push({pn:'',desc:'',qty:''});markDirty();if($('#pl-'+id))repunch();else rerenderRow(id);break;}
  case 'rmpt':{if($('#pl-'+id))pinCard(id);const q=itm(id);(q.parts||[]).splice(+b.dataset.i,1);markDirty();if($('#pl-'+id))repunch();else rerenderRow(id);break;}
  case 'relopen':{itm(id);modal(relDlgHtml(id));break;}
@@ -13852,7 +13853,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'fyinext':{const k=fyiNextKey();if(k)fyiGo(k);else showFyiNext();break;}
  case 'fyiclose':{const e=$('#fyiNext');if(e)e.remove();break;}
  case 'rep':{const q0=itm(id);if(!q0.rep&&q0.st==='fail'){const v=await choose('Save as resolved?',labOf(id)+' will be marked Repaired / resolved. Update and save this?',[{v:'save',t:'Save – resolved',c:'pri'},{v:'cancel',t:'Cancel'}]);if(v!=='save')break;}
-  if($('#pl-'+id)&&!b.dataset.fin)pinCard(id);const q=itm(id);q.rep=!q.rep;q.repAuto=false;markDirty();if($('#pl-'+id))repunch();else rerenderRow(id);if(q.rep&&q.st==='fail')await afterResolve(id);break;}
+  if($('#pl-'+id)&&!b.dataset.fin)pinCard(id);const q=itm(id);q.rep=!q.rep;if(q.rep)q.na=false;q.repAuto=false;markDirty();if($('#pl-'+id))repunch();else rerenderRow(id);if(q.rep&&q.st==='fail')await afterResolve(id);break;}
  case 'det':S.detail[id]=!S.detail[id];rerenderRow(id);break;
  case 'cam':modal(`<h3>Add photo</h3><button class="pri" data-act="cam-take" data-id="${id}">📷 Take photo</button><button data-act="cam-lib" data-id="${id}">🖼 Choose from library</button><button data-act="mclose">Cancel</button>`);break;
  case 'savecopies':{const v=!saveOn();S.settings.saveCopies=v;setting('saveCopies',v);if(v)notice('Each photo you take with the 📷 Take photo button is also saved as a full-size JPEG in the tablet\'s Downloads folder, named with the platform number and what it shows. The tablet may ask you once to allow multiple downloads – tap Allow.',{title:'Photo copies turned on'});render();break;}
@@ -14085,7 +14086,7 @@ function finInlineHtml(){const r=S.rec;if(S.fkeepRid!==r.id){S.fkeepRid=r.id;S.f
   :`<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><b>#${x.label}</b><span style="flex:1;min-width:200px">${esc(x.t)}<br><span class="muted">${esc(secLabel(r,x.si))} · not marked yet</span></span><button data-act="fset" data-id="${x.id}" data-v="pass" style="border-color:#1b8a3a;color:#1b8a3a;font-weight:700">✓ Pass</button><button data-act="fset" data-id="${x.id}" data-v="fail" style="border-color:#c62828;color:#c62828;font-weight:700">✗ Fail</button><button data-act="fset" data-id="${x.id}" data-v="na">N/A</button></div>`}).join('')}
  ${bk.map(x=>blkCard(x,1)).join('')}</div>`;}
 /* ===== resolve flow (repaired -> retest blocked items -> check unassociated) + FYI list ===== */
-const dispo=q=>!!(q&&(q.rep||q.adv||q.courtesy||q.tbd));
+const dispo=q=>!!(q&&(q.rep||q.adv||q.courtesy||q.tbd||q.na));
 const labOf=id=>{const x=flat(S.rec).find(y=>y.id===id);return x?'#'+x.label:'#?'};
 const oneL=t=>String(t||'').replace(/\s+/g,' ').trim();
 const trunc=(t,n)=>{t=oneL(t);return t.length>n?t.slice(0,n-1)+'…':t};
@@ -14516,6 +14517,25 @@ function stdName(rma,sn,type,d){var cl2=function(t){return String(t==null?'':t).
  if(m)dt=m[2]+'-'+m[3]+'-'+m[1].slice(2);else{var n=new Date(),p2=function(x){return String(x).padStart(2,'0')};dt=p2(n.getMonth()+1)+'-'+p2(n.getDate())+'-'+String(n.getFullYear()).slice(2);}
  return r+'-'+s+'-'+type+'-'+dt;}
 
+/* ---- master walk order of the devices on a truck (Ravi, 2026-10-24) ----
+   DISPLAY / PRINT ORDER AND NAMES ONLY. Storage keys, QR positions and saved records are untouched.
+   Walk: front end (plate, kilo, VIN last), cab roof Starlink, driver-side network enclosure (Server, Cisco Switch),
+   control box (Trimble GPS), skid rear to front (Radar, Pan Tilt, Camera, Gearbox), passenger-side network enclosure
+   (Cisco Receiver with its WiFi module and PIM/LTE), then the cab (LCU, HMI/SMU, Client if applicable).
+   ADD A DEVICE = add its standard name here (and an alias line if forms spell it differently). */
+var DEV_ORDER=['starlink','server','cisco switch','trimble gps','radar','pan tilt','camera','gearbox','cisco receiver','cisco wifi module','cisco pim / lte module','laptop control unit','hmi/smu','client'];
+var DEV_ALIAS={'starlink antenna':'starlink','cisco switch (driver side)':'cisco switch','network encl. cisco serial number':'cisco switch','cisco serial number':'cisco switch','trimble':'trimble gps','trimble gps serial number':'trimble gps',
+ 'radar serial number':'radar','pan/tilt':'pan tilt','pan tilt unit':'pan tilt','radar pan tilt':'pan tilt','pan-tilt':'pan tilt','radar pan tilt serial number':'pan tilt','camera serial number':'camera',
+ 'gear box':'gearbox','gearbox serial number':'gearbox','network encl. cisco router serial number':'cisco receiver','cisco router':'cisco receiver','cisco receiver serial number':'cisco receiver',
+ 'network encl. cisco module sn':'cisco wifi module','cisco module':'cisco wifi module','wifi module':'cisco wifi module','cisco wifi module serial number':'cisco wifi module',
+ 'pim sn':'cisco pim / lte module','pim':'cisco pim / lte module','cisco pim/lte':'cisco pim / lte module','lte module':'cisco pim / lte module','pim module':'cisco pim / lte module',
+ 'lcu':'laptop control unit','laptop control unit serial number':'laptop control unit','smu':'hmi/smu','system management unit serial number':'hmi/smu','hmi':'hmi/smu','server serial number':'server','starlink serial number':'starlink'};
+function devKey(name){var k=String(name||'').trim().toLowerCase();return DEV_ALIAS[k]||k;}
+/* position in the walk order (unknown devices go just before the cab devices) */
+function devRank(name){var i=DEV_ORDER.indexOf(devKey(name));return i<0?DEV_ORDER.indexOf('laptop control unit')-.5:i;}
+/* stable sort of any list by the walk order; nameOf(item) gives the device name */
+function devSort(list,nameOf){return list.map(function(x,i){return [x,i];}).sort(function(a,b){return (devRank(nameOf(a[0]))-devRank(nameOf(b[0])))||(a[1]-b[1]);}).map(function(p){return p[0];});}
+
 /* ===== remembered entries: tap a field to pick from what was typed there before ===== */
 const HX={map:null,box:null,el:null,loading:null,max:15};
 const histIsApp=typeof setting==='function';
@@ -14637,7 +14657,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New eMSC-L serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='c384a520ec';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='401bb73d78';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
@@ -14650,7 +14670,7 @@ fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r
 window.addEventListener('load',function(){setTimeout(chk,1500);});
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')chk();});
 window.addEventListener('online',chk);
-})();</script><script>(function(){var S='d4d154';window.__SUITE=S;var last='',lt=0;
+})();</script><script>(function(){var S='370e5a';window.__SUITE=S;var last='',lt=0;
 function warn(t){if(!document.body||document.getElementById('qrVerWarn'))return;var d=document.createElement('div');d.id='qrVerWarn';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:64px;z-index:2147483001;background:#8a4b00;color:#fff;font:600 15px/1.35 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">'+t+'</span><button id="qrVerX" style="background:#fff;color:#8a4b00;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">OK</button>';

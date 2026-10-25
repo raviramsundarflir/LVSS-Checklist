@@ -125,7 +125,7 @@ a.homelnk,a.homelnk:visited,a.homelnk:hover,a.homelnk:active{background:var(--bl
 
 .ser{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
 .ser .lb{font-weight:600}
-.ser .two{display:flex;gap:6px;align-items:center}
+.dvr{padding:8px 8px 8px 10px;border-bottom:1px solid var(--line);margin:0}.dvr .dvl{margin-bottom:4px}.fmiss{background:#fff3b0;border-left:4px solid #e0a800}.fna{background:#fff3b0;border-left:4px solid #e0a800}.ser .two{display:flex;gap:6px;align-items:center}
 .ckr{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start;padding:10px 6px;border-bottom:1px solid var(--line)}
 .ckr .n{font-weight:800;color:var(--mut);padding-top:10px;text-align:right}
 .ckr .tx{font-weight:600}
@@ -12997,7 +12997,7 @@ const snFull=s=>{s=String(s||'').trim();return s?snShow(s):PFX;};
 const recName=r=>{const n=snNum(r.hdr.sn);return n?snShow(r.hdr.sn):'(no S/N)';};
 const initialsOf=n=>String(n||'').trim().split(/\s+/).filter(Boolean).map(w=>w[0].toUpperCase()).slice(0,3).join('');
 function newRec(sn,tech,kind){return {id:'f-'+uid(),created:Date.now(),updated:Date.now(),archived:false,step:0,
- hdr:{sn:snFull(sn),old:'',kind:kind||'new',date:today(),tech:tech||''},f:{},ck:{},done:{notes:'',complete:false,incPh:''},ph:[]};}
+ hdr:{sn:snFull(sn),old:'',kind:kind||'new',date:today(),tech:tech||''},f:{},ck:{},done:{notes:'',complete:false,incPh:''},ph:[],dv:{},rv:{},chg:[],carry:{}};}
 function markDirty(){S.dirty=true;if(S.rec)S.rec.updated=Date.now();paintSave();clearTimeout(S.saveTimer);S.saveTimer=setTimeout(save,700);}
 async function save(){const rec=S.rec;if(!rec||!S.dirty)return;S.dirty=false;clearTimeout(S.saveTimer);await DB.put('recs',clone(rec));const i=S.recs.findIndex(x=>x.id===rec.id);if(i<0)S.recs.push(rec);else S.recs[i]=rec;paintSave();}
 function paintSave(){const e=$('#saveInd');if(e)e.textContent=S.dirty?'Saving…':'✓ Saved';}
@@ -13122,7 +13122,44 @@ function stdName(rma,sn,type,d){var cl2=function(t){return String(t==null?'':t).
  r=r?'RMA '+r:'X';
  if(m)dt=m[2]+'-'+m[3]+'-'+m[1].slice(2);else{var n=new Date(),p2=function(x){return String(x).padStart(2,'0')};dt=p2(n.getMonth()+1)+'-'+p2(n.getDate())+'-'+String(n.getFullYear()).slice(2);}
  return r+'-'+s+'-'+type+'-'+dt;}
+
+/* ---- master walk order of the devices on a truck (Ravi, 2026-10-24) ----
+   DISPLAY / PRINT ORDER AND NAMES ONLY. Storage keys, QR positions and saved records are untouched.
+   Walk: front end (plate, kilo, VIN last), cab roof Starlink, driver-side network enclosure (Server, Cisco Switch),
+   control box (Trimble GPS), skid rear to front (Radar, Pan Tilt, Camera, Gearbox), passenger-side network enclosure
+   (Cisco Receiver with its WiFi module and PIM/LTE), then the cab (LCU, HMI/SMU, Client if applicable).
+   ADD A DEVICE = add its standard name here (and an alias line if forms spell it differently). */
+var DEV_ORDER=['starlink','server','cisco switch','trimble gps','radar','pan tilt','camera','gearbox','cisco receiver','cisco wifi module','cisco pim / lte module','laptop control unit','hmi/smu','client'];
+var DEV_ALIAS={'starlink antenna':'starlink','cisco switch (driver side)':'cisco switch','network encl. cisco serial number':'cisco switch','cisco serial number':'cisco switch','trimble':'trimble gps','trimble gps serial number':'trimble gps',
+ 'radar serial number':'radar','pan/tilt':'pan tilt','pan tilt unit':'pan tilt','radar pan tilt':'pan tilt','pan-tilt':'pan tilt','radar pan tilt serial number':'pan tilt','camera serial number':'camera',
+ 'gear box':'gearbox','gearbox serial number':'gearbox','network encl. cisco router serial number':'cisco receiver','cisco router':'cisco receiver','cisco receiver serial number':'cisco receiver',
+ 'network encl. cisco module sn':'cisco wifi module','cisco module':'cisco wifi module','wifi module':'cisco wifi module','cisco wifi module serial number':'cisco wifi module',
+ 'pim sn':'cisco pim / lte module','pim':'cisco pim / lte module','cisco pim/lte':'cisco pim / lte module','lte module':'cisco pim / lte module','pim module':'cisco pim / lte module',
+ 'lcu':'laptop control unit','laptop control unit serial number':'laptop control unit','smu':'hmi/smu','system management unit serial number':'hmi/smu','hmi':'hmi/smu','server serial number':'server','starlink serial number':'starlink'};
+function devKey(name){var k=String(name||'').trim().toLowerCase();return DEV_ALIAS[k]||k;}
+/* position in the walk order (unknown devices go just before the cab devices) */
+function devRank(name){var i=DEV_ORDER.indexOf(devKey(name));return i<0?DEV_ORDER.indexOf('laptop control unit')-.5:i;}
+/* stable sort of any list by the walk order; nameOf(item) gives the device name */
+function devSort(list,nameOf){return list.map(function(x,i){return [x,i];}).sort(function(a,b){return (devRank(nameOf(a[0]))-devRank(nameOf(b[0])))||(a[1]-b[1]);}).map(function(p){return p[0];});}
 const STEPS=['Truck details','Checklist','Complete'];
+/* new-build devices captured on the bench (Starlink is captured at ATP) and the revisions Floor Test records */
+const FDEV=devSort([['server','Server','network enclosure, driver side'],['sw','Cisco Switch','network enclosure, driver side'],['gps','Trimble GPS','control enclosure'],['radar','Radar','rear of skid'],['pt','Pan Tilt','rear of skid'],['cam','Camera','middle of skid'],['gear','Gearbox','front-middle of skid'],['rcv','Cisco Receiver','network enclosure, passenger side'],['wifi','Cisco WiFi Module','in the Cisco receiver'],['pim','Cisco PIM / LTE Module','in the Cisco receiver'],['lcu','Laptop Control Unit','center console'],['hmi','HMI/SMU','center console']],function(d){return d[1];});
+const FREV=[['img','Server Image (created date)'],['pmu','PMU Version'],['hmi','HMI Version']];
+const fx=r=>{r.dv=r.dv||{};r.rv=r.rv||{};r.chg=r.chg||[];r.carry=r.carry||{};return r;};
+const phN=(r,k)=>(r.ph||[]).filter(p=>p.k===k).length;
+function dvRow(r,pre,k,lbl,loc){fx(r);const key=pre+':'+k,box=pre==='dv'?r.dv:r.rv,c=box[k]||{},n=phN(r,key),miss=!c.na&&(!String(c.v||'').trim()||!n);
+ return `<div class="dvr${miss?' fmiss':''}${c.na?' fna':''}" id="dvr-${pre}-${k}"><div class="dvl"><b>${esc(lbl)}</b>${loc?` <span class="muted">${esc(loc)}</span>`:''}<span class="muted" style="margin-left:6px">${c.na?'N/A':(n?'✓ photo':'photo needed')}</span></div><div style="display:flex;gap:6px;align-items:center"><input style="flex:1;min-width:0" data-b="${pre}.${k}.v" value="${esc(c.na?'':(c.v||''))}" ${c.na?'disabled placeholder="N/A"':''} autocomplete="off" autocapitalize="characters"><button type="button" data-act="dvna" data-pre="${pre}" data-k="${k}" class="${c.na?'pri':''}" style="min-height:44px">${c.na?'✓ ':''}N/A</button>${c.na?'':`<button type="button" class="fcam" data-act="ckcam" data-k="${key}" title="Photo of ${esc(lbl)}" style="min-height:44px;flex:0 0 56px">📷${n?' '+n:''}</button>`}</div>${c.na?'':phStrip(r,key)}</div>`;}
+function refreshDv(key){const r=S.rec;if(!r)return;const m=/^(dv|rv):(.+)$/.exec(key);if(!m)return;const el=document.getElementById('dvr-'+m[1]+'-'+m[2]);const L=m[1]==='dv'?FDEV.find(x=>x[0]===m[2]):FREV.find(x=>x[0]===m[2]);if(!L)return;if(el)el.outerHTML=dvRow(r,m[1],m[2],L[1],m[1]==='dv'?L[2]:'');refreshCore();}
+function coreMissing(r){fx(r);const m=[];if(!snNum(r.hdr.sn))m.push('Platform serial number');
+ [['plate','License plate #'],['kilo','Kilo #'],['vin','Truck VIN']].forEach(t=>{if(!String(r.hdr[t[0]]||'').trim())m.push(t[1]);});
+ if(r.hdr.kind!=='up')FDEV.forEach(d=>{const c=r.dv[d[0]]||{};if(c.na)return;if(!String(c.v||'').trim())m.push(d[1]+' serial number');else if(!phN(r,'dv:'+d[0]))m.push(d[1]+' photo');});
+ FREV.forEach(d=>{const c=r.rv[d[0]]||{};if(c.na)return;if(!String(c.v||'').trim())m.push(d[1]);else if(!phN(r,'rv:'+d[0]))m.push(d[1]+' photo');});
+ return m;}
+function coreHtml(r){const m=coreMissing(r);return m.length?`<div class="fmiss" style="padding:8px 10px;border-radius:8px"><b>${m.length} core item${m.length===1?'':'s'} missing</b> <span class="muted">– you can still finish. Missing and N/A items are highlighted in yellow on the report.</span></div>`:'';}
+function refreshCore(){const e=document.getElementById('coreBox');if(e&&S.rec)e.innerHTML=coreHtml(S.rec);}
+function devCard(r){fx(r);if(r.hdr.kind==='up')return `<div class="card"><h2>Devices</h2><p class="muted">Upfit: the device serial numbers were captured at Intake, so they are not asked again here. If you find one that is wrong, tell the Intake/ATP owner; the form carries only the skid serials below.</p></div>`;
+ return `<div class="card"><h2>Device serial numbers</h2><p class="muted">New build: enter each serial number and take a photo, or tap N/A. You can move on without them – anything missing is highlighted yellow on the report. Starlink is captured at ATP.</p>${FDEV.map(d=>dvRow(r,'dv',d[0],d[1],d[2])).join('')}</div>`;}
+function revCard(r){fx(r);return `<div class="card"><h2>Revisions</h2><p class="muted">Record each version after any re-image or flash, with a photo.</p>${FREV.map(d=>dvRow(r,'rv',d[0],d[1],'')).join('')}</div>`;}
 const bar=(sub,right)=>`<div class="top"><div class="bar"><img src="${LOGO2}" alt="Teledyne FLIR"><div class="brand">${esc(TPL.title)}<small>${esc(sub||TPL.subtitle)}</small></div>${right||''}</div></div>`;
 function homeHtml(){const act=S.recs.filter(r=>!r.archived);
  const row=r=>{const c=ckCount(r),st=r.done.complete?'Complete - '+overall(r):`In progress – ${STEPS[r.step||0]} · ${c.done}/${c.total}`;
@@ -13135,9 +13172,9 @@ function stepDone(r,i){if(i===0)return !!snNum(r.hdr.sn)&&(r.hdr.kind!=='up'||!!
 function serHtml(r){const up=r.hdr.kind==='up';
  return `<div class="card"><h2>Truck details</h2>
  <label class="f">What is this?</label><div class="seg2"><button data-act="kind" data-v="new" class="${up?'':'on'}">New build</button><button data-act="kind" data-v="up" class="${up?'on':''}">Upfit</button></div>
- <label class="f">Platform serial number (required)</label>${snTg('n-sn',r.hdr.sn)}<input id="n-sn" data-snin="1" data-b="hdr.sn" data-nohist value="${esc(r.hdr.sn)}" autocomplete="off" autocapitalize="off" inputmode="text">
- ${up?`<label class="f">Old serial number (required for an upfit)</label>${snTg('n-old',r.hdr.old)}<input id="n-old" data-snin="1" data-b="hdr.old" value="${esc(r.hdr.old)}" placeholder="Serial number of the old unit" autocomplete="off">`:''}
- ${tkIdHtml(r)}<div class="grid"><div><label class="f">Completed by</label><input id="n-te" data-b="hdr.tech" value="${esc(r.hdr.tech)}" placeholder="Technician name" autocomplete="off"></div><div><label class="f">Date</label><input type="date" data-b="hdr.date" value="${esc(r.hdr.date)}"></div></div>${techChips()}</div>`;}
+ <label class="f">Platform serial number (required)</label><input id="n-sn" data-snin="1" data-b="hdr.sn" data-nohist value="${esc(r.hdr.sn)}" autocomplete="off" autocapitalize="off" inputmode="text">${snTg('n-sn',r.hdr.sn)}
+ ${up?`<label class="f">Old serial number (required for an upfit)</label><input id="n-old" data-snin="1" data-b="hdr.old" value="${esc(r.hdr.old)}" placeholder="Serial number of the old unit" autocomplete="off">${snTg('n-old',r.hdr.old)}`:''}
+ ${tkIdHtml(r)}<div class="grid"><div><label class="f">Completed by</label><input id="n-te" data-b="hdr.tech" value="${esc(r.hdr.tech)}" placeholder="Technician name" autocomplete="off"></div><div><label class="f">Date</label><input type="date" data-b="hdr.date" value="${esc(r.hdr.date)}"></div></div>${techChips()}</div><div id="coreBox" style="margin-bottom:10px">${coreHtml(r)}</div>${devCard(r)}${revCard(r)}`;}
 const phCount=(r,k)=>(r.ph||[]).filter(p=>p.k===k).length;
 function ckRow(r,i){const c=ckOf(r,i.k),s=c.s||'',n=phCount(r,i.k);
  const cam=`<button class="fcam" data-act="ckcam" data-k="${i.k}" title="Add a picture to this line">📷${n?' '+n:''}</button>`;
@@ -13149,9 +13186,9 @@ function ckRow(r,i){const c=ckOf(r,i.k),s=c.s||'',n=phCount(r,i.k);
 function progHtml(r){const c=ckCount(r),p=Math.round(c.done/c.total*100);return `<div><b>${c.done} of ${c.total}</b> answered${c.fail?` · <span class="res f">${c.fail} failed</span>`:''}${c.na?` · ${c.na} N/A`:''}<div class="prog"><i style="width:${p}%"></i></div></div>`;}
 function ckHtml(r){return `<div class="card"><h2>Verify wiring and comms for all subcomponents</h2><p class="muted">Mark each line Pass, Fail or N/A. On a Fail, describe the failure and the repair in the box that opens, then say whether the retest passed.</p><div id="prog" style="margin-top:10px">${progHtml(r)}</div></div>
  <div class="card" style="padding:4px 10px">${TPL.items.map(i=>ckRow(r,i)).join('')}</div>`;}
-function updCk(k){const r=S.rec,i=TPL.items.find(x=>x.k===k),el=document.getElementById('ck-'+k);if(el&&i)el.outerHTML=ckRow(r,i);const p=$('#prog');if(p)p.innerHTML=progHtml(r);}
+function updCk(k){if(/^(dv|rv):/.test(k)){refreshDv(k);return;}const r=S.rec,i=TPL.items.find(x=>x.k===k),el=document.getElementById('ck-'+k);if(el&&i)el.outerHTML=ckRow(r,i);const p=$('#prog');if(p)p.innerHTML=progHtml(r);}
 function sumHtml(r){const c=ckCount(r),o=overall(r);
- return `<table class="t"><tr><th>Item</th><th>Status</th></tr><tr><td>S/N</td><td>${esc(recName(r))} (${r.hdr.kind==='up'?'upfit, old S/N '+esc(r.hdr.old||'-'):'new build'})</td></tr><tr><td>Checklist</td><td>${c.done} of ${c.total} answered - ${c.pass} pass, ${c.fail} fail, ${c.na} N/A${c.left?` <b style="color:var(--fail)">- ${c.left} left</b>`:''}</td></tr><tr><td>Result</td><td><span class="res ${o==='PASS'?'p':'f'}">${o}</span>${c.fail&&o==='PASS'?' <span class="muted">(all failures repaired and retested)</span>':''}</td></tr></table>`;}
+ return `<table class="t"><tr><th>Item</th><th>Status</th></tr><tr><td>S/N</td><td>${esc(recName(r))} (${r.hdr.kind==='up'?'upfit, old S/N '+esc(r.hdr.old||'-'):'new build'})</td></tr><tr><td>Checklist</td><td>${c.done} of ${c.total} answered - ${c.pass} pass, ${c.fail} fail, ${c.na} N/A${c.left?` <b style="color:var(--fail)">- ${c.left} left</b>`:''}</td></tr><tr><td>Core data</td><td>${coreMissing(r).length?`<span style="background:#ffec99;padding:1px 6px;border-radius:4px">${coreMissing(r).length} missing</span>`:'complete'}</td></tr><tr><td>Result</td><td><span class="res ${o==='PASS'?'p':'f'}">${o}</span>${c.fail&&o==='PASS'?' <span class="muted">(all failures repaired and retested)</span>':''}</td></tr></table>`;}
 const subj=r=>'Floor Test - '+recName(r)+' - '+(r.done.partial&&overall(r)!=='FAIL'?'PARTIAL ('+ckCount(r).done+' of '+ckCount(r).total+')':overall(r));
 function doneHtml(r){const d=r.done;
  return `<div class="card"><h2>Completion</h2><div id="sumBox">${sumHtml(r)}</div><label class="f" style="margin-top:12px">Notes</label><textarea data-b="done.notes" rows="5" placeholder="Numbered notes, as on the sheet">${esc(d.notes)}</textarea>
@@ -13217,14 +13254,15 @@ function pickPhotos(cam,key){const i=document.createElement('input');i.type='fil
  i.onchange=async()=>{const fs=[...(i.files||[])];setTimeout(()=>{try{i.remove()}catch(e){}},60000);if(!fs.length||!S.rec)return;const r=S.rec;r.ph=r.ph||[];
   for(const f of fs){try{r.ph.push({id:uid(),d:await compress(f),k:key||'',cap:''});}catch(e){await notice('A picture could not be read.',{title:'Picture'});}}
   markDirty();if(key)updCk(key);else{const b=$('#phBox');if(b)b.innerHTML=photosInner(r);}};i.click();}
-const phLabel=(r,p)=>{if(!p.k)return 'General';const x=TPL.items.findIndex(i=>i.k===p.k);return x<0?'General':TPL.items[x].n+' '+TPL.items[x].t.slice(0,40);};
+const dvTag=k=>{const m=/^(dv|rv):(.+)$/.exec(k||'');if(!m)return null;const L=(m[1]==='dv'?FDEV:FREV).find(x=>x[0]===m[2]);return L?L[1]+(m[1]==='dv'?' serial':''):'General';};
+const phLabel=(r,p)=>{if(!p.k)return 'General';if(dvTag(p.k))return dvTag(p.k);const x=TPL.items.findIndex(i=>i.k===p.k);return x<0?'General':TPL.items[x].n+' '+TPL.items[x].t.slice(0,40);};
 function photosInner(r){const L=r.ph||[];
  return `<div class="row"><button data-act="phcam" style="flex:1 1 180px">📷 Take picture</button><button data-act="phlib" style="flex:1 1 180px">🖼 Choose from library</button></div>
  ${L.length?`<div class="phg">${L.map(p=>`<figure><img src="${p.d}" alt="" data-act="phview" data-id="${p.id}" style="cursor:pointer"><figcaption><b>${esc(phLabel(r,p))}</b><input data-ph="${p.id}" data-nohist value="${esc(p.cap||'')}" placeholder="Caption (optional)"><button class="dng" data-act="phdel" data-id="${p.id}" style="margin-top:4px;min-height:34px;padding:4px 10px">Remove</button></figcaption></figure>`).join('')}</div>
  <div style="margin-top:12px"><b>Include these pictures with the report?</b><div class="muted">They are never put in the PDF. If you include them, they are sent as a separate ZIP of pictures.</div><div class="row" style="margin-top:6px"><button data-act="phinc" data-v="1" class="${r.done.incPh==='1'?'pri':''}" style="flex:1 1 180px">Include (separate ZIP)</button><button data-act="phinc" data-v="0" class="${r.done.incPh==='0'?'pri':''}" style="flex:1 1 180px">Do not include</button></div></div>`:'<p class="muted" style="margin-bottom:0">No pictures yet. You can also add a picture to any checklist line with its 📷 button.</p>'}`;}
 function photosHtml(r){return `<div class="card"><h3>Pictures (optional)</h3><p class="muted">Pictures stay on this tablet and are not in the PDF.</p><div id="phBox">${photosInner(r)}</div></div>`;}
 function photoZipFile(r){const L=r.ph||[];if(!L.length)return null;const folder=fileSafe(stdName('',recName(r),'FLOOR-TEST',r.hdr.date)),cnt={},files=L.map(p=>{const b=atob(p.d.split(',')[1]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);
-  const x=TPL.items.findIndex(i=>i.k===p.k),tag=x<0?'General':TPL.items[x].n+' '+TPL.items[x].t.slice(0,40);const k=fileSafe(tag);cnt[k]=(cnt[k]||0)+1;return {name:folder+'/'+k+' '+cnt[k]+(p.cap?' - '+fileSafe(p.cap):'')+'.jpg',data:u};});
+  const x=TPL.items.findIndex(i=>i.k===p.k),tag=dvTag(p.k)||(x<0?'General':TPL.items[x].n+' '+TPL.items[x].t.slice(0,40));const k=fileSafe(tag);cnt[k]=(cnt[k]||0)+1;return {name:folder+'/'+k+' '+cnt[k]+(p.cap?' - '+fileSafe(p.cap):'')+'.jpg',data:u};});
  return {blob:zipStore(files),name:folder+'.zip',n:files.length};}
 
 /* ---- picture viewer with rotate (same steps as the other forms) ---- */
@@ -13236,18 +13274,29 @@ function phView(id,rot){const r=S.rec,p=(r.ph||[]).find(x=>x.id===id);if(!p)retu
    <p class="muted" style="margin:6px 0 4px">Rotate${S.phv.rot?' (now '+S.phv.rot+'°)':''}</p><div class="row" style="gap:4px;flex-wrap:nowrap">${B(-90,'⟲90')}${B(-45,'⟲45')}${B(-5,'⟲5')}${B(5,'⟳5')}${B(45,'⟳45')}${B(90,'⟳90')}</div>
    <div class="row" style="margin-top:8px"><button data-act="phrotreset" style="flex:1 1 90px">Reset</button><button class="pri" data-act="phrotsave" style="flex:2 1 140px">Save picture</button><button data-act="phrotx" style="flex:1 1 90px">Cancel</button></div>
    <button class="dng" data-act="phdel" data-id="${p.id}" style="margin-top:8px;width:100%">Remove this picture</button>`);};im.src=p.d;}
-function phRefresh(){const r=S.rec;if(!r)return;const bx=$('#phBox');if(bx)bx.innerHTML=photosInner(r);TPL.items.forEach(i=>{if(document.getElementById('ck-'+i.k))updCk(i.k);});}
+function phRefresh(){const r=S.rec;if(!r)return;const bx=$('#phBox');if(bx)bx.innerHTML=photosInner(r);TPL.items.forEach(i=>{if(document.getElementById('ck-'+i.k))updCk(i.k);});FDEV.forEach(d=>refreshDv('dv:'+d[0]));FREV.forEach(d=>refreshDv('rv:'+d[0]));}
 const phStrip=(r,k)=>{const L=(r.ph||[]).filter(p=>p.k===k);return L.length?`<div class="row" style="gap:6px;margin-top:6px">${L.map(p=>`<img src="${p.d}" data-act="phview" data-id="${p.id}" alt="picture" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:pointer">`).join('')}<span class="muted" style="align-self:center">tap a picture to rotate</span></div>`:'';};
 /* ---- PDF (mirrors the Floor Testing sheet) ---- */
 function footers(d,r){const n=d.getNumberOfPages();for(let i=1;i<=n;i++){d.setPage(i);creditLine(d,TPL.revision);d.setFont('helvetica','normal');d.setFontSize(7.5);d.setTextColor(120);d.text(cl(recName(r)+'  |  '+TPL.title),PW/2,770,{align:'center'});d.text('Page '+i+' of '+n,PW-MX,770,{align:'right'});}}
 const resTxt=c=>!c.s?'Not tested':c.s==='p'?'Pass':c.s==='n'?'N/A':c.s==='f'?(c.rt==='p'?'Fail - repaired, retest pass':c.rt==='f'?'FAIL - still failing':'FAIL - not retested'):'';
+function fxPdf(d,r,y){fx(r);const ens=n=>{if(y+n>BOT){d.addPage();y=TOP;}},Y=(x,yy,w,h)=>{d.setFillColor(255,236,153);d.rect(x,yy,w,h,'F');d.setFillColor(0);};
+ if(r.chg.length){ens(30);y+=6;d.setFont('helvetica','bold');d.setFontSize(9);d.setTextColor(0);d.text('Changes to carried-in data',MX,y+8);y+=12;d.setFont('helvetica','normal');d.setFontSize(8.6);
+  r.chg.forEach(c=>{const t=cl((CHG_L[c.k]||c.k)+': '+c.o+' -> '+(c.n||'(blank)')+(c.f?'  (from '+c.f+')':'')+(c.why?'  - '+c.why:''));wrap(d,t,CW-8).forEach(l=>{ens(11);d.text(l,MX+4,y+8);y+=10.5;});});y+=4;}
+ const tbl=(title,rows)=>{ens(40);y+=6;d.setFillColor(219,230,246);d.rect(MX,y,CW,15,'F');d.setFont('helvetica','bold');d.setFontSize(9);d.setTextColor(30);d.text(title,MX+4,y+10.5);y+=15;
+  rows.forEach(q=>{ens(18);d.setDrawColor(170);d.setLineWidth(.6);d.rect(MX,y,CW,17);d.line(MX+190,y,MX+190,y+17);d.line(MX+400,y,MX+400,y+17);d.setFont('helvetica','normal');d.setFontSize(8.8);d.setTextColor(0);d.text(cl(q.l),MX+4,y+11.5);
+   const f=(txt,hl,x0,w)=>{if(hl)Y(x0+1,y+.5,w-2,16);d.setTextColor(hl?70:0,hl?45:0,0);d.setFont('helvetica',hl?'bold':'normal');d.text(cl(String(txt)).slice(0,60),x0+4,y+11.5);};
+   f(q.v,q.vh,MX+190,210);f(q.p,q.ph,MX+400,CW-400);y+=17;});};
+ const row=(pre,d0,box)=>{const c=box[d0[0]]||{},n=phN(r,pre+':'+d0[0]),v=String(c.v||'').trim();return c.na?{l:d0[1],v:'N/A',vh:true,p:'-',ph:false}:{l:d0[1],v:v||'MISSING',vh:!v,p:n?n+' photo(s)':'NO PHOTO',ph:!n};};
+ if(r.hdr.kind!=='up')tbl('Device serial numbers',FDEV.map(x=>row('dv',x,r.dv)));
+ tbl('Revisions',FREV.map(x=>row('rv',x,r.rv)));
+ return y;}
 function floorPdf(r){const d=pdfNew();let y;const ens=n=>{if(y+n>BOT){d.addPage();y=TOP;}};
  pdfHead(d,TPL.title);y=90;
  const up=r.hdr.kind==='up';
  d.setFont('helvetica','bold');d.setFontSize(10.5);d.setTextColor(0);
  const box=(a,b,x,w)=>{d.setDrawColor(150);d.setLineWidth(.6);d.rect(x,y,w,26);d.setFont('helvetica','normal');d.setFontSize(6.8);d.setTextColor(110);d.text(a,x+4,y+8);d.setFontSize(10.5);d.setTextColor(0);d.text(cl(b),x+4,y+20);};
  box('S/N',recName(r)+(isOldSn(r)?' (old S/N)':''),MX,up?170:270);if(up)box('Old S/N (upfit)',r.hdr.old||'-',MX+170,150);else box('Type','New build',MX+270,120);
- box('Date',fmtD(r.hdr.date),MX+(up?320:390),90);box('Completed by',r.hdr.tech||'-',MX+(up?410:480),up?130:60);y+=26;y=tkIdPdf(d,r,MX,CW,y+4)+4;
+ box('Date',fmtD(r.hdr.date),MX+(up?320:390),90);box('Completed by',r.hdr.tech||'-',MX+(up?410:480),up?130:60);y+=26;y=tkIdPdf(d,r,MX,CW,y+4)+4;y=fxPdf(d,r,y);
  if(!up){d.setFontSize(7);}
  y+=10;const c0=44,cw=CW-c0-110,rw=110;
  const hd=()=>{d.setFillColor(17,17,17);d.rect(MX,y,CW,15,'F');d.setFont('helvetica','bold');d.setFontSize(9);d.setTextColor(255);d.text('Item',MX+5,y+10.5);d.text('Verify wiring and comms for all subcomponents',MX+c0+5,y+10.5);d.text('Pass/Fail',MX+c0+cw+5,y+10.5);y+=15;};
@@ -13270,7 +13319,7 @@ function floorPdf(r){const d=pdfNew();let y;const ens=n=>{if(y+n>BOT){d.addPage(
 const fileOf=r=>recName(r).replace(/[^\w\-]+/g,'_');
 function floorPdfFile(r){const d=floorPdf(r);return {blob:d.output('blob'),name:stdName('',recName(r),'FLOOR-TEST',r.hdr.date)+'.pdf'};}
 /* ---- QR (pause) ---- */
-function floorPayload(r,notes){const ck={};Object.keys(r.ck||{}).forEach(k=>{const c=r.ck[k];ck[k]={s:c.s,rp:c.rep,sv:c.sev,rt:c.rt};});const o={a:'FLR',v:1,k:'P',rv:r.done.complete&&!r.done.partial?(overall(r)==='PASS'?'P':overall(r)==='FAIL'?'F':'I'):(overall(r)==='FAIL'?'F':'I'),id:r.id,u:r.updated,sn:r.hdr.sn,rma:r.hdr.rma||'',vin:r.hdr.vin,pl:r.hdr.plate,kl:r.hdr.kilo,os:isOldSn(r)?1:0,ol:r.hdr.old,kd:r.hdr.kind,d:r.hdr.date,t:r.hdr.tech,st:r.step||0,ck:ck,dn:{notes:r.done.notes,name:r.done.name,date:r.done.date}};if(notes)o.no=notes;return JSON.stringify(strip(o));}
+function floorPayload(r,notes){const ck={};Object.keys(r.ck||{}).forEach(k=>{const c=r.ck[k];ck[k]={s:c.s,rp:c.rep,sv:c.sev,rt:c.rt};});const o={a:'FLR',v:1,k:'P',rv:r.done.complete&&!r.done.partial?(overall(r)==='PASS'?'P':overall(r)==='FAIL'?'F':'I'):(overall(r)==='FAIL'?'F':'I'),id:r.id,u:r.updated,sn:r.hdr.sn,rma:r.hdr.rma||'',vin:r.hdr.vin,pl:r.hdr.plate,kl:r.hdr.kilo,os:isOldSn(r)?1:0,ol:r.hdr.old,kd:r.hdr.kind,d:r.hdr.date,t:r.hdr.tech,st:r.step||0,ck:ck,dn:{notes:r.done.notes,name:r.done.name,date:r.done.date}};fx(r);const dv={},rv={};Object.keys(r.dv).forEach(k=>{const c=r.dv[k];if(c&&(c.v||c.na))dv[k]=[c.v||'',c.na?1:0];});Object.keys(r.rv).forEach(k=>{const c=r.rv[k];if(c&&(c.v||c.na))rv[k]=[c.v||'',c.na?1:0];});if(Object.keys(dv).length)o.dv=dv;if(Object.keys(rv).length)o.rv2=rv;if(r.chg.length)o.cg=r.chg.map(c=>[c.k,c.o,c.n,c.f,c.why]);if(Object.keys(r.carry).length){o.cr=r.carry;o.cf=r.carryFrom||'';}if(notes)o.no=notes;return JSON.stringify(strip(o));}
 function sheetPdf(r,notes){const d=pdfNew();pdfHead(d,'Paused Floor Test QR Code');let y=92;d.setFont('helvetica','bold');d.setFontSize(13);d.setTextColor(0);d.text(cl(recName(r)),MX,y);y+=16;const c=ckCount(r);d.setFont('helvetica','normal');d.setFontSize(10);d.setTextColor(60);d.text(cl('Paused at: '+STEPS[r.step||0]+'   |   '+c.done+'/'+c.total+' answered   |   '+fmtD(r.hdr.date)+(r.hdr.tech?'   |   '+r.hdr.tech:'')),MX,y);y+=14;
  d.text(wrap(d,"To continue: open the Floor Test form on any tablet, tap Scan paused-test QR, and scan the code below.",CW),MX,y);y+=26;
  y=qrBigPdf(d,612,y-8,recName(r),MX);d.addImage(qrPng(floorPayload(r,notes),700),'PNG',MX+(CW-330)/2,y,330,330);y+=342;
@@ -13289,7 +13338,7 @@ async function scanDone(txt){scanStop();let o=null;try{o=JSON.parse(txt);}catch(
  if(o&&(o.a==='ATP'||o.a==='LVSS'||o.a==='CAL')){closeModal();const frm=o.a==='ATP'?'ATP inspection':o.a==='LVSS'?(o.it?'truck intake inspection':'post-repair inspection'):'calibration',sn0=snShow(o.a==='LVSS'&&o.up&&o.nsn?o.nsn:o.sn);
   if(o.rv!=='P'){await notice(o.rv==='F'?'The '+frm+(sn0?' for '+sn0:'')+' is FAILED. Its information can\u2019t be used until it passes.':o.rv==='I'?'The '+frm+(sn0?' for '+sn0:'')+' is INCOMPLETE. Its information can\u2019t be used until it is finished and passes.':'This QR code has no pass result in it. Open that report and scan the QR code from its latest version.',{title:'Not passed'});return;}
   if(!await ask('The '+frm+(sn0?' for '+sn0:'')+' passed. Start a floor test with the serial number filled in?',{title:'Start from QR code?',ok:'Start floor test'}))return;
-  const upf=o.a==='LVSS'&&o.up&&o.nsn;const r0=newRec(sn0,'',upf?'up':'');if(upf)r0.hdr.old=snShow(o.sn);r0.hdr.vin=o.vin||'';r0.hdr.plate=o.pl||'';r0.hdr.kilo=o.kl||'';r0.hdr.rma=o.rma||'';if(o.a==='LVSS'&&!upf)r0.hdr.osn=r0.hdr.sn;S.rec=r0;S.step=0;S.dirty=true;await save();S.view='rec';render();return;}
+  const upf=o.a==='LVSS'&&o.up&&o.nsn;const r0=newRec(sn0,'',upf?'up':'');if(upf)r0.hdr.old=snShow(o.sn);r0.hdr.vin=o.vin||'';r0.hdr.plate=o.pl||'';r0.hdr.kilo=o.kl||'';r0.hdr.rma=o.rma||'';if(o.a==='LVSS'&&!upf)r0.hdr.osn=r0.hdr.sn;r0.carryFrom=o.a==='ATP'?'ATP':o.a==='CAL'?'Calibration':o.it?'Intake':'Post-Repair';r0.carry={sn:r0.hdr.sn,old:r0.hdr.old,vin:r0.hdr.vin,plate:r0.hdr.plate,kilo:r0.hdr.kilo};S.rec=r0;S.step=0;S.dirty=true;await save();S.view='rec';render();return;}
  if(!(o&&o.a==='FLR'&&o.k==='P')){const m=$('#scanMsg');if(m)m.textContent='That is not a paused floor-test QR code. Try again.';if($('#scanV')&&$('#scanV').style.display!=='none')scanDlg();return;}
  closeModal();await fromQr(o);}
 async function openRec(x){S.rec=x;S.step=x.step||0;S.view='rec';render();}
@@ -13297,13 +13346,22 @@ async function fromQr(o){
  const ex=S.recs.find(x=>x.id===o.id);if(ex&&!await ask('This floor test ('+(o.sn||'')+') is already on this tablet. Replace it with the version from the QR code?',{title:'Replace?',ok:'Replace',danger:1}))return;
  const r=newRec(o.sn||'',o.t||'',o.kd);r.id=o.id||r.id;r.updated=Date.now();r.hdr.date=o.d||r.hdr.date;r.hdr.old=o.ol||'';r.hdr.vin=o.vin||'';r.hdr.plate=o.pl||'';r.hdr.kilo=o.kl||'';r.hdr.rma=o.rma||'';if(o.os)r.hdr.osn=r.hdr.sn;
  Object.keys(o.ck||{}).forEach(k=>{const c=o.ck[k];if(c&&c.s)r.ck[k]={s:c.s,rep:c.rp||'',sev:c.sv||'',rt:c.rt||''};});r.done.notes=(o.dn&&o.dn.notes)||'';if(o.dn){r.done.name=o.dn.name||'';r.done.date=o.dn.date||'';}
+ fx(r);Object.keys(o.dv||{}).forEach(k=>{r.dv[k]={v:o.dv[k][0],na:!!o.dv[k][1]};});Object.keys(o.rv2||{}).forEach(k=>{r.rv[k]={v:o.rv2[k][0],na:!!o.rv2[k][1]};});r.chg=(o.cg||[]).map(a=>({k:a[0],o:a[1],n:a[2],f:a[3],why:a[4]||''}));r.carry=o.cr||{};r.carryFrom=o.cf||'';
  S.rec=r;S.step=o.st||0;r.step=S.step;S.dirty=true;await save();S.view='rec';render();if(o.no)await notice(o.no,{title:'Hand-off notes from the previous tech'});}
 /* ---- actions ---- */
 function goStep(i){S.step=Math.max(0,Math.min(2,i));S.rec.step=S.step;markDirty();render();}
 document.addEventListener('input',e=>{const t=e.target;if(t.dataset&&t.dataset.ph&&S.rec){const p=(S.rec.ph||[]).find(x=>x.id===t.dataset.ph);if(p){p.cap=t.value;markDirty();}return;}
  if(t.dataset&&t.dataset.b&&S.rec&&S.view==='rec'){let v=t.value;
-  setp(S.rec,t.dataset.b,v);markDirty();if(/^hdr\./.test(t.dataset.b)){refreshSum();if(t.dataset.b==='hdr.sn'){const x=document.querySelector('.brand small');if(x)x.textContent=recName(S.rec);}}}});
-document.addEventListener('change',e=>{const t=e.target,r=S.rec;if(!(t.dataset&&t.dataset.b&&r))return;if(t.dataset.b==='hdr.tech')techRemember(t.value);});
+  setp(S.rec,t.dataset.b,v);markDirty();if(/^(dv|rv)\./.test(t.dataset.b))refreshCore();if(/^hdr\./.test(t.dataset.b)){refreshSum();refreshCore();if(t.dataset.b==='hdr.sn'){const x=document.querySelector('.brand small');if(x)x.textContent=recName(S.rec);}}}});
+/* neutral change notation: a value that came in from an earlier form and was then edited is listed on the report (old, new, which form); the reason is optional */
+const CHG_L={sn:'Platform serial',old:'Old serial',vin:'Truck VIN',plate:'License plate #',kilo:'Kilo #'};
+function trackChg(r,key,val){fx(r);const cv=r.carry[key];if(cv==null||cv==='')return false;val=String(val||'').trim();const i=r.chg.findIndex(x=>x.k===key);
+ if(val===String(cv).trim()){if(i>=0)r.chg.splice(i,1);return false;}
+ if(i>=0){r.chg[i].n=val;return false;}r.chg.push({k:key,o:String(cv).trim(),n:val,f:r.carryFrom||'',why:''});return true;}
+function whyDlg(key){const r=S.rec,c=r.chg.find(x=>x.k===key);if(!c)return;const B=(v,l)=>`<button type="button" data-act="chgwhy" data-key="${key}" data-v="${v}" style="width:100%;margin:4px 0;min-height:48px">${l}</button>`;
+ modal(`<h3 style="margin-top:0">${esc(CHG_L[key])} changed</h3><p>${esc(c.o)} → <b>${esc(c.n||'(blank)')}</b>${c.f?' <span class="muted">(was from '+esc(c.f)+')</span>':''}</p><p class="muted">The change is listed on the report. A reason is optional.</p>${B('Typo / correction','Typo / correction')}${B('Device failed and replaced','Device failed and replaced')}${B('Swapped between platforms','Swapped between platforms')}${B('Other','Other')}<input id="chgNote" placeholder="Note (optional)" autocomplete="off" style="margin-top:6px"><button class="pri" data-act="chgwhy" data-key="${key}" data-v="" style="width:100%;margin-top:8px;min-height:48px">Skip – no reason</button>`);}
+document.addEventListener('change',e=>{const t=e.target,r=S.rec;if(!(t.dataset&&t.dataset.b&&r))return;if(t.dataset.b==='hdr.tech')techRemember(t.value);
+ const m=/^hdr\.(sn|old|vin|plate|kilo)$/.exec(t.dataset.b);if(m){if(trackChg(r,m[1],t.value)){markDirty();whyDlg(m[1]);}else markDirty();}});
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,r=S.rec,id=b.dataset.id;
  switch(a){
  case 'home':await save();await loadAll();S.view='home';S.rec=null;render();break;
@@ -13312,6 +13370,8 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'open':{const x=S.recs.find(y=>y.id===id);if(x)await openRec(x);break;}
  case 'delrec':{const x=S.recs.find(y=>y.id===id);if(x&&await ask('Delete the floor test for '+recName(x)+' from this tablet? This cannot be undone.',{title:'Delete?',ok:'Delete',danger:1})){await DB.del('recs',id);await loadAll();render();}break;}
  case 'scan':scanDlg();break;
+ case 'dvna':{const box=b.dataset.pre==='dv'?fx(r).dv:fx(r).rv,k=b.dataset.k,c=box[k]=box[k]||{};c.na=!c.na;markDirty();refreshDv(b.dataset.pre+':'+k);break;}
+ case 'chgwhy':{const c=fx(r).chg.find(x=>x.k===b.dataset.key);if(c){const n=(($('#chgNote')||{}).value||'').trim();c.why=[b.dataset.v,n].filter(Boolean).join(' - ');markDirty();}closeModal();break;}
  case 'kind':{r.hdr.kind=b.dataset.v;markDirty();render();break;}
  case 'step':goStep(+b.dataset.i);break;
  case 'prev':goStep(S.step-1);break;
@@ -13470,7 +13530,7 @@ document.addEventListener('focusout',e=>{histCommit(e.target);setTimeout(()=>{if
 document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='cde0005920';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='770d4f63d7';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
@@ -13483,7 +13543,7 @@ fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r
 window.addEventListener('load',function(){setTimeout(chk,1500);});
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')chk();});
 window.addEventListener('online',chk);
-})();</script><script>(function(){var S='d4d154';window.__SUITE=S;var last='',lt=0;
+})();</script><script>(function(){var S='370e5a';window.__SUITE=S;var last='',lt=0;
 function warn(t){if(!document.body||document.getElementById('qrVerWarn'))return;var d=document.createElement('div');d.id='qrVerWarn';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:64px;z-index:2147483001;background:#8a4b00;color:#fff;font:600 15px/1.35 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">'+t+'</span><button id="qrVerX" style="background:#fff;color:#8a4b00;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">OK</button>';
