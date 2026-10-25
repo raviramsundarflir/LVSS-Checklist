@@ -280,6 +280,17 @@ h2{font-size:21px}
 .arw.ok{color:#177a3c}.arw.ok i{animation:none;font-size:20px;background:#1faa4a;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center}
 .arw.grn{color:#177a3c;margin:0}.arw.grn i{font-size:30px}
 
+.tally li[data-act]{cursor:pointer;text-decoration:underline}.lnk{background:none;border:0;padding:6px 4px;color:#1f4e8c;font:inherit;font-weight:700;text-decoration:underline;min-height:40px}.punch li.inl.done{border-color:#177a3c;background:#f3fbf5}.rx-bulk{margin:6px 0}.punch li .ovrb{display:block;margin:6px 0 0 auto;min-height:44px;padding:0 14px;border:2px solid #1f4e8c;border-radius:10px;background:#fff;color:#1f4e8c;font-weight:700}.blksum .row2{margin-top:6px}
+.row.st-none:not(.spare){background:#fff6c7;border-left-color:#e0a800}
+.punch li.inl .rx-chips button.chip{display:inline-block;width:auto;text-align:center;min-height:38px;padding:4px 12px;border:1px solid #b9c2d0;border-radius:18px;background:#fff}
+.punch li.inl .rx-chips button.chip.on{background:#1d3b6a;color:#fff;border-color:#1d3b6a}
+.punch li.inl .rx-chips button.chip.lv-dno.on{background:#000;color:#ff7a7a}
+.blkpanel .chipcol{display:flex;flex-direction:row;align-items:flex-start;flex-wrap:wrap;gap:6px;margin:4px 0}
+.blkpanel .chipcol button.chip,.punch li.inl .blkpanel .chipcol button.chip{display:inline-block;width:auto;min-height:38px;padding:4px 12px;border:1px solid #b9c2d0;border-radius:18px;background:#fff;font-size:13.5px;text-align:center}
+.blkpanel .chipcol button.chip.on,.punch li.inl .blkpanel .chipcol button.chip.on{background:#1d3b6a;color:#fff;border-color:#1d3b6a;font-weight:700}
+.blkpanel button.pendbtn,.punch li.inl .blkpanel button.pendbtn{display:inline-block;width:auto;min-height:38px;padding:4px 12px;border:1px solid #b9c2d0;border-radius:18px;background:#fff;font-size:13.5px;margin:6px 6px 0 0}
+.blkpanel button.pendbtn.on,.punch li.inl .blkpanel button.pendbtn.on{background:#1d3b6a;color:#fff;border-color:#1d3b6a;font-weight:700}
+
 /* ---------- Print ---------- */
 @media print{
   @page{size:letter;margin:11mm 11mm 10mm}
@@ -13517,16 +13528,16 @@ async function renderReview(){
     '<header class="bar"><button class="btn light" data-act="back">\u2039 Back to checklist</button><div class="brand"><strong>Review: S/N '+esc(h.newSerial)+'</strong><span>'+esc(h.inspector||'')+(h.date?', '+esc(fmtDate(h.date)):'')+'</span></div>'+
     '<div class="bar-actions"><button class="save-ind" id="saveInd" data-act="save"></button><button class="btn primary" data-act="complete" style="background:#177a3c;border-color:#177a3c;color:#fff">✔ Complete report</button></div></header>'+
     storageBanner()+
-    '<main><section class="kpi '+(pass?'pass':'fail')+'"><div class="stamp">KPI '+(pass?'PASS':'FAIL')+'</div><p>'+(pass?'No nonconformances found during unit inspection.':a.blocking.length+' open item'+(a.blocking.length===1?'':'s')+' (failed, not tested or not inspected). Fix them or override them below - you can still complete the report.')+'</p></section>'+
-    '<ul class="tally"><li class="t-pass"><b>'+c.pass+'</b>Pass</li><li class="t-fail"><b>'+c.fail+'</b>Fail</li><li class="t-awp"><b>'+c.awp+'</b>AWP</li><li class="t-blk"><b>'+c.blk+'</b>Not tested</li><li class="t-na"><b>'+c.na+'</b>N/A</li><li class="t-ni"><b>'+c.ni+'</b>Not inspected</li></ul>'+
+    '<main><section class="kpi '+(pass?'pass':'fail')+'"><div class="stamp">KPI '+(pass?'PASS':'FAIL')+'</div><p>'+(pass?'No nonconformances found during unit inspection.':revKpiLine(a)+' You can still complete the report.')+'</p></section>'+
+    '<ul class="tally"><li class="t-pass"><b>'+c.pass+'</b>Pass</li><li class="t-fail"'+revJmpA('FAIL',c.fail)+'><b>'+c.fail+'</b>Fail</li><li class="t-awp"'+revJmpA('AWP',c.awp)+'><b>'+c.awp+'</b>AWP</li><li class="t-blk"'+revJmpA('NOT TESTED',c.blk)+'><b>'+c.blk+'</b>Not tested</li><li class="t-na"><b>'+c.na+'</b>N/A</li><li class="t-ni"'+revJmpA('NOT INSPECTED',c.ni)+'><b>'+c.ni+'</b>Not inspected</li></ul>'+
     (pass?'':'<label class="full">If KPI fail, state reason (printed in the sign-off block)<textarea data-g="kpiReason" rows="2">'+esc(reason)+'</textarea></label>'+
       (rec.kpiReason!=null?'<button class="linkish reset-reason" data-act="reset-reason">Use automatic wording</button>':''))+
-    rxReviewCard(rec)+'<h2>Punch List Items - SN: '+esc(h.newSerial||'')+'</h2>'+
-    (a.issues.length ? '<ol class="punch">'+a.issues.map(function(it){
+    '<h2>Punch List Items - SN: '+esc(h.newSerial||'')+'</h2>'+rxReviewCard(rec)+
+    (revIssues(a).length ? '<ol class="punch">'+revIssues(a).map(function(it){
       var n=S.photos.filter(function(p){ return p.num===it.r.num; }).length;
       var desc = issueText(rec,it);
       var inl=revInline(it); if(inl) return inl;
-      return '<li><button data-act="goto" data-num="'+it.r.num+'"><span class="pn">'+it.r.num+'</span><span class="pd"><b>'+esc(desc)+'</b><small>'+esc(lineText(it.r,it.d))+(n?' ('+n+' photo'+(n>1?'s':'')+')':'')+'</small></span><span class="tag tag-'+it.kind.split(' ')[0]+'">'+it.kind+'</span></button></li>';
+      return '<li data-kind="'+it.kind+'"><button data-act="goto" data-num="'+it.r.num+'"><span class="pn">'+it.r.num+'</span><span class="pd"><b>'+esc(desc)+'</b><small>'+esc(lineText(it.r,it.d))+(n?' ('+n+' photo'+(n>1?'s':'')+')':'')+'</small></span><span class="tag tag-'+it.kind.split(' ')[0]+'">'+it.kind+'</span></button>'+(it.kind==='FAIL'?'<button type="button" class="ovrb" data-act="rx-ovr1" data-num="'+it.r.num+'">Mark N/A – doesn’t apply</button>':'')+'</li>';
     }).join('')+'</ol>' : '<p class="card">Nothing to rework. The punch list page will print as \u201cNo nonconformances found.\u201d</p>')+
     fyiHTML(rec)+swRmaHTML(rec)+ddReviewCard(rec)+calAtpCard(rec)+finAtpCard(rec)+auQrCard(rec)+auEntryCard(rec)+'<h2>Report PDFs</h2><div class="actions"><button class="btn emailbig" data-act="pdf-share-full">\u2709 Email full report (PDF attached)<small>Recommended \u2013 opens your email app with the PDF attached</small></button><button class="btn light big" data-act="pdf-save-full">\u2b07 Save report PDF</button></div><div class="actions"><button class="btn light big" data-act="backup-cur">Backup file</button><button class="btn light big" data-act="wip-copy">\ud83d\udccb Copy '+WIP_MAIL+'</button></div>'+
     '<p class="tip">PDFs are named eMSC-L_'+esc(safeName(snNum(h.newSerial)))+'_ATP / _PunchList. Tap an item above to jump back to it.</p>'+rxBars()+'</main>';
@@ -13916,13 +13927,15 @@ function blkHTML(r,d){
   if(s!==5&&r.spare&&!(d.text||'').trim()) return '';
   if(s!==5) return '';
   var a=analyze(S.rec), cands=a.issues.filter(function(it){ return (it.kind==='FAIL'||it.kind==='AWP') && it.r.num!==r.num; });
-  return '<div class="blkpanel"><b>⏸ Can’t be tested yet – not counted as a failure</b><p class="muted">Pick the failed item(s) that must be fixed first and/or say what is blocking it. It is listed as <b>Not tested</b> on the punch list and report, and needs a retest once the blocker is resolved. The KPI can’t pass while an item is untested.</p>'+
+  var has=(d.by&&d.by.length)||(d.why||'').trim()||d.later||d.pend, open=!has||((S.blkOpen||{})[r.num]);
+  if(!open) return '<div class="blkpanel blksum"><b>⏸ Not tested</b> <span class="muted">– '+esc(blkTxt(S.rec,d).replace(/^NOT TESTED[\s.-]*/,'').replace(/\.$/,''))+'</span><div class="row2"><button class="btn light" data-act="blk-edit" data-num="'+r.num+'">Change reason</button><button class="btn light" data-act="unblk">↩ Test it now</button><button class="btn pass" data-act="blk-pass">✓ Passes</button><button class="btn fail" data-act="blk-fail">✗ Fails</button></div></div>';
+  return '<div class="blkpanel"><b>⏸ Can’t be tested yet – not counted as a failure</b><p class="muted">Pick the failed item(s) blocking it and/or say why. Listed as <b>Not tested</b>; retest it once the blocker is fixed.</p>'+
     '<div class="muted" style="margin-top:6px">Blocked by (tap the failed item(s))</div>'+
     (cands.length ? '<div class="chipcol">'+cands.map(function(it){ var on=(d.by||[]).indexOf(it.r.num)>=0; return '<button class="chip'+(on?' on':'')+'" data-act="blk-by" data-by="'+it.r.num+'">'+(on?'✓ ':'')+'#'+it.r.num+' '+esc(lineText(it.r,it.d).slice(0,70))+'</button>'; }).join('')+'</div>' : '<p class="muted">No failed items yet – describe what is blocking it below.</p>')+
     '<label class="full">What is blocking it? (required if no item is picked)<textarea data-f="why" rows="2" placeholder="e.g. mast won’t raise until the hydraulic fault is fixed">'+esc(d.why||'')+'</textarea></label>'+
     '<button class="btn pendbtn'+(d.later?' on':'')+'" data-act="blk-later">'+(d.later?'✓ ':'⏳ ')+'To be tested later – no details needed, does not stop the report</button>'+
     '<button class="btn pendbtn'+(d.pend?' on':'')+'" data-act="blk-pend">'+(d.pend?'✓ ':'⏳ ')+'Pending retest – test after the suspected cause is fixed</button>'+
-    '<div class="row2"><button class="btn light" data-act="unblk">↩ It can be tested now – back to failed</button><button class="btn pass" data-act="blk-pass">✓ Retested – it passes</button><button class="btn fail" data-act="blk-fail">✗ Retested – it fails</button></div></div>';
+    '<div class="row2">'+(has?'<button class="btn primary" data-act="blk-edit" data-num="'+r.num+'">✓ OK</button>':'')+'<button class="btn light" data-act="unblk">↩ It can be tested now – back to failed</button><button class="btn pass" data-act="blk-pass">✓ Retested – it passes</button><button class="btn fail" data-act="blk-fail">✗ Retested – it fails</button></div></div>';
 }
 
 /* ---- zoom / rotate viewer ---- */
@@ -14741,7 +14754,7 @@ function swName(k){ for(var i=0;i<SWD.length;i++){ if(SWD[i][0]===k) return SWD[
 function swPhotos(key){ return S.photos.filter(function(p){ return p.num===key; }); }
 function swThumbs(key){ var l=swPhotos(key); return l.length?'<div class="thumbs">'+l.map(thumbHTML).join('')+'</div>':''; }
 function choose(title,msg,btns){ return new Promise(function(res){ dlg('<h2 style="margin-top:0">'+esc(title)+'</h2><p class="muted" style="white-space:pre-line">'+esc(msg)+'</p><div class="sheet-btns">'+btns.map(function(b){ return '<button class="btn '+(b.c||'light')+' big" data-act="chpick" data-v="'+b.v+'">'+esc(b.t)+'</button>'; }).join('')+'</div>','sheet'); S.chRes=res; }); }
-function swRefresh(){ if(typeof custRefresh==='function') custRefresh(); if(typeof ddRefresh==='function') ddRefresh(); var u=document.getElementById('swapUnit'); if(u) u.innerHTML=swEntriesHTML(); var e=document.getElementById('swapEnd'); if(e) e.innerHTML=swapEndHTML(); if(S.view==='review'&&!S.audit) reReview(); }
+function swRefresh(){ var _a=document.getElementById('lastChk'), _t=_a?_a.getBoundingClientRect().top:null; if(typeof custRefresh==='function') custRefresh(); if(typeof ddRefresh==='function') ddRefresh(); var u=document.getElementById('swapUnit'); if(u) u.innerHTML=swEntriesHTML(); var e=document.getElementById('swapEnd'); if(e) e.innerHTML=swapEndHTML(); var _b=document.getElementById('lastChk'); if(_t!==null&&_b){ var _d=_b.getBoundingClientRect().top-_t; if(Math.abs(_d)>1) window.scrollBy(0,_d); } if(S.view==='review'&&!S.audit) reReview(); }
 async function reReview(){ var y=window.scrollY; await renderReview(); window.scrollTo(0,y); }
 function swEntryHTML(e,i){
   var key='swn:'+e.id, n=swPhotos(key).length;
@@ -14763,9 +14776,9 @@ function swapEndHTML(){
   '<table style="width:100%;border-collapse:collapse;font-size:15px">'+SWD.map(function(d){ var f=fs.filter(function(x){ return x.dev===d[0]; })[0]; return '<tr><td style="padding:3px 8px 3px 0;font-weight:600">'+esc(d[1])+'</td><td style="font-family:ui-monospace,Menlo,Consolas,monospace;word-break:break-all">'+esc(f?f.s:(rec.header[d[0]]||'—'))+(f&&f.swapped?' <span class="tag" style="background:#7b4fb5">swapped</span>':'')+'</td></tr>'; }).join('')+
    L.filter(function(e){ return !e.dev; }).map(function(e){ return '<tr><td style="padding:3px 8px 3px 0;font-weight:600">'+esc(e.t||'Other device')+'</td><td>'+esc(e.nw||'—')+' <span class="tag" style="background:#7b4fb5">swapped</span></td></tr>'; }).join('')+'</table>'+
   '<p style="margin:10px 0 4px"><b>'+(L.length?'Were any other devices swapped?':'Were any devices swapped?')+'</b></p><p class="muted" style="margin:0 0 6px">Tap a device to record its swap (the old serial is kept – then enter the new serial # and photo), or add one that isn’t listed. To swap a device again, change its new serial # in the card above.</p>'+
-  '<div class="row2" style="margin:0 0 8px">'+SWD.filter(function(d){ return !swFor(rec,d[0]); }).map(function(d){ return '<button class="btn light" data-act="sw-lcsel" data-key="'+d[0]+'">'+esc(d[1])+'</button>'; }).join('')+'</div>'+
+  '<div class="row2" style="margin:0 0 8px">'+SWD.filter(function(d){ return !swFor(rec,d[0]); }).map(function(d){ return '<button class="btn light" data-act="sw-lcsel" data-key="'+d[0]+'">'+esc(d[1])+'</button>'; }).join('')+'</div>'+(S.swNote?'<div class="card" style="background:#f6f1fc;border:2px solid #7b4fb5;margin:0 0 8px;padding:8px 10px"><b>'+esc(S.swNote)+' swap added</b> – its card (serials, photo, reason) is in the purple box above.<div class="row2" style="margin-top:6px"><button class="btn primary" data-act="sw-show">Show me</button><button class="btn light" data-act="sw-hide">Dismiss</button></div></div>':'')+
   '<div class="row2"><input id="swNew" placeholder="Device not in the list – type its name" style="flex:1;min-width:200px;min-height:44px;font-size:16px;padding:6px 10px;border:2px solid var(--line);border-radius:8px"><button class="btn light" data-act="sw-add">＋ Add unlisted device</button></div>'+
-  '<div style="display:flex;align-items:center;gap:10px;margin-top:10px">'+((w.chk||L.length)?'':'<span class="arw grn"><i>&#10140;</i></span>')+'<button class="btn big" data-act="sw-lcno" style="flex:1;background:#6b3fa0;color:#fff;border:2px solid #4d2a78;font-weight:800">'+(w.chk?'✓ ':'')+(L.length?'No, nothing else swapped':'No, nothing was swapped')+'</button></div></div>';
+  '<div style="display:flex;align-items:center;gap:10px;margin-top:10px">'+((w.chk||L.length)?'':'<span class="arw grn"><i>&#10140;</i></span>')+'<button class="btn big" data-act="sw-lcno" style="flex:1;'+(w.chk?'background:#6b3fa0;color:#fff;':'background:#fff;color:#6b3fa0;')+'border:2px solid #4d2a78;font-weight:800">'+(w.chk?'<span style="color:#7CFC9A;font-size:1.2em">✔</span> ':'')+(L.length?'No, nothing else swapped':'No, nothing was swapped')+'</button></div></div>';
 }
 function swGate(rec){ var m=[], w=SW(rec); if(!w.chk) m.push('"One last check" on swapped devices (bottom of the checklist)'); return m; }
 function failedUnits(rec){ var o=[]; SW(rec).list.forEach(function(e,i){ e.mid.forEach(function(m,j){ o.push({e:e,i:i,m:m,j:j}); }); }); return o; }
@@ -14806,13 +14819,32 @@ function swPickPhoto(key,cam){
   i.click();
 }
 /* ---- review: inline controls for unchecked / not-tested items ---- */
+/* review list: an item stays on screen until the tech taps OK */
+function revPend(){ if(S.pendRid!==S.rec.id){ S.pendRid=S.rec.id; S.pend={}; } S.pend=S.pend||{}; return S.pend; }
+function revIssues(a){
+  var P=revPend(), L=a.issues.slice(), have={};
+  L.forEach(function(it){ have[it.r.num]=1; });
+  Object.keys(P).forEach(function(k){ var n=+k; if(have[n]) return; var r=a.rows.filter(function(q){ return q.num===n; })[0]; if(!r) return; L.push({r:r,d:itemOf(S.rec,n),kind:'DONE'}); });
+  L.sort(function(x,y){ return x.r.num-y.r.num; });
+  return L;
+}
+function revKpiLine(a){
+  var k={'FAIL':0,'NOT TESTED':0,'NOT INSPECTED':0}; a.blocking.forEach(function(it){ if(k[it.kind]!=null) k[it.kind]++; });
+  var b=function(kind,n,t){ return n?'<button type="button" class="lnk" data-act="rv-jump" data-k="'+kind+'">'+n+' '+t+'</button>':''; };
+  var parts=[b('FAIL',k['FAIL'],'failed'),b('NOT TESTED',k['NOT TESTED'],'not tested'),b('NOT INSPECTED',k['NOT INSPECTED'],'not inspected')].filter(Boolean);
+  return a.blocking.length+' open item'+(a.blocking.length===1?'':'s')+': '+parts.join(', ')+' (tap one to jump to it).';
+}
+function revJmpA(kind,n){ return n>0?' data-act="rv-jump" data-k="'+kind+'"':''; }
 function revInline(it){
-  var num=it.r.num; S.fkeep=S.fkeep||{}; if(S.fkeepRid!==S.rec.id){ S.fkeepRid=S.rec.id; S.fkeep={}; }
+  var num=it.r.num;
+  if(it.kind==='OVERRIDDEN'&&revPend()[num]) return '<li class="inl" data-kind="OVERRIDDEN"><ol class="rows">'+rowHTML(it.r)+'</ol><div class="row2"><button class="btn primary" data-act="rv-ok" data-num="'+num+'">\u2713 OK</button></div></li>';
+  if(it.kind==='DONE'){ var lab=it.d.s===1?'Pass':it.d.s===3?'N/A':it.d.s===2?'Fail':'answered';
+    return '<li class="inl done" data-kind="DONE"><div class="inl-h"><span class="pn">'+num+'</span><span class="pd"><b>'+esc(lineText(it.r,it.d))+'</b><small>Marked '+lab+' \u2713</small></span></div><div class="row2"><button class="btn primary" data-act="rv-ok" data-num="'+num+'">\u2713 OK</button><button class="btn light" data-act="rv-undo" data-num="'+num+'">Change</button></div></li>'; } S.fkeep=S.fkeep||{}; if(S.fkeepRid!==S.rec.id){ S.fkeepRid=S.rec.id; S.fkeep={}; }
   if(it.kind==='NOT INSPECTED'){
-    return '<li class="inl"><div class="inl-h"><span class="pn">'+num+'</span><span class="pd"><b>'+esc(lineText(it.r,it.d))+'</b><small>Not marked yet</small></span></div><div class="row2"><button class="btn pass" data-act="rv-set" data-num="'+num+'" data-v="1">✓ Pass</button><button class="btn fail" data-act="rv-set" data-num="'+num+'" data-v="2">✗ Fail</button><button class="btn light" data-act="rv-set" data-num="'+num+'" data-v="3">N/A</button></div></li>';
+    return '<li class="inl" data-kind="'+it.kind+'"><div class="inl-h"><span class="pn">'+num+'</span><span class="pd"><b>'+esc(lineText(it.r,it.d))+'</b><small>Not marked yet</small></span></div><div class="row2"><button class="btn pass" data-act="rv-set" data-num="'+num+'" data-v="1">✓ Pass</button><button class="btn fail" data-act="rv-set" data-num="'+num+'" data-v="2">✗ Fail</button><button class="btn light" data-act="rv-set" data-num="'+num+'" data-v="3">N/A</button></div></li>';
   }
   if(it.kind==='NOT TESTED'||((it.kind==='FAIL'||it.kind==='AWP')&&S.fkeep[num]&&!(S.fdone||{})[num])){
-    return '<li class="inl"><ol class="rows">'+rowHTML(it.r)+'</ol>'+(it.kind==='NOT TESTED'?'':'<div class="row2"><button class="btn primary" data-act="rv-done" data-num="'+num+'">✓ Done with this item</button></div>')+'</li>';
+    return '<li class="inl" data-kind="'+it.kind+'"><ol class="rows">'+rowHTML(it.r)+'</ol>'+(it.kind==='NOT TESTED'?'':'<div class="row2"><button class="btn primary" data-act="rv-done" data-num="'+num+'">✓ OK</button></div>')+'</li>';
   }
   return null;
 }
@@ -14829,18 +14861,23 @@ async function swAppAct(act,el){
   var w=SW();
   switch(act){
     case 'sw-rm': if(!await ask('Remove this swap entry?',{title:'Remove swap entry?',ok:'Remove',danger:true})) return true; w.list=w.list.filter(function(e){ return e.id!==el.dataset.id; }); markDirty(); swRefresh(); return true;
-    case 'sw-lcsel': var k=el.dataset.key; if(!swFor(S.rec,k)) w.list.push({id:'sw'+uid(''),dev:k,t:swName(k),old:String(S.rec.header[k]||''),nw:'',reason:'',rma:'',mid:[]}); markDirty(); swRefresh(); return true;
+    case 'sw-lcsel': var k=el.dataset.key; if(!swFor(S.rec,k)){ S.swNote=swName(k); } if(!swFor(S.rec,k)) w.list.push({id:'sw'+uid(''),dev:k,t:swName(k),old:String(S.rec.header[k]||''),nw:'',reason:'',rma:'',mid:[]}); markDirty(); swRefresh(); return true;
+    case 'sw-show': S.swNote=''; swRefresh(); var ents=document.querySelectorAll('#swapUnit .swent'); if(ents.length){ var le=ents[ents.length-1]; le.scrollIntoView({block:'center'}); le.classList.remove('flash'); void le.offsetWidth; le.classList.add('flash'); } return true;
+    case 'sw-hide': S.swNote=''; swRefresh(); return true;
     case 'sw-lcno': w.chk=w.chk?'':'done'; markDirty(); swRefresh(); return true;
     case 'sw-add': var v=((document.getElementById('swNew')||{}).value||'').trim(); if(!v){ notice('Type the name of the device first.','Device name needed'); return true; } w.list.push({id:'sw'+uid(''),dev:null,t:v,old:'',nw:'',reason:'',rma:'',mid:[]}); markDirty(); swRefresh(); return true;
     case 'sw-tbd': var e=w.list[+el.dataset.i]; if(e){ e.rma=e.rma==='TBD'?'':'TBD'; markDirty(); swRefresh(); } return true;
     case 'sw-tbd2': var m=(w.list[+el.dataset.i]||{mid:[]}).mid[+el.dataset.j]; if(m){ m.rma=m.rma==='TBD'?'':'TBD'; markDirty(); reReview(); } return true;
     case 'sw-cam': S.swKey=el.dataset.key; dlg('<h2 style="margin-top:0">Add serial number photo</h2><div class="sheet-btns"><button class="btn primary big" data-act="sw-take">Take photo</button><button class="btn light big" data-act="sw-lib">Choose from library</button><button class="btn big" data-act="close-modal">Cancel</button></div>','sheet'); return true;
-    case 'rv-set': var num=+el.dataset.num, d=S.rec.items[num]||(S.rec.items[num]={}); d.s=+el.dataset.v; if(d.s===2){ S.fkeep=S.fkeep||{}; S.fkeep[num]=1; } markDirty(); reReview(); return true;
+    case 'rv-set': var num=+el.dataset.num, d=S.rec.items[num]||(S.rec.items[num]={}); d.s=+el.dataset.v; if(d.s===2){ S.fkeep=S.fkeep||{}; S.fkeep[num]=1; } else revPend()[num]=1; markDirty(); reReview(); return true;
+    case 'rv-ok': delete revPend()[+el.dataset.num]; S.fdone=S.fdone||{}; S.fdone[+el.dataset.num]=1; reReview(); return true;
+    case 'rv-undo': var du=S.rec.items[+el.dataset.num]||(S.rec.items[+el.dataset.num]={}); du.s=0; du.ovr=false; delete revPend()[+el.dataset.num]; if(S.fkeep) delete S.fkeep[+el.dataset.num]; markDirty(); reReview(); return true;
+    case 'rv-jump': var tg=document.querySelector('.punch li[data-kind="'+el.dataset.k+'"]'); if(tg){ tg.scrollIntoView({block:'center'}); tg.classList.remove('flash'); void tg.offsetWidth; tg.classList.add('flash'); } return true;
     case 'cu-add': CU().list.push({id:'c'+uid(''),t:'',d:''}); markDirty(); custRefresh(); var ni=document.querySelector('#custInfo input[data-cu="'+(CU().list.length-1)+'.t"]'); if(ni) ni.focus(); return true;
     case 'cu-rm': if(!await ask('Remove this customer-reported issue?',{title:'Remove issue?',ok:'Remove',danger:true})) return true; CU().list.splice(+el.dataset.i,1); markDirty(); custRefresh(); return true;
     case 'fyinext': var nk=fyiNextKey(); if(nk) fyiGo(nk); else showFyiNext(); return true;
     case 'fyiclose': var nb=document.getElementById('fyiNext'); if(nb) nb.remove(); return true;
-    case 'rv-done': S.fdone=S.fdone||{}; S.fdone[+el.dataset.num]=1; reReview(); return true;
+    case 'rv-done': S.fdone=S.fdone||{}; S.fdone[+el.dataset.num]=1; delete revPend()[+el.dataset.num]; reReview(); return true;
   }
   return false;
 }
@@ -15049,7 +15086,7 @@ function ddRefresh(){ var e=document.getElementById('ddBox'); if(!e) return; var
 function ddSet(el){ var x=DD(), p=el.dataset.dd; if(p.indexOf('rev.')===0) x.rev[p.slice(4)]=el.value; else x[p]=el.value; markDirty(); var ms=document.getElementById('ddBox'); }
 document.addEventListener('change',function(e){ var t=e.target; if(t&&t.dataset&&(t.dataset.dd||(t.dataset.h&&(DD_LBL[t.dataset.h]||t.dataset.h==='oldSerial')))) setTimeout(function(){ if(S.rec&&!S.audit&&S.view==='insp') ddRefresh(); },350); });
 /* ---- Omit ---- */
-function ddOmitHTML(r,d){ if(r.spare&&!(d.text||'').trim()) return ''; var on=!!d.omit;
+function ddOmitHTML(r,d){ if(r.spare&&!(d.text||'').trim()) return ''; var on=!!d.omit; if(!on) return ''; /* Omit merged into 'Mark N/A - doesn't apply'; only items omitted in older inspections still show it */
   return '<div class="omit-slot" data-num="'+r.num+'" style="margin-top:6px"><button type="button" class="btn '+(on?'primary':'light')+' omitbtn" data-act="dd-omit" style="min-height:38px;font-size:13px">'+(on?'✓ Omitted':'Omit this item')+'</button>'+(on?'<label class="full" style="margin-top:6px">Why is this item omitted? (required – printed on the report and checksheet)<textarea data-f="onote" rows="2">'+esc(d.onote||'')+'</textarea></label>':'')+'</div>'; }
 /* ---- ATP passed / override ---- */
 function ddReviewCard(rec){ var x=DD(rec), ms=ddMissing(rec), om=omitList(rec);
@@ -15225,8 +15262,8 @@ function rxFlag(r,d){
 }
 function rxArrow(r,d){
   var f=rxFlag(r,d); if(!f) return '';
-  if(f==='fail'&&d.rep) return '<span class="arw ok" title="Repaired"><i>&#10003;</i> Repaired - retest it (or override) to clear the FAIL</span>';
-  var t=f==='fail'?(d.rep?'Repaired - retest it, or override':'Failed - fix it, or override'):f==='blk'?'Not tested - retest, or override':'Not inspected - inspect it, or override';
+  if(f==='fail'&&d.rep) return '<span class="arw ok" title="Repaired"><i>&#10003;</i> Repaired - retest it (or mark N/A) to clear the FAIL</span>';
+  var t=f==='fail'?(d.rep?'Repaired - retest it, or mark N/A':'Failed - fix it, or mark N/A'):f==='blk'?'Not tested - retest, or mark N/A':'Not inspected - inspect it, or mark N/A';
   return '<span class="arw" title="'+esc(t)+'"><i>&#10140;</i> '+esc(t)+'</span>';
 }
 function rxPartsHTML(d){
@@ -15250,7 +15287,7 @@ function rxHTML(r,d){
        '<button type="button" class="btn '+(d.rep?'pass':'light')+'" data-act="rx-rep" style="min-height:40px;margin-top:6px">'+(d.rep?'&#10003; Repaired':'&#9744; Mark repaired')+'</button>'+rxPartsHTML(d)+'</div>';
   }
   if(fl||s===4&&false) h+='';
-  if(fl) h+='<button type="button" class="btn light rx-ovbtn" data-act="rx-ovr">Override - mark N/A</button>';
+  if(fl) h+='<button type="button" class="btn light rx-ovbtn" data-act="rx-ovr">Mark N/A \u2013 doesn\u2019t apply</button>';
   return h;
 }
 function rxRefresh(li){
@@ -15280,6 +15317,7 @@ async function rxAct(act,el){
       default: return false;
     }
     markDirty();
+    if(S.view==='review'&&(act==='rx-ovr'||act==='rx-ovr-undo')){ if(act==='rx-ovr') revPend()[num]=1; else delete revPend()[num]; reReview(); return true; }
     if(act==='rx-ovr'||act==='rx-ovr-undo'){ refreshRow(li); updateSecCount(+li.dataset.sec); updateProgress(); }
     rxRefresh(li);
     if(act==='rx-ovr'){ var t=li.querySelector('textarea[data-f="ovn"]'); if(t) t.focus({preventScroll:true}); }
@@ -15367,26 +15405,13 @@ async function rxOvrAll(){
   markDirty(); await save(); renderReview(); return true;
 }
 async function rxOvrOne(num){
-  var d=S.rec.items[num]||(S.rec.items[num]={}); d.os=d.s||0; d.s=3; d.ovr=true; markDirty(); await save(); renderReview(); return true;
+  var d=S.rec.items[num]||(S.rec.items[num]={}); d.os=d.s||0; d.s=3; d.ovr=true; revPend()[num]=1; markDirty(); await save(); renderReview(); return true;
 }
 
 /* ---- review-page summary ---- */
 function rxReviewCard(rec){
-  var sm=rxSummary(rec), I=sm.a.issues;
-  var row=function(it,btn){
-    var d=it.d, lab=it.kind==='NOT INSPECTED'?'Not inspected':it.kind==='NOT TESTED'?'Not tested':it.kind==='FAIL'?'Failed':it.kind==='AWP'?'AWP':it.kind==='OMIT'?'Omitted':'Overridden';
-    return '<li class="rxi"><div class="rxi-t"><span class="arw"><i>&#10140;</i></span><b>#'+it.r.num+'</b> '+esc(lineText(it.r,d).slice(0,110))+'<small> - '+lab+((d.note||'').trim()&&it.kind==='FAIL'?': '+esc(d.note.trim().slice(0,80)):'')+'</small></div><div class="rxi-b"><button class="btn primary" data-act="goto" data-num="'+it.r.num+'">Go to item</button>'+(btn?'<button class="btn light" data-act="rx-ovr1" data-num="'+it.r.num+'">Override</button>':'')+'</div></li>';
-  };
-  var info=function(it){ var d=it.d, lab=it.kind==='AWP'?'AWP (does not affect the result)':it.kind==='OMIT'?'Omitted':'Overridden to N/A'; return '<li class="rxi info"><div class="rxi-t"><b>#'+it.r.num+'</b> '+esc(lineText(it.r,d).slice(0,110))+'<small> - '+lab+(it.kind==='OMIT'&&d.onote?': '+esc(d.onote):it.kind==='OVERRIDDEN'&&d.ovn?': '+esc(d.ovn):'')+'</small></div><div class="rxi-b"><button class="btn light" data-act="goto" data-num="'+it.r.num+'">Go to item</button></div></li>'; };
-  var inf=I.filter(function(i){ return i.info; });
-  var h='<section class="card rx-sum '+(sm.B.length?'bad':'ok')+'" id="rxSum"><h2 style="margin:0 0 6px">'+(sm.B.length?'What is affecting the result ('+sm.B.length+')':'Nothing is affecting the result')+'</h2>';
-  if(sm.B.length){
-    h+='<p class="muted" style="margin:0 0 6px">'+esc(rxLine(sm.k))+'. None of this stops you from completing the report - fix it, or override it (it becomes N/A on the report).</p><ul class="rxl">'+sm.B.map(function(it){ return row(it,true); }).join('')+'</ul>';
-    if(sm.k.ni>1) h+='<button class="btn light" data-act="rx-ovr-all" style="margin-top:6px">Override all '+sm.k.ni+' not-inspected items to N/A</button>';
-  } else h+='<p style="margin:0">&#10003; No failed, untested or unchecked items.</p>';
-  if(inf.length) h+='<h3 style="margin:12px 0 4px">Listed on the report - does not affect the result</h3><ul class="rxl">'+inf.map(info).join('')+'</ul>';
-  h+='</section>';
-  return h;
+  var sm=rxSummary(rec);
+  return sm.k.ni>1?'<div class="rx-bulk"><button class="btn light" data-act="rx-ovr-all">Override all '+sm.k.ni+' not-inspected items to N/A</button></div>':'';
 }
 function rxBars(){
   return '<div class="rx-bottom"><button class="btn primary big" data-act="complete">&#10004; Complete report</button></div>';
@@ -15411,6 +15436,7 @@ async function appAct(act,el){
     case 'blk': getD().s=5; refresh(); return true;
     case 'cnt': var cd=getD(); cd.ovr=false; cd.s=(cd.s===5)?0:5; refresh(); return true;
     case 'unblk': getD().s=2; refresh(); return true;
+    case 'blk-edit': S.blkOpen=S.blkOpen||{}; S.blkOpen[num]=!S.blkOpen[num]; refresh(); return true;
     case 'blk-by': var d=getD(), b=+el.dataset.by; d.by=d.by||[]; var k=d.by.indexOf(b); if(k>=0) d.by.splice(k,1); else d.by.push(b); refresh(); return true;
     case 'blk-later': var dl=getD(); dl.later=!dl.later; if(dl.later&&!(dl.why||'').trim()&&!(dl.by||[]).length) dl.why=''; refresh(); return true;
     case 'blk-pend': var d2=getD(); d2.pend=!d2.pend; refresh(); return true;
@@ -15618,7 +15644,7 @@ window.addEventListener('beforeunload', function(e){ if(S.view==='admin' && S.dr
 })();
 
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='80190a5aea';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='0adaf054fa';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
@@ -15631,7 +15657,7 @@ fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r
 window.addEventListener('load',function(){setTimeout(chk,1500);});
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')chk();});
 window.addEventListener('online',chk);
-})();</script><script>(function(){var S='370e5a';window.__SUITE=S;var last='',lt=0;
+})();</script><script>(function(){var S='ca88b6';window.__SUITE=S;var last='',lt=0;
 function warn(t){if(!document.body||document.getElementById('qrVerWarn'))return;var d=document.createElement('div');d.id='qrVerWarn';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:64px;z-index:2147483001;background:#8a4b00;color:#fff;font:600 15px/1.35 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">'+t+'</span><button id="qrVerX" style="background:#fff;color:#8a4b00;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">OK</button>';
