@@ -1,0 +1,189 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><title>Inspection Workflow</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: path tabs; each path is a row of phase columns, steps stacked top to bottom with connector lines. */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --ink:#14233a; --muted:#51627a; --line:#cfd8e3;
+  --navy:#0b3d6b; --navy-soft:#dbe8f6;
+  --signal:#f2b705; --signal-soft:#fff3cf; --signal-ink:#6b4b00;
+  --new:#1b7f5a; --new-soft:#dff3ea;
+  --out:#e7ebf0; --out-ink:#44566b;
+  --display:'Barlow Condensed','Arial Narrow',sans-serif; --body:'IBM Plex Sans',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c1522; --surface:#142235; --ink:#e6edf6; --muted:#9db0c6; --line:#2b3d55;
+  --navy:#6fb0ee; --navy-soft:#173a5e; --signal:#f2b705; --signal-soft:#3a2f0c; --signal-ink:#f5d572;
+  --new:#4fd0a0; --new-soft:#12392c; --out:#1c2c42; --out-ink:#a9bbd0; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1522; --surface:#142235; --ink:#e6edf6; --muted:#9db0c6; --line:#2b3d55;
+  --navy:#6fb0ee; --navy-soft:#173a5e; --signal:#f2b705; --signal-soft:#3a2f0c; --signal-ink:#f5d572;
+  --new:#4fd0a0; --new-soft:#12392c; --out:#1c2c42; --out-ink:#a9bbd0; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;margin:0;
+  padding-block:24px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1240px;margin:0 auto}
+header{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:flex-end;justify-content:space-between;border-bottom:3px solid var(--navy);padding-bottom:12px}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(32px,6vw,48px);letter-spacing:.01em;text-transform:uppercase;margin:0;line-height:1}
+.sub{color:var(--muted);margin:6px 0 0;max-width:60ch}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:6px;border:2px solid var(--navy);background:var(--surface)}
+.legend i.o{background:var(--out);border-color:var(--out-ink)}
+.legend i.d{background:var(--signal-soft);border-color:var(--signal)}
+.legend i.n{background:var(--new-soft);border:2px dashed var(--new)}
+nav{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 6px}
+nav button{font:600 14px var(--body);color:var(--ink);background:var(--surface);border:2px solid var(--line);border-radius:6px;padding:9px 14px;cursor:pointer;min-height:44px}
+nav button[aria-selected="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) nav button[aria-selected="true"]{color:#06182b}}
+:root[data-theme="dark"] nav button[aria-selected="true"]{color:#06182b}
+nav button:focus-visible{outline:3px solid var(--signal);outline-offset:2px}
+.blurb{margin:10px 0 18px;color:var(--muted);max-width:75ch}
+.tag{display:inline-block;font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:3px;background:var(--new-soft);color:var(--new);margin-left:8px;vertical-align:2px}
+.lanes{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;align-items:start}
+.lane{min-width:0}
+.lane h2{font-family:var(--display);font-size:20px;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;padding:6px 10px;background:var(--navy-soft);color:var(--navy);border-radius:4px}
+.steps{list-style:none;margin:0;padding:0}
+.step{position:relative;background:var(--surface);border:2px solid var(--navy);border-radius:10px;padding:12px 14px 12px 50px;margin-bottom:26px;box-shadow:0 1px 3px rgba(11,61,107,.12)}
+.step:not(:last-child)::after{content:"";position:absolute;left:50%;top:100%;height:26px;width:2px;background:var(--navy)}
+.step:not(:last-child)::before{content:"";position:absolute;left:calc(50% - 5px);top:calc(100% + 15px);border:6px solid transparent;border-top:9px solid var(--navy);border-bottom:0;z-index:1}
+.step .n{position:absolute;left:12px;top:12px;width:28px;height:28px;border-radius:50%;background:var(--navy);color:#fff;font:700 14px var(--mono);display:grid;place-items:center}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .step .n{color:#06182b}}
+:root[data-theme="dark"] .step .n{color:#06182b}
+.step b{display:block;font-size:16px;line-height:1.25}
+.step p{margin:4px 0 0;color:var(--muted);font-size:13.5px}
+.step.out{background:var(--out);border-color:var(--out-ink);box-shadow:none}
+.step.out .n{background:var(--out-ink)}
+.step.out::after{background:var(--out-ink)}
+.step.dec{background:var(--signal-soft);border-color:var(--signal)}
+.step.dec .n{background:var(--signal);color:#2b2100}
+.step.new{background:var(--new-soft);border:2px dashed var(--new);box-shadow:none}
+.step.new .n{background:var(--new)}
+.br{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.br span{font-size:12.5px;padding:3px 8px;border-radius:4px;background:var(--surface);border:1px solid var(--line);color:var(--ink)}
+.br span em{font:700 11px var(--mono);font-style:normal;margin-right:6px;color:var(--signal-ink)}
+.note{margin-top:8px;padding:12px 14px;border-left:4px solid var(--signal);background:var(--surface);border-radius:0 6px 6px 0;color:var(--muted);max-width:80ch}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.rule{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;min-width:0}
+.rule h3{font-family:var(--display);text-transform:uppercase;letter-spacing:.06em;font-size:19px;margin:0 0 6px;color:var(--navy)}
+.rule p{margin:0;color:var(--muted);font-size:14px}
+code{font:13px var(--mono);background:var(--navy-soft);color:var(--navy);padding:2px 6px;border-radius:3px;overflow-wrap:anywhere}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:no-preference){.step{transition:transform .15s}.step:hover{transform:translateY(-1px)}}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+
+<div class="wrap"><a href="../" style="display:inline-block;margin-bottom:10px;color:var(--navy);font-weight:600;text-decoration:none">‹ All forms</a>
+<header>
+  <div><h1>Inspection Workflow</h1><p class="sub">How a truck moves through the Tucson Service Center apps, from intake to delivery.</p></div>
+  <div class="legend"><span><i></i>App step</span><span><i class="d"></i>Decision</span><span><i class="o"></i>Outside the app</span><span><i class="n"></i>Proposed or not built yet</span></div>
+</header>
+<nav role="tablist" id="tabs"></nav>
+<div id="view"></div>
+</div>
+
+<script>
+var A='app',O='out',D='dec',N='new';
+var PATHS={
+repair:{label:'Repair',blurb:'Customer unit comes in, is repaired, tested and signed off. Floor Test and Jake’s Final are not part of repair.',
+ lanes:[
+ {n:'Intake',s:[
+  [A,'Intake','Customer-reported issues, core data, photos, failed lines. Makes the Intake QR.'],
+  [A,'RMA prompt','Before inspection starts: RMA, service order and account indicator (ZM, Z1, Z2, Z3 or other).'],
+  [A,'Intake PDF','Folder front page and bin tag page lead the PDF. Photo zip downloads with it.'],
+  [O,'Print and file','Front page in the folder sleeve. Bin tag on the customer property bin.']]},
+ {n:'Repair and calibrate',s:[
+  [A,'Post-Repair','Scan the Intake QR. Core data and work list load. Log repairs and new findings.'],
+  [D,'Post-Repair complete?','Punch list is built from the work list and any new findings, each with a disposition.'],
+  [D,'TFU or radar?','If the unit has them, run TFU & Radar Calibration.',['Yes','Calibration form, then ATP'],['No','Straight to ATP']]]},
+ {n:'Accept',s:[
+  [A,'ATP','Acceptance test. Server serial and Windows activation key go on the PDF and email.'],
+  [D,'Any punch items?','Failed lines become the punch list.',['Yes','Technician fixes, auditor re-checks'],['No','Go to DD1149']],
+  [A,'Technician, then Auditor','Different people. Auditor sees only the items that originally failed.']]},
+ {n:'Close out',s:[
+  [N,'DD1149','Delivery sign-off form. Required whenever a truck is about to be delivered.'],
+  [O,'Ship','Complete folder and printed paperwork go with the unit.']]}]},
+upfit:{label:'Upgrade / upfit',blurb:'Same trip through the shop, but parts are swapped for newer ones, so old and new serial numbers are tracked.',
+ lanes:[
+ {n:'Intake',s:[
+  [A,'Intake','Mark the unit as an upgrade. Capture core data and the swap list (old serial to new serial).'],
+  [A,'RMA prompt','RMA, service order and account indicator before inspection starts.'],
+  [A,'Intake PDF','Bin tag shows the serial and the updated serial.'],
+  [O,'Print and file','Front page in the folder sleeve. Tech ticks downstream checks on paper.']]},
+ {n:'Upgrade and test',s:[
+  [A,'Tear down and upfit prep','Scan the Intake QR. New serials are entered as parts go in. Cameleon Advanced tab checked.'],
+  [A,'Floor Test','Carries RMA and the new serials forward. Photo zip downloads with the PDF. Whether upfit keeps this step is still to be confirmed.'],
+  [A,'Jake’s Final','Final check against the upgraded configuration. Also still to be confirmed for upfit.'],
+  [D,'TFU or radar?','If the upgraded unit has them, run the calibration form.',['Yes','Calibration, then ATP'],['No','Straight to ATP']]]},
+ {n:'Accept',s:[
+  [A,'ATP','New serials and the Windows activation key are used. The ATP shows “Replaces old serial”.'],
+  [D,'Any punch items?','Same rule as repair.',['Yes','Technician fixes, auditor re-checks'],['No','Go to DD1149']]]},
+ {n:'Close out',s:[
+  [N,'DD1149','Uses the new serial and shows the old one.'],
+  [O,'Ship','Folder shows old and new serials. Paperwork goes with the unit.']]}]},
+build:{label:'New build',proposed:1,blurb:'Proposed, not built yet. The government supplies the F-250. Devices, sensors and enclosures arrive later.',
+ lanes:[
+ {n:'Truck arrives',s:[
+  [A,'Intake','Planned eMSC-L or M2S2 serial is the main serial. VIN, plate, kilo, mileage, condition notes and photos.'],
+  [N,'Truck prep','Wiring and cabling, mounts and brackets, truck mods and fit checks. Mark “prepped, waiting on devices” and park the record.']]},
+ {n:'Build and test',s:[
+  [N,'Floor Test','Enclosures arrive. Bench test off the battery enclosure: camera, LCU, pan/tilt, radar. Device serials are captured here.'],
+  [D,'Floor Test passed?','',['Yes','Assemble and integrate on the truck'],['No','Fix and retest']],
+  [O,'On-truck testing','Until everything is green. Ideally the tech runs the ATP first; to be raised with the site manager.'],
+  [A,'Jake’s Final','Final items addressed, then Jake’s final inspection.'],
+  [A,'TFU & Radar Calibration','Normally after integration. May happen later.']]},
+ {n:'Accept',s:[
+  [A,'ATP','Acceptance test, then the punch list.'],
+  [A,'Technician, then Auditor','Technicians correct, a different person audits.'],
+  [O,'PIVCO','Customer acceptance.']]},
+ {n:'Close out',s:[
+  [N,'DD1149','Sign-off form. Ravi to provide the form.'],
+  [O,'Final delivery','']]}]},
+audit:{label:'Punch list and audit',blurb:'The ATP finds problems, the repair tech fixes them, and a different person checks only what failed.',
+ lanes:[
+ {n:'Find',s:[
+  [A,'ATP finds problems','Failed lines become a punch list with a disposition: repair, advise, courtesy or TBD.'],
+  [A,'Punch list QR','Carries the punch list and the RMA so nobody retypes it.']]},
+ {n:'Fix',s:[
+  [A,'Technician mode','Repair tech scans the QR and logs what was fixed. Output is the Repairs Completed record.'],
+  [D,'Who is auditing?','The auditor cannot be the tech who did the repair.',['Same person','Blocked'],['Different person','Continue']]]},
+ {n:'Check',s:[
+  [A,'Auditor mode','Scans the same QR. Only the originally failed items appear.'],
+  [A,'Re-check','Auditor confirms each failed item is fixed. Passed items are not re-inspected.'],
+  [A,'Audit PDF','Saved as RMA-SERIAL-AUDIT. Photos download as a zip.']]},
+ {n:'File',s:[
+  [O,'Back to the folder','Printed audit goes in the folder so the boss can see it is closed out.']]}],
+ note:'Repair items are fixed and re-checked. Advise and courtesy items are listed for the customer without a repair.'},
+carry:{label:'What carries',rules:[
+ ['Core data','Platform and device serials, VIN, plate, kilo, revisions, mileage, engine and idle hours. Mileage and hours show as the “last reading”, never prefilled. Serial inputs default to CAPS.'],
+ ['Intake QR','Core data first, then the RMA, then the work list: customer-reported issues, failed lines and tech notes. If space runs out, notes shrink first, then items drop.'],
+ ['RMA prompt','Asked before any inspection: RMA, service order, account indicator. Can be skipped; files then use X in place of the RMA.'],
+ ['RMA carry-over','Scanning a QR from an earlier form fills the RMA on the next one. Typing it works too.'],
+ ['File naming','<code>RMA 5512-SERIAL-TYPE-MM-DD-YY</code><br>No RMA: <code>X-SERIAL-TYPE-MM-DD-YY</code><br>Types: INTAKE, POST-REPAIR, FLOOR-TEST, FINAL, CALIBRATION, ATP, PUNCH-LIST, AUDIT, REPAIRS-COMPLETED, CARRYOVER.'],
+ ['Photo zips','Each PDF download also saves a zip of its photos with the same name. ATP and DD1149 photos get their own zip. Tablets may ask permission for multiple downloads.'],
+ ['Folder front page','Built from Intake. Platform serial large, plus the Intake QR and downstream checks as paper tick boxes.'],
+ ['Intake PDF order','1. Folder front page (folder sleeve). 2. Bin tag page with serial and any upfit serial (property bin). 3. The rest of the Intake report.'],
+ ['Windows key','Captured with the ATP server serial. Prints on the ATP PDF and the email.'],
+ ['DD1149','Required whenever a truck is about to be delivered: after ATP and after PIVCO.']]}
+};
+var tabs=document.getElementById('tabs'),view=document.getElementById('view'),keys=Object.keys(PATHS);
+function esc(s){return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
+function render(k){
+  var p=PATHS[k],h='';
+  Array.prototype.forEach.call(tabs.children,function(b){b.setAttribute('aria-selected',b.dataset.k===k?'true':'false');});
+  if(p.rules){
+    h='<p class="blurb">The rules every form follows.</p><div class="rules">'+p.rules.map(function(r){return '<div class="rule"><h3>'+esc(r[0])+'</h3><p>'+r[1]+'</p></div>';}).join('')+'</div>';
+  }else{
+    var n=0;
+    h='<p class="blurb">'+esc(p.blurb)+(p.proposed?'<span class="tag">Proposed</span>':'')+'</p><div class="lanes">'+p.lanes.map(function(l){
+      return '<section class="lane"><h2>'+esc(l.n)+'</h2><ol class="steps">'+l.s.map(function(s){
+        n++; var br=s.slice(3).map(function(b){return '<span><em>'+esc(b[0]).toUpperCase()+'</em>'+esc(b[1])+'</span>';}).join('');
+        return '<li class="step '+s[0]+'"><span class="n">'+n+'</span><b>'+esc(s[1])+'</b>'+(s[2]?'<p>'+esc(s[2])+'</p>':'')+(br?'<div class="br">'+br+'</div>':'')+'</li>';
+      }).join('')+'</ol></section>';}).join('')+'</div>'+(p.note?'<p class="note">'+esc(p.note)+'</p>':'');
+  }
+  view.innerHTML=h;
+  try{history.replaceState(null,'','#'+k);}catch(e){}
+}
+tabs.innerHTML=keys.map(function(k){return '<button role="tab" data-k="'+k+'">'+esc(PATHS[k].label)+'</button>';}).join('');
+tabs.addEventListener('click',function(e){var b=e.target.closest('button');if(b)render(b.dataset.k);});
+var start=(location.hash||'').slice(1);render(PATHS[start]?start:'repair');
+</script>
+</body></html>
