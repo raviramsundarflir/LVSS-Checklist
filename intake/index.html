@@ -55,7 +55,7 @@ label.f{display:block;font-size:12px;color:var(--mut);font-weight:600;margin:0 0
 .box{width:64px;height:48px;border:2px solid #98a4b6;border-radius:10px;font-size:22px;font-weight:700;background:#fff;padding:0}
 .box.pass{background:var(--pass);border-color:var(--pass);color:#fff}
 .box.fail{background:var(--fail);border-color:var(--fail);color:#fff}
-.box.blk{background:#b58900;border-color:#b58900;color:#fff;font-size:24px}.it.blk{background:#fffaf0}
+.box.blk{background:#b58900;border-color:#b58900;color:#fff;font-size:24px}.it.blk{background:#fffaf0}.it.todo{background:#fff6c7;box-shadow:inset 4px 0 0 #e0a800}
 .box.na{background:#8a94a3;border-color:#8a94a3;color:#fff;font-size:15px}
 .box{position:relative}.box.fixed{color:#c62828}.box .fx{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#22d65f;font-size:34px;font-weight:900;text-shadow:0 0 4px #000,0 0 2px #000}.garrow{display:flex;align-items:center;gap:12px;margin:-4px 0 10px;color:#1b8a3a;font-weight:800;font-size:17px;animation:gpulse 1.2s ease-in-out infinite}.garrow svg{flex:none}@keyframes gpulse{0%,100%{transform:translateX(0)}50%{transform:translateX(10px)}}.pl.target,.card.target{outline:4px solid #1b8a3a;outline-offset:2px}.it.fail{background:#fff4f4}
 .pnl{grid-column:1/-1;padding:6px 6px 6px 50px}
@@ -13244,7 +13244,7 @@ function issSumHtml(x){const r=S.rec,d=r.items[x.id]||{st:'',lvl:'',ph:[]};const
 function rowHtml(x){if(issCollapsed(x))return issSumHtml(x);const r=S.rec,d=r.items[x.id]||{st:'',lvl:'',note:'',ph:[],v:{}};const open=S.detail[x.id]||d.st==='fail'||d.st==='blk'||(d.note||(d.ph&&d.ph.length));
  const fl=x.f.length?`<div class="fl">${x.f.map((n,i)=>`<label>${esc(n)}<input data-b="items.${x.id}.v.${i}" value="${esc((d.v||{})[i]||'')}"></label>`).join('')}</div>`:'';
  const txt=x.extra?`<input data-b="extraT.${x.id}" value="${esc(x.t)}" placeholder="Describe the added item…">`:`<span style="white-space:pre-line">${stabH(esc(x.t))}</span>`;
- return `<div class="it ${d.st}" id="r-${x.id}" data-id="${x.id}"><div class="n">${x.label}</div><div class="tx">${arwHtml(d)}${txt}${fl}${x.sec.kind==='rep'?`<div style="margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="muted" style="font-size:13px">Reported on (leave blank = date at top)</span><input type="date" data-b="items.${x.id}.rdate" value="${esc(d.rdate||'')}" style="max-width:190px;min-height:38px;padding:4px 8px"></div>`:''}${x.extra&&isIss(x.sec)?`<div class="row" style="margin-top:6px;gap:6px"><button class="${x.sec.kind==='rep'?'pri':''}" data-act="src" data-id="${x.id}" data-v="rep" style="min-height:38px;padding:4px 12px">Customer reported</button><button class="${x.sec.kind==='new'?'pri':''}" data-act="src" data-id="${x.id}" data-v="new" style="min-height:38px;padding:4px 12px">Found by FLIR tech</button></div>`:''}</div>
+ return `<div class="it ${d.st}${d.st?'':' todo'}" id="r-${x.id}" data-id="${x.id}"><div class="n">${x.label}</div><div class="tx">${arwHtml(d)}${txt}${fl}${x.sec.kind==='rep'?`<div style="margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="muted" style="font-size:13px">Reported on (leave blank = date at top)</span><input type="date" data-b="items.${x.id}.rdate" value="${esc(d.rdate||'')}" style="max-width:190px;min-height:38px;padding:4px 8px"></div>`:''}${x.extra&&isIss(x.sec)?`<div class="row" style="margin-top:6px;gap:6px"><button class="${x.sec.kind==='rep'?'pri':''}" data-act="src" data-id="${x.id}" data-v="rep" style="min-height:38px;padding:4px 12px">Customer reported</button><button class="${x.sec.kind==='new'?'pri':''}" data-act="src" data-id="${x.id}" data-v="new" style="min-height:38px;padding:4px 12px">Found by FLIR tech</button></div>`:''}</div>
  <button class="ic" data-act="cam" data-id="${x.id}" title="Photo">📷${(d.ph||[]).length?`<b>${d.ph.length}</b>`:''}</button>
  <button class="ic" data-act="det" data-id="${x.id}" title="Notes">✎</button>
  <button class="box ${d.st} ${d.st==='fail'&&d.rep?'fixed':''}" data-act="tog" data-id="${x.id}">${STL[d.st||'']}${d.st==='fail'&&d.rep?'<span class="fx">✓</span>':''}</button>
@@ -14742,7 +14742,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New eMSC-L serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='c7dab71d38';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='b479f62dca';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
@@ -14755,7 +14755,7 @@ fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r
 window.addEventListener('load',function(){setTimeout(chk,1500);});
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')chk();});
 window.addEventListener('online',chk);
-})();</script><script>(function(){var S='df1665';window.__SUITE=S;var last='',lt=0;
+})();</script><script>(function(){var S='4a1e45';window.__SUITE=S;var last='',lt=0;
 function warn(t){if(!document.body||document.getElementById('qrVerWarn'))return;var d=document.createElement('div');d.id='qrVerWarn';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:64px;z-index:2147483001;background:#8a4b00;color:#fff;font:600 15px/1.35 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">'+t+'</span><button id="qrVerX" style="background:#fff;color:#8a4b00;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">OK</button>';
