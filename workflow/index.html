@@ -66,6 +66,14 @@ nav button:focus-visible{outline:3px solid var(--signal);outline-offset:2px}
 .rule h3{font-family:var(--display);text-transform:uppercase;letter-spacing:.06em;font-size:19px;margin:0 0 6px;color:var(--navy)}
 .rule p{margin:0;color:var(--muted);font-size:14px}
 code{font:13px var(--mono);background:var(--navy-soft);color:var(--navy);padding:2px 6px;border-radius:3px;overflow-wrap:anywhere}
+.lane h2{display:flex;justify-content:space-between;gap:8px}
+.lane h2 .sub{white-space:nowrap;font:600 14px var(--mono);letter-spacing:0;text-transform:none;color:var(--ink)}
+.tm{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;color:var(--muted)}
+.tm input{width:88px;min-height:40px;font:600 15px var(--mono);color:var(--ink);background:var(--bg);border:2px solid var(--line);border-radius:6px;padding:4px 8px}
+.tm input:focus{outline:3px solid var(--signal);outline-offset:1px;border-color:var(--navy)}
+.total{position:sticky;bottom:0;margin-top:18px;padding:12px 16px;background:var(--navy);color:#fff;border-radius:8px;display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:space-between;font-size:16px;padding-bottom:max(12px,env(safe-area-inset-bottom,0px))}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .total{color:#06182b}}
+:root[data-theme="dark"] .total{color:#06182b}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion:no-preference){.step{transition:transform .15s}.step:hover{transform:translateY(-1px)}}
 </style>
@@ -83,58 +91,61 @@ code{font:13px var(--mono);background:var(--navy-soft);color:var(--navy);padding
 <script>
 var A='app',O='out',D='dec',N='new';
 var PATHS={
-repair:{label:'Repair',blurb:'Customer unit comes in, is repaired, tested and signed off. Floor Test and Jake’s Final are not part of repair.',
+repair:{label:'Repair',blurb:'Customer unit comes in, issues are identified and corrected, and a summary report is submitted. No ATP, Floor Test or Jake’s Final on a repair.',
  lanes:[
  {n:'Intake',s:[
   [A,'Intake','Customer-reported issues, core data, photos, failed lines. Makes the Intake QR.'],
   [A,'RMA prompt','Before inspection starts: RMA, service order and account indicator (ZM, Z1, Z2, Z3 or other).'],
   [A,'Intake PDF','Folder front page and bin tag page lead the PDF. Photo zip downloads with it.'],
   [O,'Print and file','Front page in the folder sleeve. Bin tag on the customer property bin.']]},
- {n:'Repair and calibrate',s:[
-  [A,'Post-Repair','Scan the Intake QR. Core data and work list load. Log repairs and new findings.'],
-  [D,'Post-Repair complete?','Punch list is built from the work list and any new findings, each with a disposition.'],
-  [D,'TFU or radar?','If the unit has them, run TFU & Radar Calibration.',['Yes','Calibration form, then ATP'],['No','Straight to ATP']]]},
- {n:'Accept',s:[
-  [A,'ATP','Acceptance test. Server serial and Windows activation key go on the PDF and email.'],
-  [D,'Any punch items?','Failed lines become the punch list.',['Yes','Technician fixes, auditor re-checks'],['No','Go to DD1149']],
-  [A,'Technician, then Auditor','Different people. Auditor sees only the items that originally failed.']]},
- {n:'Close out',s:[
-  [N,'DD1149','Delivery sign-off form. Required whenever a truck is about to be delivered.'],
-  [O,'Ship','Complete folder and printed paperwork go with the unit.']]}]},
-upfit:{label:'Upgrade / upfit',blurb:'Same trip through the shop, but parts are swapped for newer ones, so old and new serial numbers are tracked.',
+ {n:'Repair',s:[
+  [A,'Post-Repair: identify issues','Scan the Intake QR. Core data and the customer-reported issues load. The tech adds anything else found.'],
+  [O,'Correct the issues','The tech repairs each identified issue.'],
+  [A,'Mark issues corrected','Back in Post-Repair, each corrected issue is marked repaired, with notes, parts and photos.'],
+  [D,'TFU or radar changed?','If the TFU or radar was replaced during the repair, it must be calibrated.',['Yes','Run TFU & Radar Calibration'],['No','Go to the report']]]},
+ {n:'Report and release',s:[
+  [A,'Summary report','Everything checked, everything identified as faulty, anything repaired, and the technician\u2019s notes.'],
+  [O,'Release to customer','The vehicle goes back to the customer. No ATP is run on a repair.']]}]},
+upfit:{label:'Upgrade / upfit',time:1,blurb:'Same trip through the shop, but parts are swapped for newer ones, so old and new serial numbers are tracked. Enter your estimated hours on each step to see the total.',
  lanes:[
  {n:'Intake',s:[
   [A,'Intake','Mark the unit as an upgrade. Capture core data and the swap list (old serial to new serial).'],
   [A,'RMA prompt','RMA, service order and account indicator before inspection starts.'],
   [A,'Intake PDF','Bin tag shows the serial and the updated serial.'],
   [O,'Print and file','Front page in the folder sleeve. Tech ticks downstream checks on paper.']]},
- {n:'Upgrade and test',s:[
+ {n:'Disassembly and build-up',s:[
   [A,'Tear down and upfit prep','Scan the Intake QR. New serials are entered as parts go in. Cameleon Advanced tab checked.'],
   [A,'Floor Test','Carries RMA and the new serials forward. Photo zip downloads with the PDF. Whether upfit keeps this step is still to be confirmed.'],
-  [A,'Jake’s Final','Final check against the upgraded configuration. Also still to be confirmed for upfit.'],
+  [A,'Jake\u2019s Final (ad hoc test)','Final check against the upgraded configuration, before the ATP. Also still to be confirmed for upfit.'],
   [D,'TFU or radar?','If the upgraded unit has them, run the calibration form.',['Yes','Calibration, then ATP'],['No','Straight to ATP']]]},
  {n:'Accept',s:[
-  [A,'ATP','New serials and the Windows activation key are used. The ATP shows “Replaces old serial”.'],
-  [D,'Any punch items?','Same rule as repair.',['Yes','Technician fixes, auditor re-checks'],['No','Go to DD1149']]]},
+  [A,'ATP','New serials and the Windows activation key are used. The ATP shows \u201cReplaces old serial\u201d.'],
+  [D,'Any punch items?','Same rule as repair.',['Yes','Corrections, then audit'],['No','Go to the final report']],
+  [A,'Punch list corrections','The technician fixes each punch list item.'],
+  [A,'ATP audit','A different person re-checks only the originally failed items until they pass.'],
+  [A,'Final report and pass certificate','Overall ATP, any issues and how each was addressed, then the ATP pass certificate.']]},
  {n:'Close out',s:[
   [N,'DD1149','Uses the new serial and shows the old one.'],
   [O,'Ship','Folder shows old and new serials. Paperwork goes with the unit.']]}]},
-build:{label:'New build',proposed:1,blurb:'Proposed, not built yet. The government supplies the F-250. Devices, sensors and enclosures arrive later.',
+build:{label:'New build',proposed:1,time:1,blurb:'Proposed, not built yet. The government supplies the F-250. Devices, sensors and enclosures arrive later. Enter your estimated hours on each step to see the total.',
  lanes:[
- {n:'Truck arrives',s:[
+ {n:'Truck build',s:[
   [A,'Intake','Planned eMSC-L or M2S2 serial is the main serial. VIN, plate, kilo, mileage, condition notes and photos.'],
-  [N,'Truck prep','Wiring and cabling, mounts and brackets, truck mods and fit checks. Mark “prepped, waiting on devices” and park the record.']]},
- {n:'Build and test',s:[
-  [N,'Floor Test','Enclosures arrive. Bench test off the battery enclosure: camera, LCU, pan/tilt, radar. Device serials are captured here.'],
-  [D,'Floor Test passed?','',['Yes','Assemble and integrate on the truck'],['No','Fix and retest']],
-  [O,'On-truck testing','Until everything is green. Ideally the tech runs the ATP first; to be raised with the site manager.'],
-  [A,'Jake’s Final','Final items addressed, then Jake’s final inspection.'],
+  [N,'Truck prep','Wiring and cabling, mounts and brackets, truck mods and fit checks. Mark \u201cprepped, waiting on devices\u201d and park the record.']]},
+ {n:'Enclosures received',s:[
+  [N,'Floor Test','Bench test off the battery enclosure: camera, LCU, pan/tilt, radar. Device serials are captured here.'],
+  [D,'Floor Test passed?','',['Yes','Install in the cab'],['No','Fix and retest']],
+  [O,'Installation into the cab','Assemble and integrate on the truck.'],
+  [O,'Dressing','Cable and hardware dressing.'],
+  [A,'Jake\u2019s Final (ad hoc test)','Ad hoc testing before the ATP. Final items addressed here.'],
   [A,'TFU & Radar Calibration','Normally after integration. May happen later.']]},
- {n:'Accept',s:[
-  [A,'ATP','Acceptance test, then the punch list.'],
-  [A,'Technician, then Auditor','Technicians correct, a different person audits.'],
-  [O,'PIVCO','Customer acceptance.']]},
- {n:'Close out',s:[
+ {n:'ATP and punch list',s:[
+  [A,'ATP','Acceptance test. Ideally the tech runs it earlier; to be raised with the site manager.'],
+  [A,'Punch list corrections','Technicians correct each item on the punch list.'],
+  [A,'ATP audit','A different person verifies the corrections until every item passes.'],
+  [A,'Final report and pass certificate','Overall ATP, any issues and how each was addressed, then the ATP pass certificate.']]},
+ {n:'Customer',s:[
+  [O,'Customer inspection (PIVCO)','Customer acceptance.'],
   [N,'DD1149','Sign-off form. Ravi to provide the form.'],
   [O,'Final delivery','']]}]},
 audit:{label:'Punch list and audit',blurb:'The ATP finds problems, the repair tech fixes them, and a different person checks only what failed.',
@@ -164,6 +175,20 @@ carry:{label:'What carries',rules:[
  ['Windows key','Captured with the ATP server serial. Prints on the ATP PDF and the email.'],
  ['DD1149','Required whenever a truck is about to be delivered: after ATP and after PIVCO.']]}
 };
+var TV={};try{TV=JSON.parse(localStorage.getItem('wf_times')||'{}')||{};}catch(e){TV={};}
+function fmtH(x){return (Math.round(x*100)/100)+' h';}
+function wireTimes(k){
+  function sum(){
+    var tot=0;
+    Array.prototype.forEach.call(view.querySelectorAll('.lane'),function(l){
+      var t=0;Array.prototype.forEach.call(l.querySelectorAll('input[data-t]'),function(i){t+=parseFloat(i.value)||0;});
+      l.querySelector('.sub').textContent=t?fmtH(t):''; tot+=t;});
+    var el=document.getElementById('total');
+    if(el){var days=tot/8;el.innerHTML='<b>Estimated total</b> <span>'+fmtH(tot)+(tot?' &middot; about '+(Math.round(days*10)/10)+' working days at 8 h':'')+'</span>';}
+  }
+  view.addEventListener('input',function(e){var i=e.target.closest('input[data-t]');if(!i)return;TV[i.dataset.t]=i.value;try{localStorage.setItem('wf_times',JSON.stringify(TV));}catch(x){}sum();});
+  sum();
+}
 var tabs=document.getElementById('tabs'),view=document.getElementById('view'),keys=Object.keys(PATHS);
 function esc(s){return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
 function render(k){
@@ -174,12 +199,12 @@ function render(k){
   }else{
     var n=0;
     h='<p class="blurb">'+esc(p.blurb)+(p.proposed?'<span class="tag">Proposed</span>':'')+'</p><div class="lanes">'+p.lanes.map(function(l){
-      return '<section class="lane"><h2>'+esc(l.n)+'</h2><ol class="steps">'+l.s.map(function(s){
-        n++; var br=s.slice(3).map(function(b){return '<span><em>'+esc(b[0]).toUpperCase()+'</em>'+esc(b[1])+'</span>';}).join('');
-        return '<li class="step '+s[0]+'"><span class="n">'+n+'</span><b>'+esc(s[1])+'</b>'+(s[2]?'<p>'+esc(s[2])+'</p>':'')+(br?'<div class="br">'+br+'</div>':'')+'</li>';
-      }).join('')+'</ol></section>';}).join('')+'</div>'+(p.note?'<p class="note">'+esc(p.note)+'</p>':'');
+      return '<section class="lane"><h2>'+esc(l.n)+(p.time?'<span class="sub" data-lane="'+esc(l.n)+'"></span>':'')+'</h2><ol class="steps">'+l.s.map(function(s){
+        n++; var tid=k+':'+n, tm=(p.time&&s[0]!==D)?'<label class="tm">Est. hours <input type="number" inputmode="decimal" min="0" step="0.25" data-t="'+tid+'" value="'+esc(TV[tid]||'')+'" aria-label="Estimated hours for '+esc(s[1])+'"></label>':''; var br=s.slice(3).map(function(b){return '<span><em>'+esc(b[0]).toUpperCase()+'</em>'+esc(b[1])+'</span>';}).join('');
+        return '<li class="step '+s[0]+'"><span class="n">'+n+'</span><b>'+esc(s[1])+'</b>'+(s[2]?'<p>'+esc(s[2])+'</p>':'')+(br?'<div class="br">'+br+'</div>':'')+tm+'</li>';
+      }).join('')+'</ol></section>';}).join('')+'</div>'+(p.time?'<div class="total" id="total"></div>':'')+(p.note?'<p class="note">'+esc(p.note)+'</p>':'');
   }
-  view.innerHTML=h;
+  view.innerHTML=h; if(p.time){wireTimes(k);}
   try{history.replaceState(null,'','#'+k);}catch(e){}
 }
 tabs.innerHTML=keys.map(function(k){return '<button role="tab" data-k="'+k+'">'+esc(PATHS[k].label)+'</button>';}).join('');
