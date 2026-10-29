@@ -12929,7 +12929,146 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
 /***/ })
 /******/ ])["default"];
-});</script><script>/* ===== shared: report recipients (Ravi, 2026-10-29) =====
+});</script><script>/* ===== shared: camera (Ravi, 2026-10-29) =====
+   1) Photos: every "take a photo" button (a file input with the capture attribute) opens a camera
+      inside the form. It starts on the back camera, has Switch camera, Light (when the camera has one),
+      a shutter, then Retake / Use this photo. The tablet's own camera app stays available as a backup.
+   2) QR scanners: live scanning starts on the back camera (or the camera picked last time) and gets a
+      Switch camera button.
+   The camera choice is remembered on this tablet for every form (localStorage 'camPick'). */
+(function(){
+var MD=navigator.mediaDevices,OK=!!(MD&&MD.getUserMedia&&window.isSecureContext&&window.DataTransfer);
+var KEY='camPick';
+function lsGet(){try{return JSON.parse(localStorage.getItem(KEY)||'null')||{};}catch(e){return {};}}
+function lsSet(o){try{localStorage.setItem(KEY,JSON.stringify(o));}catch(e){}}
+var origGUM=OK?MD.getUserMedia.bind(MD):null;
+var live=new Set();
+function trackOf(s){return s&&s.getVideoTracks?s.getVideoTracks()[0]:null;}
+function sett(t){try{return (t&&t.getSettings&&t.getSettings())||{};}catch(e){return {};}}
+function facingOf(t){var f=sett(t).facingMode;if(f)return f;var l=String(t&&t.label||'').toLowerCase();if(/back|rear|environment|world/.test(l))return 'environment';if(/front|user|selfie|face/.test(l))return 'user';return '';}
+function camName(t){var f=facingOf(t);return f==='environment'?'Back camera':f==='user'?'Front camera (faces you)':(t&&t.label)||'Camera';}
+function remember(t){if(!t)return;lsSet({id:sett(t).deviceId||'',facing:facingOf(t),label:t.label||''});}
+function withX(v,x){var o={};if(v&&typeof v==='object')for(var k in v)if(k!=='facingMode'&&k!=='deviceId')o[k]=v[k];for(var j in x)o[j]=x[j];return o;}
+function vidsOf(s){return [].filter.call(document.querySelectorAll('video'),function(v){return v.srcObject===s;});}
+function rebind(s){vidsOf(s).forEach(function(v){v.srcObject=null;v.srcObject=s;var p=v.play();if(p&&p.catch)p.catch(function(){});});}
+async function cams(){try{return (await MD.enumerateDevices()).filter(function(d){return d.kind==='videoinput'&&d.deviceId;});}catch(e){return [];}}
+/* open the remembered camera, else the back camera, else whatever the browser gives */
+async function openBest(v){
+ var p=lsGet(),tries=[],err=null;
+ /* device ids can change between pages or sessions (Brave), so match the saved camera by name first */
+ if(p.label){var m=(await cams()).filter(function(d){return d.label===p.label;})[0];if(m)tries.push(withX(v,{deviceId:{exact:m.deviceId}}));}
+ if(p.id)tries.push(withX(v,{deviceId:{exact:p.id}}));
+ tries.push(withX(v,{facingMode:{exact:p.facing||'environment'}}));
+ if(p.facing&&p.facing!=='environment')tries.push(withX(v,{facingMode:{exact:'environment'}}));
+ tries.push(withX(v,{facingMode:{ideal:'environment'}}));
+ for(var i=0;i<tries.length;i++){
+  try{var s=await origGUM({audio:false,video:tries[i]});return await fixFront(s,v,p);}
+  catch(e){err=e;if(e&&(e.name==='NotAllowedError'||e.name==='SecurityError'))throw e;}}
+ throw err||new Error('No camera');}
+/* no choice saved yet and the browser handed us the front camera: look for a back one */
+async function fixFront(s,v,p){var t=trackOf(s);if(p.id||p.facing||facingOf(t)!=='user')return s;
+ var cur=sett(t).deviceId,ds=await cams();
+ var back=ds.filter(function(d){return d.deviceId!==cur&&/back|rear|environment/i.test(d.label);})[0];
+ if(!back)return s;
+ try{t.stop();var s2=await origGUM({audio:false,video:withX(v,{deviceId:{exact:back.deviceId}})});return s2;}
+ catch(e){try{return await origGUM({audio:false,video:withX(v,{deviceId:{exact:cur}})});}catch(e2){return s;}}}
+/* next camera in the list (one camera can be open at a time on most tablets, so the current one stops first) */
+async function nextTrack(cur,v){var ds=await cams();if(ds.length<2)return null;var id=sett(cur).deviceId,i=-1;
+ ds.forEach(function(d,k){if(d.deviceId===id)i=k;});cur.stop();
+ for(var k=1;k<=ds.length;k++){var d=ds[(i+k+ds.length)%ds.length];if(d.deviceId===id&&k<ds.length)continue;
+  try{var s=await origGUM({audio:false,video:withX(v,{deviceId:{exact:d.deviceId}})});var t=trackOf(s);remember(t);return t;}catch(e){}}
+ return null;}
+
+/* ---------- QR scanners: getUserMedia wrapper + Switch camera button ---------- */
+if(OK){MD.getUserMedia=function(c){
+ if(!c||!c.video)return origGUM(c);
+ var v=c.video===true?{}:c.video;
+ if(v&&typeof v==='object'&&v.deviceId)return origGUM(c);
+ return openBest(v).then(function(s){s.__v=v;live.add(s);watch(s,0);return s;});};}
+function watch(s,n){setTimeout(function(){var vs=vidsOf(s);if(vs.length){vs.forEach(function(v){addSwitch(v,s);});return;}if(n<20)watch(s,n+1);},150);}
+async function addSwitch(video,s){if(video.__camSw)return;video.__camSw=1;if((await cams()).length<2)return;
+ var b=document.createElement('button');b.type='button';b.className='camsw';
+ b.style.cssText='display:block;width:100%;margin:8px 0 0;min-height:44px;border-radius:8px;border:1.5px solid #8a94a6;background:#fff;color:#1b2430;font:600 15px system-ui,sans-serif;cursor:pointer';
+ var lab=function(){b.textContent='⟲ Switch camera  ·  now: '+camName(trackOf(s));};lab();
+ b.addEventListener('click',async function(e){e.preventDefault();e.stopPropagation();if(b.disabled)return;b.disabled=true;b.textContent='Switching…';
+  var old=trackOf(s),t=old?await nextTrack(old,s.__v||{}):null;
+  if(!t){try{t=trackOf(await openBest(s.__v||{}));}catch(e2){}}
+  if(t){s.getVideoTracks().forEach(function(x){s.removeTrack(x);});s.addTrack(t);rebind(s);}
+  b.disabled=false;lab();});
+ video.insertAdjacentElement('afterend',b);}
+/* pause the scanner while the photo camera is open (tablets open one camera at a time), resume after */
+function pauseLive(){var out=[];live.forEach(function(s){var t=trackOf(s);if(!t||t.readyState!=='live'||!vidsOf(s).length){if(!t||t.readyState!=='live')live.delete(s);return;}
+ var id=sett(t).deviceId;t.stop();s.removeTrack(t);out.push({s:s,id:id});});return out;}
+function resumeLive(list){if(!list.length)return;setTimeout(function(){list.forEach(async function(x){
+ if(!vidsOf(x.s).some(function(v){return v.isConnected;}))return;
+ try{var s2=await origGUM({audio:false,video:x.id?withX(x.s.__v,{deviceId:{exact:x.id}}):(x.s.__v||{})});var t=trackOf(s2);
+  if(!vidsOf(x.s).some(function(v){return v.isConnected;})){t.stop();return;}x.s.addTrack(t);rebind(x.s);}catch(e){}});},700);}
+
+/* ---------- photos: camera inside the form ---------- */
+var oClick=HTMLInputElement.prototype.click;
+function want(el){return OK&&el&&el.tagName==='INPUT'&&el.type==='file'&&(el.hasAttribute('capture')||!!el.capture)&&!el.disabled&&!el.__camNative&&!el.hasAttribute('data-nativecam');}
+function nativeOpen(inp){inp.__camNative=true;try{oClick.call(inp);}finally{setTimeout(function(){inp.__camNative=false;},0);}}
+HTMLInputElement.prototype.click=function(){if(want(this)){openCam(this);return;}return oClick.apply(this,arguments);};
+document.addEventListener('click',function(e){var t=e.target;if(want(t)){e.preventDefault();openCam(t);}},true);
+var did=false;function css(){if(did)return;did=true;var st=document.createElement('style');st.textContent=
+ '#camx{position:fixed;inset:0;z-index:2147483600;background:#000;color:#fff;display:flex;flex-direction:column;font:600 16px/1.3 system-ui,-apple-system,sans-serif;touch-action:manipulation;user-select:none}'+
+ '#camx .cx-top{display:flex;align-items:center;gap:10px;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top))}#camx .cx-name{flex:1;min-width:0;font-size:17px}'+
+ '#camx .cx-stage{flex:1;position:relative;min-height:0;overflow:hidden}#camx video,#camx img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}'+
+ '#camx .cx-msg{position:absolute;left:18px;right:18px;top:38%;text-align:center;font-size:17px}#camx .cx-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .25s}'+
+ '#camx .cx-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px 6px}#camx .cx-bar>*{flex:1 1 0}#camx .cx-mid{display:flex;justify-content:center}'+
+ '#camx button{font:inherit;cursor:pointer;border-radius:12px;min-height:56px;padding:8px 12px;border:2px solid rgba(255,255,255,.55);background:rgba(255,255,255,.12);color:#fff}'+
+ '#camx button:disabled{opacity:.35}#camx button.on{background:#f2c200;border-color:#f2c200;color:#000}'+
+ '#camx .cx-shut{flex:none;width:84px;height:84px;min-height:84px;border-radius:50%;background:#fff;border:7px solid rgba(255,255,255,.4);background-clip:padding-box;padding:0}'+
+ '#camx .cx-use{background:#1b8a3a;border-color:#1b8a3a}#camx .cx-hide{visibility:hidden}#camx [hidden]{display:none!important}'+
+ '#camx .cx-alt{display:block;margin:0 auto;padding:6px 14px 10px;padding-bottom:max(10px,env(safe-area-inset-bottom));background:none;border:0;min-height:44px;font-weight:500;text-decoration:underline;opacity:.85}';
+ document.head.appendChild(st);}
+var ov=null;
+async function openCam(input){if(ov)return;css();
+ var paused=pauseLive(),VC={width:{ideal:2560},height:{ideal:1920}},stream=null,track=null,blob=null,url='',done=false;
+ ov=document.createElement('div');ov.id='camx';ov.setAttribute('role','dialog');ov.setAttribute('aria-label','Camera');
+ ov.innerHTML='<div class="cx-top"><div class="cx-name">Starting camera…</div><button type="button" data-cx="cancel">✕ Cancel</button></div>'+
+  '<div class="cx-stage"><video playsinline muted autoplay></video><img alt="Photo taken" hidden><div class="cx-msg"></div><div class="cx-flash"></div></div>'+
+  '<div class="cx-bar" data-mode="live"><button type="button" data-cx="switch" class="cx-hide">⟲ Switch camera</button><div class="cx-mid"><button type="button" class="cx-shut" data-cx="shoot" aria-label="Take photo" disabled></button></div><button type="button" data-cx="light" class="cx-hide">🔦 Light</button></div>'+
+  '<div class="cx-bar" data-mode="shot" hidden><button type="button" data-cx="retake">↺ Retake</button><button type="button" class="cx-use" data-cx="use">✓ Use this photo</button></div>'+
+  '<button type="button" class="cx-alt" data-cx="native">Use the tablet’s camera app instead</button>';
+ document.body.appendChild(ov);
+ var q=function(s){return ov.querySelector(s);},vid=q('video'),img=q('img'),msg=q('.cx-msg'),nm=q('.cx-name'),
+  bLive=q('[data-mode=live]'),bShot=q('[data-mode=shot]'),sw=q('[data-cx=switch]'),lt=q('[data-cx=light]'),sh=q('[data-cx=shoot]');
+ try{history.pushState({camx:1},'',location.href);}catch(e){}
+ function stopCam(){if(stream)stream.getTracks().forEach(function(t){t.stop();});stream=null;track=null;}
+ function close(back){if(done)return;done=true;stopCam();if(url)URL.revokeObjectURL(url);if(ov){ov.remove();ov=null;}
+  window.removeEventListener('popstate',onPop);document.removeEventListener('keydown',onKey,true);
+  if(back!==false){try{if(history.state&&history.state.camx)history.back();}catch(e){}}resumeLive(paused);}
+ function onPop(){close(false);}
+ function onKey(e){if(e.key==='Escape'){e.preventDefault();close();}}
+ window.addEventListener('popstate',onPop);document.addEventListener('keydown',onKey,true);
+ function say(t){msg.textContent=t||'';}
+ async function show(t){if(done){t.stop();return;}track=t;stream=new MediaStream([t]);vid.srcObject=stream;try{await vid.play();}catch(e){}
+  nm.textContent=camName(t);say('');sh.disabled=false;
+  sw.classList.toggle('cx-hide',(await cams()).length<2);
+  var caps={};try{caps=(t.getCapabilities&&t.getCapabilities())||{};}catch(e){}lt.classList.toggle('cx-hide',!caps.torch);lt.classList.remove('on');}
+ function fail(e){sh.disabled=true;nm.textContent='Camera';
+  say(e&&e.name==='NotAllowedError'?'Camera access is blocked for this page. Allow the camera for this site in the browser settings, or use the tablet’s camera app below.':'The camera could not start here. Use the tablet’s camera app below.');}
+ ov.addEventListener('click',async function(e){var b=e.target.closest&&e.target.closest('[data-cx]');if(!b||b.disabled)return;e.preventDefault();var a=b.dataset.cx;
+  if(a==='cancel'){close();return;}
+  if(a==='native'){close();nativeOpen(input);return;}
+  if(a==='switch'&&track){sh.disabled=true;sw.disabled=true;say('Switching…');var t=await nextTrack(track,VC);
+   if(!t){try{t=trackOf(await openBest(VC));}catch(e2){}}sw.disabled=false;if(done){if(t)t.stop();return;}if(t)await show(t);else fail();return;}
+  if(a==='light'&&track){var on=!b.classList.contains('on');try{await track.applyConstraints({advanced:[{torch:on}]});b.classList.toggle('on',on);}catch(e3){}return;}
+  if(a==='shoot'&&track&&vid.videoWidth){var c=document.createElement('canvas');c.width=vid.videoWidth;c.height=vid.videoHeight;c.getContext('2d').drawImage(vid,0,0,c.width,c.height);
+   var f=q('.cx-flash');f.style.transition='none';f.style.opacity='.85';requestAnimationFrame(function(){f.style.transition='opacity .25s';f.style.opacity='0';});
+   blob=await new Promise(function(r){c.toBlob(r,'image/jpeg',0.92);});if(!blob||done)return;
+   if(url)URL.revokeObjectURL(url);url=URL.createObjectURL(blob);img.src=url;img.hidden=false;vid.pause();bLive.hidden=true;bShot.hidden=false;return;}
+  if(a==='retake'){blob=null;img.hidden=true;bShot.hidden=true;bLive.hidden=false;var p=vid.play();if(p&&p.catch)p.catch(function(){});return;}
+  if(a==='use'&&blob){var d=new Date(),z=function(n){return String(n).padStart(2,'0');};
+   var file=new File([blob],'IMG_'+d.getFullYear()+z(d.getMonth()+1)+z(d.getDate())+'_'+z(d.getHours())+z(d.getMinutes())+z(d.getSeconds())+'.jpg',{type:'image/jpeg',lastModified:Date.now()});
+   close();try{var dt=new DataTransfer();dt.items.add(file);input.files=dt.files;}catch(e4){}
+   input.dispatchEvent(new Event('change',{bubbles:true}));}});
+ try{var s0=await openBest(VC);if(done){s0.getTracks().forEach(function(t){t.stop();});return;}await show(trackOf(s0));}catch(e){if(!done)fail(e);}
+}
+window.CamFix={open:function(i){openCam(i);},native:nativeOpen,pick:lsGet};
+})();
+</script><script>/* ===== shared: report recipients (Ravi, 2026-10-29) =====
    Every report, pass or fail: TSC@teledyne.com is always copied (Cc).
    The tech decides the To line: TSC, the customer address(es), or both.
    State lives on the record: rec.sendTo = {tscTo:bool, custOff:bool, cust:'a@b, c@d'}.
@@ -13141,7 +13280,7 @@ const isIss=sec=>sec.kind==='rep'||sec.kind==='new';
 const repIdx=r=>r.tpl.sections.findIndex(s=>s.kind==='rep');
 const secNo=(r,si)=>r.tpl.sections.slice(0,si+1).filter(s=>!isIss(s)).length;
 const secLabel=(r,si)=>{const s=r.tpl.sections[si];return isIss(s)?s.title:`Section ${secNo(r,si)}: ${s.title}`};
-function migrate(r){if(!r.cal)r.cal={st:'',date:''};if(r.vfPh){const a=(r.vfPh.v7||[]).slice();['v8','v9'].forEach(k=>{(r.vfPh[k]||[]).forEach(p=>{if(!a.includes(p))a.push(p);});delete r.vfPh[k];});if(a.length)r.vfPh.v7=a;}r.tpl.sections.forEach(s=>{if(s.kind==='new')s.title='Additional Issues Identified by Tech';});if(!r.tpl.sections.some(isIss)){EMBED.sections.filter(isIss).reverse().forEach(x=>r.tpl.sections.unshift(clone(x)));}r.swap=r.swap||{a:'',list:[]};if(!r.swap.chk)r.swap.chk='done';r.swap.list.forEach(e=>{e.mid=e.mid||[]});r.ver=r.ver||{};r.gear=gOrd(r.gear||newGear());r.hdr=r.hdr||{};r.hdr.ptype=r.hdr.ptype||'LVSS';ensureTruck(r);r.mail=r.mail||{};r.parts=r.parts||[];r.extra=r.extra||{};return r;}
+function migrate(r){if(!r.cal)r.cal={st:'',date:''};if(r.vfPh){const a=(r.vfPh.v7||[]).slice();['v8','v9'].forEach(k=>{(r.vfPh[k]||[]).forEach(p=>{if(!a.includes(p))a.push(p);});delete r.vfPh[k];});if(a.length)r.vfPh.v7=a;}r.tpl.sections.forEach(s=>{if(s.kind==='new')s.title='Additional Issues Identified by Tech';});if(!r.tpl.sections.some(isIss)){EMBED.sections.filter(isIss).reverse().forEach(x=>r.tpl.sections.unshift(clone(x)));}r.swap=r.swap||{a:'',list:[]};if(!r.swap.chk)r.swap.chk='done';r.swap.list.forEach(e=>{e.mid=e.mid||[]});r.ver=r.ver||{};r.gear=gearSort(r.gear||newGear((r.hdr||{}).ptype),(r.hdr||{}).ptype||'LVSS');r.hdr=r.hdr||{};r.hdr.ptype=r.hdr.ptype||'LVSS';ensureTruck(r);r.mail=r.mail||{};r.parts=r.parts||[];r.extra=r.extra||{};return r;}
 const swOf=(r,id)=>r.swap.list.find(x=>x.id===id);
 const midOf=(r,id)=>{for(const e of r.swap.list){const m=(e.mid||[]).find(z=>z.id===id);if(m)return m;}return null;};
 const rmaOk=v=>{v=String(v||'').trim();return (v&&v.toUpperCase()!=='TBD')?v:'';};
@@ -14886,7 +15025,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New eMSC-L serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='35a987ae61';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='41a9a14331';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
