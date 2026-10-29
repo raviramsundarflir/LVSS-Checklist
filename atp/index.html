@@ -14060,7 +14060,7 @@ function atpPdf(mode){
       var rowp=photos.slice(k,k+3), rh=IH+46; ens(rh);
       rowp.forEach(function(p,j){
         var x0=MX+j*(CWc+GAP); d.setDrawColor(190); d.setLineWidth(.5); d.rect(x0,y,CWc,IH);
-        try{ var pr=d.getImageProperties(p.data), kk=Math.min((CWc-4)/pr.width,(IH-4)/pr.height), w=pr.width*kk, hh2=pr.height*kk; d.addImage(p.data,'JPEG',x0+(CWc-w)/2,y+(IH-hh2)/2,w,hh2); }catch(e){}
+        try{ var pr=d.getImageProperties(pzd(p)), kk=Math.min((CWc-4)/pr.width,(IH-4)/pr.height), w=pr.width*kk, hh2=pr.height*kk; d.addImage(pzd(p),'JPEG',x0+(CWc-w)/2,y+(IH-hh2)/2,w,hh2); }catch(e){}
         var r=a.rows.find(function(q){ return q.num===p.num; }), dd=itemOf(rec,p.num), s2=dd.s||0;
         var status=r&&counts(r,dd)?(s2===0?'Not inspected':s2===5?'Not tested':STAT[s2].label.replace(' (awaiting parts)','')):'';
         var ty=y+IH+10; d.setFont('helvetica','bold'); d.setFontSize(7.5); d.setTextColor(0); wrap(d,(typeof p.num==='string'?(p.num.indexOf('dd:')===0?ddCap(rec,p):swCap(rec,p)):'Item '+p.num+(status?' - '+status:'')),CWc).slice(0,1).forEach(function(l){ d.text(l,x0,ty); ty+=9; });
@@ -14094,6 +14094,7 @@ function pdfName(mode){ var h=S.rec.header; return stdName(h.rma,snShow(h.newSer
 async function pdfOut(mode,how){
   if(dirty()) await save();
   toast('Preparing PDF...'); await new Promise(function(z){ setTimeout(z,40); });
+  try{ await atpZoom(); }catch(e){}
   var d;
   try{ d=mode==='audit'?atpAuditPdf(S.rec):atpPdf(mode); }catch(e){ console.error(e); alert('Could not create the PDF: '+(e.message||e)); return; }
   var blob=d.output('blob'), name=pdfName(mode);
@@ -14145,11 +14146,21 @@ function viewTarget(p){
   return null;
 }
 function zsHtml(src){ return '<div id="zs" style="position:relative;width:100%;flex:1 1 auto;min-height:150px;overflow:hidden;background:#000;border-radius:8px;touch-action:none;user-select:none;-webkit-user-select:none;line-height:0"><div id="zi" style="position:absolute;left:0;top:0;transform-origin:0 0;visibility:hidden"><img id="zimg" src="'+src+'" draggable="false" style="display:block;width:100%;height:100%"></div></div><div style="display:flex;gap:6px;margin-top:8px"><button type="button" id="zbOut" class="btn light" style="flex:1">－</button><button type="button" id="zbIn" class="btn light" style="flex:1">＋</button><button type="button" id="zbFit" class="btn light" style="flex:1.3">Fit</button></div>'; }
-function zsInit(){
+/* zoom crop for serial / revision photos: the report shows the photo cropped to where the tech left it zoomed */
+function zvOk(p){ var k=String(p.num); return k.indexOf('dd:s')===0||k.indexOf('dd:r')===0||k.indexOf('sw')===0||!!viewTarget(p); }
+function zvOpt(p){ if(!zvOk(p)) return {}; return {init:(p.zv&&(p.zv.rot||0)===(S.viewRot||0))?{x:p.zv.x,y:p.zv.y,w:p.zv.w,h:p.zv.h}:null, onView:function(v){ if(v.k>1.15&&v.w>0.02&&v.h>0.02) p.zv={rot:S.viewRot||0,x:v.x,y:v.y,w:v.w,h:v.h}; else delete p.zv; clearTimeout(S.zvT); S.zvT=setTimeout(function(){ DB.put('photos',p); },400); }}; }
+function pzd(p){ return (S.zimg&&S.zimg[p.id])||p.data; }
+async function atpZoom(){ S.zimg={}; for(var i=0;i<S.photos.length;i++){ var p=S.photos[i], z=p.zv; if(!z||!p.data) continue;
+  try{ var im=await new Promise(function(ok,no){ var e=new Image(); e.onload=function(){ ok(e); }; e.onerror=no; e.src=p.data; });
+    var a=(z.rot||0)*Math.PI/180, w=im.width, h=im.height, cs=Math.abs(Math.cos(a)), sn=Math.abs(Math.sin(a)), W=Math.round(w*cs+h*sn), H=Math.round(w*sn+h*cs), cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+    var g=cv.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,W,H); g.translate(W/2,H/2); g.rotate(a); g.drawImage(im,-w/2,-h/2);
+    var sx=Math.round(z.x*W), sy=Math.round(z.y*H), sw=Math.max(8,Math.round(z.w*W)), sh=Math.max(8,Math.round(z.h*H)), c2=document.createElement('canvas'), kk=Math.min(1,1400/Math.max(sw,sh));
+    c2.width=Math.round(sw*kk); c2.height=Math.round(sh*kk); c2.getContext('2d').drawImage(cv,sx,sy,sw,sh,0,0,c2.width,c2.height); S.zimg[p.id]=c2.toDataURL('image/jpeg',0.9); }catch(e){} } }
+function zsInit(opt){ opt=opt||{};
   var st=document.getElementById('zs'), zi=document.getElementById('zi'), im=document.getElementById('zimg'); if(!st) return;
   var k=1,tx=0,ty=0,bw=0,bh=0,g=null,P=new Map();
-  function apply(){ zi.style.transform='translate('+tx+'px,'+ty+'px) scale('+k+')'; }
-  function fit(){ var W=st.clientWidth,H=st.clientHeight,ar=(im.naturalWidth||4)/(im.naturalHeight||3); bw=Math.min(W,H*ar); bh=bw/ar; zi.style.width=bw+'px'; zi.style.height=bh+'px'; k=1; tx=(W-bw)/2; ty=(H-bh)/2; apply(); zi.style.visibility='visible'; }
+  function apply(){ zi.style.transform='translate('+tx+'px,'+ty+'px) scale('+k+')'; if(opt.onView&&bw){ var W=st.clientWidth,H=st.clientHeight,x0=Math.max(0,(0-tx)/k/bw),y0=Math.max(0,(0-ty)/k/bh),x1=Math.min(1,(W-tx)/k/bw),y1=Math.min(1,(H-ty)/k/bh); opt.onView({k:k,x:x0,y:y0,w:Math.max(0,x1-x0),h:Math.max(0,y1-y0)}); } }
+  function fit(){ var W=st.clientWidth,H=st.clientHeight,ar=(im.naturalWidth||4)/(im.naturalHeight||3); bw=Math.min(W,H*ar); bh=bw/ar; zi.style.width=bw+'px'; zi.style.height=bh+'px'; k=1; tx=(W-bw)/2; ty=(H-bh)/2; if(opt.init){ var z=opt.init; opt.init=null; k=Math.max(1,Math.min(10,Math.min(W/(z.w*bw),H/(z.h*bh)))); tx=W/2-(z.x+z.w/2)*bw*k; ty=H/2-(z.y+z.h/2)*bh*k; } apply(); zi.style.visibility='visible'; }
   function zoomAt(cx,cy,nk){ nk=Math.max(1,Math.min(10,nk)); var ix=(cx-tx)/k, iy=(cy-ty)/k; k=nk; tx=cx-ix*k; ty=cy-iy*k; apply(); }
   function loc(e){ var r=st.getBoundingClientRect(); return {x:e.clientX-r.left,y:e.clientY-r.top}; }
   function mid(){ var a=Array.from(P.values()); return {x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2,d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1}; }
@@ -14169,7 +14180,7 @@ function zsInit(){
 function viewRotate(d){ var v=S.view2; if(!v) return; S.viewRot=(((S.viewRot||0)+d)%360+360)%360; showPhoto(v.pid,true); }
 function showPhoto(pid,keep){
   var p=S.photos.find(function(x){ return x.id===pid; }); if(!p) return;
-  var t=viewTarget(p); S.view2={pid:pid}; if(!keep) S.viewRot=0;
+  var t=viewTarget(p); S.view2={pid:pid}; if(!keep) S.viewRot=(p.zv&&p.zv.rot)||0;
   var rot=S.viewRot||0;
   var go=function(src){
     var B=function(i,dg,l){ return '<button type="button" id="'+i+'" class="btn light" style="flex:1;padding:4px 2px;min-height:42px;font-size:14px" title="Rotate '+Math.abs(dg)+'°">'+l+'</button>'; };
@@ -14177,7 +14188,7 @@ function showPhoto(pid,keep){
     var canDel=true;
     modalRoot.innerHTML='<div class="scrim" data-act="noop"><div class="dialog vw" data-act="noop" style="width:min(96vw,1000px);height:96vh;height:96dvh;max-height:96dvh;padding:10px;display:flex;flex-direction:column;overflow:hidden">'+
       '<h2 style="margin:0 0 4px;font-size:17px">'+esc(t?t.what.charAt(0).toUpperCase()+t.what.slice(1):title)+'</h2>'+
-      '<p class="muted" style="margin:0 0 6px;font-size:13px;line-height:1.3">💡 <b>Tip:</b> rotate the picture first so the text reads level, then zoom in to check every character.'+(t?' Correct the serial number below as you go – it saves as you type.':'')+'</p>'+
+      '<p class="muted" style="margin:0 0 6px;font-size:13px;line-height:1.3">💡 <b>Tip:</b> rotate the picture first so the text reads level, then zoom in to check every character.'+(zvOk(p)?' <b>The report shows this photo cropped to the area you leave zoomed in on</b> (zoom all the way out for the full photo).':'')+(t?' Correct the serial number below as you go – it saves as you type.':'')+'</p>'+
       (t?'<input id="zsSer" value="'+esc(String(S.rec.header[t.path]||''))+'" placeholder="'+esc(t.lbl)+'" aria-label="'+esc(t.lbl)+'" autocapitalize="characters" autocomplete="off" spellcheck="false" style="width:100%;margin:0 0 6px;padding:6px 10px;min-height:44px;font:700 18px ui-monospace,Menlo,Consolas,monospace;border:2px solid var(--line);border-radius:8px">':'')+
       zsHtml(src)+
       '<div style="display:flex;gap:4px;align-items:center;margin-top:6px">'+B('rv1',-90,'⟲90')+B('rv2',-45,'↺45')+B('rv3',-5,'↺5')+'<button type="button" id="rv0" class="btn light" style="flex:.9;padding:4px 2px;min-height:42px;font-size:13px" title="Tap to reset rotation">'+rot+'°</button>'+B('rv4',5,'↻5')+B('rv5',45,'↻45')+B('rv6',90,'⟳90')+'</div>'+
@@ -14185,7 +14196,7 @@ function showPhoto(pid,keep){
     pvReorder();
     [['rv1',-90],['rv2',-45],['rv3',-5],['rv4',5],['rv5',45],['rv6',90]].forEach(function(x){ document.getElementById(x[0]).onclick=function(){ viewRotate(x[1]); }; });
     document.getElementById('rv0').onclick=function(){ S.viewRot=0; showPhoto(pid,true); };
-    zsInit();
+    zsInit(zvOpt(p));
     var si=document.getElementById('zsSer'); if(si) si.addEventListener('input',function(){ setHeaderVal(t.path,si.value); });
   };
   if(!rot){ go(p.data); return; }
@@ -15428,7 +15439,7 @@ function ddPdf(rec,dIn){
     if(!ph.length){ ddWarn(d); d.setFont('helvetica','bold'); d.setFontSize(14); d.text('NO PHOTO',bx+BW/2,by+BH/2+12,{align:'center'}); return; }
     var show=ph.slice(0,4), cols=show.length===1?1:2, rws=show.length<=2?1:2, pw=(BW-12-(cols-1)*6)/cols, phh=(BH-48-(rws-1)*4)/rws;
     show.forEach(function(p,j){ var px=bx+6+(j%cols)*(pw+6), py=by+34+Math.floor(j/cols)*(phh+4); d.setDrawColor(200); d.rect(px,py,pw,phh);
-      try{ var pr=d.getImageProperties(p.data), kk=Math.min((pw-2)/pr.width,(phh-2)/pr.height), w=pr.width*kk, hh=pr.height*kk; d.addImage(p.data,'JPEG',px+(pw-w)/2,py+(phh-hh)/2,w,hh); }catch(e){} });
+      try{ var pr=d.getImageProperties(pzd(p)), kk=Math.min((pw-2)/pr.width,(phh-2)/pr.height), w=pr.width*kk, hh=pr.height*kk; d.addImage(pzd(p),'JPEG',px+(pw-w)/2,py+(phh-hh)/2,w,hh); }catch(e){} });
     if(ph.length>4){ d.setFont('helvetica','normal'); d.setFontSize(8); d.setTextColor(90); d.text('+'+(ph.length-4)+' more photo(s) in the ATP report',bx+6,by+BH-5); }
   });
   if(!dIn) footers(d,rec,'DD1149 Base Serial Checksheet',new Set([1]));
@@ -15437,6 +15448,7 @@ function ddPdf(rec,dIn){
 async function ddOut(how){
   if(dirty()) await save();
   toast('Preparing checksheet...'); await new Promise(function(z){ setTimeout(z,40); });
+  try{ await atpZoom(); }catch(e){}
   var d; try{ d=ddPdf(S.rec); }catch(e){ console.error(e); alert('Could not create the PDF: '+(e.message||e)); return; }
   var blob=d.output('blob'), name=stdName(S.rec.header.rma,snShow(S.rec.header.newSerial,''),'DD1149',S.rec.header.date)+'.pdf';
   if(how==='share'){ var file=new File([blob],name,{type:'application/pdf'}), data={files:[file],title:'DD1149 Base Serial Checksheet - '+snD(S.rec.header),text:'Attached is the DD1149 base serial checksheet for eMSC-L '+snNum(S.rec.header.newSerial)+'.'};
@@ -15590,6 +15602,7 @@ function rxPhotoName(rec,p,n){
 }
 async function rxZipOut(){
   var rec=S.rec, h=rec.header, files=[], used={}, cnt={};
+  try{ await atpZoom(); }catch(e){}
   var pdf=ddPdf(rec).output('arraybuffer'); files.push({name:stdName(h.rma,snShow(h.newSerial,''),'DD1149',h.date)+'.pdf',data:new Uint8Array(pdf)});
   S.photos.forEach(function(p){ if(!p.data) return; var base=rxPhotoName(rec,p,1).replace(/ \(1\)\.jpg$/,''); cnt[base]=(cnt[base]||0)+1; var nm=base+' ('+cnt[base]+').jpg'; if(used[nm]) nm=base+' ('+cnt[base]+'b).jpg'; used[nm]=1; try{ files.push({name:nm,data:rxDataBytes(p.data)}); }catch(e){} });
   var blob=rxZip(files), name=stdName(h.rma,snShow(h.newSerial,''),'ATP-PHOTOS',h.date)+'.zip';
@@ -15846,7 +15859,7 @@ SendTo.init({rec:function(){ return S.rec; },dirty:function(){ markDirty(); save
 })();
 
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='287ad1c73c';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='717d254701';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
