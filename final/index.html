@@ -12957,7 +12957,69 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
 /***/ })
 /******/ ])["default"];
-});</script>
+});</script><script>/* ===== shared: report recipients (Ravi, 2026-10-29) =====
+   Every report, pass or fail: TSC@teledyne.com is always copied (Cc).
+   The tech decides the To line: TSC, the customer address(es), or both.
+   State lives on the record: rec.sendTo = {tscTo:bool, custOff:bool, cust:'a@b, c@d'}.
+   Forms that already keep a customer e-mail (Intake / Post-Repair / Quick Capture) pass get/set so
+   the same field is used. */
+(function(){
+var TSC='TSC@teledyne.com',HK='sendToHist',cfg={rec:function(){return null;},get:null,set:null,dirty:function(){},changed:function(){}};
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+var RX=/^[^@\s,;]+@[^@\s,;]+\.[^@\s,;]+$/;
+function list(s){var o=[],seen={};String(s||'').split(/[\s,;]+/).forEach(function(x){x=x.trim().replace(/^<|>$/g,'');var k=x.toLowerCase();if(RX.test(x)&&!seen[k]&&k!==TSC.toLowerCase()){seen[k]=1;o.push(x);}});return o;}
+function st(r){if(!r)return {};if(!r.sendTo||typeof r.sendTo!=='object')r.sendTo={};return r.sendTo;}
+function custStr(r){if(!r)return '';return cfg.get?String(cfg.get(r)||''):String(st(r).cust||'');}
+function setCust(r,v){if(cfg.set)cfg.set(r,v);else st(r).cust=v;}
+function addr(r){var s=st(r),cl=list(custStr(r)),custOn=!s.custOff&&cl.length>0,tscTo=!!s.tscTo||!custOn,to=[];
+ if(tscTo)to.push(TSC);if(custOn)to=to.concat(cl);
+ return {to:to.join(', '),cc:tscTo?'':TSC,list:to,tscTo:tscTo,custOn:custOn,cust:cl,auto:tscTo&&!s.tscTo};}
+function hist(){try{var a=JSON.parse(ls(HK)||'[]');return Array.isArray(a)?a.filter(function(x){return RX.test(x);}):[];}catch(e){return [];}}
+function remember(r){var cl=addr(r).custOn?list(custStr(r)):[];if(!cl.length)return;var h=hist(),low=cl.map(function(x){return x.toLowerCase();});h=cl.concat(h.filter(function(x){return low.indexOf(x.toLowerCase())<0;})).slice(0,8);ls(HK,JSON.stringify(h));}
+function tg(key,on,label,note){return '<button type="button" class="sto-t'+(on?' on':'')+'" data-sto="'+key+'" aria-pressed="'+(on?'true':'false')+'"><span class="sto-box">'+(on?'✓':'')+'</span><span class="sto-l"><b>'+esc(label)+'</b>'+(note?'<small>'+esc(note)+'</small>':'')+'</span></button>';}
+function tgHtml(r){var a=addr(r),n=a.cust.length;
+ return tg('tsc',a.tscTo,TSC,a.auto?'On the To line because no customer address is picked':a.tscTo?'On the To line - tap to take it off (it stays copied)':'Copied - tap to also put it on the To line')+
+  tg('cust',a.custOn,n?'Customer'+(n>1?'s ('+n+')':''):'Customer',n?a.cust.join(', '):'Enter the customer address below');}
+function sumHtml(r){var a=addr(r);return '<div><b>To:</b> '+esc(a.to)+'</div><div><b>Cc:</b> '+(a.cc?esc(a.cc)+' <span class="sto-m">(always copied)</span>':'<span class="sto-m">'+esc(TSC)+' is already on the To line</span>')+'</div>';}
+function rcHtml(r){var have=list(custStr(r)).map(function(x){return x.toLowerCase();}),h=hist().filter(function(x){return have.indexOf(x.toLowerCase())<0;});
+ return h.length?'<div class="sto-rc"><span class="sto-m">Used before on this tablet:</span>'+h.slice(0,6).map(function(x){return '<button type="button" class="sto-chip" data-sto="add" data-v="'+esc(x)+'">＋ '+esc(x)+'</button>';}).join('')+'</div>':'';}
+function card(r){css();r=r||cfg.rec();if(!r)return '';
+ return '<div class="card sto-card" id="sendToCard"><h3 style="margin:0 0 4px">Send to</h3><p class="sto-m" style="margin:0 0 8px">You choose who gets this report, whether it passed or failed. <b>'+esc(TSC)+' is always copied.</b></p>'+
+  '<div id="stoTg">'+tgHtml(r)+'</div>'+
+  '<label class="sto-lab" for="stoCust">Customer e-mail (separate several with commas)</label><input id="stoCust" data-sti="cust" type="email" inputmode="email" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" data-nohist data-nocaps value="'+esc(custStr(r))+'" placeholder="customer@example.com">'+
+  '<div id="stoRc">'+rcHtml(r)+'</div>'+
+  '<div class="sto-sum" id="stoSum">'+sumHtml(r)+'</div>'+
+  '<div class="sto-row"><button type="button" data-sto="copyto">📋 Copy To</button><button type="button" data-sto="copycc">📋 Copy Cc</button></div>'+
+  '<p class="sto-m" style="margin:8px 0 0;font-size:13px">The share sheet can’t fill in addresses. When you tap Email, the To addresses are copied: paste them into To, then tap Copy Cc and paste into Cc.</p></div>';}
+function paint(full){var r=cfg.rec();if(!r)return;var t=document.getElementById('stoTg'),s=document.getElementById('stoSum'),c=document.getElementById('stoRc');if(t)t.innerHTML=tgHtml(r);if(s)s.innerHTML=sumHtml(r);if(c&&full)c.innerHTML=rcHtml(r);if(full){var i=document.getElementById('stoCust');if(i&&document.activeElement!==i)i.value=custStr(r);}try{cfg.changed(r);}catch(e){}}
+function copy(t){return new Promise(function(res){var done=function(ok){res(ok);};try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){done(true);},function(){done(fb(t));});return;}}catch(e){}done(fb(t));});}
+function fb(t){try{var a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;left:0;top:0;opacity:0';document.body.appendChild(a);a.focus();a.select();var ok=document.execCommand('copy');a.remove();return ok;}catch(e){return false;}}
+function flash(b,ok,what){if(!b)return;var o=b.dataset.t||(b.dataset.t=b.innerHTML);b.innerHTML=ok?'✓ Copied '+esc(what):'Could not copy';clearTimeout(b._tm);b._tm=setTimeout(function(){b.innerHTML=o;},2200);}
+function copyTo(r){r=r||cfg.rec();var a=addr(r);remember(r);return copy(a.to);}
+function mailto(r,subj,body){r=r||cfg.rec();var a=addr(r);return 'mailto:'+encodeURIComponent(a.to).replace(/%2C/gi,',').replace(/%40/g,'@')+'?'+(a.cc?'cc='+encodeURIComponent(a.cc)+'&':'')+'subject='+encodeURIComponent(subj||'')+'&body='+encodeURIComponent(body||'');}
+document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('[data-sto]');if(!b)return;var r=cfg.rec();if(!r)return;e.preventDefault();e.stopPropagation();var k=b.dataset.sto,s=st(r);
+ if(k==='tsc'){var a=addr(r);if(a.auto){var i=document.getElementById('stoCust');if(i){i.focus();}return;}s.tscTo=!s.tscTo;cfg.dirty();paint();return;}
+ if(k==='cust'){var a2=addr(r);if(!a2.cust.length){var i2=document.getElementById('stoCust');if(i2)i2.focus();return;}s.custOff=!s.custOff;cfg.dirty();paint();return;}
+ if(k==='add'){var cur=custStr(r).trim(),v=b.dataset.v||'';setCust(r,cur?cur.replace(/[\s,;]+$/,'')+', '+v:v);s.custOff=false;cfg.dirty();paint(true);var i3=document.getElementById('stoCust');if(i3)i3.value=custStr(r);return;}
+ if(k==='copyto'){var t=addr(r).to;copyTo(r).then(function(ok){flash(b,ok,'To');});return;}
+ if(k==='copycc'){var c=addr(r).cc||TSC;copy(c).then(function(ok){flash(b,ok,'Cc');});return;}},true);
+document.addEventListener('input',function(e){var t=e.target;if(!t||!t.dataset||t.dataset.sti!=='cust')return;e.stopPropagation();var r=cfg.rec();if(!r)return;setCust(r,t.value);if(list(t.value).length)st(r).custOff=false;cfg.dirty();paint();},true);
+document.addEventListener('change',function(e){var t=e.target;if(!t||!t.dataset||t.dataset.sti!=='cust')return;e.stopPropagation();var r=cfg.rec();if(!r)return;remember(r);var c=document.getElementById('stoRc');if(c)c.innerHTML=rcHtml(r);},true);
+var did=false;function css(){if(did||!document.head)return;did=true;var s=document.createElement('style');s.textContent=
+ '#sendToCard{border:2px solid #1d3b6a}#sendToCard .sto-m{color:#5a6478}#sendToCard button{font:inherit;cursor:pointer;border:1px solid #c7ccd4;background:#fff;color:#1b2430;border-radius:8px;padding:10px 14px;min-height:44px}'+
+ '#sendToCard .sto-t{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin:0 0 6px;padding:8px 12px;min-height:52px;line-height:1.25}#sendToCard .sto-t small{display:block;font-size:12.5px;color:#5a6478;font-weight:400;word-break:break-word}'+
+ '#sendToCard .sto-box{flex:none;width:26px;height:26px;border:2px solid #8a94a6;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;color:#fff;background:#fff}#sendToCard .sto-t.on{border-color:#1d3b6a;background:#eef3fb}#sendToCard .sto-t.on .sto-box{background:#1d3b6a;border-color:#1d3b6a}'+
+ '#sendToCard .sto-lab{display:block;font-size:12px;color:#5a6478;font-weight:600;margin:6px 0 3px}#sendToCard input{font:inherit;font-size:16px;width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #bcc6d4;border-radius:8px;min-height:44px;background:#fff;color:#1b2430}'+
+ '#sendToCard .sto-rc{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;font-size:13px}#sendToCard .sto-chip{min-height:36px;padding:4px 10px;font-size:14px}'+
+ '#sendToCard .sto-sum{margin-top:10px;padding:8px 10px;border-radius:8px;background:#f3f6fa;border:1px solid #d5dce6;font-size:15px;word-break:break-word}#sendToCard .sto-row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}#sendToCard .sto-row button{flex:1 1 140px}';
+ document.head.appendChild(s);}
+window.SendTo={TSC:TSC,init:function(o){for(var k in o)cfg[k]=o[k];},addr:function(r){return addr(r||cfg.rec());},card:card,copyTo:copyTo,mailto:mailto,remember:function(r){remember(r||cfg.rec());},refresh:function(){paint(true);},list:list};
+})();
+
+/* report recipients: shared Send-to card */
+SendTo.init({rec:()=>S.rec,dirty:()=>markDirty()});
+</script>
 <script>/* Jake's New Build Final Inspection Form - core */
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -13014,7 +13076,7 @@ function techRemember(n){n=(n||'').trim();if(!n)return;const L=[n,...techNames()
 function techPick(i){const n=techNames()[i],el=$('#n-te');if(n&&el){el.value=n;S.techDraft=n;}}
 /* shared: ask at the start of each inspection whether the tech has a good connection; offline readiness check */
 (function(){
-var FORMS=[['intake','Truck Intake'],['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch']];
+var FORMS=[['intake','Truck Intake'],['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch'],['qc','Quick Capture']];
 var ME=(location.pathname.split('/').filter(Boolean).slice(-1)[0]||'').replace(/\.html?$/,'');
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
 if(!ls('off:since'))ls('off:since',String(Date.now()));
@@ -13186,7 +13248,7 @@ function doneHtml(r){const d=r.done;
  <label class="f" style="margin-top:10px">Technician signature (sign with your finger)</label><canvas id="sigc" class="sigc" width="900" height="260"></canvas><div class="row" style="margin-top:6px"><button data-act="sigclr">Clear signature</button><span class="muted" id="sigMsg">${d.sig?'Signature saved.':'Not signed yet.'}</span></div></div>
  ${photosHtml(r)}
  ${d.complete?doneActions(r):`<div class="card"><div id="finNeed"></div><button class="pri" data-act="finish" style="width:100%;min-height:56px;font-size:18px">✓ Finish final inspection</button></div>`}`;}
-function doneActions(r){return `<div class="card" style="border:2px solid var(--pass)"><h3>Final inspection complete</h3><div class="row"><button class="emailbig" data-act="email">✉ Email report (PDF attached)<small>Recommended - opens your email app with the PDF attached, addressed to ${esc(WIP_MAIL)}</small></button><button data-act="pdf" style="flex:1 1 150px">⬇ Save PDF</button>${(r.ph||[]).length&&r.done.incPh==='1'?'<button data-act="phzip" style="flex:1 1 150px">⬇ Save photos (ZIP)</button>':''}<button data-act="copymail" style="flex:1 1 150px">Copy address</button><button data-act="copysubj" style="flex:1 1 150px">Copy subject</button><button data-act="reopen" style="flex:1 1 150px">Re-open to edit</button></div></div>`;}
+function doneActions(r){return SendTo.card(r)+`<div class="card" style="border:2px solid var(--pass)"><h3>Final inspection complete</h3><div class="row"><button class="emailbig" data-act="email">✉ Email report (PDF attached)<small>Recommended - opens your email app with the PDF attached, addressed to the Send to list above</small></button><button data-act="pdf" style="flex:1 1 150px">⬇ Save PDF</button>${(r.ph||[]).length&&r.done.incPh==='1'?'<button data-act="phzip" style="flex:1 1 150px">⬇ Save photos (ZIP)</button>':''}<button data-act="copymail" style="flex:1 1 150px">Copy To</button><button data-act="copysubj" style="flex:1 1 150px">Copy subject</button><button data-act="reopen" style="flex:1 1 150px">Re-open to edit</button></div></div>`;}
 function optHtml(r){return `<div class="card"><h3>Pause</h3><div class="row optb"><button data-act="pause">⏸ Pause – QR code to continue later</button></div></div>`;}
 function recHtml(r){const bdy=[serHtml,ckHtml,doneHtml][S.step](r);
  return bar('Skid '+recName(r),`<button id="saveInd" class="save" data-act="save"></button><button data-act="home">Home</button>`)+stepsBar(r)+`<div class="wrap">${bdy}<div class="row" style="margin-bottom:12px"><button data-act="prev" ${S.step===0?'disabled':''} style="flex:1">‹ Back</button><button class="pri" data-act="next" ${S.step===2?'disabled':''} style="flex:1">Next ›</button></div>${r.done.complete?'':optHtml(r)}</div>`;}
@@ -13301,8 +13363,8 @@ function qrDlg(notes){const r=S.rec;let t=finPayload(r,notes),svg='';try{const q
 /* ---- e-mail ---- */
 async function emailReport(){const r=S.rec,f=finalPdfFile(r),c=ckCount(r),subj=jakeSubj(r);
  const body=`New build final inspection for skid S/N ${recName(r)}.\n\nVIN: ${(r.f.vin||'-')}\nChecklist: ${c.done+c.na} of ${c.total} complete${c.na?' ('+c.na+' N/A)':''}\nInspected by: ${r.done.name||r.hdr.tech||'-'}  ${fmtD(r.done.date||r.hdr.date)}\n${(r.done.notes||'').trim()?'\nNotes: '+r.done.notes.trim()+'\n':''}\nThe PDF report is attached.${(r.done.incPh==='1'&&(r.ph||[]).length)?'\nPictures ('+r.ph.length+') are in a separate ZIP.':''}`;
- const fl=new File([f.blob],f.name,{type:'application/pdf'}),z=(r.done.incPh==='1')?photoZipFile(r):null,fls=[fl].concat(z?[new File([z.blob],z.name,{type:'application/zip'})]:[]);try{if(navigator.canShare&&navigator.canShare({files:fls})){await navigator.share({files:fls,title:subj,text:body+(z?'\n\nA ZIP of '+z.n+' picture'+(z.n===1?'':'s')+' is attached too.':'')});return;}}catch(e){if(e&&e.name==='AbortError')return;}
- await notice('This browser cannot attach the PDF automatically, so the email will open without it. Use "Save PDF" and attach the file from Downloads.',{title:'PDF not attached'});location.href='mailto:'+WIP_MAIL+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);}
+ const fl=new File([f.blob],f.name,{type:'application/pdf'}),z=(r.done.incPh==='1')?photoZipFile(r):null,fls=[fl].concat(z?[new File([z.blob],z.name,{type:'application/zip'})]:[]);await SendTo.copyTo(r);try{if(navigator.canShare&&navigator.canShare({files:fls})){await navigator.share({files:fls,title:subj,text:body+(z?'\n\nA ZIP of '+z.n+' picture'+(z.n===1?'':'s')+' is attached too.':'')});return;}}catch(e){if(e&&e.name==='AbortError')return;}
+ await notice('This browser cannot attach the PDF automatically, so the email will open without it. Use "Save PDF" and attach the file from Downloads.',{title:'PDF not attached'});location.href=SendTo.mailto(r,subj,body);}
 async function scanDone(txt){scanStop();let o=null;try{o=JSON.parse(txt);}catch(e){}
  const ok=o&&((o.a==='ATP'&&o.k==='A')||(o.a==='FIN'&&o.k==='P')||o.a==='FLR'||o.a==='CAL'||o.a==='LVSS');
  if(!ok){const m=$('#scanMsg');if(m)m.textContent='That is not a QR code from one of the inspection forms. Try again.';if($('#scanV')&&$('#scanV').style.display!=='none')scanDlg();return;}
@@ -13372,7 +13434,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'reopen':r.done.complete=false;markDirty();render();break;
  case 'pdf':{const f=finalPdfFile(r);(async()=>{await dlBlob(f.blob,f.name);const z=photoZipFile(r);if(z){await new Promise(t=>setTimeout(t,600));await dlBlob(z.blob,z.name);}})();break;}
  case 'email':await emailReport();break;
- case 'copymail':copyText(WIP_MAIL,'Address copied: '+WIP_MAIL);break;
+ case 'copymail':{const t=SendTo.addr(S.rec).to;copyText(t,'To copied: '+t);break;}
  case 'copysubj':copyText(jakeSubj(r),'Subject copied. Paste it into the Subject line.');break;
  case 'pause':pauseDlg();break;
  }});
@@ -13386,7 +13448,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)save();});
 function curTpl(){return TPL}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'10/25/2026'};
+const CREDIT={by:'Ravi Ramsundar',built:'10/29/2026'};
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -13506,7 +13568,7 @@ document.addEventListener('focusout',e=>{histCommit(e.target);setTimeout(()=>{if
 document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='b1f91a8797';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='9c920ebd65';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';

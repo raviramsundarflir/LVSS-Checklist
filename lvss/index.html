@@ -12929,7 +12929,69 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
 /***/ })
 /******/ ])["default"];
-});</script>
+});</script><script>/* ===== shared: report recipients (Ravi, 2026-10-29) =====
+   Every report, pass or fail: TSC@teledyne.com is always copied (Cc).
+   The tech decides the To line: TSC, the customer address(es), or both.
+   State lives on the record: rec.sendTo = {tscTo:bool, custOff:bool, cust:'a@b, c@d'}.
+   Forms that already keep a customer e-mail (Intake / Post-Repair / Quick Capture) pass get/set so
+   the same field is used. */
+(function(){
+var TSC='TSC@teledyne.com',HK='sendToHist',cfg={rec:function(){return null;},get:null,set:null,dirty:function(){},changed:function(){}};
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+var RX=/^[^@\s,;]+@[^@\s,;]+\.[^@\s,;]+$/;
+function list(s){var o=[],seen={};String(s||'').split(/[\s,;]+/).forEach(function(x){x=x.trim().replace(/^<|>$/g,'');var k=x.toLowerCase();if(RX.test(x)&&!seen[k]&&k!==TSC.toLowerCase()){seen[k]=1;o.push(x);}});return o;}
+function st(r){if(!r)return {};if(!r.sendTo||typeof r.sendTo!=='object')r.sendTo={};return r.sendTo;}
+function custStr(r){if(!r)return '';return cfg.get?String(cfg.get(r)||''):String(st(r).cust||'');}
+function setCust(r,v){if(cfg.set)cfg.set(r,v);else st(r).cust=v;}
+function addr(r){var s=st(r),cl=list(custStr(r)),custOn=!s.custOff&&cl.length>0,tscTo=!!s.tscTo||!custOn,to=[];
+ if(tscTo)to.push(TSC);if(custOn)to=to.concat(cl);
+ return {to:to.join(', '),cc:tscTo?'':TSC,list:to,tscTo:tscTo,custOn:custOn,cust:cl,auto:tscTo&&!s.tscTo};}
+function hist(){try{var a=JSON.parse(ls(HK)||'[]');return Array.isArray(a)?a.filter(function(x){return RX.test(x);}):[];}catch(e){return [];}}
+function remember(r){var cl=addr(r).custOn?list(custStr(r)):[];if(!cl.length)return;var h=hist(),low=cl.map(function(x){return x.toLowerCase();});h=cl.concat(h.filter(function(x){return low.indexOf(x.toLowerCase())<0;})).slice(0,8);ls(HK,JSON.stringify(h));}
+function tg(key,on,label,note){return '<button type="button" class="sto-t'+(on?' on':'')+'" data-sto="'+key+'" aria-pressed="'+(on?'true':'false')+'"><span class="sto-box">'+(on?'✓':'')+'</span><span class="sto-l"><b>'+esc(label)+'</b>'+(note?'<small>'+esc(note)+'</small>':'')+'</span></button>';}
+function tgHtml(r){var a=addr(r),n=a.cust.length;
+ return tg('tsc',a.tscTo,TSC,a.auto?'On the To line because no customer address is picked':a.tscTo?'On the To line - tap to take it off (it stays copied)':'Copied - tap to also put it on the To line')+
+  tg('cust',a.custOn,n?'Customer'+(n>1?'s ('+n+')':''):'Customer',n?a.cust.join(', '):'Enter the customer address below');}
+function sumHtml(r){var a=addr(r);return '<div><b>To:</b> '+esc(a.to)+'</div><div><b>Cc:</b> '+(a.cc?esc(a.cc)+' <span class="sto-m">(always copied)</span>':'<span class="sto-m">'+esc(TSC)+' is already on the To line</span>')+'</div>';}
+function rcHtml(r){var have=list(custStr(r)).map(function(x){return x.toLowerCase();}),h=hist().filter(function(x){return have.indexOf(x.toLowerCase())<0;});
+ return h.length?'<div class="sto-rc"><span class="sto-m">Used before on this tablet:</span>'+h.slice(0,6).map(function(x){return '<button type="button" class="sto-chip" data-sto="add" data-v="'+esc(x)+'">＋ '+esc(x)+'</button>';}).join('')+'</div>':'';}
+function card(r){css();r=r||cfg.rec();if(!r)return '';
+ return '<div class="card sto-card" id="sendToCard"><h3 style="margin:0 0 4px">Send to</h3><p class="sto-m" style="margin:0 0 8px">You choose who gets this report, whether it passed or failed. <b>'+esc(TSC)+' is always copied.</b></p>'+
+  '<div id="stoTg">'+tgHtml(r)+'</div>'+
+  '<label class="sto-lab" for="stoCust">Customer e-mail (separate several with commas)</label><input id="stoCust" data-sti="cust" type="email" inputmode="email" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" data-nohist data-nocaps value="'+esc(custStr(r))+'" placeholder="customer@example.com">'+
+  '<div id="stoRc">'+rcHtml(r)+'</div>'+
+  '<div class="sto-sum" id="stoSum">'+sumHtml(r)+'</div>'+
+  '<div class="sto-row"><button type="button" data-sto="copyto">📋 Copy To</button><button type="button" data-sto="copycc">📋 Copy Cc</button></div>'+
+  '<p class="sto-m" style="margin:8px 0 0;font-size:13px">The share sheet can’t fill in addresses. When you tap Email, the To addresses are copied: paste them into To, then tap Copy Cc and paste into Cc.</p></div>';}
+function paint(full){var r=cfg.rec();if(!r)return;var t=document.getElementById('stoTg'),s=document.getElementById('stoSum'),c=document.getElementById('stoRc');if(t)t.innerHTML=tgHtml(r);if(s)s.innerHTML=sumHtml(r);if(c&&full)c.innerHTML=rcHtml(r);if(full){var i=document.getElementById('stoCust');if(i&&document.activeElement!==i)i.value=custStr(r);}try{cfg.changed(r);}catch(e){}}
+function copy(t){return new Promise(function(res){var done=function(ok){res(ok);};try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){done(true);},function(){done(fb(t));});return;}}catch(e){}done(fb(t));});}
+function fb(t){try{var a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;left:0;top:0;opacity:0';document.body.appendChild(a);a.focus();a.select();var ok=document.execCommand('copy');a.remove();return ok;}catch(e){return false;}}
+function flash(b,ok,what){if(!b)return;var o=b.dataset.t||(b.dataset.t=b.innerHTML);b.innerHTML=ok?'✓ Copied '+esc(what):'Could not copy';clearTimeout(b._tm);b._tm=setTimeout(function(){b.innerHTML=o;},2200);}
+function copyTo(r){r=r||cfg.rec();var a=addr(r);remember(r);return copy(a.to);}
+function mailto(r,subj,body){r=r||cfg.rec();var a=addr(r);return 'mailto:'+encodeURIComponent(a.to).replace(/%2C/gi,',').replace(/%40/g,'@')+'?'+(a.cc?'cc='+encodeURIComponent(a.cc)+'&':'')+'subject='+encodeURIComponent(subj||'')+'&body='+encodeURIComponent(body||'');}
+document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('[data-sto]');if(!b)return;var r=cfg.rec();if(!r)return;e.preventDefault();e.stopPropagation();var k=b.dataset.sto,s=st(r);
+ if(k==='tsc'){var a=addr(r);if(a.auto){var i=document.getElementById('stoCust');if(i){i.focus();}return;}s.tscTo=!s.tscTo;cfg.dirty();paint();return;}
+ if(k==='cust'){var a2=addr(r);if(!a2.cust.length){var i2=document.getElementById('stoCust');if(i2)i2.focus();return;}s.custOff=!s.custOff;cfg.dirty();paint();return;}
+ if(k==='add'){var cur=custStr(r).trim(),v=b.dataset.v||'';setCust(r,cur?cur.replace(/[\s,;]+$/,'')+', '+v:v);s.custOff=false;cfg.dirty();paint(true);var i3=document.getElementById('stoCust');if(i3)i3.value=custStr(r);return;}
+ if(k==='copyto'){var t=addr(r).to;copyTo(r).then(function(ok){flash(b,ok,'To');});return;}
+ if(k==='copycc'){var c=addr(r).cc||TSC;copy(c).then(function(ok){flash(b,ok,'Cc');});return;}},true);
+document.addEventListener('input',function(e){var t=e.target;if(!t||!t.dataset||t.dataset.sti!=='cust')return;e.stopPropagation();var r=cfg.rec();if(!r)return;setCust(r,t.value);if(list(t.value).length)st(r).custOff=false;cfg.dirty();paint();},true);
+document.addEventListener('change',function(e){var t=e.target;if(!t||!t.dataset||t.dataset.sti!=='cust')return;e.stopPropagation();var r=cfg.rec();if(!r)return;remember(r);var c=document.getElementById('stoRc');if(c)c.innerHTML=rcHtml(r);},true);
+var did=false;function css(){if(did||!document.head)return;did=true;var s=document.createElement('style');s.textContent=
+ '#sendToCard{border:2px solid #1d3b6a}#sendToCard .sto-m{color:#5a6478}#sendToCard button{font:inherit;cursor:pointer;border:1px solid #c7ccd4;background:#fff;color:#1b2430;border-radius:8px;padding:10px 14px;min-height:44px}'+
+ '#sendToCard .sto-t{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin:0 0 6px;padding:8px 12px;min-height:52px;line-height:1.25}#sendToCard .sto-t small{display:block;font-size:12.5px;color:#5a6478;font-weight:400;word-break:break-word}'+
+ '#sendToCard .sto-box{flex:none;width:26px;height:26px;border:2px solid #8a94a6;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;color:#fff;background:#fff}#sendToCard .sto-t.on{border-color:#1d3b6a;background:#eef3fb}#sendToCard .sto-t.on .sto-box{background:#1d3b6a;border-color:#1d3b6a}'+
+ '#sendToCard .sto-lab{display:block;font-size:12px;color:#5a6478;font-weight:600;margin:6px 0 3px}#sendToCard input{font:inherit;font-size:16px;width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #bcc6d4;border-radius:8px;min-height:44px;background:#fff;color:#1b2430}'+
+ '#sendToCard .sto-rc{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;font-size:13px}#sendToCard .sto-chip{min-height:36px;padding:4px 10px;font-size:14px}'+
+ '#sendToCard .sto-sum{margin-top:10px;padding:8px 10px;border-radius:8px;background:#f3f6fa;border:1px solid #d5dce6;font-size:15px;word-break:break-word}#sendToCard .sto-row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}#sendToCard .sto-row button{flex:1 1 140px}';
+ document.head.appendChild(s);}
+window.SendTo={TSC:TSC,init:function(o){for(var k in o)cfg[k]=o[k];},addr:function(r){return addr(r||cfg.rec());},card:card,copyTo:copyTo,mailto:mailto,remember:function(r){remember(r||cfg.rec());},refresh:function(){paint(true);},list:list};
+})();
+
+/* report recipients: shared Send-to card */
+SendTo.init({rec:()=>S.rec,get:r=>r&&r.hdr?r.hdr.custEmail:'',set:(r,v)=>{r.hdr.custEmail=v;},dirty:()=>markDirty()});
+</script>
 <script>const HOMELINK=(location.protocol==='http:'||location.protocol==='https:')?'<a href="../" class="homelnk">⌂ All forms</a>':'';
 'use strict';
 const SOURCE='<!DOCTYPE html>\n'+document.documentElement.outerHTML; // captured before render (for admin "download app file")
@@ -13167,11 +13229,11 @@ async function scanDone(txt){if(String(txt).startsWith('WIP1~')){wipChunk(txt);r
  if(!o){const m=$('#scanMsg');if(m)m.textContent='That is not an LVSS QR code. Try again.';if($('#scanV')&&$('#scanV').style.display!=='none')scanDlg();return;}
  closeModal();if(o.k==='A'){const n=o.f.length;if(!await ask(`Start an audit of ${o.sn?lv(o.sn):'this platform'} (RMA ${o.rma||'-'}) with ${n} fault${n===1?'':'s'} from the tech's punch list?\n\nThe tech's photos are not in the QR code. Mark each fault Verified or Not acceptable, add your own photos and details, then submit the audit.`,{title:'Start audit from QR code?',ok:'Start audit'}))return;
   S.rec=auFromQr(o);S.photos={};S.view='rec';S.audit=true;S.open=-1;S.detail={};S.dirty=true;await save();render();return;}
- const n=o.s.length;if(!await ask(`Start a new inspection for ${o.sn?lv(o.sn):'LVSS (no serial)'} with the core data filled in from the ${o.it?'truck intake ':''}QR code (${n} serial number${n===1?'':'s'}, VIN, plate, kilo${o.it?', RMA, SVO and account':''}; revisions and mileage/hours shown as the last reading)?\n\nYou still take a fresh photo of each serial plate.`,{title:'Start from QR code?',ok:'Start inspection'}))return;
+ const n=o.s.length;if(!await ask(`Start a new inspection for ${o.sn?(snType(o.sn)?o.sn:lv(o.sn)):'LVSS (no serial)'} with the core data filled in from the ${o.qc?'site quick capture ':o.it?'truck intake ':''}QR code (${n} serial number${n===1?'':'s'}, VIN, plate, kilo${o.it?', RMA, SVO and account':''}; revisions and mileage/hours shown as the last reading)?\n\nYou still take a fresh photo of each serial plate.`,{title:'Start from QR code?',ok:'Start inspection'}))return;
  S.rec=newRec({sn:o.sn||'',tech:'',ptype:ptOfCode(o.p)});if(o.it||o.rma){Object.assign(S.rec.hdr,{rma:o.rma||'',so:o.so||'',acct:o.ac||''});}setTv(S.rec,'vin',o.vin);setTv(S.rec,'plate',o.pl);setTv(S.rec,'kilo',o.kl);if(o.i&&typeof o.i==='object')S.rec.prev=o.i;const used=new Set();
  o.s.forEach(p=>{const nm=String(p[0]||''),val=String(p[1]||'');const g=S.rec.gear.find(x=>!used.has(x.id)&&gKey(x.t)===gKey(nm));if(g){g.s=val;used.add(g.id);}else{const x={id:'eq'+uid(),t:nm||'Other device',s:val,ph:[],na:false,custom:true};S.rec.gear.push(x);used.add(x.id);}});
  if(Array.isArray(o.w)&&o.w.length){const xn=+o.wx||0;
-  if(await ask(`This code also carries ${o.w.length} item${o.w.length===1?'':'s'} from the truck intake: the customer-reported issues, the lines that failed, and the tech's notes.\n\nLoad them as this inspection's issues, so each one gets repaired / advised / courtesy on the punch list?`+(xn?`\n\n${xn} more item${xn===1?'':'s'} did not fit in the code - see the Intake PDF.`:''),{title:'Load the Intake work list?',ok:'Load work list',no:'Start from scratch'})){
+  if(await ask(`This code also carries ${o.w.length} item${o.w.length===1?'':'s'} from the ${o.qc?'site quick capture':'truck intake'}: the customer-reported issues, the lines that failed, and the tech's notes.\n\nLoad them as this inspection's issues, so each one gets repaired / advised / courtesy on the punch list?`+(xn?`\n\n${xn} more item${xn===1?'':'s'} did not fit in the code - see the Intake PDF.`:''),{title:'Load the Intake work list?',ok:'Load work list',no:'Start from scratch'})){
    const rs=repSecOf(S.rec),ns=S.rec.tpl.sections.find(z=>z.kind==='new')||rs;
    o.w.forEach(a=>{const k=a[0],sec=k==='c'?rs:ns;if(!sec)return;const x={id:'x'+uid(),t:String(a[1]||'')};(S.rec.extra[sec.id]=S.rec.extra[sec.id]||[]).push(x);const d=itm(x.id);d.st='fail';d.war=a[2]==='w'?'w':a[2]==='n'?'nw':'';d.lvl=a[4]||'';d.note=(k==='b'?'Not tested at intake. ':'')+String(a[3]||'');d.fromIntake=true;});
    S.rec.wlN=o.w.length;S.rec.wlX=xn;}}
@@ -13460,7 +13522,7 @@ function reportHtml(){S.emEdited=false;const r=S.rec,st=stats(r),iss=[...gateIss
  ${sendCardHtml(r)}
  <div class="card"><h3>Email template</h3><p class="muted"><b>Copy message (plain text)</b> pastes cleanly into any email app. <b>Copy as table</b> pastes the table below into apps that accept formatted text. <b>Email report</b> opens your share sheet so you can pick your email app with the PDF already attached and the plain-text message filled in (the recipient address is copied for you to paste, and some apps may ignore the subject). If the device can't attach files, it opens a plain email instead and you attach the saved PDF yourself.</p>
  <label class="f">RMA number for the subject line</label><div class="row" style="flex-wrap:nowrap"><input id="emRma" value="${esc(r.hdr.rma||'')}" placeholder="RMA number" style="flex:1"><button id="emOmit" data-act="rmaomit" class="${r.mailNoRma?'pri':''}">${r.mailNoRma?'✓ Omitted':'Omit RMA'}</button></div><label class="f">Subject</label><div class="row" style="flex-wrap:nowrap"><input id="emSubj" value="${esc(emailText(r).subj)}" style="flex:1"><button data-act="emcopys">📋 Copy subject</button></div><div class="sp"></div><label class="f">Message</label><div id="emBody" contenteditable="true" style="border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff;color:#000;min-height:200px;overflow-x:auto">${emailText(r).html}</div>
- <div class="row" style="margin-top:8px"><button class="pri" data-act="emcopyt" style="flex:1">📋 Copy message (plain text)</button><button data-act="emcopy" style="flex:1">📋 Copy as table</button><button data-act="wip-copy" style="flex:1">📋 Copy ${WIP_MAIL}</button><button class="emailbig" data-act="emopen">${sendTo(r).mode==='internal'?'✉ Email report to TSC (internal)':'✉ Email report to customer'}<small>Recommended – opens your email app with the PDF attached</small></button><button data-act="emreset">Reset</button></div></div>
+ <div class="row" style="margin-top:8px"><button class="pri" data-act="emcopyt" style="flex:1">📋 Copy message (plain text)</button><button data-act="emcopy" style="flex:1">📋 Copy as table</button><button data-act="wip-copy" style="flex:1">📋 Copy ${WIP_MAIL}</button><button class="emailbig" data-act="emopen">✉ Email report<small>Recommended – opens your email app with the PDF attached</small></button><button data-act="emreset">Reset</button></div></div>
  <div class="card"><div class="row"><button class="pri" data-act="share" style="flex:1">📤 Share PDF</button><button data-act="dl" style="flex:1">⬇ Save PDF to tablet</button></div><div class="row" style="margin-top:8px"><button data-act="photozip" style="flex:1">🗂 Save all photos as a folder (ZIP named with RMA &amp; ${PLN(r)})</button></div><p class="muted">Share opens the Android share sheet with the PDF attached (e-mail, Drive, etc.). Needs a connection only for the app you share to.</p></div>
  ${r.verdict?`<div class="card" style="border:2px solid #6b3fa0"><h3>Auditor review</h3><p class="muted">For an auditor: go through every fault, confirm each repair was completed properly, and submit an audit report (PASSED or FAILED).${(r.audit&&r.audit.done)?` <b>Audit ${r.audit.verdict==='pass'?'PASSED':'FAILED'} – ${esc(r.audit.name||'')}</b>`:''}</p><button class="pri" data-act="audit" style="background:#6b3fa0;border-color:#6b3fa0">🔍 ${(r.audit&&r.audit.done)?'Open the audit report':'Start auditor review'}</button></div>`:''}
  <div class="row"><button data-act="step" data-s="3">← Punch list</button></div>`;}
@@ -13479,12 +13541,9 @@ function auCard(x){const r=S.rec,au=r.audit,d=r.items[x.id],q=au.items[x.id]||{}
   ${d.st==='blk'&&!q.r?'<p class="muted" style="margin:6px 0 0">The tech could not test this item. Verify the reason is valid.</p>':!d.rep&&!q.r?'<p class="muted" style="margin:6px 0 0">The tech did not mark this fault repaired.</p>':''}
   <label class="f">Auditor photos</label><div class="row" style="flex-wrap:nowrap"><button class="ic" data-act="cam" data-id="au:${x.id}" title="Add an audit photo">📷${(q.ph||[]).length?`<b>${q.ph.length}</b>`:''}</button><span class="muted" style="font-size:13px">Take or choose photos of the repair as you found it.</span></div>${thumbs('au:'+x.id)}
   <label class="f">Auditor details${q.r==='no'?' (required)':' (optional)'}</label><textarea data-b="audit.items.${x.id}.n" rows="2" placeholder="${q.r==='no'?'What is wrong / what must be redone':'What you checked, measurements, torque marks, etc.'}" style="width:100%">${esc(q.n||'')}</textarea></div>`;}
-function sendTo(r){const pass=r.verdict==='pass',cust=String(r.hdr.custEmail||'').trim();if(!pass&&!r.sendCust)return {mode:'internal',to:WIP_MAIL,cc:'',cust};return {mode:pass?'customer':'override',to:cust,cc:WIP_MAIL,cust};}
-function sendCardHtml(r){const t=sendTo(r),pass=r.verdict==='pass';
- const ban=t.mode==='internal'?`<div class="err" style="margin:0 0 8px"><b>${r.verdict==='fail'?'FAILED':'Not passed'} – internal only.</b> This report goes to <b>${esc(WIP_MAIL)}</b>, not to the customer.</div>`:t.mode==='override'?`<div class="warn" style="margin:0 0 8px"><b>Override on.</b> This report did not pass, but you chose to send it to the customer. ${esc(WIP_MAIL)} is copied in.</div>`:`<div class="ok" style="margin:0 0 8px"><b>PASSED – goes to the customer.</b> ${esc(WIP_MAIL)} is copied in.</div>`;
- const inpH=t.mode==='internal'?'':`<label class="f">Customer e-mail</label><input data-b="hdr.custEmail" type="email" value="${esc(r.hdr.custEmail||'')}" placeholder="customer@example.com">${t.cust?'':'<p class="muted" style="margin:4px 0 0">No customer e-mail entered yet. Enter it here or on the Info page.</p>'}`;
- return `<div class="card" id="sendCard" style="border:2px solid ${t.mode==='internal'?'#c62828':'#1b8a3a'}"><h3>Send to</h3>${ban}<p style="margin:0 0 6px"><b>To:</b> ${esc(t.to||'(customer e-mail needed)')}${t.cc?`<br><b>CC:</b> ${esc(t.cc)}`:''}</p>${inpH}${pass?'':`<div class="row" style="margin-top:8px"><button data-act="sendcust" class="${r.sendCust?'dng':''}">${r.sendCust?'✓ Override on – tap to turn off':'Override – send to customer anyway'}</button></div>`}<p class="muted" style="margin:8px 0 0">The address is copied when you tap Email report – paste it into the To line (the share sheet can't fill it in for you).</p></div>`;}
-async function sendCopy(r){const t=sendTo(r),a=t.to||'';if(!a)return false;try{if(navigator.clipboard)await navigator.clipboard.writeText(a);return true;}catch(e){}try{const ta=document.createElement('textarea');ta.value=a;ta.style.cssText='position:fixed;left:0;top:0;opacity:0';document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();return ok;}catch(e){return false;}}
+function sendTo(r){const a=SendTo.addr(r);return {mode:'route',to:a.to,cc:a.cc,cust:a.cust.join(', ')};}
+function sendCardHtml(r){return SendTo.card(r);}
+async function sendCopy(r){SendTo.remember(r);const t=sendTo(r),a=t.to||'';if(!a)return false;try{if(navigator.clipboard)await navigator.clipboard.writeText(a);return true;}catch(e){}try{const ta=document.createElement('textarea');ta.value=a;ta.style.cssText='position:fixed;left:0;top:0;opacity:0';document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();return ok;}catch(e){return false;}}
 function mailHref(r,subj,body){const t=sendTo(r);return 'mailto:'+encodeURIComponent(t.to||'')+'?'+(t.cc?'cc='+encodeURIComponent(t.cc)+'&':'')+'subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);}
 function auSummary(r){const au=r.audit,P=auF(r),v=au.verdict==='pass'?'PASSED':'FAILED';const L=[`${LL('LVSS')} Post-Repair Audit – ${v}`,`${snD(r)}  |  RMA ${r.hdr.rma||'-'}  |  SO ${r.hdr.so||'-'}`,`Auditor: ${au.name}  (${fmtD(au.date)})`,`Tech: ${r.hdr.tech||'-'}  |  Tech result: ${r.verdict==='pass'?'PASSED':'FAILED'}`,'',`Faults reviewed: ${P.length}`];
  P.forEach(x=>{const a=au.items[x.id]||{};L.push(`  #${x.label} ${x.t} – ${a.r==='ok'?'VERIFIED':a.r==='no'?'NOT ACCEPTABLE':'not reviewed'}${a.n?' ('+a.n+')':''}`);});
@@ -13654,7 +13713,7 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
  th();
  const srow=(dev,ser)=>{d.setFont('helvetica','normal');d.setFontSize(9.5);const l=wrap(d,ser,CW-182);const hh=Math.max(17,6+l.length*11);if(y+hh>BOT){d.addPage();y=TOP;th();}d.setDrawColor(170);d.setLineWidth(.6);d.rect(MX,y,CW,hh);d.line(MX+170,y,MX+170,y+hh);d.setTextColor(0);d.setFont('helvetica','bold');d.text(wrap(d,dev,160)[0]||'',MX+6,y+12);d.setFont('helvetica','normal');d.text(l,MX+176,y+12);y+=hh;};
  r.gear.forEach(g=>{const sw=swOn(r)?r.swap.list.find(e=>e.dev===g.id):null;const nv=sw&&(sw.nw||'').trim();
-  srow(g.t,g.na?'N/A':nv?`${sw.nw}   (Old: ${sw.old||g.s||''})`:(g.s||'Not entered'));});
+  srow(g.t,g.na?'N/A':nv?`${sw.nw}   (Old: ${sw.old||g.s||''})`:g.tk?(String(g.v||'').trim()||'Not entered'):(g.s||'Not entered'));});
  r.swap.list.filter(e=>swOn(r)&&!e.dev&&(e.nw||'').trim()).forEach(e=>srow(e.t||'Other device',`${e.nw}   (Old: ${e.old||''})`));
  // swaps - itemized
  const sl=swOn(r)?r.swap.list:[];
@@ -14417,7 +14476,7 @@ function techRemember(n){n=(n||'').trim();if(!n)return;const L=[n,...techNames()
 function techPick(i){const n=techNames()[i],el=$('#n-te');if(n&&el){el.value=n;S.techDraft=n;}}
 /* shared: ask at the start of each inspection whether the tech has a good connection; offline readiness check */
 (function(){
-var FORMS=[['intake','Truck Intake'],['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch']];
+var FORMS=[['intake','Truck Intake'],['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch'],['qc','Quick Capture']];
 var ME=(location.pathname.split('/').filter(Boolean).slice(-1)[0]||'').replace(/\.html?$/,'');
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
 if(!ls('off:since'))ls('off:since',String(Date.now()));
@@ -14594,7 +14653,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'10/25/2026'};
+const CREDIT={by:'Ravi Ramsundar',built:'10/29/2026'};
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14657,7 +14716,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New eMSC-L serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='dd84f016c1';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='04a8bd7bf9';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
