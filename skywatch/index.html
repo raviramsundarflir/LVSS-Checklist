@@ -13415,8 +13415,10 @@ function buildAuditPdf(r){const d=pdfNew(),au=r.audit,h=r.hdr,skip=new Set([1]);
 /* ---------- step 5: e-mail ---------- */
 const mails=x=>(x||'').split(/[;,\s]+/).filter(Boolean);
 const emailOk=e=>/^\S+@\S+\.\S+$/.test(e);
-function rcpList(r){const l=[];mails(r.hdr.email).forEach(e=>l.push({e,l:'Customer',role:'to'}));l.push({e:S.settings.tscEmail||TSC_EMAIL,l:'TSC Teledyne FLIR',role:'to'});(r.recipients.extra||[]).forEach(e=>l.push({e,l:'Added',role:'to'}));mails(r.hdr.techEmail).forEach(e=>l.push({e,l:'Technician (Cc)',role:'cc'}));return l;}
-const rcpSel=r=>rcpList(r).filter(x=>!r.recipients.off[x.e]);
+function rcpList(r){const l=[];mails(r.hdr.email).forEach(e=>l.push({e,l:'Customer',role:'to'}));l.push({e:S.settings.tscEmail||TSC_EMAIL,l:'TSC Teledyne FLIR',role:'to'});(r.recipients.extra||[]).forEach(e=>l.push({e,l:'Added',role:'to'}));mails(r.hdr.techEmail).forEach(e=>l.push({e,l:'Technician (Cc)',role:'cc'}));
+ /* TSC@teledyne.com is always copied on every report, pass or fail (Ravi, 2026-10-29) */
+ if(!l.some(x=>x.e.toLowerCase()==='tsc@teledyne.com'))l.push({e:'TSC@teledyne.com',l:'TSC (Cc) - always copied',role:'cc',lock:1});return l;}
+const rcpSel=r=>rcpList(r).filter(x=>x.lock||!r.recipients.off[x.e]);
 function mailDefaults(r){if(isAud(r)){const s=auSummary(r);return {subject:s.subj,body:s.text};}const st=stats(r),h=r.hdr;return {subject:`Teledyne FLIR SkyWatch Service Inspection & Completion Certificate - ${h.customer||''} - Tower S/N ${h.towerSerial||''}`.replace(/ - +$/,''),
  body:`Attached is one PDF with the signed Service Certificate of Completion, the punch list report, any items to be quoted, and the complete SkyWatch inspection checklist.\n\nCustomer: ${h.customer||''}\nCustomer PO #: ${h.po||''}\nTeledyne FLIR Sales Order #: ${h.salesOrder||''}\nRMA #: ${h.rma||''}\nService Order #: ${h.serviceOrder||''}\nTower S/N: ${h.towerSerial||''}\nGenerator S/N: ${h.genSerial||''}\nDate: ${fmtD(h.date)}\n\nFinal result: ${r.verdict==='pass'?'PASSED':r.verdict==='fail'?'FAILED':'not recorded'}\nResults: ${st.f} item(s) failed, ${st.f-st.open} repaired, ${st.open} open${st.quote?` (${st.quote} non-warranty repair(s) to be quoted)`:''}.${st.dno&&!st.openDno?`\nDo Not Operate item(s) found: ${st.dno} - all repaired; no longer present.`:''}${st.openDno?`\n*** DO NOT OPERATE: ${st.openDno} open item(s) - tower must not be operated until resolved. ***`:''}${st.blk?`\nNot tested (blocked by other issues): ${st.blk} item(s) - retest required once the blocking issue is resolved.`:''}${rmaLines(r)}${sparesLine(r)}\n\nTeledyne FLIR\nTucson Service Center (TSC)\n8165 S Camino de Cafe\nTucson, Arizona, 85747\n\n${TSC_EMAIL}\n520-262-6910`};}
 function sendHtml(){const r=S.rec,md=mailDefaults(r),m=r.mail;const st=stats(r);
@@ -13424,7 +13426,7 @@ function sendHtml(){const r=S.rec,md=mailDefaults(r),m=r.mail;const st=stats(r);
  <div class="ok"><b>Signed ${new Date(r.signedAt||Date.now()).toLocaleString()}.</b> The PDF is created on this tablet.</div>
  <div class="card"><h3>File</h3><div id="pdfst" class="muted">Preparing PDF…</div></div>
  ${fyiHtml()}${auEntryCard(r)}${auQrCard(r)}
- <div class="card"><h3>Recipients</h3><p class="muted" style="margin:0 0 6px">Customer and TSC are addressed To; the technician is Cc.</p>${rcpList(r).map(x=>`<label class="row" style="padding:6px 0"><input type="checkbox" style="width:24px;min-height:24px" data-act="rcp" data-e="${esc(x.e)}" ${r.recipients.off[x.e]?'':'checked'}> <span><b>${esc(x.e)}</b> <span class="tag">${x.l}</span></span></label>`).join('')}
+ <div class="card"><h3>Recipients</h3><p class="muted" style="margin:0 0 6px">Customer and SkyWatch support are addressed To; the technician is Cc, and TSC@teledyne.com is always copied.</p>${rcpList(r).map(x=>`<label class="row" style="padding:6px 0"><input type="checkbox" style="width:24px;min-height:24px" data-act="rcp" data-e="${esc(x.e)}" ${x.lock?'checked disabled':r.recipients.off[x.e]?'':'checked'}> <span><b>${esc(x.e)}</b> <span class="tag">${x.l}</span></span></label>`).join('')}
  <div class="row" style="margin-top:8px"><input id="newRcp" type="email" placeholder="Add another e-mail address" style="flex:1;min-width:200px"><button data-act="addrcp">Add</button></div>
  <div class="sp"></div><label class="f">TSC Teledyne FLIR admin e-mail (remembered on this tablet)</label><input data-set="tscEmail" value="${esc(S.settings.tscEmail||TSC_EMAIL)}"></div>
  <div class="card"><h3>Message</h3><label class="f">Subject</label><input data-b="mail.subject" value="${esc(m.subject!=null?m.subject:md.subject)}"><div class="sp"></div><label class="f">Text</label><textarea data-b="mail.body" style="min-height:190px">${esc(m.body!=null?m.body:md.body)}</textarea></div>
@@ -13668,7 +13670,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'auemail':{const s=auSummary(r);
   if(S.pdf){try{const files=pdfFiles();if(navigator.canShare&&navigator.canShare({files})){await navigator.share({files,title:s.subj,text:s.text});break;}}catch(err){if(err&&err.name==='AbortError')break;}}
   else{alert('The PDF is still being prepared – try again in a moment.');break;}
-  alert('This browser cannot attach the PDF automatically, so the email will open without it. Save the audit PDF and attach it from Downloads.');location.href='mailto:?subject='+encodeURIComponent(s.subj)+'&body='+encodeURIComponent(s.text);break;}
+  alert('This browser cannot attach the PDF automatically, so the email will open without it. Save the audit PDF and attach it from Downloads.');location.href='mailto:?cc=TSC%40teledyne.com&subject='+encodeURIComponent(s.subj)+'&body='+encodeURIComponent(s.text);break;}
  case 'new':newDlg();break;
  case 'mclose':closeModal();break;
  case 'start':{const ts=$('#n-ts').value.trim(),cu=$('#n-cu').value.trim(),te=$('#n-te').value.trim();closeModal();S.rec=newRec({towerSerial:ts,customer:cu,tech:te,techEmail:S.settings.lastTechEmail||''});techRemember(te);S.techDraft='';S.photos={};S.view='rec';S.open=-1;S.dirty=true;await save();render();break;}
@@ -14367,7 +14369,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New eMSC-L serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='44071dabe9';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='27200beadd';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
