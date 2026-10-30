@@ -15223,7 +15223,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'10/29/2026'};
+const CREDIT={by:'Ravi Ramsundar',built:'10/30/2026'};
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -15286,7 +15286,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New eMSC-L serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='b46dd22439';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='3a0e14c376';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
@@ -15484,4 +15484,161 @@ function row(d,y,cells,o){var CWc=o.CWc,GAP=o.GAP,IH=o.IH,tw=CWc-10;
  d.setTextColor(0,0,0);d.setDrawColor(0,0,0);d.setLineWidth(.5);return y+H+12;}
 window.PhotoBox={row:row};
 })();
-</script></body></html>
+</script><script>/* ===== shared: dictation for serial numbers and revisions (Ravi, 2026-10-30) =====
+   Same code as /dictate-test/. Speech is cleaned into the field's format:
+   serial = no spaces, ALL CAPS, number words -> digits, call-sign words / letter names -> letters, "dash" -> -;
+   version = keeps "point" -> . and lower-case letters; number = digits only ("forty eight thousand..." works). */
+(function(){
+var SR=window.SpeechRecognition||window.webkitSpeechRecognition||null;
+var NATO={alpha:'a',alfa:'a',bravo:'b',charlie:'c',delta:'d',echo:'e',foxtrot:'f',golf:'g',hotel:'h',india:'i',juliet:'j',juliett:'j',kilo:'k',lima:'l',mike:'m',november:'n',oscar:'o',papa:'p',quebec:'q',romeo:'r',sierra:'s',tango:'t',uniform:'u',victor:'v',whiskey:'w',whisky:'w',xray:'x',yankee:'y',zulu:'z'};
+var LET={bee:'b',be:'b',see:'c',sea:'c',cee:'c',dee:'d',eff:'f',gee:'g',aitch:'h',jay:'j',kay:'k',pee:'p',pea:'p',cue:'q',queue:'q',are:'r',tee:'t',tea:'t',you:'u',vee:'v',why:'y',zee:'z',zed:'z'};
+var UNIT={zero:'0',oh:'0',owe:'0',one:'1',won:'1',two:'2',to:'2',too:'2',three:'3',four:'4',for:'4',five:'5',six:'6',seven:'7',eight:'8',ate:'8',nine:'9'};
+var TEEN={ten:'10',eleven:'11',twelve:'12',thirteen:'13',fourteen:'14',fifteen:'15',sixteen:'16',seventeen:'17',eighteen:'18',nineteen:'19'};
+var TENS={twenty:'2',thirty:'3',forty:'4',fifty:'5',sixty:'6',seventy:'7',eighty:'8',ninety:'9'};
+var SYM={dash:'-',hyphen:'-',minus:'-',point:'.',dot:'.',period:'.',decimal:'.',slash:'/'};
+var NV={zero:0,oh:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,forty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90};
+function numWords(toks){/* "sixty six thousand eight hundred nineteen" -> 66819 */
+ var tot=0,cur=0,any=false,out='';
+ toks.forEach(function(w){if(/^\d+$/.test(w)){if(any){out+=String(tot+cur);tot=cur=0;any=false;}out+=w;return;}
+  if(NV[w]!=null){cur+=NV[w];any=true;}else if(w==='hundred'){cur=(cur||1)*100;any=true;}else if(w==='thousand'){tot+=(cur||1)*1000;cur=0;any=true;}});
+ if(any)out+=String(tot+cur);return out;}
+function clean(raw,kind){kind=kind||'serial';
+ var t=String(raw||'').toLowerCase().replace(/x[\s-]ray/g,'xray').replace(/double[\s-]you/g,'w').replace(/(\d),(?=\d)/g,'$1').replace(/,/g,' ');
+ var toks=t.split(/\s+/).map(function(w){return w.replace(/[^a-z0-9.\-\/]/g,'');}).filter(Boolean);
+ if(kind==='number'){if(toks.some(function(w){return w==='hundred'||w==='thousand';}))return numWords(toks.filter(function(w){return w!=='and';}));}
+ var out=[],rep=1,tens=null;
+ var push=function(v){for(var i=0;i<rep;i++)out.push(v);rep=1;};
+ toks.forEach(function(w){
+  if(tens!==null){if(UNIT[w]&&UNIT[w]!=='0'){push(tens+UNIT[w]);tens=null;return;}push(tens+'0');tens=null;}
+  if(w==='double'){rep=2;return;}if(w==='triple'){rep=3;return;}
+  if(TENS[w]){tens=TENS[w];return;}
+  var v=NATO[w]!=null?NATO[w]:UNIT[w]!=null?UNIT[w]:TEEN[w]!=null?TEEN[w]:SYM[w]!=null?SYM[w]:(kind!=='number'&&LET[w]!=null)?LET[w]:w;push(v);});
+ if(tens!==null)push(tens+'0');
+ var s=out.join('');
+ if(kind==='number')return s.replace(/[^0-9.]/g,'');
+ if(kind==='version')return s.replace(/[^a-z0-9.\-\/]/gi,'');
+ return s.toUpperCase().replace(/[^A-Z0-9\-\/.]/g,'');}
+/* true when text looks spoken ("x-ray two six"), not typed ("X26B140057") */
+function spoken(raw){var t=String(raw||'').toLowerCase().replace(/x[\s-]ray/g,'xray').replace(/(\d),(?=\d)/g,'$1');var toks=t.split(/[\s,]+/).map(function(w){return w.replace(/[^a-z0-9.\-\/]/g,'');}).filter(Boolean);if(toks.length<2)return false;
+ var word=0,code=0;toks.forEach(function(w){var a=w.replace(/[^a-z]/g,'');if(a.length>1&&a===w&&(NATO[a]!=null||UNIT[a]!=null||TEEN[a]!=null||TENS[a]!=null||SYM[a]!=null||a==='double'||a==='triple'||a==='hundred'||a==='thousand')){word++;code++;}else if(/^[a-z]$/.test(w)||/^[0-9.\-\/]+$/.test(w)||LET[w]!=null||/^[a-z]?\d[a-z0-9]*$/.test(w))code++;});
+ return word>=1&&code/toks.length>=0.7;}
+var cur=null;
+function listen(o){o=o||{};if(!SR){o.onError&&o.onError('unsupported','This browser has no speech recognition. Use the keyboard’s microphone key instead.');return null;}
+ stop();var r=new SR(),got=false,heard=false,ended=false;r.lang=o.lang||'en-US';r.interimResults=true;r.maxAlternatives=4;r.continuous=false;
+ var st=function(t,k){o.onState&&o.onState(t,k);};
+ r.onstart=function(){st('Listening… speak now, then pause.','start');};
+ r.onaudiostart=function(){st('Listening… microphone on. Speak now, then pause.','audio');};
+ r.onspeechstart=function(){heard=true;st('Hearing you…','speech');};
+ r.onresult=function(e){var res=e.results[e.results.length-1];var alts=[];for(var i=0;i<res.length;i++)alts.push(res[i].transcript);
+  if(!res.isFinal){st('Heard so far: “'+alts[0]+'”','interim');return;}got=true;o.onResult&&o.onResult(alts[0],alts);};
+ r.onerror=function(e){var c=e.error||'error',m={
+   'not-allowed':'The microphone is blocked for this page. Allow the microphone for this site in the browser settings, then try again.',
+   'service-not-allowed':'This browser does not allow speech recognition here.',
+   'network':'The speech service could not be reached. It needs internet, and some browsers (Brave is a known case) do not provide it.',
+   'no-speech':'Nothing was heard. Tap the field and try again, a little closer to the tablet.',
+   'audio-capture':'No microphone was found.','aborted':'Stopped.'}[c]||('Speech recognition error: '+c);got=true;o.onError&&o.onError(c,m);};
+ r.onend=function(){if(ended)return;ended=true;cur=null;if(!got)o.onError&&o.onError('empty',heard?'Speech was heard but no text came back. This browser may not support dictation (Brave is a known case). Use the keyboard’s microphone key instead.':'Nothing came back from the speech service. Tap the field and try again, or use the keyboard’s microphone key.');o.onEnd&&o.onEnd();};
+ try{r.start();}catch(e){o.onError&&o.onError('start',String(e&&e.message||e));return null;}cur=r;return r;}
+function stop(){if(cur){try{cur.abort();}catch(e){}cur=null;}}
+window.Dictate={supported:!!SR,clean:clean,spoken:spoken,listen:listen,stop:stop};
+})();
+
+/* ===== shared: dictation in the forms (Ravi, 2026-10-30) =====
+   Dictate On/Off is chosen when an inspection starts, and again at the top of the serial numbers (switch any time).
+   With it on, tapping a serial-number or version field listens instead of opening the keyboard. A panel at the bottom of
+   the screen shows what was heard and what was entered; "Type instead" opens the keyboard for that field.
+   Text from the keyboard's own microphone key ("x-ray two six…") is cleaned up when the field is left, Dictate on or off.
+   Each form sets window.DICTATE_FIELDS = [{sel, kind}] (kind: serial | version | number). */
+(function(){
+if(!window.Dictate)return;
+var KEY='dictate_on',kbd=typeof WeakSet==='function'?new WeakSet():{has:function(){return false;},add:function(){},delete:function(){}};
+var st={el:null,busy:false,dog:null,last:null};
+function on(){try{return localStorage.getItem(KEY)==='1';}catch(e){return false;}}
+function setOn(v){try{localStorage.setItem(KEY,v?'1':'0');}catch(e){}if(!v){stop();hide();}paint();}
+function cfg(){return window.DICTATE_FIELDS||[];}
+function kindOf(el){if(!el||el.tagName!=='INPUT'||el.type==='date'||el.disabled||el.readOnly)return null;var F=cfg();for(var i=0;i<F.length;i++){try{if(el.matches(F[i].sel))return F[i].kind||'serial';}catch(e){}}return null;}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function labelOf(el){var a=el.parentElement;for(var n=0;a&&n<5;n++,a=a.parentElement){var L=a.querySelectorAll('label.f,.lb,b');for(var i=L.length-1;i>=0;i--){if(L[i].compareDocumentPosition(el)&Node.DOCUMENT_POSITION_FOLLOWING){var t=L[i].textContent.replace(/\s+/g,' ').trim();if(t)return t.length>60?t.slice(0,57)+'…':t;}}}return el.placeholder||'this field';}
+/* ---------- look ---------- */
+var css=document.createElement('style');css.textContent=
+ 'input.dk-mic{background-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%231d5fc4%27 stroke-width=%272%27 stroke-linecap=%27round%27%3E%3Crect x=%279%27 y=%273%27 width=%276%27 height=%2711%27 rx=%273%27/%3E%3Cpath d=%27M5 11a7 7 0 0 0 14 0M12 18v3%27/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-position:right 10px center!important;background-size:20px 20px!important;padding-right:38px!important}'+
+ 'input.dk-kbd{background-image:none!important}'+
+ 'input.dk-live{border-color:#c2410c!important;background-color:#fff1e6!important;box-shadow:0 0 0 3px rgba(194,65,12,.18)!important}'+
+ '#dkPanel{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom));width:min(680px,calc(100% - 20px));background:#fff;color:#14213d;border:1px solid #d5dce6;border-left:6px solid #1d5fc4;border-radius:14px;box-shadow:0 10px 30px rgba(20,33,61,.25);padding:10px 12px;z-index:900;font-size:15px;display:none}'+
+ '#dkPanel.live{border-left-color:#c2410c}#dkPanel.err{border-left-color:#c62828}#dkPanel.ok{border-left-color:#1b8a3a}'+
+ '#dkPanel .t{display:flex;align-items:center;gap:8px;min-height:24px}#dkPanel .t b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
+ '#dkPanel .m{color:#4a5568;font-size:14px;min-height:40px;margin-top:2px;line-height:1.4}#dkPanel .m code{font:700 16px/1.2 ui-monospace,Menlo,Consolas,monospace;color:#14213d}'+
+ '#dkPanel .b{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;align-items:center;min-height:44px;margin-top:4px}'+
+ '#dkPanel button{min-height:40px;padding:4px 12px;border-radius:10px;border:1px solid #c7d0dd;background:#fff;font:inherit;font-size:14px;font-weight:700;color:#14213d;white-space:nowrap;flex:none}'+
+ '#dkPanel button.p{background:#1d5fc4;border-color:#1d5fc4;color:#fff}#dkPanel button.alt{font-family:ui-monospace,Menlo,Consolas,monospace;background:#eef3fc}'+
+ '#dkPanel .dot{width:12px;height:12px;border-radius:50%;background:#c2410c;flex:none;animation:dkp 1s infinite}@keyframes dkp{50%{opacity:.25}}'+
+ '.dk-pill{min-height:40px;padding:4px 10px;font-weight:800;white-space:nowrap;flex:none}.dk-pill.on{background:#1d5fc4!important;border-color:#1d5fc4!important;color:#fff!important}'+
+ '.dk-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#eef3fc;border:1px solid #c9d8f0;border-radius:10px;padding:8px 10px;margin:10px 0}.dk-row span{flex:1 1 200px;font-weight:700}.dk-row small{display:block;font-weight:400;color:#5a6478}'+
+ '.dk-seg{display:inline-flex;border:2px solid #1d5fc4;border-radius:10px;overflow:hidden}.dk-seg button{border:0!important;border-radius:0!important;margin:0!important;min-height:42px;min-width:70px;font-weight:800;background:#fff;color:#1d5fc4;width:auto!important}.dk-seg button.on{background:#1d5fc4;color:#fff}';
+document.head.appendChild(css);
+var P=document.createElement('div');P.id='dkPanel';P.setAttribute('role','status');P.setAttribute('aria-live','polite');
+function mount(){if(!P.parentNode)document.body.appendChild(P);}
+function place(){var el=st.el,top=false;try{if(el){var r=el.getBoundingClientRect();top=(r.top+r.bottom)/2>window.innerHeight*0.55;}}catch(e){}P.style.top=top?'calc(70px + env(safe-area-inset-top))':'auto';P.style.bottom=top?'auto':'calc(10px + env(safe-area-inset-bottom))';}
+function show(cls,title,msg,btns){mount();if(P.style.display!=='block')place();P.className=cls||'';P.innerHTML='<div class="t">'+(cls==='live'?'<span class="dot"></span>':'')+'<b>'+title+'</b><button data-dk-x="close" aria-label="Close">✕</button></div><div class="m">'+(msg||'')+'</div><div class="b">'+(btns||'')+'</div>';P.style.display='block';}
+function hide(){P.style.display='none';}
+/* ---------- marks on the fields ---------- */
+function paint(){var o=on();document.querySelectorAll('input').forEach(function(el){var k=kindOf(el);if(!k){el.classList.remove('dk-mic');return;}
+  el.classList.toggle('dk-mic',o);el.classList.toggle('dk-kbd',o&&kbd.has(el));if(o&&!kbd.has(el))el.setAttribute('inputmode','none');else if(el.getAttribute('inputmode')==='none')el.removeAttribute('inputmode');});
+ document.querySelectorAll('.dk-pill').forEach(function(b){b.classList.toggle('on',o);b.textContent=o?'🎤 On':'🎤 Off';b.setAttribute('aria-label','Dictation '+(o?'on':'off')+' - tap to switch');});
+ document.querySelectorAll('.dk-seg button').forEach(function(b){b.classList.toggle('on',(b.getAttribute('data-dk')==='1')===o);});}
+function pill(){var bars=window.DICTATE_PILL?document.querySelectorAll('.bar'):[];bars.forEach(function(bar){if(bar.querySelector('.dk-pill'))return;var h=bar.querySelector('[data-act=home]');if(!h||!document.querySelector('[data-b]'))return;
+ var b=document.createElement('button');b.className='dk-pill';b.type='button';b.setAttribute('data-dk-x','pill');b.title='Turn dictation on or off';bar.insertBefore(b,h);});paint();}
+var mo=new MutationObserver(function(){clearTimeout(mo.t);mo.t=setTimeout(pill,30);});
+function start(){mo.observe(document.body,{childList:true,subtree:true});pill();}
+if(document.body)start();else document.addEventListener('DOMContentLoaded',start);
+/* the On/Off choice shown when an inspection starts */
+window.DictUI={rowHtml:function(){return '<div class="dk-row"><span>🎤 Dictate serial numbers and versions<small>Tap a field and say it instead of typing. You can switch it here any time.</small></span><div class="dk-seg"><button type="button" data-dk="0">Off</button><button type="button" data-dk="1">On</button></div></div>';},paint:paint,on:on,setOn:setOn};
+/* ---------- putting a value in, the same way typing does ---------- */
+function put(el,v){el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));try{el.blur();}catch(e){}el.dispatchEvent(new Event('change',{bubbles:true}));}
+/* ---------- listening ---------- */
+function stop(){clearTimeout(st.dog);if(st.busy){st.busy=false;Dictate.stop();}if(st.el)st.el.classList.remove('dk-live');}
+function listen(el){var k=kindOf(el);if(!k)return;stop();st.el=el;place();st.busy=true;el.classList.add('dk-live');var lb=esc(labelOf(el)),before=el.value,t0=Date.now(),done=false;
+ var kb='<button data-dk-x="kbd">⌨ Type instead</button>';
+ show('live','Listening – '+lb,'Say it one character at a time, then pause.',kb);
+ var fin=function(){done=true;st.busy=false;clearTimeout(st.dog);el.classList.remove('dk-live');};
+ st.dog=setTimeout(function(){if(done)return;fin();Dictate.stop();show('err',lb,'No answer from the speech service. This browser may not support dictation (Brave is a known case). Use the keyboard and its microphone key.','<button class="p" data-dk-x="again">🎤 Try again</button><button data-dk-x="kbd">⌨ Type instead</button>');},10000);
+ Dictate.listen({onState:function(t,kd){if(done)return;if(kd==='interim')show('live','Listening – '+lb,esc(t),kb);},
+  onResult:function(best,alts){if(done)return;fin();var v=Dictate.clean(best,k);
+   if(!v){show('err',lb,'Heard “'+esc(best)+'” but no letters or numbers came out of it.','<button class="p" data-dk-x="again">🎤 Try again</button><button data-dk-x="kbd">⌨ Type instead</button>');return;}
+   st.last={el:el,before:before};put(el,v);
+   var seen={},o=[];seen[v.toLowerCase()]=1;(alts||[]).forEach(function(a){var c=Dictate.clean(a,k);if(c&&!seen[c.toLowerCase()]){seen[c.toLowerCase()]=1;o.push(c);}});
+   show('ok','✓ '+lb+': <code style="font:800 16px ui-monospace,Menlo,Consolas,monospace">'+esc(v)+'</code>','Heard “'+esc(best.trim())+'”.'+(o.length?' Not right? Tap one of the others, or try again.':' Not right? Try again or type it.'),
+    o.map(function(c){return '<button class="alt" data-dk-alt="'+esc(c)+'">'+esc(c)+'</button>';}).join('')+'<button data-dk-x="again">🎤 Again</button><button data-dk-x="undo">Undo</button><button data-dk-x="kbd">⌨ Type</button><button class="p" data-dk-x="close">Done</button>');},
+  onError:function(c,m){if(done)return;fin();if(c==='aborted'){hide();return;}show('err',lb,esc(m),'<button class="p" data-dk-x="again">🎤 Try again</button><button data-dk-x="kbd">⌨ Type instead</button>');},
+  onEnd:function(){if(!done)fin();}});}
+/* ---------- taps ---------- */
+document.addEventListener('pointerdown',function(e){var el=e.target;if(!on()||!kindOf(el))return;if(!kbd.has(el))el.setAttribute('inputmode','none');},true);
+document.addEventListener('click',function(e){var el=e.target;
+ if(el.closest&&el.closest('.dk-seg button')){setOn(el.closest('button').getAttribute('data-dk')==='1');return;}
+ if(!on()||!kindOf(el)||kbd.has(el))return;if(st.busy&&st.el===el){stop();hide();return;}listen(el);},true);
+P.addEventListener('pointerdown',function(e){e.preventDefault();});P.addEventListener('mousedown',function(e){e.preventDefault();});
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-dk-x],[data-dk-alt]');if(!b)return;var x=b.getAttribute('data-dk-x'),el=st.el;
+ if(x==='pill'){setOn(!on());return;}
+ e.stopPropagation();
+ if(b.hasAttribute('data-dk-alt')){if(el){put(el,b.getAttribute('data-dk-alt'));show('ok','✓ '+esc(labelOf(el))+': <code style="font:800 16px ui-monospace,Menlo,Consolas,monospace">'+esc(b.getAttribute('data-dk-alt'))+'</code>','Picked from the other matches.','<button data-dk-x="undo">Undo</button><button class="p" data-dk-x="close">Done</button>');}return;}
+ if(x==='close'){stop();hide();return;}
+ if(x==='again'&&el){el.focus();listen(el);return;}
+ if(x==='undo'&&st.last){put(st.last.el,st.last.before);show('','Undone','The field is back to what it was.','<button class="p" data-dk-x="close">Done</button>');return;}
+ if(x==='kbd'&&el){stop();hide();kbd.add(el);el.removeAttribute('inputmode');el.classList.add('dk-kbd');el.blur();el.focus();return;}
+ if(x==='voice'&&el){kbd.delete(el);el.classList.remove('dk-kbd');el.setAttribute('inputmode','none');el.blur();el.focus();listen(el);return;}},true);
+/* field in keyboard mode: offer to switch back to voice */
+document.addEventListener('focusin',function(e){var el=e.target;if(!on()||!kindOf(el)||!kbd.has(el))return;st.el=el;place();show('','⌨ Typing – '+esc(labelOf(el)),'The keyboard is open for this field.','<button class="p" data-dk-x="voice">🎤 Speak instead</button><button data-dk-x="close">Done</button>');});
+document.addEventListener('focusout',function(e){var el=e.target;if(kindOf(el)&&kbd.has(el)&&!st.busy)setTimeout(function(){if(document.activeElement!==el&&P.className==='')hide();},150);});
+/* keyboard microphone key: clean "x-ray two six bravo…" when the field is left (only text that looks spoken is changed) */
+document.addEventListener('change',function(e){var el=e.target,k=kindOf(el);if(!k||!e.isTrusted)return;var raw=el.value;if(!Dictate.spoken(raw))return;var v=Dictate.clean(raw,k);if(!v||v===raw)return;
+ st.el=el;st.last={el:el,before:raw};el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));show('ok','✓ '+esc(labelOf(el))+': <code style="font:800 16px ui-monospace,Menlo,Consolas,monospace">'+esc(v)+'</code>','Cleaned up from “'+esc(raw)+'”.','<button data-dk-x="undo">Undo</button><button class="p" data-dk-x="close">Done</button>');},true);
+})();
+
+window.DICTATE_FIELDS=[
+ {sel:'input[data-b^="gear."][data-b$=".s"]',kind:'serial'},
+ {sel:'input[data-b^="swap.list."][data-b$=".nw"],input[data-b^="swap.list."][data-b$=".old"]',kind:'serial'},
+ {sel:'input[data-tk],input[data-b^="gear."][data-b$=".v"]',kind:'serial'},
+ {sel:'input[data-b="ver.v7"],input[data-b="ver.v8"],input[data-b="ver.v9"]',kind:'number'},
+ {sel:'input[data-b^="ver.v"]:not([data-b="ver.v0s"]):not([data-b="ver.v0c"])',kind:'version'}];
+(function(){var _h=serHtml;serHtml=function(){return _h.apply(this,arguments).replace('<h2>Serial numbers</h2>','<h2>Serial numbers</h2>'+DictUI.rowHtml());};})();
+(function(){var _n=newDlg;newDlg=function(){var o=_n.apply(this,arguments);var s=document.querySelector('#modal [data-act=start]');if(s&&!document.querySelector('#modal .dk-row'))s.insertAdjacentHTML('beforebegin',DictUI.rowHtml());DictUI.paint();return o;};})();</script></body></html>

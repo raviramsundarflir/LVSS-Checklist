@@ -126,7 +126,7 @@ a.homelnk,a.homelnk:visited,a.homelnk:hover,a.homelnk:active{background:var(--bl
 .ser{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
 .ser .lb{font-weight:600}
 .ser .two{display:flex;gap:6px;align-items:center}
-.ckr.todo{background:#fff6c7}
+.ckr.todo{background:#fff6c7}div.ser{padding:6px 6px 6px 10px;border-radius:6px}div.ser.miss{background:#fff6c7;box-shadow:inset 4px 0 0 #e0b400}table tr.miss td{background:#fff6c7}div.ser button.cam,div.ckr button.cam{min-width:56px;min-height:44px;font-size:18px}
 .ckr{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start;padding:10px 6px;border-bottom:1px solid var(--line)}
 .ckr .n{font-weight:800;color:var(--mut);padding-top:10px;text-align:right}
 .ckr .tx{font-weight:600}
@@ -13274,6 +13274,29 @@ window.Core={pendClear:pendClear,dec:dec,pack:pack,json:json,start:start,resume:
  dk:dk,idOf:idOf,devOfId:devOfId,LBL:LBL,ORDER:ORDER,REV:REV,REVK:REVK,TRACK_REV:TRACK_REV,FORM:FORM,KIND:KIND,same:same,fd:fd,today:today,label:label,
  use:function(A){AD=A;css();}};
 })();
+</script><script>/* ===== shared: photo appendix boxes (Ravi, 2026-10-29) =====
+   Each photo sits in one bordered box with its label on a shaded strip at the top (item, then the serial number /
+   value / note), so it is always clear which information goes with which picture. */
+(function(){
+function lines(d,t,w,max,cl){t=String(t==null?'':t).trim();if(!t)return [];return d.splitTextToSize(cl?cl(t):t,w).slice(0,max);}
+/* cells: [{src, w, h, t, s}] (src = image data URL or null) ; o: {MX, CWc, GAP, IH, cl, tMax, sMax, ens(n)->y}
+   returns the y below the row */
+function row(d,y,cells,o){var CWc=o.CWc,GAP=o.GAP,IH=o.IH,tw=CWc-10;
+ d.setFont('helvetica','bold');d.setFontSize(8);var T=cells.map(function(c){return lines(d,c.t,tw,o.tMax||2,o.cl);});
+ d.setFont('helvetica','normal');d.setFontSize(7.8);var Ss=cells.map(function(c){return lines(d,c.s,tw,o.sMax||2,o.cl);});
+ var nl=0,ns=0;cells.forEach(function(c,i){nl=Math.max(nl,T[i].length);ns=Math.max(ns,Ss[i].length);});
+ var capH=6+nl*9.5+ns*9+4,H=capH+IH;if(o.ens)y=o.ens(H+12);
+ cells.forEach(function(c,i){var x0=o.MX+i*(CWc+GAP);
+  d.setFillColor(234,241,251);d.rect(x0,y,CWc,capH,'F');
+  var ty=y+11;d.setFont('helvetica','bold');d.setFontSize(8);d.setTextColor(0,0,0);T[i].forEach(function(l){d.text(l,x0+5,ty);ty+=9.5;});
+  d.setFont('helvetica','normal');d.setFontSize(7.8);d.setTextColor(35,35,35);Ss[i].forEach(function(l){d.text(l,x0+5,ty);ty+=9;});
+  var src=c.src,pw=c.w,ph=c.h;
+  if(src){try{if(!pw||!ph){var pr=d.getImageProperties(src);pw=pr.width;ph=pr.height;}var k=Math.min((CWc-6)/pw,(IH-6)/ph),w=pw*k,hh=ph*k;d.addImage(src,'JPEG',x0+(CWc-w)/2,y+capH+(IH-hh)/2,w,hh);}catch(e){}}
+  else{d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(110);d.text('Photo omitted',x0+CWc/2,y+capH+IH/2,{align:'center'});}
+  d.setDrawColor(120,130,148);d.setLineWidth(.4);d.line(x0,y+capH,x0+CWc,y+capH);d.setLineWidth(.9);d.rect(x0,y,CWc,H);});
+ d.setTextColor(0,0,0);d.setDrawColor(0,0,0);d.setLineWidth(.5);return y+H+12;}
+window.PhotoBox={row:row};
+})();
 </script><script>/* ===== shared: camera (Ravi, 2026-10-29) =====
    1) Photos: "Take photo" opens the tablet's own camera app (asked for the back camera), as before Rev 10.
       Every "Add photo" dialog also gets a small "Back camera (in form)" button: a camera inside the form
@@ -13678,7 +13701,7 @@ function tkLbl(k){const x=TPL.fields.find(y=>y.k===k);return x?x.l:k;}
 function tkRow(r,x){const k=x.k,v=(r.f||{})[k]||'',n=(r.ph||[]).filter(p=>p.k==='tk:'+k).length,om=(r.tkOm||{})[k]&&!n;let ip;
  if(k==='plate'){const on=r.tkPf!==false,sh=on?String(v).replace(/^dhs\s*/i,''):v;ip=`<div style="display:flex;gap:6px"><button data-act="tkpf" class="${on?'pri':''}" style="min-height:44px;padding:4px 12px;font-weight:800">${on?'DHS':'no prefix'}</button><input data-tkplate="1" value="${esc(sh)}" placeholder="e.g. 201838" autocomplete="off" autocapitalize="characters" style="flex:1"></div>`;}
  else ip=`<input data-b="f.${k}" value="${esc(v)}" autocomplete="off" autocapitalize="characters">`;
- return `<div class="ser"><div class="lb">${esc(x.l)}<div class="muted" style="font-size:12px">${n?'✓ photo':om?'photo omitted':'photo needed'}</div></div><div style="display:flex;gap:6px;align-items:center"><div style="flex:1">${ip}</div><button class="cam" data-act="tkcam" data-k="${k}" title="Photo of ${esc(x.l)}">📷${n?' '+n:''}</button></div></div>`;}
+ return `<div class="ser${String(v).trim()?'':' miss'}" id="tk-${k}"><div class="lb">${esc(x.l)}<div class="muted" style="font-size:12px">${n?'✓ photo':om?'photo omitted':'photo needed'}</div></div><div style="display:flex;gap:6px;align-items:center"><div style="flex:1">${ip}</div><button class="cam" data-act="tkcam" data-k="${k}" title="Photo of ${esc(x.l)}">📷${n?' '+n:''}</button></div></div>`;}
 function tkPrompt(then){const r=S.rec,m=tkMissing(r);if(!m.length){closeModal();if(then)then();return;}S.tkThen=then||null;modal(`<h3>Truck photos needed</h3><p class="muted">Take a photo of each one, or omit it (no reason needed).</p>${m.map(k=>`<div class="card" style="margin:6px 0"><b>${esc(tkLbl(k))}</b>${(r.f||{})[k]?' – '+esc(r.f[k]):''}<div class="row" style="margin-top:6px"><button class="pri" data-act="tkcam" data-k="${k}" style="flex:1">📷 Take the photo</button><button data-act="tkomit" data-k="${k}" style="flex:1">Omit</button></div></div>`).join('')}<button data-act="mclose">Close</button>`);}
 document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset||!t.dataset.tkplate||!S.rec)return;const r=S.rec;let v=String(t.value||'').trim();r.f=r.f||{};if(r.tkPf!==false){v=v.replace(/^dhs\s*/i,'');r.f.plate=v?'DHS '+v:'';}else r.f.plate=v;markDirty();});
 function serHtml(r){const f=TPL.fields.filter(x=>!TKK.includes(x.k));
@@ -13687,25 +13710,32 @@ function serHtml(r){const f=TPL.fields.filter(x=>!TKK.includes(x.k));
  return `<div class="card"><h2>Unit and technician</h2>${r.hdr.src?`<div class="warn" style="background:#eaf3ff;border-color:#9bbbe8"><b>Started from the ATP report</b> (${esc(r.hdr.src)}). Skid S/N, VIN and any serials the ATP recorded are filled in below - check them against the unit.</div>`:''}
  <div class="grid"><div><label class="f">Skid serial number (required)</label><input id="n-sn" data-snin="1" data-b="hdr.sn" value="${esc(r.hdr.sn)}" placeholder="e.g. eMSC-L 0056" autocomplete="off">${snTg('n-sn',r.hdr.sn)}</div><div><label class="f">Inspection date</label><input type="date" data-b="hdr.date" value="${esc(r.hdr.date)}"></div><div><label class="f">RMA number (optional)</label><input data-b="hdr.rma" value="${esc(r.hdr.rma||'')}" autocomplete="off"></div></div>${whoHtml(r,true)}</div>
  <div class="card"><h2>Truck identification</h2><p class="muted">Photo of each is required – take it, or omit it when asked.</p>${TKK.map(k=>tkRow(r,TPL.fields.find(x=>x.k===k))).join('')}</div>
- <div class="card"><h2>CBP component serial numbers</h2><p class="muted">Fill in what is on the unit. Anything left blank is listed when you finish.</p>${f.map(x=>`<div class="ser"><div class="lb">${esc(x.l)}</div><div>${inp(x)}</div></div>`).join('')}</div>`;}
+ <div class="card"><h2>CBP component serial numbers</h2><p class="muted">Fill in what is on the unit. Tap 📷 to add a picture of a label or an issue. Anything left blank stays yellow and shows as missing in the report.</p>${f.map(x=>serRow(r,x)).join('')}</div>`;}
+function serInp(x,v){if(x.o==='date')return `<input type="date" data-b="f.${x.k}" value="${esc(v)}">`;return `<input data-b="f.${x.k}" ${x.o==='nohist'?'data-nohist ':''}value="${esc(v)}" autocomplete="off" autocapitalize="characters">`;}
+function serRow(r,x){const v=(r.f||{})[x.k]||'',k='sn:'+x.k,n=phCount(r,k);return `<div class="ser${String(v).trim()?'':' miss'}" id="ser-${x.k}"><div class="lb">${esc(x.l)}</div><div style="display:flex;gap:6px;align-items:center"><div style="flex:1">${serInp(x,v)}</div>${x.o==='date'?'':`<button class="cam" data-act="sercam" data-k="${x.k}" title="Picture for ${esc(x.l)}">📷${n?' '+n:''}</button>`}</div>${phStrip(r,k)}</div>`;}
+function updSer(k){const r=S.rec,x=TPL.fields.find(y=>y.k===k),el=document.getElementById('ser-'+k);if(r&&x&&el)el.outerHTML=serRow(r,x);}
+document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset||!S.rec)return;let k=null;if(t.dataset.tkplate)k='plate';else if(/^f\./.test(t.dataset.b||''))k=t.dataset.b.slice(2);if(!k)return;const el=document.getElementById('ser-'+k)||document.getElementById('tk-'+k);if(el)el.classList.toggle('miss',!String(t.value||'').trim());});
 const phCount=(r,k)=>(r.ph||[]).filter(p=>p.k===k).length;
-function ckRow(r,i,idx){const c=ckOf(r,i.k),cl=c.n?'na':c.x?'dn':c.u?'':'todo',open=S.upd===i.k;
+/* lines that carry a version: (2.16q) in brackets, or 'version' / 'Update...' in the text */
+function ckVer(i){return /\(\s*\d+(\.\d+)+[a-z]?\s*\)|\bversion\b|^\s*update\b/i.test(String(i.t||''));}
+function ckRow(r,i,idx){const vl=ckVer(i)||!!ckOf(r,i.k).u,c=ckOf(r,i.k),cl=c.n?'na':c.x?'dn':c.u?'':'todo',open=S.upd===i.k;
  const n=phCount(r,i.k),cam=`<button class="cam" data-act="ckcam" data-k="${i.k}" title="Add a picture to this line">📷${n?' '+n:''}</button>`;
  const dt=`<input type="date" data-b="ck.${i.k}.d" value="${esc(c.d||'')}"><input class="ini" data-b="ck.${i.k}.i" data-nohist maxlength="4" value="${esc(c.i||'')}" placeholder="Init.">`;
  let ctl='';
- if(c.n)ctl=`<span class="tag">Not applicable</span><button class="nab" data-act="ckna" data-k="${i.k}">Undo N/A</button>`;
+ if(c.n)ctl=`<span class="tag">Not applicable</span><button class="nab" data-act="ckna" data-k="${i.k}">Undo N/A</button>${cam}`;
  else if(c.u&&!open)ctl=`<span class="tag upd">Updated</span>${dt}<button data-act="ckupd" data-k="${i.k}">Edit</button><button data-act="ckundo" data-k="${i.k}">Undo</button>${cam}`;
- else if(c.x)ctl=`<button data-act="ck" data-k="${i.k}">✓ Completed</button>${dt}<button data-act="ckupd" data-k="${i.k}">Tap to update</button><button class="nab" data-act="ckna" data-k="${i.k}">N/A</button>${cam}`;
- else ctl=`<button data-act="ck" data-k="${i.k}">Tap to complete</button><button data-act="ckupd" data-k="${i.k}"${open?' style="background:var(--blue);border-color:var(--blue);color:#fff"':''}>Tap to update</button><button class="nab" data-act="ckna" data-k="${i.k}">N/A</button>${cam}`;
- const panel=open?`<div class="updp"><b>Update</b><label class="f" style="margin-top:6px">Updated rev:</label><input data-b="ck.${i.k}.rev" value="${esc(c.rev||'')}" placeholder="e.g. 1.38a" autocomplete="off"><b style="display:block;margin-top:8px">Notes</b><label class="f" style="margin-top:4px">Notes (optional)</label><textarea data-b="ck.${i.k}.nt" rows="2" placeholder="Anything the office should know">${esc(c.nt||'')}</textarea><div class="ctl" style="margin-top:8px"><button data-act="ckcam" data-k="${i.k}" style="flex:1 1 100%">📷 Add picture to this line</button></div>${phStrip(r,i.k)}<div class="ctl"><button class="pri" data-act="ckupdsave" data-k="${i.k}" style="min-width:150px">Save update</button><button data-act="ckupdcancel" data-k="${i.k}">Cancel</button></div></div>`:'';
- const sum=(c.u&&!open)?`<div class="muted" style="margin-top:4px"><b>Updated rev:</b> ${esc(c.rev||'')}${c.nt?`<br><b>Notes:</b> ${esc(c.nt)}`:''}</div>`:'';
+ else if(c.x)ctl=`<button data-act="ck" data-k="${i.k}">✓ Completed</button>${dt}${vl?`<button data-act="ckupd" data-k="${i.k}">Tap to update</button>`:''}<button class="nab" data-act="ckna" data-k="${i.k}">N/A</button>${cam}`;
+ else ctl=`<button data-act="ck" data-k="${i.k}">Tap to complete</button>${vl?`<button data-act="ckupd" data-k="${i.k}"${open?' style="background:var(--blue);border-color:var(--blue);color:#fff"':''}>Tap to update</button>`:''}<button class="nab" data-act="ckna" data-k="${i.k}">N/A</button>${cam}`;
+ const panel=open?`<div class="updp"><b>Update</b> <span class="muted" style="font-size:13px">- the new rev, a note, or both</span><label class="f" style="margin-top:6px">Updated rev (optional):</label><input data-b="ck.${i.k}.rev" value="${esc(c.rev||'')}" placeholder="e.g. 1.38a" autocomplete="off"><b style="display:block;margin-top:8px">Notes</b><label class="f" style="margin-top:4px">Notes (optional)</label><textarea data-b="ck.${i.k}.nt" rows="2" placeholder="Anything the office should know">${esc(c.nt||'')}</textarea><div class="ctl" style="margin-top:8px"><button data-act="ckcam" data-k="${i.k}" style="flex:1 1 100%">📷 Add picture to this line</button></div>${phStrip(r,i.k)}<div class="ctl"><button class="pri" data-act="ckupdsave" data-k="${i.k}" style="min-width:150px">Save update</button><button data-act="ckupdcancel" data-k="${i.k}">Cancel</button></div></div>`:'';
+ const sum=(c.u&&!open)?`<div class="muted" style="margin-top:4px">${c.rev?`<b>Updated rev:</b> ${esc(c.rev)}`:''}${c.rev&&c.nt?'<br>':''}${c.nt?`<b>Notes:</b> ${esc(c.nt)}`:''}</div>`:'';
  return `<div class="ckr ${cl}" id="ck-${i.k}"><div class="n">${idx+1}</div><div><div class="tx">${esc(i.t)}</div><div class="ctl">${ctl}</div>${panel}${sum}${open?'':phStrip(r,i.k)}</div></div>`;}
 function progHtml(r){const c=ckCount(r),p=Math.round((c.done+c.na)/c.total*100);return `<div><b>${c.done+c.na} of ${c.total}</b> complete${c.na?` (${c.na} N/A)`:''}<div class="prog"><i style="width:${p}%"></i></div></div>`;}
-function ckHtml(r){return `<div class="card"><h2>Checklist</h2><p class="muted">Tap <b>Tap to complete</b> on each line when the work is done. It stamps today's date and your initials; you can edit either. Use N/A only for items that do not apply to this unit.</p>${whoHtml(r,false)}<div id="prog" style="margin-top:10px">${progHtml(r)}</div></div>
+function ckHtml(r){return `<div class="card"><h2>Checklist</h2><p class="muted">Tap <b>Tap to complete</b> on each line when the work is done. It stamps today's date and your initials; you can edit either. Use N/A only for items that do not apply to this unit. Lines with a version also have <b>Tap to update</b> for the new rev, a note, or both. Tap 📷 on a line to add a picture of an issue for the team. Lines not completed stay yellow and show as not completed in the report.</p>${whoHtml(r,false)}<div id="prog" style="margin-top:10px">${progHtml(r)}</div></div>
  <div class="card" style="padding:4px 10px">${TPL.items.map((i,x)=>ckRow(r,i,x)).join('')}</div>`;}
 function updCk(k){const r=S.rec,x=TPL.items.findIndex(i=>i.k===k),el=document.getElementById('ck-'+k);if(el&&x>=0)el.outerHTML=ckRow(r,TPL.items[x],x);const p=$('#prog');if(p)p.innerHTML=progHtml(r);}
-function sumHtml(r){const c=ckCount(r),bf=blankFields(r);
- return `<table class="t"><tr><th>Item</th><th>Status</th></tr><tr><td>Skid serial number</td><td>${esc(recName(r))}</td></tr><tr><td>Serial numbers entered</td><td>${TPL.fields.length-bf.length} of ${TPL.fields.length}${bf.length?` <span class="muted">(blank: ${esc(bf.join(', '))})</span>`:''}</td></tr><tr><td>Checklist</td><td>${c.done+c.na} of ${c.total} complete${c.na?` (${c.na} N/A)`:''}${c.left?` <b style="color:var(--fail)">- ${c.left} left</b>`:' <b style="color:var(--pass)">✓</b>'}</td></tr></table>`;}
+function ckLeft(r){return TPL.items.map((i,x)=>({i,x})).filter(o=>!ckDone(r,o.i.k));}
+function sumHtml(r){const c=ckCount(r),bf=blankFields(r),cL=ckLeft(r),np=(r.ph||[]).length;
+ return `<table class="t"><tr><th>Item</th><th>Status</th></tr><tr><td>Skid serial number</td><td>${esc(recName(r))}</td></tr><tr${bf.length?' class="miss"':''}><td>Serial numbers entered</td><td>${TPL.fields.length-bf.length} of ${TPL.fields.length}${bf.length?` <b style="color:#7a5c00">- missing: ${esc(bf.join(', '))}</b>`:' <b style="color:var(--pass)">✓</b>'}</td></tr><tr${cL.length?' class="miss"':''}><td>Checklist</td><td>${c.done+c.na} of ${c.total} complete${c.na?` (${c.na} N/A)`:''}${cL.length?` <b style="color:#7a5c00">- not completed: ${cL.map(o=>'#'+(o.x+1)).join(', ')}</b>`:' <b style="color:var(--pass)">✓</b>'}</td></tr><tr><td>Pictures</td><td>${np?np+' - at the end of the PDF':'None'}</td></tr></table>${(bf.length||cL.length)?'<p class="muted" style="margin:6px 0 0">You can still finish. Anything missing is highlighted yellow in the report.</p>':''}`;}
 function jakeSubj(r){return 'New Build Final Inspection - Skid '+recName(r);}
 function doneHtml(r){const d=r.done;
  return `<div class="card"><h2>Completion</h2><div id="sumBox">${sumHtml(r)}</div><label class="f" style="margin-top:12px">Notes / observations</label><textarea data-b="done.notes" rows="4">${esc(d.notes)}</textarea>
@@ -13772,15 +13802,15 @@ function compress(file){return new Promise((res,rej)=>{const fr=new FileReader()
 function pickPhotos(cam,key){const i=document.createElement('input');i.type='file';i.accept='image/*';if(cam)i.capture='environment';i.multiple=!cam;i.style.cssText='position:fixed;left:-9999px;top:0;opacity:0';document.body.appendChild(i);
  i.onchange=async()=>{const fs=[...(i.files||[])];setTimeout(()=>{try{i.remove()}catch(e){}},60000);if(!fs.length||!S.rec)return;const r=S.rec;r.ph=r.ph||[];
   for(const f of fs){try{r.ph.push({id:uid(),d:await compress(f),k:key||'',cap:''});}catch(e){await notice('A picture could not be read.',{title:'Picture'});}}
-  markDirty();if(key&&String(key).indexOf('tk:')===0){render();}else if(key)updCk(key);else{const b=$('#phBox');if(b)b.innerHTML=photosInner(r);}};i.click();}
-const phLabel=(r,p)=>{if(!p.k)return 'General';if(String(p.k).indexOf('tk:')===0)return tkLbl(String(p.k).slice(3));const x=TPL.items.findIndex(i=>i.k===p.k);return x<0?'General':'Item '+(x+1)+' - '+TPL.items[x].t;};
+  markDirty();if(key&&String(key).indexOf('tk:')===0){render();}else if(key&&String(key).indexOf('sn:')===0){updSer(String(key).slice(3));}else if(key)updCk(key);else{const b=$('#phBox');if(b)b.innerHTML=photosInner(r);}};i.click();}
+const phLabel=(r,p)=>{if(!p.k)return 'General';if(String(p.k).indexOf('tk:')===0||String(p.k).indexOf('sn:')===0)return tkLbl(String(p.k).slice(3));const x=TPL.items.findIndex(i=>i.k===p.k);return x<0?'General':'Item '+(x+1)+' - '+TPL.items[x].t;};
 function photosInner(r){const L=r.ph||[];
  return `<div class="row"><button data-act="phcam" style="flex:1 1 180px">📷 Take picture</button><button data-act="phlib" style="flex:1 1 180px">🖼 Choose from library</button></div>
  ${L.length?`<div class="phg">${L.map(p=>`<figure><img src="${p.d}" alt="" data-act="phview" data-id="${p.id}" style="cursor:pointer"><figcaption><b>${esc(phLabel(r,p))}</b><input data-ph="${p.id}" data-nohist value="${esc(p.cap||'')}" placeholder="Caption (optional)"><button class="dng" data-act="phdel" data-id="${p.id}" style="margin-top:4px;min-height:34px;padding:4px 10px">Remove</button></figcaption></figure>`).join('')}</div>
- <div style="margin-top:12px"><b>Include these pictures with the report?</b><div class="muted">They are never put in the PDF. If you include them, they are sent as a separate ZIP of pictures.</div><div class="row" style="margin-top:6px"><button data-act="phinc" data-v="1" class="${r.done.incPh==='1'?'pri':''}" style="flex:1 1 180px">Include (separate ZIP)</button><button data-act="phinc" data-v="0" class="${r.done.incPh==='0'?'pri':''}" style="flex:1 1 180px">Do not include</button></div></div>`:'<p class="muted" style="margin-bottom:0">No pictures yet. You can also add a picture to any checklist line with its 📷 button.</p>'}`;}
-function photosHtml(r){return `<div class="card"><h3>Pictures (optional)</h3><p class="muted">Pictures stay on this tablet and are not in the PDF.</p><div id="phBox">${photosInner(r)}</div></div>`;}
+ <div style="margin-top:12px"><b>Also send the pictures as a separate ZIP?</b><div class="muted">They are in the PDF report either way, each boxed with the line or serial it belongs to. The ZIP has them at full size.</div><div class="row" style="margin-top:6px"><button data-act="phinc" data-v="1" class="${r.done.incPh==='1'?'pri':''}" style="flex:1 1 180px">Also send ZIP</button><button data-act="phinc" data-v="0" class="${r.done.incPh==='0'?'pri':''}" style="flex:1 1 180px">PDF only</button></div></div>`:'<p class="muted" style="margin-bottom:0">No pictures yet. You can also add a picture to any serial number or checklist line with its 📷 button.</p>'}`;}
+function photosHtml(r){return `<div class="card"><h3>Pictures (optional)</h3><p class="muted">Pictures are added at the end of the PDF report.</p><div id="phBox">${photosInner(r)}</div></div>`;}
 function photoZipFile(r){const L=r.ph||[];if(!L.length)return null;const folder=fileSafe(stdName('',recName(r),'FINAL',r.hdr.date)),cnt={},files=L.map(p=>{const b=atob(p.d.split(',')[1]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);
-  const x=TPL.items.findIndex(i=>i.k===p.k),tag=x<0?'General':'Item '+String(x+1).padStart(2,'0')+' '+TPL.items[x].t;const k=fileSafe(tag);cnt[k]=(cnt[k]||0)+1;return {name:folder+'/'+k+' '+cnt[k]+(p.cap?' - '+fileSafe(p.cap):'')+'.jpg',data:u};});
+  const x=TPL.items.findIndex(i=>i.k===p.k),tag=x>=0?'Item '+String(x+1).padStart(2,'0')+' '+TPL.items[x].t:phLabel(r,p).replace(/\s*#$/,'');const k=fileSafe(tag);cnt[k]=(cnt[k]||0)+1;return {name:folder+'/'+k+' '+cnt[k]+(p.cap?' - '+fileSafe(p.cap):'')+'.jpg',data:u};});
  return {blob:zipStore(files),name:folder+'.zip',n:files.length};}
 
 /* ---- picture viewer with rotate (same steps as the other forms) ---- */
@@ -13792,27 +13822,36 @@ function phView(id,rot){const r=S.rec,p=(r.ph||[]).find(x=>x.id===id);if(!p)retu
    <p class="muted" style="margin:6px 0 4px">Rotate${S.phv.rot?' (now '+S.phv.rot+'°)':''}</p><div class="row" style="gap:4px;flex-wrap:nowrap">${B(-90,'⟲90')}${B(-45,'⟲45')}${B(-5,'⟲5')}${B(5,'⟳5')}${B(45,'⟳45')}${B(90,'⟳90')}</div>
    <div class="row" style="margin-top:8px"><button data-act="phrotreset" style="flex:1 1 90px">Reset</button><button class="pri" data-act="phrotsave" style="flex:2 1 140px">Save picture</button><button data-act="phrotx" style="flex:1 1 90px">Cancel</button></div>
    <button class="dng" data-act="phdel" data-id="${p.id}" style="margin-top:8px;width:100%">Remove this picture</button>`);};im.src=p.d;}
-function phRefresh(){const r=S.rec;if(!r)return;const bx=$('#phBox');if(bx)bx.innerHTML=photosInner(r);TPL.items.forEach(i=>{if(document.getElementById('ck-'+i.k))updCk(i.k);});}
+function phRefresh(){const r=S.rec;if(!r)return;const bx=$('#phBox');if(bx)bx.innerHTML=photosInner(r);TPL.items.forEach(i=>{if(document.getElementById('ck-'+i.k))updCk(i.k);});TPL.fields.forEach(x=>{if(document.getElementById('ser-'+x.k))updSer(x.k);});}
 const phStrip=(r,k)=>{const L=(r.ph||[]).filter(p=>p.k===k);return L.length?`<div class="row" style="gap:6px;margin-top:6px">${L.map(p=>`<img src="${p.d}" data-act="phview" data-id="${p.id}" alt="picture" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:pointer">`).join('')}<span class="muted" style="align-self:center">tap a picture to rotate</span></div>`:'';};
 /* ---- PDF (mirrors the "Print Me" sheet) ---- */
 function footers(d,r){const n=d.getNumberOfPages();for(let i=1;i<=n;i++){d.setPage(i);creditLine(d,TPL.revision);d.setFont('helvetica','normal');d.setFontSize(7.5);d.setTextColor(120);d.text(cl('Skid S/N '+(r.hdr.sn||'-')+'  |  '+TPL.title),PW/2,770,{align:'center'});d.text('Page '+i+' of '+n,PW-MX,770,{align:'right'});}}
-function pdfRows(r){const rows=[['Skid Serial Number',r.hdr.sn||'']];TPL.fields.forEach(x=>{let v=(r.f||{})[x.k]||'';if(x.o==='date')v=fmtD(v);if(TKK.includes(x.k)){const n=(r.ph||[]).filter(p=>p.k==='tk:'+x.k).length;v=(v||'')+(n?'   (photo taken)':(r.tkOm||{})[x.k]?'   (Photo omitted)':'');}rows.push([x.l,v]);});return rows;}
+function pdfRows(r){const rows=[['Skid Serial Number',r.hdr.sn||'',!String(r.hdr.sn||'').trim()]];TPL.fields.forEach(x=>{const v0=String((r.f||{})[x.k]||'').trim();let v=x.o==='date'?fmtD(v0):v0;if(!v0)v='Missing';if(TKK.includes(x.k)){const n=(r.ph||[]).filter(p=>p.k==='tk:'+x.k).length;v=v+(n?'   (photo taken)':(r.tkOm||{})[x.k]?'   (Photo omitted)':'');}else{const n=phCount(r,'sn:'+x.k);if(n)v=v+'   (see picture'+(n===1?'':'s')+')';}rows.push([x.l,v,!v0]);});return rows;}
 function ckText(r,k){const c=ckOf(r,k);return c.n?'N/A':c.x?(fmtD(c.d||'')+'   '+(c.i||'')).trim():'';}
 function finalPdf(r){const d=pdfNew();let y;const ens=n=>{if(y+n>BOT){d.addPage();y=TOP;}};
  pdfHead(d,TPL.title);y=88;
  d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(60);d.text(cl('Inspection date: '+fmtD(r.hdr.date)+'    Technician: '+(r.hdr.tech||'-')+(r.hdr.ini?' ('+r.hdr.ini+')':'')+(r.hdr.src?'    Started from: '+r.hdr.src:'')),MX,y);y+=8;
- const LW=300;d.setFont('helvetica','normal');d.setFontSize(9.5);const nL=wrap(d,(r.done.notes||'').trim()||'(none)',CW-12);let exN=0;TPL.items.forEach(i=>{const c=ckOf(r,i.k);if(c.u){d.setFontSize(7.8);exN+=1+(c.nt?Math.min(4,wrap(d,'Notes: '+c.nt,LW-14).length):0);}});
+ const LW=300;d.setFont('helvetica','normal');d.setFontSize(9.5);const nL=wrap(d,(r.done.notes||'').trim()||'(none)',CW-12);let exN=0;TPL.items.forEach(i=>{const c=ckOf(r,i.k);if(c.u){d.setFontSize(7.8);exN+=(c.rev?1:0)+(c.nt?Math.min(4,wrap(d,'Notes: '+c.nt,LW-14).length):0);}});
  const nRows=1+TPL.fields.length+TPL.items.length,fixed=y+8+30+8+6+14+nL.length*11+3+66+4;const RH=Math.max(10.2,Math.min(11.7,(BOT-fixed-exN*9.4)/nRows));
 
  const head=(a,b)=>{ens(RH+14);d.setFillColor(17,17,17);d.rect(MX,y,CW,15,'F');d.setFont('helvetica','bold');d.setFontSize(9.5);d.setTextColor(255);d.text(cl(a),MX+5,y+10.6);d.text(cl(b),MX+LW+5,y+10.6);y+=15;};
- const row=(a,b,st,ex)=>{ex=ex||[];const hh=RH+ex.length*9.4;ens(hh);d.setDrawColor(150);d.setLineWidth(.5);d.rect(MX,y,CW,hh);d.line(MX+LW,y,MX+LW,y+hh);d.setFont('helvetica','normal');d.setFontSize(8.4);d.setTextColor(0);d.text(cl(a),MX+4,y+8.5);if(st==='na')d.setTextColor(110);d.setFont('helvetica',st==='done'?'bold':'normal');d.text(cl(b),MX+LW+4,y+8.5);d.setFont('helvetica','normal');d.setFontSize(7.8);d.setTextColor(60);ex.forEach((l,j)=>d.text(cl(l),MX+LW+4,y+17.5+j*9.4));y+=hh;};
- head('CBP Component','Serial Numbers');pdfRows(r).forEach(x=>row(x[0],x[1]));
- y+=8;head('Check List','Completed - Date - Initials');TPL.items.forEach(i=>{const c=ckOf(r,i.k);let ex=[];if(c.u){d.setFontSize(7.8);ex=['Updated rev: '+(c.rev||'')].concat(c.nt?wrap(d,'Notes: '+c.nt,LW-14).slice(0,4):[]);}row(i.t,ckText(r,i.k),c.n?'na':c.x?'done':'',ex);});
+ const row=(a,b,st,ex)=>{ex=ex||[];const hh=RH+ex.length*9.4;ens(hh);if(st==='miss'){d.setFillColor(255,236,140);d.rect(MX,y,CW,hh,'F');}d.setDrawColor(150);d.setLineWidth(.5);d.rect(MX,y,CW,hh);d.line(MX+LW,y,MX+LW,y+hh);d.setFont('helvetica','normal');d.setFontSize(8.4);d.setTextColor(0);d.text(cl(a),MX+4,y+8.5);if(st==='na')d.setTextColor(110);if(st==='miss')d.setTextColor(110,80,0);d.setFont('helvetica',st==='done'?'bold':st==='miss'?'bolditalic':'normal');d.text(cl(b),MX+LW+4,y+8.5);d.setFont('helvetica','normal');d.setFontSize(7.8);d.setTextColor(60);ex.forEach((l,j)=>d.text(cl(l),MX+LW+4,y+17.5+j*9.4));y+=hh;};
+ head('CBP Component','Serial Numbers');pdfRows(r).forEach(x=>row(x[0],x[1],x[2]?'miss':''));
+ y+=8;head('Check List','Completed - Date - Initials');TPL.items.forEach(i=>{const c=ckOf(r,i.k);let ex=[];if(c.u){d.setFontSize(7.8);ex=(c.rev?['Updated rev: '+c.rev]:[]).concat(c.nt?wrap(d,'Notes: '+c.nt,LW-14).slice(0,4):[]);}const np=phCount(r,i.k),pv=np?'   (see picture'+(np===1?'':'s')+')':'';row(i.t,(c.n||c.x?ckText(r,i.k):'Not completed')+pv,c.n?'na':c.x?'done':'miss',ex);});
  y+=6;ens(40);d.setFont('helvetica','bold');d.setFontSize(9.5);d.setTextColor(0);d.text('Notes / observations',MX,y+10);y+=14;d.setFont('helvetica','normal');
  wrap(d,(r.done.notes||'').trim()||'(none)',CW-12).forEach(l=>{ens(12);d.text(l,MX+6,y+8);y+=11;});y+=3;
  ens(66);const hh=62;d.setDrawColor(150);d.setLineWidth(.6);d.rect(MX,y,CW,hh);d.line(MX+300,y,MX+300,y+hh);d.setFontSize(6.8);d.setTextColor(110);d.text('Technician signature',MX+4,y+8);d.text('Print name',MX+304,y+8);d.text('Date completed',MX+304,y+36);d.setFontSize(10);d.setTextColor(0);d.text(cl(r.done.name||r.hdr.tech||''),MX+304,y+22);d.text(cl(fmtD(r.done.date)),MX+304,y+50);
  if(r.done.sig){try{d.addImage(r.done.sig,'PNG',MX+8,y+11,190,48);}catch(e){}}
- y=Core.pdf(d,y+hh+6,{x:MX,w:CW,top:TOP,bot:BOT},r);footers(d,r);return d;}
+ y=Core.pdf(d,y+hh+6,{x:MX,w:CW,top:TOP,bot:BOT},r);finPhotos(d,r);footers(d,r);return d;}
+/* picture appendix: truck IDs, serials, checklist lines in form order, then general pictures */
+function phOrder(r){const L=r.ph||[],key=p=>{const k=String(p.k||'');if(k.indexOf('tk:')===0)return [0,TKK.indexOf(k.slice(3))];if(k.indexOf('sn:')===0)return [1,TPL.fields.findIndex(x=>x.k===k.slice(3))];const x=TPL.items.findIndex(i=>i.k===k);return x>=0?[2,x]:[3,0];};return L.map((p,n)=>({p,n,o:key(p)})).sort((a,b)=>a.o[0]-b.o[0]||a.o[1]-b.o[1]||a.n-b.n).map(z=>z.p);}
+function phCell(r,p){const k=String(p.k||''),cap=String(p.cap||'').trim();let t='General',sub='';
+ if(k.indexOf('tk:')===0||k.indexOf('sn:')===0){const fk=k.slice(3),x=TPL.fields.find(y=>y.k===fk);t=x?x.l:fk;const v=String((r.f||{})[fk]||'').trim();sub=v?(x&&x.o==='date'?fmtD(v):v):'Missing';}
+ else{const x=TPL.items.findIndex(i=>i.k===k);if(x>=0){const c=ckOf(r,k);t='Item '+(x+1)+' - '+TPL.items[x].t;sub=c.n?'N/A':c.x?((c.u?(c.rev?'Updated rev '+c.rev+' - ':'Updated - '):'Completed ')+ckText(r,k)):'Not completed';}}
+ if(cap)sub=sub?sub+' - '+cap:cap;return {src:p.d,t,s:sub};}
+function finPhotos(d,r){const L=phOrder(r);if(!L.length)return;d.addPage();let y=TOP;const ens=n=>{if(y+n>BOT){d.addPage();y=TOP;}return y;};
+ d.setFont('helvetica','bold');d.setFontSize(15);d.setTextColor(0);d.text('Pictures',MX,y+12);d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(90);d.text(cl('Skid S/N '+(r.hdr.sn||'-')+'  |  '+L.length+' picture'+(L.length===1?'':'s')),MX+70,y+12);y+=26;
+ const GAP=10,CWc=(CW-2*GAP)/3,IH=165;for(let i=0;i<L.length;i+=3){y=PhotoBox.row(d,y,L.slice(i,i+3).map(p=>phCell(r,p)),{MX,CWc,GAP,IH,cl,tMax:3,sMax:3,ens});}}
 function finalPdfFile(r){const d=finalPdf(r);return {blob:d.output('blob'),name:stdName('',recName(r),'FINAL',r.hdr.date)+'.pdf'};}
 /* ---- QR (pause / start later) ---- */
 function finPayload(r,notes){const ck={};Object.keys(r.ck||{}).forEach(k=>{const c=r.ck[k];ck[k]=c.n?{n:1}:c.x?{x:1,d:c.d,i:c.i,u:c.u?1:null,rv:c.rev,nt:c.nt}:null;});const o={a:'FIN',v:1,k:'P',id:r.id,u:r.updated,sn:r.hdr.sn,rma:r.hdr.rma||'',d:r.hdr.date,t:r.hdr.tech,ii:r.hdr.ini,sr:r.hdr.src,st:r.step||0,f:r.f,ck:ck,dn:{notes:r.done.notes,name:r.done.name,date:r.done.date}};if(notes)o.no=notes;return coreJ(r,strip(o));}
@@ -13829,7 +13868,7 @@ function qrDlg(notes){const r=S.rec;let t=finPayload(r,notes),svg='';try{const q
  $('#qX').onclick=closeModal;$('#qSheet').onclick=()=>{const d=sheetPdf(r,notes);dlBlob(d.output('blob'),stdName('',recName(r),'FINAL-CARRYOVER',r.hdr.date)+'.pdf');};}
 /* ---- e-mail ---- */
 async function emailReport(){const r=S.rec,f=finalPdfFile(r),c=ckCount(r),subj=jakeSubj(r);
- const body=`New build final inspection for skid S/N ${recName(r)}.\n\nVIN: ${(r.f.vin||'-')}\nChecklist: ${c.done+c.na} of ${c.total} complete${c.na?' ('+c.na+' N/A)':''}\nInspected by: ${r.done.name||r.hdr.tech||'-'}  ${fmtD(r.done.date||r.hdr.date)}\n${(r.done.notes||'').trim()?'\nNotes: '+r.done.notes.trim()+'\n':''}\nThe PDF report is attached.${(r.done.incPh==='1'&&(r.ph||[]).length)?'\nPictures ('+r.ph.length+') are in a separate ZIP.':''}`;
+ const body=`New build final inspection for skid S/N ${recName(r)}.\n\nVIN: ${(r.f.vin||'-')}\nChecklist: ${c.done+c.na} of ${c.total} complete${c.na?' ('+c.na+' N/A)':''}\n${(()=>{const bf=blankFields(r),cL=ckLeft(r);return (bf.length||cL.length)?'Missing (highlighted yellow in the PDF): '+[bf.length?bf.length+' serial number'+(bf.length===1?'':'s'):'',cL.length?cL.length+' checklist item'+(cL.length===1?'':'s'):''].filter(Boolean).join(', ')+'\n':'';})()}Inspected by: ${r.done.name||r.hdr.tech||'-'}  ${fmtD(r.done.date||r.hdr.date)}\n${(r.done.notes||'').trim()?'\nNotes: '+r.done.notes.trim()+'\n':''}\nThe PDF report is attached.${(r.ph||[]).length?'\nPictures ('+r.ph.length+') are at the end of the PDF.':''}`;
  const fl=new File([f.blob],f.name,{type:'application/pdf'}),z=(r.done.incPh==='1')?photoZipFile(r):null,fls=[fl].concat(z?[new File([z.blob],z.name,{type:'application/zip'})]:[]);await SendTo.copyTo(r);try{if(navigator.canShare&&navigator.canShare({files:fls})){await navigator.share({files:fls,title:subj,text:body+(z?'\n\nA ZIP of '+z.n+' picture'+(z.n===1?'':'s')+' is attached too.':'')});return;}}catch(e){if(e&&e.name==='AbortError')return;}
  await notice('This browser cannot attach the PDF automatically, so the email will open without it. Use "Save PDF" and attach the file from Downloads.',{title:'PDF not attached'});location.href=SendTo.mailto(r,subj,body);}
 async function scanDone(txt){scanStop();let o=null;try{o=JSON.parse(txt);}catch(e){}
@@ -13876,12 +13915,13 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'ck':{const k=b.dataset.k;closeUpd(r);if(ckOf(r,k).x){delete r.ck[k];}else{if(!String(r.hdr.ini||'').trim()){await notice('Enter your initials first (at the top of this page) - they are stamped on each completed line.',{title:'Initials needed'});const f=$('#n-ini2')||$('#n-ini');if(f)f.focus();break;}r.ck[k]={x:1,d:today(),i:String(r.hdr.ini).trim().toUpperCase()};}markDirty();updCk(k);break;}
  case 'ckna':{const k=b.dataset.k;closeUpd(r);if(ckOf(r,k).n)delete r.ck[k];else r.ck[k]={n:1};markDirty();updCk(k);break;}
  case 'ckupd':{const k=b.dataset.k;closeUpd(r);S.upd=k;updCk(k);const f=document.querySelector('#ck-'+k+' input[data-b$=".rev"]');if(f)f.focus();break;}
- case 'ckupdsave':{const k=b.dataset.k,c=r.ck[k]||{};if(!String(c.rev||'').trim()){await notice('Enter the updated rev first (for example 1.38a).',{title:'Updated rev needed'});break;}
+ case 'ckupdsave':{const k=b.dataset.k,c=r.ck[k]||{};if(!String(c.rev||'').trim()&&!String(c.nt||'').trim()){await notice('Enter the updated rev (for example 1.38a), a note, or both.',{title:'Nothing to save yet'});break;}
   if(!c.x&&!String(r.hdr.ini||'').trim()){await notice('Enter your initials first (at the top of this page) - they are stamped on each completed line.',{title:'Initials needed'});const f=$('#n-ini2')||$('#n-ini');if(f)f.focus();break;}
-  c.x=1;c.u=1;c.d=c.d||today();c.i=c.i||String(r.hdr.ini).trim().toUpperCase();c.rev=String(c.rev).trim();r.ck[k]=c;S.upd=null;markDirty();updCk(k);break;}
+  c.x=1;c.u=1;c.d=c.d||today();c.i=c.i||String(r.hdr.ini).trim().toUpperCase();c.rev=String(c.rev||'').trim();c.nt=String(c.nt||'').trim();r.ck[k]=c;S.upd=null;markDirty();updCk(k);break;}
  case 'ckupdcancel':{closeUpd(r);break;}
  case 'ckundo':{const k=b.dataset.k;if(await ask('Remove this update and mark the line not done?',{title:'Undo update?',ok:'Undo',danger:1})){delete r.ck[k];markDirty();updCk(k);}break;}
  case 'ckcam':pickPhotos(true,b.dataset.k);break;
+ case 'sercam':pickPhotos(true,'sn:'+b.dataset.k);break;
  case 'phview':phView(id);break;
  case 'phrot':phView(S.phv.id,((S.phv.rot+(+b.dataset.d))%360+360)%360);break;
  case 'phrotreset':phView(S.phv.id,0);break;
@@ -13893,10 +13933,10 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'phinc':{r.done.incPh=b.dataset.v;markDirty();const bx=$('#phBox');if(bx)bx.innerHTML=photosInner(r);if(r.done.complete)render();break;}
  case 'phzip':{const z=photoZipFile(r);if(z)dlBlob(z.blob,z.name);break;}
  case 'sigclr':{r.done.sig='';const c=$('#sigc');if(c)c.getContext('2d').clearRect(0,0,c.width,c.height);const m=$('#sigMsg');if(m)m.textContent='Not signed yet.';markDirty();break;}
- case 'finish':{if(tkMissing(r).length&&!S.tkSkip){tkPrompt(()=>{S.tkSkip=1;b.click();});break;}S.tkSkip=0;const m=[];if(!(r.hdr.sn||'').trim())m.push('Skid serial number (Serials page)');const c=ckCount(r);if(c.left)m.push(c.left+' checklist item'+(c.left===1?'':'s')+' not completed (Checklist page) - tap Tap to complete, or N/A');if(!String(r.done.name||r.hdr.tech||'').trim())m.push('Print name');if(!r.done.sig)m.push('Technician signature');
+ case 'finish':{if(tkMissing(r).length&&!S.tkSkip){tkPrompt(()=>{S.tkSkip=1;b.click();});break;}S.tkSkip=0;const m=[];if(!(r.hdr.sn||'').trim())m.push('Skid serial number (Serials page)');if(!String(r.done.name||r.hdr.tech||'').trim())m.push('Print name');if(!r.done.sig)m.push('Technician signature');
   const n=$('#finNeed');if(m.length){n.innerHTML=`<div class="err"><b>Still needed:</b><ul style="margin:6px 0 0 18px;padding:0">${m.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;break;}
-  const bf=blankFields(r);if(bf.length&&!await ask('These serial numbers are blank:\n\n'+bf.join('\n')+'\n\nFinish anyway?',{title:bf.length+' blank serial field'+(bf.length===1?'':'s'),ok:'Finish anyway',no:'Go back'}))break;
-  if((r.ph||[]).length&&r.done.incPh===''){const inc=await ask('Include the '+r.ph.length+' picture'+(r.ph.length===1?'':'s')+' with this report? They are never put in the PDF - they are sent as a separate ZIP.',{title:'Include pictures?',ok:'Include (ZIP)',no:'Do not include'});r.done.incPh=inc?'1':'0';}
+  const bf=blankFields(r),cL=ckLeft(r),nm=bf.length+cL.length;if(nm&&!await ask('These are not filled in. The report will show them highlighted in yellow.'+(bf.length?'\n\nSerial numbers:\n'+bf.map(x=>'  • '+x).join('\n'):'')+(cL.length?'\n\nChecklist (not completed):\n'+cL.map(o=>'  • '+(o.x+1)+'. '+o.i.t).join('\n'):'')+'\n\nFinish anyway?',{title:nm+' item'+(nm===1?'':'s')+' missing',ok:'Finish anyway',no:'Go back'}))break;
+  if((r.ph||[]).length&&r.done.incPh===''){const inc=await ask('The '+r.ph.length+' picture'+(r.ph.length===1?' is':'s are')+' in the PDF report. Also send '+(r.ph.length===1?'it':'them')+' as a separate ZIP (full size)?',{title:'Pictures',ok:'Also send ZIP',no:'PDF only'});r.done.incPh=inc?'1':'0';}
   r.done.complete=true;if(!r.done.name)r.done.name=r.hdr.tech;if(!r.done.date)r.done.date=today();techRemember(r.done.name);markDirty();await save();render();break;}
  case 'reopen':r.done.complete=false;markDirty();render();break;
  case 'pdf':{const f=finalPdfFile(r);(async()=>{await dlBlob(f.blob,f.name);const z=photoZipFile(r);if(z){await new Promise(t=>setTimeout(t,600));await dlBlob(z.blob,z.name);}})();break;}
@@ -13915,7 +13955,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)save();});
 function curTpl(){return TPL}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'10/29/2026'};
+const CREDIT={by:'Ravi Ramsundar',built:'10/30/2026'};
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14035,7 +14075,7 @@ document.addEventListener('focusout',e=>{histCommit(e.target);setTimeout(()=>{if
 document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='1bc5f267a4';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='190e30c1af';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
@@ -14096,4 +14136,156 @@ window.coreFin=function(r,o){var C=Core.dec(o);if(!C)return;r.f=r.f||{};
  Object.keys(NK).forEach(function(k){var v=C.s[NK[k]];if(v&&!T(r.f[k]))r.f[k]=v;});
  if(C.vin&&!T(r.f.vin))r.f.vin=C.vin;if(C.pl&&!T(r.f.plate))r.f.plate=C.pl;if(C.kl&&!T(r.f.kilo))r.f.kilo=C.kl;if(!T(r.hdr.rma)&&C.rma)r.hdr.rma=C.rma;
  Core.start(r,C);};
-})();</script></body></html>
+})();</script><script>/* ===== shared: dictation for serial numbers and revisions (Ravi, 2026-10-30) =====
+   Same code as /dictate-test/. Speech is cleaned into the field's format:
+   serial = no spaces, ALL CAPS, number words -> digits, call-sign words / letter names -> letters, "dash" -> -;
+   version = keeps "point" -> . and lower-case letters; number = digits only ("forty eight thousand..." works). */
+(function(){
+var SR=window.SpeechRecognition||window.webkitSpeechRecognition||null;
+var NATO={alpha:'a',alfa:'a',bravo:'b',charlie:'c',delta:'d',echo:'e',foxtrot:'f',golf:'g',hotel:'h',india:'i',juliet:'j',juliett:'j',kilo:'k',lima:'l',mike:'m',november:'n',oscar:'o',papa:'p',quebec:'q',romeo:'r',sierra:'s',tango:'t',uniform:'u',victor:'v',whiskey:'w',whisky:'w',xray:'x',yankee:'y',zulu:'z'};
+var LET={bee:'b',be:'b',see:'c',sea:'c',cee:'c',dee:'d',eff:'f',gee:'g',aitch:'h',jay:'j',kay:'k',pee:'p',pea:'p',cue:'q',queue:'q',are:'r',tee:'t',tea:'t',you:'u',vee:'v',why:'y',zee:'z',zed:'z'};
+var UNIT={zero:'0',oh:'0',owe:'0',one:'1',won:'1',two:'2',to:'2',too:'2',three:'3',four:'4',for:'4',five:'5',six:'6',seven:'7',eight:'8',ate:'8',nine:'9'};
+var TEEN={ten:'10',eleven:'11',twelve:'12',thirteen:'13',fourteen:'14',fifteen:'15',sixteen:'16',seventeen:'17',eighteen:'18',nineteen:'19'};
+var TENS={twenty:'2',thirty:'3',forty:'4',fifty:'5',sixty:'6',seventy:'7',eighty:'8',ninety:'9'};
+var SYM={dash:'-',hyphen:'-',minus:'-',point:'.',dot:'.',period:'.',decimal:'.',slash:'/'};
+var NV={zero:0,oh:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,forty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90};
+function numWords(toks){/* "sixty six thousand eight hundred nineteen" -> 66819 */
+ var tot=0,cur=0,any=false,out='';
+ toks.forEach(function(w){if(/^\d+$/.test(w)){if(any){out+=String(tot+cur);tot=cur=0;any=false;}out+=w;return;}
+  if(NV[w]!=null){cur+=NV[w];any=true;}else if(w==='hundred'){cur=(cur||1)*100;any=true;}else if(w==='thousand'){tot+=(cur||1)*1000;cur=0;any=true;}});
+ if(any)out+=String(tot+cur);return out;}
+function clean(raw,kind){kind=kind||'serial';
+ var t=String(raw||'').toLowerCase().replace(/x[\s-]ray/g,'xray').replace(/double[\s-]you/g,'w').replace(/(\d),(?=\d)/g,'$1').replace(/,/g,' ');
+ var toks=t.split(/\s+/).map(function(w){return w.replace(/[^a-z0-9.\-\/]/g,'');}).filter(Boolean);
+ if(kind==='number'){if(toks.some(function(w){return w==='hundred'||w==='thousand';}))return numWords(toks.filter(function(w){return w!=='and';}));}
+ var out=[],rep=1,tens=null;
+ var push=function(v){for(var i=0;i<rep;i++)out.push(v);rep=1;};
+ toks.forEach(function(w){
+  if(tens!==null){if(UNIT[w]&&UNIT[w]!=='0'){push(tens+UNIT[w]);tens=null;return;}push(tens+'0');tens=null;}
+  if(w==='double'){rep=2;return;}if(w==='triple'){rep=3;return;}
+  if(TENS[w]){tens=TENS[w];return;}
+  var v=NATO[w]!=null?NATO[w]:UNIT[w]!=null?UNIT[w]:TEEN[w]!=null?TEEN[w]:SYM[w]!=null?SYM[w]:(kind!=='number'&&LET[w]!=null)?LET[w]:w;push(v);});
+ if(tens!==null)push(tens+'0');
+ var s=out.join('');
+ if(kind==='number')return s.replace(/[^0-9.]/g,'');
+ if(kind==='version')return s.replace(/[^a-z0-9.\-\/]/gi,'');
+ return s.toUpperCase().replace(/[^A-Z0-9\-\/.]/g,'');}
+/* true when text looks spoken ("x-ray two six"), not typed ("X26B140057") */
+function spoken(raw){var t=String(raw||'').toLowerCase().replace(/x[\s-]ray/g,'xray').replace(/(\d),(?=\d)/g,'$1');var toks=t.split(/[\s,]+/).map(function(w){return w.replace(/[^a-z0-9.\-\/]/g,'');}).filter(Boolean);if(toks.length<2)return false;
+ var word=0,code=0;toks.forEach(function(w){var a=w.replace(/[^a-z]/g,'');if(a.length>1&&a===w&&(NATO[a]!=null||UNIT[a]!=null||TEEN[a]!=null||TENS[a]!=null||SYM[a]!=null||a==='double'||a==='triple'||a==='hundred'||a==='thousand')){word++;code++;}else if(/^[a-z]$/.test(w)||/^[0-9.\-\/]+$/.test(w)||LET[w]!=null||/^[a-z]?\d[a-z0-9]*$/.test(w))code++;});
+ return word>=1&&code/toks.length>=0.7;}
+var cur=null;
+function listen(o){o=o||{};if(!SR){o.onError&&o.onError('unsupported','This browser has no speech recognition. Use the keyboard’s microphone key instead.');return null;}
+ stop();var r=new SR(),got=false,heard=false,ended=false;r.lang=o.lang||'en-US';r.interimResults=true;r.maxAlternatives=4;r.continuous=false;
+ var st=function(t,k){o.onState&&o.onState(t,k);};
+ r.onstart=function(){st('Listening… speak now, then pause.','start');};
+ r.onaudiostart=function(){st('Listening… microphone on. Speak now, then pause.','audio');};
+ r.onspeechstart=function(){heard=true;st('Hearing you…','speech');};
+ r.onresult=function(e){var res=e.results[e.results.length-1];var alts=[];for(var i=0;i<res.length;i++)alts.push(res[i].transcript);
+  if(!res.isFinal){st('Heard so far: “'+alts[0]+'”','interim');return;}got=true;o.onResult&&o.onResult(alts[0],alts);};
+ r.onerror=function(e){var c=e.error||'error',m={
+   'not-allowed':'The microphone is blocked for this page. Allow the microphone for this site in the browser settings, then try again.',
+   'service-not-allowed':'This browser does not allow speech recognition here.',
+   'network':'The speech service could not be reached. It needs internet, and some browsers (Brave is a known case) do not provide it.',
+   'no-speech':'Nothing was heard. Tap the field and try again, a little closer to the tablet.',
+   'audio-capture':'No microphone was found.','aborted':'Stopped.'}[c]||('Speech recognition error: '+c);got=true;o.onError&&o.onError(c,m);};
+ r.onend=function(){if(ended)return;ended=true;cur=null;if(!got)o.onError&&o.onError('empty',heard?'Speech was heard but no text came back. This browser may not support dictation (Brave is a known case). Use the keyboard’s microphone key instead.':'Nothing came back from the speech service. Tap the field and try again, or use the keyboard’s microphone key.');o.onEnd&&o.onEnd();};
+ try{r.start();}catch(e){o.onError&&o.onError('start',String(e&&e.message||e));return null;}cur=r;return r;}
+function stop(){if(cur){try{cur.abort();}catch(e){}cur=null;}}
+window.Dictate={supported:!!SR,clean:clean,spoken:spoken,listen:listen,stop:stop};
+})();
+
+/* ===== shared: dictation in the forms (Ravi, 2026-10-30) =====
+   Dictate On/Off is chosen when an inspection starts, and again at the top of the serial numbers (switch any time).
+   With it on, tapping a serial-number or version field listens instead of opening the keyboard. A panel at the bottom of
+   the screen shows what was heard and what was entered; "Type instead" opens the keyboard for that field.
+   Text from the keyboard's own microphone key ("x-ray two six…") is cleaned up when the field is left, Dictate on or off.
+   Each form sets window.DICTATE_FIELDS = [{sel, kind}] (kind: serial | version | number). */
+(function(){
+if(!window.Dictate)return;
+var KEY='dictate_on',kbd=typeof WeakSet==='function'?new WeakSet():{has:function(){return false;},add:function(){},delete:function(){}};
+var st={el:null,busy:false,dog:null,last:null};
+function on(){try{return localStorage.getItem(KEY)==='1';}catch(e){return false;}}
+function setOn(v){try{localStorage.setItem(KEY,v?'1':'0');}catch(e){}if(!v){stop();hide();}paint();}
+function cfg(){return window.DICTATE_FIELDS||[];}
+function kindOf(el){if(!el||el.tagName!=='INPUT'||el.type==='date'||el.disabled||el.readOnly)return null;var F=cfg();for(var i=0;i<F.length;i++){try{if(el.matches(F[i].sel))return F[i].kind||'serial';}catch(e){}}return null;}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function labelOf(el){var a=el.parentElement;for(var n=0;a&&n<5;n++,a=a.parentElement){var L=a.querySelectorAll('label.f,.lb,b');for(var i=L.length-1;i>=0;i--){if(L[i].compareDocumentPosition(el)&Node.DOCUMENT_POSITION_FOLLOWING){var t=L[i].textContent.replace(/\s+/g,' ').trim();if(t)return t.length>60?t.slice(0,57)+'…':t;}}}return el.placeholder||'this field';}
+/* ---------- look ---------- */
+var css=document.createElement('style');css.textContent=
+ 'input.dk-mic{background-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%231d5fc4%27 stroke-width=%272%27 stroke-linecap=%27round%27%3E%3Crect x=%279%27 y=%273%27 width=%276%27 height=%2711%27 rx=%273%27/%3E%3Cpath d=%27M5 11a7 7 0 0 0 14 0M12 18v3%27/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-position:right 10px center!important;background-size:20px 20px!important;padding-right:38px!important}'+
+ 'input.dk-kbd{background-image:none!important}'+
+ 'input.dk-live{border-color:#c2410c!important;background-color:#fff1e6!important;box-shadow:0 0 0 3px rgba(194,65,12,.18)!important}'+
+ '#dkPanel{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom));width:min(680px,calc(100% - 20px));background:#fff;color:#14213d;border:1px solid #d5dce6;border-left:6px solid #1d5fc4;border-radius:14px;box-shadow:0 10px 30px rgba(20,33,61,.25);padding:10px 12px;z-index:900;font-size:15px;display:none}'+
+ '#dkPanel.live{border-left-color:#c2410c}#dkPanel.err{border-left-color:#c62828}#dkPanel.ok{border-left-color:#1b8a3a}'+
+ '#dkPanel .t{display:flex;align-items:center;gap:8px;min-height:24px}#dkPanel .t b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
+ '#dkPanel .m{color:#4a5568;font-size:14px;min-height:40px;margin-top:2px;line-height:1.4}#dkPanel .m code{font:700 16px/1.2 ui-monospace,Menlo,Consolas,monospace;color:#14213d}'+
+ '#dkPanel .b{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;align-items:center;min-height:44px;margin-top:4px}'+
+ '#dkPanel button{min-height:40px;padding:4px 12px;border-radius:10px;border:1px solid #c7d0dd;background:#fff;font:inherit;font-size:14px;font-weight:700;color:#14213d;white-space:nowrap;flex:none}'+
+ '#dkPanel button.p{background:#1d5fc4;border-color:#1d5fc4;color:#fff}#dkPanel button.alt{font-family:ui-monospace,Menlo,Consolas,monospace;background:#eef3fc}'+
+ '#dkPanel .dot{width:12px;height:12px;border-radius:50%;background:#c2410c;flex:none;animation:dkp 1s infinite}@keyframes dkp{50%{opacity:.25}}'+
+ '.dk-pill{min-height:40px;padding:4px 10px;font-weight:800;white-space:nowrap;flex:none}.dk-pill.on{background:#1d5fc4!important;border-color:#1d5fc4!important;color:#fff!important}'+
+ '.dk-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#eef3fc;border:1px solid #c9d8f0;border-radius:10px;padding:8px 10px;margin:10px 0}.dk-row span{flex:1 1 200px;font-weight:700}.dk-row small{display:block;font-weight:400;color:#5a6478}'+
+ '.dk-seg{display:inline-flex;border:2px solid #1d5fc4;border-radius:10px;overflow:hidden}.dk-seg button{border:0!important;border-radius:0!important;margin:0!important;min-height:42px;min-width:70px;font-weight:800;background:#fff;color:#1d5fc4;width:auto!important}.dk-seg button.on{background:#1d5fc4;color:#fff}';
+document.head.appendChild(css);
+var P=document.createElement('div');P.id='dkPanel';P.setAttribute('role','status');P.setAttribute('aria-live','polite');
+function mount(){if(!P.parentNode)document.body.appendChild(P);}
+function place(){var el=st.el,top=false;try{if(el){var r=el.getBoundingClientRect();top=(r.top+r.bottom)/2>window.innerHeight*0.55;}}catch(e){}P.style.top=top?'calc(70px + env(safe-area-inset-top))':'auto';P.style.bottom=top?'auto':'calc(10px + env(safe-area-inset-bottom))';}
+function show(cls,title,msg,btns){mount();if(P.style.display!=='block')place();P.className=cls||'';P.innerHTML='<div class="t">'+(cls==='live'?'<span class="dot"></span>':'')+'<b>'+title+'</b><button data-dk-x="close" aria-label="Close">✕</button></div><div class="m">'+(msg||'')+'</div><div class="b">'+(btns||'')+'</div>';P.style.display='block';}
+function hide(){P.style.display='none';}
+/* ---------- marks on the fields ---------- */
+function paint(){var o=on();document.querySelectorAll('input').forEach(function(el){var k=kindOf(el);if(!k){el.classList.remove('dk-mic');return;}
+  el.classList.toggle('dk-mic',o);el.classList.toggle('dk-kbd',o&&kbd.has(el));if(o&&!kbd.has(el))el.setAttribute('inputmode','none');else if(el.getAttribute('inputmode')==='none')el.removeAttribute('inputmode');});
+ document.querySelectorAll('.dk-pill').forEach(function(b){b.classList.toggle('on',o);b.textContent=o?'🎤 On':'🎤 Off';b.setAttribute('aria-label','Dictation '+(o?'on':'off')+' - tap to switch');});
+ document.querySelectorAll('.dk-seg button').forEach(function(b){b.classList.toggle('on',(b.getAttribute('data-dk')==='1')===o);});}
+function pill(){var bars=window.DICTATE_PILL?document.querySelectorAll('.bar'):[];bars.forEach(function(bar){if(bar.querySelector('.dk-pill'))return;var h=bar.querySelector('[data-act=home]');if(!h||!document.querySelector('[data-b]'))return;
+ var b=document.createElement('button');b.className='dk-pill';b.type='button';b.setAttribute('data-dk-x','pill');b.title='Turn dictation on or off';bar.insertBefore(b,h);});paint();}
+var mo=new MutationObserver(function(){clearTimeout(mo.t);mo.t=setTimeout(pill,30);});
+function start(){mo.observe(document.body,{childList:true,subtree:true});pill();}
+if(document.body)start();else document.addEventListener('DOMContentLoaded',start);
+/* the On/Off choice shown when an inspection starts */
+window.DictUI={rowHtml:function(){return '<div class="dk-row"><span>🎤 Dictate serial numbers and versions<small>Tap a field and say it instead of typing. You can switch it here any time.</small></span><div class="dk-seg"><button type="button" data-dk="0">Off</button><button type="button" data-dk="1">On</button></div></div>';},paint:paint,on:on,setOn:setOn};
+/* ---------- putting a value in, the same way typing does ---------- */
+function put(el,v){el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));try{el.blur();}catch(e){}el.dispatchEvent(new Event('change',{bubbles:true}));}
+/* ---------- listening ---------- */
+function stop(){clearTimeout(st.dog);if(st.busy){st.busy=false;Dictate.stop();}if(st.el)st.el.classList.remove('dk-live');}
+function listen(el){var k=kindOf(el);if(!k)return;stop();st.el=el;place();st.busy=true;el.classList.add('dk-live');var lb=esc(labelOf(el)),before=el.value,t0=Date.now(),done=false;
+ var kb='<button data-dk-x="kbd">⌨ Type instead</button>';
+ show('live','Listening – '+lb,'Say it one character at a time, then pause.',kb);
+ var fin=function(){done=true;st.busy=false;clearTimeout(st.dog);el.classList.remove('dk-live');};
+ st.dog=setTimeout(function(){if(done)return;fin();Dictate.stop();show('err',lb,'No answer from the speech service. This browser may not support dictation (Brave is a known case). Use the keyboard and its microphone key.','<button class="p" data-dk-x="again">🎤 Try again</button><button data-dk-x="kbd">⌨ Type instead</button>');},10000);
+ Dictate.listen({onState:function(t,kd){if(done)return;if(kd==='interim')show('live','Listening – '+lb,esc(t),kb);},
+  onResult:function(best,alts){if(done)return;fin();var v=Dictate.clean(best,k);
+   if(!v){show('err',lb,'Heard “'+esc(best)+'” but no letters or numbers came out of it.','<button class="p" data-dk-x="again">🎤 Try again</button><button data-dk-x="kbd">⌨ Type instead</button>');return;}
+   st.last={el:el,before:before};put(el,v);
+   var seen={},o=[];seen[v.toLowerCase()]=1;(alts||[]).forEach(function(a){var c=Dictate.clean(a,k);if(c&&!seen[c.toLowerCase()]){seen[c.toLowerCase()]=1;o.push(c);}});
+   show('ok','✓ '+lb+': <code style="font:800 16px ui-monospace,Menlo,Consolas,monospace">'+esc(v)+'</code>','Heard “'+esc(best.trim())+'”.'+(o.length?' Not right? Tap one of the others, or try again.':' Not right? Try again or type it.'),
+    o.map(function(c){return '<button class="alt" data-dk-alt="'+esc(c)+'">'+esc(c)+'</button>';}).join('')+'<button data-dk-x="again">🎤 Again</button><button data-dk-x="undo">Undo</button><button data-dk-x="kbd">⌨ Type</button><button class="p" data-dk-x="close">Done</button>');},
+  onError:function(c,m){if(done)return;fin();if(c==='aborted'){hide();return;}show('err',lb,esc(m),'<button class="p" data-dk-x="again">🎤 Try again</button><button data-dk-x="kbd">⌨ Type instead</button>');},
+  onEnd:function(){if(!done)fin();}});}
+/* ---------- taps ---------- */
+document.addEventListener('pointerdown',function(e){var el=e.target;if(!on()||!kindOf(el))return;if(!kbd.has(el))el.setAttribute('inputmode','none');},true);
+document.addEventListener('click',function(e){var el=e.target;
+ if(el.closest&&el.closest('.dk-seg button')){setOn(el.closest('button').getAttribute('data-dk')==='1');return;}
+ if(!on()||!kindOf(el)||kbd.has(el))return;if(st.busy&&st.el===el){stop();hide();return;}listen(el);},true);
+P.addEventListener('pointerdown',function(e){e.preventDefault();});P.addEventListener('mousedown',function(e){e.preventDefault();});
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-dk-x],[data-dk-alt]');if(!b)return;var x=b.getAttribute('data-dk-x'),el=st.el;
+ if(x==='pill'){setOn(!on());return;}
+ e.stopPropagation();
+ if(b.hasAttribute('data-dk-alt')){if(el){put(el,b.getAttribute('data-dk-alt'));show('ok','✓ '+esc(labelOf(el))+': <code style="font:800 16px ui-monospace,Menlo,Consolas,monospace">'+esc(b.getAttribute('data-dk-alt'))+'</code>','Picked from the other matches.','<button data-dk-x="undo">Undo</button><button class="p" data-dk-x="close">Done</button>');}return;}
+ if(x==='close'){stop();hide();return;}
+ if(x==='again'&&el){el.focus();listen(el);return;}
+ if(x==='undo'&&st.last){put(st.last.el,st.last.before);show('','Undone','The field is back to what it was.','<button class="p" data-dk-x="close">Done</button>');return;}
+ if(x==='kbd'&&el){stop();hide();kbd.add(el);el.removeAttribute('inputmode');el.classList.add('dk-kbd');el.blur();el.focus();return;}
+ if(x==='voice'&&el){kbd.delete(el);el.classList.remove('dk-kbd');el.setAttribute('inputmode','none');el.blur();el.focus();listen(el);return;}},true);
+/* field in keyboard mode: offer to switch back to voice */
+document.addEventListener('focusin',function(e){var el=e.target;if(!on()||!kindOf(el)||!kbd.has(el))return;st.el=el;place();show('','⌨ Typing – '+esc(labelOf(el)),'The keyboard is open for this field.','<button class="p" data-dk-x="voice">🎤 Speak instead</button><button data-dk-x="close">Done</button>');});
+document.addEventListener('focusout',function(e){var el=e.target;if(kindOf(el)&&kbd.has(el)&&!st.busy)setTimeout(function(){if(document.activeElement!==el&&P.className==='')hide();},150);});
+/* keyboard microphone key: clean "x-ray two six bravo…" when the field is left (only text that looks spoken is changed) */
+document.addEventListener('change',function(e){var el=e.target,k=kindOf(el);if(!k||!e.isTrusted)return;var raw=el.value;if(!Dictate.spoken(raw))return;var v=Dictate.clean(raw,k);if(!v||v===raw)return;
+ st.el=el;st.last={el:el,before:raw};el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));show('ok','✓ '+esc(labelOf(el))+': <code style="font:800 16px ui-monospace,Menlo,Consolas,monospace">'+esc(v)+'</code>','Cleaned up from “'+esc(raw)+'”.','<button data-dk-x="undo">Undo</button><button class="p" data-dk-x="close">Done</button>');},true);
+})();
+
+window.DICTATE_FIELDS=[
+ {sel:'input[data-b^="f."]',kind:'serial'},{sel:'input[data-tkplate]',kind:'serial'},{sel:'input[data-b$=".rev"]',kind:'version'}];
+(function(){var _s=serHtml;serHtml=function(r){return _s(r).replace('<div class="card"><h2>Unit and technician</h2>','<div class="card"><h2>Unit and technician</h2>'+DictUI.rowHtml());};})();</script></body></html>
