@@ -12971,6 +12971,281 @@ function show(){if(dlg)return;css();dlg=document.createElement('div');dlg.id='bg
  var st=dlg.querySelector('.st');if(st)st.focus();}
 window.BackGuard={show:show};
 })();
+</script><script>/* ===== shared: core details carried through every form (Ravi, 2026-10-29) =====
+   Serial numbers, revisions, mileage/hours, VIN / plate / kilo, RMA / SVO / account and the reported issues travel
+   in each report's QR code to the next form, so the truck can be tracked from the first look to the final inspection.
+   - A form with no field for a detail still passes it on in its own code (the "cx" part of the code).
+   - Editing a carried serial, revision, VIN, plate, kilo or platform serial asks "Correction or actually changed?";
+     every later report lists the change (old -> new, why, which form, date).
+   - A removed device can wait for its replacement serial ("Removed - new serial to follow"); it never blocks a report.
+   - Issues reported or failed earlier stay on every later form until a tech marks them Fixed. */
+(function(){
+'use strict';
+var ORDER=['starlink','server','cisco switch','trimble gps','radar','pan tilt','camera','gearbox','cisco receiver','cisco wifi module','cisco pim / lte module','laptop control unit','hmi/smu','client'];
+var LBL={'starlink':'Starlink','server':'Server','cisco switch':'Cisco Switch','trimble gps':'Trimble GPS','radar':'Radar','pan tilt':'Pan Tilt','camera':'Camera','gearbox':'Gearbox','cisco receiver':'Cisco Receiver','cisco wifi module':'Cisco WiFi Module','cisco pim / lte module':'Cisco PIM / LTE Module','laptop control unit':'Laptop Control Unit','hmi/smu':'HMI/SMU','client':'Client'};
+var ALIAS={'starlink antenna':'starlink','cisco switch (driver side)':'cisco switch','network encl. cisco serial number':'cisco switch','cisco serial number':'cisco switch','cisco':'cisco switch','trimble':'trimble gps','gps':'trimble gps','trimble gps serial number':'trimble gps',
+ 'radar serial number':'radar','pan/tilt':'pan tilt','pan tilt unit':'pan tilt','radar pan tilt':'pan tilt','pan-tilt':'pan tilt','radar pan tilt serial number':'pan tilt','camera serial number':'camera','tfu':'camera','camera / tfu':'camera',
+ 'gear box':'gearbox','gearbox serial number':'gearbox','network encl. cisco router serial number':'cisco receiver','cisco router':'cisco receiver','cisco receiver serial number':'cisco receiver',
+ 'network encl. cisco module sn':'cisco wifi module','cisco module':'cisco wifi module','wifi module':'cisco wifi module','cisco wifi module serial number':'cisco wifi module',
+ 'pim sn':'cisco pim / lte module','pim':'cisco pim / lte module','cisco pim/lte':'cisco pim / lte module','lte module':'cisco pim / lte module','pim module':'cisco pim / lte module','cisco pim / lte':'cisco pim / lte module',
+ 'lcu':'laptop control unit','laptop control unit serial number':'laptop control unit','smu':'hmi/smu','hmi':'hmi/smu','system management unit':'hmi/smu','system management unit serial number':'hmi/smu','server serial number':'server','starlink serial number':'starlink','client pc':'client'};
+var REV=[['v0s','Server Image (created date)'],['v0c','Client Image (created date)'],['v1','PMU Version'],['v2','PCM Version'],['v3','HMI Version'],['v4','PSR Version'],['v5','Rim 1 Version'],['v6','Rim 2 Version'],['v7','Vehicle Mileage'],['v8','Engine Hours'],['v9','Idle Hours']];
+var REVK={};REV.forEach(function(f){REVK[f[0]]=f[1];});
+var TRACK_REV=['v0s','v0c','v1','v2','v3','v4','v5','v6']; /* mileage and hours change every visit: carried, never questioned */
+var FORM={QC:'Quick Capture',IN:'Intake',PR:'Post-Repair',ATP:'ATP',FLR:'Floor Test',CAL:'Calibration',FIN:'Final Inspection'};
+var KIND={c:'Correction',r:'Device replaced',s:'Swapped between platforms',p:'Removed - new serial to follow',u:'Updated',x:'Actually changed',o:'Other','':'Reason not given yet'};
+var WK={c:'Customer reported',f:'Failed',b:'Not tested'};
+function T(v){return String(v==null?'':v).trim();}
+function norm(t){return T(t).toLowerCase().replace(/\s+/g,' ');}
+function dk(t){var k=norm(t);if(ORDER.indexOf(k)>=0)return k;if(ALIAS[k])return ALIAS[k];k=k.replace(/\s*(serial number|serial no\.?|serial|s\/n|sn)$/,'');if(ORDER.indexOf(k)>=0)return k;return ALIAS[k]||null;}
+function L(k){var i=ORDER.indexOf(k);return i<0?'':String.fromCharCode(97+i);}
+function devOfL(l){return ORDER[String(l||'').charCodeAt(0)-97]||null;}
+function idOf(k){return '#'+L(k);}
+function devOfId(id){return id&&id.charAt(0)==='#'?devOfL(id.charAt(1)):null;}
+function label(id){var dv=devOfId(id);if(dv)return LBL[dv]+' serial number';if(REVK[id])return REVK[id];return {sn:'Platform serial number',vin:'Truck VIN',pl:'License plate #',kl:'Kilo #'}[id]||id;}
+function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function fd(v){var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(T(v));return m?m[2]+'/'+m[3]+'/'+m[1]:T(v);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function sq(v){return T(v).toUpperCase().replace(/[\s\-_]+/g,'');}
+function same(a,b){a=sq(a);b=sq(b);if(a===b)return true;var m=/^([A-Z]+)(\d+)$/,x=m.exec(a),y=m.exec(b);
+ if(x&&/^\d+$/.test(b))return +x[2]===+b;if(y&&/^\d+$/.test(a))return +y[2]===+a;return false;}
+function formOf(o){if(!o||typeof o!=='object')return '';if(o.a==='LVSS')return o.qc?'QC':o.it?'IN':'PR';return {ATP:'ATP',FLR:'FLR',CAL:'CAL',FIN:'FIN'}[o.a]||'';}
+var HK={cameraSerial:'camera',radarSerial:'radar',lcuSerial:'laptop control unit',radarPtSerial:'pan tilt',starlinkSerial:'starlink',ciscoEnclSerial:'cisco switch',ciscoModSerial:'cisco wifi module',pimSerial:'cisco pim / lte module',serverSerial:'server',ciscoRtrSerial:'cisco receiver',smuSerial:'hmi/smu',gpsSerial:'trimble gps',gearSerial:'gearbox'};
+var SWK=[null,'camera','radar','laptop control unit','pan tilt','starlink','cisco switch','cisco wifi module','cisco pim / lte module','server','cisco receiver','hmi/smu','trimble gps','gearbox'];
+var RK=['v0s','v0c','v1','v2','v3','v4','v5','v6','v7','v8','v9'];
+var FK={server:'server',sw:'cisco switch',gps:'trimble gps',radar:'radar',pt:'pan tilt',cam:'camera',gear:'gearbox',rcv:'cisco receiver',wifi:'cisco wifi module',pim:'cisco pim / lte module',lcu:'laptop control unit',hmi:'hmi/smu'};
+var FR={img:'v0s',pmu:'v1',hmi:'v3'};
+var NK={starlink:'starlink',server:'server',cisco:'cisco switch',gps:'trimble gps',radar:'radar',pt:'pan tilt',cam:'camera',gear:'gearbox',router:'cisco receiver',mod:'cisco wifi module',pim:'cisco pim / lte module',lcu:'laptop control unit',smu:'hmi/smu'};
+var OLDCG={sn:'sn',vin:'vin',plate:'pl',kilo:'kl',cam:'#g',rad:'#e',pt:'#f'};
+
+/* ---- read any form's QR code into one set of core details ---- */
+function dec(o){
+ var f=formOf(o);if(!f)return null;
+ var C={f:f,d:T(o.d),rv:o.rv||'',sn:'',osn:'',p:'',rma:T(o.rma),so:T(o.so),ac:T(o.ac),vin:T(o.vin),pl:T(o.pl),kl:T(o.kl),s:{},r:{},w:[],x:[],pd:[],h:[],n:0,wn:0};
+ var S_=function(k,v){v=T(v);if(k&&v&&!/^(n\/a|pdx)$/i.test(v))C.s[k]=v;};
+ var R_=function(k,v){v=T(v);if(k&&REVK[k]&&v&&!/^n\/a$/i.test(v))C.r[k]=v;};
+ if(o.a==='LVSS'){var up=o.up&&o.nsn;C.sn=T(up?o.nsn:o.sn);if(up)C.osn=T(o.sn);C.p=T(o.p);
+  (o.s||[]).forEach(function(p){if(!p)return;var n=norm(p[0]);if(/^(truck )?vin$/.test(n)){if(!C.vin)C.vin=T(p[1]);return;}S_(dk(p[0]),p[1]);});
+  var iv=o.i||{};Object.keys(iv).forEach(function(k){R_(k,iv[k]);});
+  (o.w||[]).forEach(function(a){if(Array.isArray(a)&&T(a[1]))C.w.push([a[0]||'f',T(a[1]),a[2]||'',T(a[3]),a[4]||'',a[5]||f,a[6]||'',T(a[7]),a[8]||'']);});}
+ else if(o.a==='ATP'){C.sn=T(o.sn);C.osn=T(o.os);
+  if(Array.isArray(o.sv))o.sv.forEach(function(v,i){S_(SWK[i],v);});
+  if(!C.s.camera)S_('camera',o.cs);if(!C.s.radar)S_('radar',o.rs);if(!C.s['laptop control unit'])S_('laptop control unit',o.ls);
+  if(Array.isArray(o.rr))o.rr.forEach(function(v,i){R_(RK[i],v);});
+  (o.wk||[]).forEach(function(w){var k=HK[w[0]]||dk(w[1]);if(!k)return;if(T(w[3]))C.s[k]=T(w[3]);else C.pd.push([k,T(w[2])]);});}
+ else if(o.a==='FLR'){C.sn=T(o.sn);if(o.kd==='up')C.osn=T(o.ol);
+  Object.keys(o.dv||{}).forEach(function(k){var a=o.dv[k];if(a&&!a[1])S_(FK[k],a[0]);});
+  Object.keys(o.rv2||{}).forEach(function(k){var a=o.rv2[k];if(a&&!a[1])R_(FR[k],a[0]);});}
+ else if(o.a==='CAL'){C.sn=T(o.sn);var u=o.un||{};S_('camera',u.cam);S_('radar',u.rad);S_('pan tilt',u.pt);var sv=o.sv||{};R_('v1',sv.pmu);R_('v3',sv.hmi);}
+ else if(o.a==='FIN'){C.sn=T(o.sn);var F=o.f||{};C.vin=T(F.vin);C.pl=T(F.plate);C.kl=T(F.kilo);Object.keys(NK).forEach(function(k){S_(NK[k],F[k]);});}
+ /* changes recorded the old way (Floor Test / Calibration before this update) */
+ if(!o.cx)(o.cg||[]).forEach(function(a){var id=OLDCG[a[0]];if(id&&(T(a[1])||T(a[2])))C.x.push([id,T(a[1]),T(a[2]),'',f,C.d,T(a[4])]);});
+ var cx=o.cx;
+ if(cx&&typeof cx==='object'){
+  ['sn','osn','p','rma','so','ac','vin','pl','kl'].forEach(function(k){if(!C[k]&&T(cx[k]))C[k]=T(cx[k]);});
+  var s=cx.s||{};Object.keys(s).forEach(function(l){var k=devOfL(l);if(k&&!C.s[k])S_(k,s[l]);});
+  var r=cx.r||{};Object.keys(r).forEach(function(k){if(!C.r[k])R_(k,r[k]);});
+  if(Array.isArray(cx.w)){var nat=C.w;C.w=[];cx.w.forEach(function(a){if(Array.isArray(a)&&T(a[1]))C.w.push([a[0]||'f',T(a[1]),a[2]||'',T(a[3]),a[4]||'',a[5]||'',a[6]||'',T(a[7]),a[8]||'']);});C.w=C.w.concat(nat);}
+  (cx.x||[]).forEach(function(a){if(Array.isArray(a)&&a[0])C.x.push([a[0],T(a[1]),T(a[2]),a[3]||'',a[4]||'',a[5]||'',T(a[6])]);});
+  (cx.pd||[]).forEach(function(a){var k=devOfL(a[0]);if(k&&!C.pd.some(function(p){return p[0]===k;}))C.pd.push([k,T(a[1])]);});
+  (cx.h||[]).forEach(function(a){if(Array.isArray(a))C.h.push([a[0]||'',a[1]||'',a[2]||'']);});
+  C.n=+cx.n||0;C.wn=+cx.wn||0;if(cx.ws)C.ws=cx.ws;if(cx.rc)C.rc=cx.rc;C.wi=0;}
+ /* a removed device has no current serial until the replacement is entered */
+ C.pd=C.pd.filter(function(p){var cur=C.s[p[0]];if(cur&&p[1]&&!same(cur,p[1]))return false;delete C.s[p[0]];return true;});
+ C.h.push([f,C.d,C.rv]);
+ return C;}
+
+/* ---- the base value a field was carried in with ---- */
+function baseOf(C,id){var dv=devOfId(id);if(dv)return T(C.s[dv]);if(REVK[id])return T(C.r[id]);return T(C[id]);}
+function pendOf(C,id){var dv=devOfId(id);if(!dv)return null;var p=(C.pd||[]).find(function(q){return q[0]===dv;});return p?p[1]:null;}
+function setBase(C,id,v){var dv=devOfId(id);if(dv){if(v)C.s[dv]=v;else delete C.s[dv];}else if(REVK[id]){if(v)C.r[id]=v;else delete C.r[id];}else C[id]=v;}
+
+/* ---- the active form ---- */
+var AD=null;
+function rec(){try{return AD&&AD.rec();}catch(e){return null;}}
+function fields(r){try{return AD.fields(r)||{};}catch(e){return {};}}
+function dirty(){try{AD.dirty();}catch(e){}}
+
+/* ---- what this form adds to its own QR code ---- */
+function pack(r,nat){
+ var K=r&&r.core,own=dec(nat)||{s:{},r:{}},F=fields(r),cx={};
+ if(K){cx.k=1;
+  /* a value this form left blank is carried on (still the last known), unless it is N/A here or was changed on purpose */
+  var keep=function(id){return F[id]!==null&&!T(F[id])&&!(r.cxl||[]).some(function(e){return e[0]===id;});};
+  ['sn','osn','p','rma','so','ac','vin','pl','kl'].forEach(function(k){if(K[k]&&!own[k]&&keep(k))cx[k]=K[k];});
+  var s={};Object.keys(K.s).forEach(function(k){if(!own.s[k]&&keep(idOf(k)))s[L(k)]=K.s[k];});if(Object.keys(s).length)cx.s=s;
+  var rv={};Object.keys(K.r).forEach(function(k){if(!own.r[k]&&keep(k))rv[k]=K.r[k];});if(Object.keys(rv).length)cx.r=rv;}
+ /* issues: the ones carried in (with the Fixed / Still open marks made here) and this form's own */
+ var w=carriedW(r),mine=[];try{mine=(AD.issues&&AD.issues(r))||[];}catch(e){}
+ if(w.length||mine.length){cx.w=w.concat(mine);cx.wn=mine.length;}
+ /* changes: the history plus this form's own */
+ var xs=(K?K.x:[]).slice(),ownX=(r.cxl||[]).slice();try{if(AD.swaps)ownX=ownX.concat(AD.swaps(r)||[]);}catch(e){}
+ if(xs.length||ownX.length){cx.x=xs.concat(ownX);cx.n=ownX.length;}
+ var pd=pending(r);if(pd.length)cx.pd=pd.map(function(p){return [L(p[0]),p[1]];});
+ if(K&&K.h&&K.h.length)cx.h=K.h.slice(-8);
+ if(r.coreWarn)cx.ws=r.coreWarn;if(r.coreRe)cx.rc=r.coreRe;
+ return cx;}
+function carriedW(r){var K=r&&r.core;if(!K||K.wi)return [];var st=r.wst||{};
+ return (K.w||[]).map(function(a,i){var m=st[i];return m?a.slice(0,6).concat([m[0],m[1]||'',m[2]||'']):a.slice();});}
+/* devices waiting for their replacement serial */
+function pending(r){var K=r&&r.core,F=fields(r),out=[];
+ if(K)(K.pd||[]).forEach(function(p){var id=idOf(p[0]);if(id in F&&T(F[id]))return;out.push(p);});
+ (r&&r.cxl||[]).forEach(function(e){var dv=devOfId(e[0]);if(dv&&e[3]==='p'&&!T(e[2])&&!out.some(function(p){return p[0]===dv;}))out.push([dv,e[1]]);});
+ try{if(AD&&AD.pend)(AD.pend(r)||[]).forEach(function(p){if(!out.some(function(q){return q[0]===p[0];}))out.push(p);});}catch(e){}
+ return out;}
+/* the code text, trimmed to fit: issue notes first, then the oldest history; serials, revisions and IDs are never cut */
+function json(o,cx,lim){lim=lim||2800;var B=function(j){return new TextEncoder().encode(j).length;};
+ if(!cx||!Object.keys(cx).length)return JSON.stringify(o);
+ var c=JSON.parse(JSON.stringify(cx)),J=function(){return JSON.stringify(Object.assign({},o,{cx:c}));},j=J();if(B(j)<=lim)return j;
+ var steps=[function(){(c.w||[]).forEach(function(a){a[3]=String(a[3]||'').slice(0,60);a[7]=String(a[7]||'').slice(0,40);});},
+  function(){(c.x||[]).forEach(function(a){a[6]=String(a[6]||'').slice(0,30);});delete c.h;},
+  function(){(c.w||[]).forEach(function(a){a[3]='';a[7]='';a[1]=String(a[1]).slice(0,60);});},
+  function(){/* fixed issues go before open ones */if(c.w){var k=c.w.length;c.w=c.w.filter(function(a,i){return a[6]!=='fx'||i>=k-(c.wn||0);});}},
+  function(){while(c.w&&c.w.length&&B(J())>lim){c.w.shift();}if(c.w&&!c.w.length)delete c.w;if(c.wn&&(!c.w||c.wn>c.w.length))c.wn=c.w?c.w.length:0;},
+  function(){(c.x||[]).forEach(function(a){a[6]='';});while(c.x&&c.x.length>(c.n||0)&&B(J())>lim){c.x.shift();}}];
+ for(var i=0;i<steps.length;i++){steps[i]();j=J();if(B(j)<=lim)return j;}
+ c={k:c.k,s:c.s,r:c.r,pd:c.pd,vin:c.vin,pl:c.pl,kl:c.kl,sn:c.sn};Object.keys(c).forEach(function(k){if(c[k]==null)delete c[k];});j=J();
+ return B(j)<=lim+150?j:JSON.stringify(o);}
+
+/* a removed device's old serial is not its current serial */
+function pendClear(C,get,set){(C&&C.pd||[]).forEach(function(p){var v=get(p[0]);if(v&&(!p[1]||same(v,p[1])))set(p[0],'');});}
+/* ---- start a record from a scanned code ---- */
+function start(r,C,o){if(!r||!C)return r;C=JSON.parse(JSON.stringify(C));C.n=0;C.wn=0;delete C.ws;delete C.rc;r.core=C;r.cxl=[];r.wst={};o=o||{};
+ if(o.warn)r.coreWarn=o.warn;if(o.re)r.coreRe=o.re;return r;}
+/* the same record moving to another tablet (Floor Test / Calibration / Final paused codes) */
+function resume(r,o,form){var C=dec(o);if(!C||!(o.cx&&o.cx.k)){r.core=null;r.cxl=[];r.wst={};return r;}
+ var n=Math.min(C.n||0,C.x.length),own=n?C.x.slice(C.x.length-n):[];C.x=C.x.slice(0,C.x.length-n);
+ /* put the base values back to what was carried in before this record's own changes */
+ r.cxl=own.filter(function(a){return a[4]===form;});for(var i=r.cxl.length-1;i>=0;i--){var a=r.cxl[i],dv=devOfId(a[0]);
+  if(a[3]==='r'&&a[6]==='Replacement serial entered'){if(dv&&!C.pd.some(function(p){return p[0]===dv;}))C.pd.push([dv,a[1]]);setBase(C,a[0],'');}
+  else{if(dv)C.pd=C.pd.filter(function(p){return p[0]!==dv;});setBase(C,a[0],a[1]);}}
+ var wn=Math.min(C.wn||0,C.w.length);if(wn)C.w=C.w.slice(0,C.w.length-wn);
+ r.wst={};C.w.forEach(function(a,i){if(a[8]===form&&a[6]){r.wst[i]=[a[6],a[7]||'',form];a[6]='';a[7]='';a[8]='';}});
+ if(C.h.length&&C.h[C.h.length-1][0]===form)C.h.pop();
+ r.coreWarn=C.ws||null;r.coreRe=C.rc||null;delete C.ws;delete C.rc;C.n=0;C.wn=0;r.core=C;return r;}
+
+/* ---- failed / incomplete codes: warn instead of block ---- */
+function openCount(o){if(!o)return 0;var C=dec(o);var n=0;
+ if(o.a==='ATP')n=(o.f||[]).filter(function(a){return a[1]==='F'||a[1]==='W'||a[1]==='B';}).length;
+ else if(o.a==='FLR')n=Object.keys(o.ck||{}).filter(function(k){var c=o.ck[k];return c&&c.s==='f'&&c.rt!=='p';}).length;
+ if(C)n+=C.w.filter(function(a,i){return a[0]!=='c'&&a[6]!=='fx'&&(o.a==='LVSS'||i<C.w.length-(C.wn||0));}).length;
+ return n;}
+function an(w){return /^[aeiou]/i.test(String(w))?'an ':'a ';}
+function gateText(o,frm,sn){var n=openCount(o);
+ return 'The '+frm+(sn?' for '+sn:'')+' is '+(o.rv==='F'?'FAILED':o.rv==='I'?'INCOMPLETE':'missing a pass result')+(n?' – '+n+' open item'+(n===1?'':'s'):'')+'.\n\nStart anyway with the core details filled in? The new report notes that it was started from a report that had not passed, and the open items come along.';}
+function warnOf(o){return [formOf(o),o.rv||'',openCount(o),T(o.d)];}
+
+/* ---- "Correction or actually changed?" ---- */
+var busy=false,Q=[],tmr=0;
+/* a typed value is only questioned once it is committed (change event), never while the field is still being typed in */
+function typing(){var a=document.activeElement;return !!(a&&/^(INPUT|TEXTAREA)$/.test(a.tagName)&&!(a.closest&&a.closest('#corex,#coreBan')));}
+function check(force){if(!AD||busy)return;if(!force&&typing())return;var r=rec();if(!r||!r.core)return;var C=r.core,F=fields(r),dd=false,nu=[];r.cxl=r.cxl||[];
+ Object.keys(F).forEach(function(id){if(F[id]===null)return;var cur=T(F[id]),i=r.cxl.findIndex(function(e){return e[0]===id;}),e=i>=0?r.cxl[i]:null,pv=pendOf(C,id);
+  if(pv!=null){if(cur&&pv&&same(cur,pv))cur='';if(cur){if(!e){r.cxl.push([id,pv,cur,'r',AD.form,today(),'Replacement serial entered']);dd=true;}else if(e[2]!==cur){e[2]=cur;dd=true;}}
+   else if(e){r.cxl.splice(i,1);dd=true;}return;}
+  var base=baseOf(C,id);if(!base)return;
+  if(same(base,cur)){if(e){r.cxl.splice(i,1);dd=true;}return;}
+  if(!cur&&!devOfId(id)){if(e){r.cxl.splice(i,1);dd=true;}return;}
+  if(e){if(e[2]!==cur){e[2]=cur;if(e[3]==='p'&&cur)e[3]='r';if(!cur&&e[3]==='r')e[3]='';dd=true;if(!e[3])nu.push(id);}return;}
+  r.cxl.push([id,base,cur,'',AD.form,today(),'']);dd=true;nu.push(id);});
+ if(dd){dirty();refresh();}
+ nu.forEach(function(id){if(Q.indexOf(id)<0)Q.push(id);});next();}
+var frc=false;function soon(ms,force){if(force)frc=true;clearTimeout(tmr);tmr=setTimeout(function(){var f=frc;frc=false;check(f);},ms||80);}
+function next(){if(busy||!Q.length)return;var id=Q.shift(),r=rec();if(!r)return;var e=(r.cxl||[]).find(function(x){return x[0]===id;});if(!e||e[3]){next();return;}askKind(e);}
+function opts(e){var dv=devOfId(e[0]);
+ if(dv)return T(e[2])?[['c','Correction – the earlier number was wrong'],['r','Device replaced – a different unit is installed'],['s','Swapped between platforms'],['o','Other']]
+  :[['p','Removed – new serial to follow'],['c','Correction – there is no '+LBL[dv]],['o','Other']];
+ if(REVK[e[0]])return [['c','Correction – the earlier reading was wrong'],['u','Actually updated – new software / firmware'],['o','Other']];
+ return [['c','Correction – the earlier entry was wrong'],['x','Actually changed'],['o','Other']];}
+function fromTxt(r){var C=r&&r.core;if(!C)return '';var h=C.h&&C.h[C.h.length-1];return h?(FORM[h[0]]||h[0])+(h[1]?', '+fd(h[1]):''):'';}
+function askKind(e){busy=true;css();var r=rec(),old=document.getElementById('corex');if(old)old.remove();
+ var dlg=document.createElement('div');dlg.id='corex';dlg.setAttribute('role','dialog');dlg.setAttribute('aria-modal','true');var pick=e[3]||'';
+ dlg.innerHTML='<div class="bx"><h3>'+esc(label(e[0]))+' changed</h3><p class="cmp">Carried in: <b>'+esc(e[1]||'(blank)')+'</b>'+(fromTxt(r)?' <span>('+esc(fromTxt(r))+')</span>':'')+'<br>Now: <b>'+esc(e[2]||'(blank)')+'</b></p><p class="q">Is this a correction, or did it actually change?</p><div class="op">'+
+  opts(e).map(function(o){return '<button type="button" data-k="'+o[0]+'"'+(o[0]===pick?' class="on"':'')+'>'+esc(o[1])+'</button>';}).join('')+
+  '</div><input id="corexN" placeholder="Note (optional) – e.g. RMA, where the old unit went" autocomplete="off" value="'+esc(e[6]&&e[6]!=='Replacement serial entered'?e[6]:'')+'"><button type="button" class="ok" data-k="!"'+(pick?'':' disabled')+'>Save</button><button type="button" class="lt" data-k="?">Decide later</button></div>';
+ document.body.appendChild(dlg);
+ dlg.addEventListener('click',function(ev){var b=ev.target.closest&&ev.target.closest('button[data-k]');if(!b)return;ev.preventDefault();ev.stopPropagation();var k=b.getAttribute('data-k');
+  if(k==='!'||k==='?'){if(k==='!'){e[3]=pick;e[6]=T((document.getElementById('corexN')||{}).value);}dlg.remove();busy=false;dirty();refresh();setTimeout(next,60);return;}
+  pick=k;[].forEach.call(dlg.querySelectorAll('.op button'),function(x){x.classList.toggle('on',x.getAttribute('data-k')===k);});var ok=dlg.querySelector('.ok');if(ok)ok.disabled=false;},true);}
+
+/* ---- on-screen banner: started from a failed report, re-created, pending serials, changes, open issues ---- */
+function chain(C){return (C.h||[]).map(function(a){return (FORM[a[0]]||a[0])+(a[1]?' '+fd(a[1]):'')+(a[2]==='F'?' (failed)':a[2]==='I'?' (incomplete)':'');}).join(' → ');}
+function changes(r){var K=r&&r.core,o=[];if(K)K.x.forEach(function(a){o.push({a:a,own:0});});(r&&r.cxl||[]).forEach(function(a,i){o.push({a:a,own:1,i:i});});try{if(AD&&AD.swaps)(AD.swaps(r)||[]).forEach(function(a){o.push({a:a,own:2});});}catch(e){}return o;}
+function chgTxt(a){return label(a[0])+': '+(a[1]||'(blank)')+' → '+(a[2]||(a[3]==='p'?'to follow':'(blank)'))+' – '+(KIND[a[3]||'']||a[3])+(a[4]?' ('+(FORM[a[4]]||a[4])+(a[5]?', '+fd(a[5]):'')+')':'')+(T(a[6])?' – '+T(a[6]):'');}
+function issues(r){var K=r&&r.core;if(!K||K.wi)return [];var st=r.wst||{};return (K.w||[]).map(function(a,i){var m=st[i];return {i:i,a:a,st:m?m[0]:(a[6]||''),nt:m?m[1]:(a[7]||''),by:m?m[2]:(a[8]||''),here:!!m};});}
+function wTxt(a){return (WK[a[0]]||'Issue')+': '+a[1]+(a[4]?' ['+lvl(a[4])+']':'')+(T(a[3])?' – '+T(a[3]):'')+(a[5]?' ('+(FORM[a[5]]||a[5])+')':'');}
+function lvl(v){return {dno:'DO NOT OPERATE',high:'High',med:'Medium',low:'Low',h:'High',m:'Medium',l:'Low'}[v]||String(v).charAt(0).toUpperCase()+String(v).slice(1);}
+function bannerHtml(r,o){o=o||{};if(!r)return '';var K=r.core,P=pending(r),X=changes(r),W=issues(r),h='';
+ if(r.coreWarn){var w=r.coreWarn;var ww=(w[1]==='F'?'FAILED':w[1]==='I'?'INCOMPLETE':'not passed');h+='<div class="cb cb-red"><b>⚠ Started from '+an(ww)+ww+' '+esc(FORM[w[0]]||w[0])+' report'+(w[3]?' ('+esc(fd(w[3]))+')':'')+(w[2]?' – '+w[2]+' open item'+(w[2]===1?'':'s'):'')+'.</b> The core details were filled in from it. Check them against the truck.</div>';}
+ if(r.coreRe){h+='<div class="cb cb-blue"><b>Re-created from the '+esc(FORM[r.coreRe[0]]||r.coreRe[0])+' report dated '+esc(fd(r.coreRe[1]))+'.</b> The serials, revisions, IDs and issues came from its QR code. Photos and the tech name are not carried over – the photos are on the original report.</div>';}
+ if(K&&!o.noChain){var ns=Object.keys(K.s).length,nr=Object.keys(K.r).length;h+='<div class="cb cb-grey">Core details carried in from: <b>'+esc(chain(K))+'</b> ('+ns+' serial number'+(ns===1?'':'s')+', '+nr+' revision'+(nr===1?'':'s')+'/hours'+(K.vin?', VIN':'')+(K.pl?', plate':'')+(K.kl?', kilo':'')+').</div>';}
+ if(P.length)h+='<div class="cb cb-amber"><b>Replacement serial to follow (does not stop the report):</b><ul>'+P.map(function(p){return '<li>'+esc(LBL[p[0]]||p[0])+' – removed'+(p[1]?' (old S/N '+esc(p[1])+')':'')+'. Enter the new serial when it is installed.</li>';}).join('')+'</ul></div>';
+ if(X.length){var li=function(x){return '<li>'+esc(chgTxt(x.a))+(x.own===1?' <button type="button" class="cbb" data-corek="'+esc(x.a[0])+'">'+(x.a[3]?'Change reason':'Answer')+'</button>':'')+'</li>';},mine=X.filter(function(x){return x.own;}),old=X.filter(function(x){return !x.own;});
+  h+='<div class="cb cb-grey"><b>Changes to core details ('+X.length+')</b> – all listed on the report.'+(mine.length?'<div style="margin-top:4px">Made on this form:</div><ul>'+mine.map(li).join('')+'</ul>':'')+(old.length?'<details><summary>Earlier changes ('+old.length+')</summary><ul>'+old.map(li).join('')+'</ul></details>':'')+'</div>';}
+ if(W.length&&!o.noIssues){var op=W.filter(function(x){return x.st!=='fx';}),fx=W.filter(function(x){return x.st==='fx';});
+  h+='<div class="cb '+(op.length?'cb-red2':'cb-green')+'"><b>Open issues from earlier forms ('+op.length+')</b>'+(op.length?' – mark each one Fixed or Still open (optional, never blocks).':' – all marked fixed.')+
+   (op.length?'<ol>'+op.map(issueLi).join('')+'</ol>':'')+(fx.length?'<details><summary>Fixed ('+fx.length+')</summary><ol>'+fx.map(issueLi).join('')+'</ol></details>':'')+'</div>';}
+ var fl=(o.noIssues?'n':'')+(o.noChain?'c':'');return '<div id="coreBan" data-o="'+fl+'">'+h+'</div>';}
+function issueLi(x){var a=x.a,ed=true;return '<li><span class="tg tg-'+esc(a[0])+'">'+esc(WK[a[0]]||'Issue')+'</span> '+esc(a[1])+(a[4]?' <span class="lv">'+esc(lvl(a[4]))+'</span>':'')+(T(a[3])?'<div class="nt">'+esc(T(a[3]))+'</div>':'')+'<div class="nt">'+(a[5]?'From '+esc(FORM[a[5]]||a[5]):'')+(x.st&&!x.here&&x.by?' · marked '+(x.st==='fx'?'fixed':'still open')+' in '+esc(FORM[x.by]||x.by):'')+(x.nt&&!x.here?' – '+esc(x.nt):'')+'</div>'+
+ (ed?'<div class="ws"><button type="button" data-corew="'+x.i+'" data-v="fx" class="'+(x.st==='fx'&&x.here?'on fx':'')+'">✓ Fixed</button><button type="button" data-corew="'+x.i+'" data-v="op" class="'+(x.st==='op'&&x.here?'on op':'')+'">Still open</button>'+(x.here?'<input data-corewn="'+x.i+'" placeholder="Note (optional)" value="'+esc(x.nt)+'" autocomplete="off">':'')+'</div>':'')+'</li>';}
+function refresh(){var el=document.getElementById('coreBan');if(!el)return;var r=rec();if(!r)return;var f=el.getAttribute('data-o')||'',o={noIssues:f.indexOf('n')>=0,noChain:f.indexOf('c')>=0};
+ var ae=document.activeElement,an=ae&&ae.getAttribute&&ae.getAttribute('data-corewn'),pos=an!=null?ae.selectionStart:null;
+ var t=document.createElement('div');t.innerHTML=bannerHtml(r,o);var n=t.firstChild;if(!n)return;el.parentNode.replaceChild(n,el);
+ if(an!=null){var ni=n.querySelector('[data-corewn="'+an+'"]');if(ni){ni.focus();try{ni.setSelectionRange(pos,pos);}catch(e){}}}}
+function mount(el,r,o){if(!el||!r)return;css();var old=el.querySelector('#coreBan');if(old)old.remove();var t=document.createElement('div');t.innerHTML=bannerHtml(r,o);var n=t.firstChild;if(!n)return;el.insertBefore(n,el.firstChild);}
+document.addEventListener('click',function(ev){var b=ev.target.closest&&ev.target.closest('[data-corek],[data-corew]');if(!b)return;var r=rec();if(!r)return;ev.preventDefault();ev.stopPropagation();
+ if(b.hasAttribute('data-corek')){var e=(r.cxl||[]).find(function(x){return x[0]===b.getAttribute('data-corek');});if(e)askKind(e);return;}
+ var i=+b.getAttribute('data-corew'),v=b.getAttribute('data-v');r.wst=r.wst||{};var cur=r.wst[i];if(cur&&cur[0]===v)delete r.wst[i];else r.wst[i]=[v,cur?cur[1]:'',AD?AD.form:''];dirty();refresh();},true);
+document.addEventListener('input',function(ev){var t=ev.target;if(!t||!t.getAttribute||!t.hasAttribute('data-corewn'))return;var r=rec();if(!r)return;var i=+t.getAttribute('data-corewn');r.wst=r.wst||{};if(r.wst[i]){r.wst[i][1]=t.value;dirty();}},true);
+document.addEventListener('change',function(ev){if(ev.target&&ev.target.closest&&ev.target.closest('#corex,#coreBan'))return;soon(80,true);});
+document.addEventListener('click',function(ev){if(ev.target&&ev.target.closest&&ev.target.closest('#corex'))return;soon(300);});
+
+/* ---- PDF block ---- */
+function pdfLines(r){var out=[],K=r&&r.core;if(!r)return out;
+ if(r.coreWarn){var w=r.coreWarn;var ww=(w[1]==='F'?'FAILED':w[1]==='I'?'INCOMPLETE':'not passed');out.push({b:1,c:[176,0,32],t:'NOTE: Started from '+an(ww)+ww+' '+(FORM[w[0]]||w[0])+' report'+(w[3]?' ('+fd(w[3])+')':'')+(w[2]?' - '+w[2]+' open item'+(w[2]===1?'':'s'):'')+'. The core details were filled in from it.'});}
+ if(r.coreRe)out.push({t:'Re-created from the '+(FORM[r.coreRe[0]]||r.coreRe[0])+' report dated '+fd(r.coreRe[1])+'. Photos are on the original report.'});
+ if(K&&K.h&&K.h.length)out.push({t:'Core details carried in from: '+chain(K)});
+ var P=pending(r);if(P.length){out.push({b:1,c:[176,90,0],t:'REPLACEMENT SERIAL PENDING ('+P.length+')'});P.forEach(function(p){out.push({c:[176,90,0],t:'  '+(LBL[p[0]]||p[0])+' - removed'+(p[1]?' (old S/N '+p[1]+')':'')+'; new serial to follow'});});}
+ var X=changes(r);if(X.length){out.push({b:1,t:'Changes to core details ('+X.length+')'});X.forEach(function(x,i){out.push({t:'  '+(i+1)+'. '+chgTxt(x.a)});});}
+ var W=issues(r);if(W.length){var op=W.filter(function(x){return x.st!=='fx';}),fx=W.filter(function(x){return x.st==='fx';});
+  out.push({b:1,c:op.length?[176,0,32]:[20,110,50],t:op.length?'OPEN ISSUES FROM EARLIER FORMS ('+op.length+')':'Issues from earlier forms: all marked fixed'});
+  op.forEach(function(x,i){out.push({t:'  '+(i+1)+'. '+wTxt(x.a)+(x.st==='op'?' - STILL OPEN'+(x.by?' ('+(FORM[x.by]||x.by)+')':'')+(T(x.nt)?': '+T(x.nt):''):'')});});
+  if(fx.length){out.push({b:1,t:'Fixed ('+fx.length+')'});fx.forEach(function(x,i){out.push({t:'  '+(i+1)+'. '+wTxt(x.a)+' - FIXED'+(x.by?' ('+(FORM[x.by]||x.by)+')':'')+(T(x.nt)?': '+T(x.nt):'')});});}}
+ return out;}
+function pdfTxt(s){return String(s).replace(/[→]/g,'->').replace(/[–—]/g,'-').replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/…/g,'...').replace(/[^\x00-\xff]/g,'');}
+/* o: {x, w, top, bot, ens(y,n)->y (optional), title} */
+function pdf(d,y,o,r){var ls=pdfLines(r);if(!ls.length)return y;o=o||{};var X=o.x||40,W=o.w||532,TOP=o.top||60,BOT=o.bot||740;
+ var E=function(n){if(o.ens)return o.ens(y,n);if(y+n>BOT){d.addPage();y=TOP;}return y;};
+ y+=8;y=E(40);d.setFillColor(232,238,248);d.rect(X,y,W,16,'F');d.setFont('helvetica','bold');d.setFontSize(9.5);d.setTextColor(20,33,61);d.text(pdfTxt(o.title||'Core details - carried through the forms'),X+4,y+11.5);y+=20;
+ ls.forEach(function(l){d.setFont('helvetica',l.b?'bold':'normal');d.setFontSize(8.8);var c=l.c||[0,0,0];d.setTextColor(c[0],c[1],c[2]);d.splitTextToSize(pdfTxt(l.t),W-8).forEach(function(t){y=E(12);d.text(t,X+4,y+8);y+=10.6;});});
+ d.setTextColor(0,0,0);d.setFont('helvetica','normal');return y+4;}
+/* a short text version for e-mails */
+function mailTxt(r){var ls=pdfLines(r);return ls.length?'\n'+ls.map(function(l){return pdfTxt(l.t);}).join('\n')+'\n':'';}
+
+var CSS='#corex{position:fixed;inset:0;z-index:2147483400;background:rgba(10,20,35,.55);display:flex;align-items:center;justify-content:center;padding:16px;font:16px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif}'+
+ '#corex .bx{background:#fff;color:#1b2430;border-radius:14px;max-width:460px;width:100%;max-height:92vh;overflow:auto;padding:18px 16px 14px;box-shadow:0 10px 40px rgba(0,0,0,.35)}'+
+ '#corex h3{margin:0 0 6px;font-size:20px}#corex .cmp{margin:0 0 8px;color:#3b4656}#corex .cmp span{color:#6b7584;font-size:14px}#corex .q{margin:0 0 8px;font-weight:700}'+
+ '#corex .op button{display:block;width:100%;text-align:left;min-height:48px;margin:0 0 8px;border-radius:10px;border:2px solid #b8c2d0;background:#fff;color:#1b2430;font:600 16px system-ui,sans-serif;padding:8px 12px;cursor:pointer}'+
+ '#corex .op button.on{border-color:#1d5fc4;background:#e7f0ff;color:#0f3f8a}#corex .op button.on:before{content:"\\2713  "}'+
+ '#corex input{width:100%;box-sizing:border-box;min-height:44px;border:1px solid #b8c2d0;border-radius:8px;padding:8px 10px;font-size:16px;margin:2px 0 10px}'+
+ '#corex .ok{display:block;width:100%;min-height:52px;border-radius:10px;border:2px solid #14692b;background:#1b8a3a;color:#fff;font:700 18px system-ui,sans-serif;margin:0 0 8px;cursor:pointer}#corex .ok:disabled{opacity:.45}'+
+ '#corex .lt{display:block;width:100%;min-height:44px;border-radius:10px;border:1px solid #9aa4b2;background:#fff;color:#3b4656;font:600 15px system-ui,sans-serif;cursor:pointer}'+
+ '#coreBan .cb{border-radius:10px;padding:10px 12px;margin:0 0 10px;font-size:14.5px;line-height:1.4;border:1px solid;border-left-width:6px}#coreBan ul,#coreBan ol{margin:6px 0 0 20px;padding:0}#coreBan li{margin:0 0 6px}'+
+ '#coreBan .cb-red{background:#fdecec;border-color:#c62828;color:#5f1010}#coreBan .cb-red2{background:#fff6f4;border-color:#d84315;color:#3a1a10}#coreBan .cb-blue{background:#eaf3ff;border-color:#5b8dd6;color:#14213d}'+
+ '#coreBan .cb-grey{background:#f3f5f9;border-color:#9aa4b2;color:#26303d}#coreBan .cb-amber{background:#fff4d6;border-color:#e0a800;color:#4a3400}#coreBan .cb-green{background:#eaf7ee;border-color:#1b8a3a;color:#123d20}'+
+ '#coreBan .cbb{margin-left:6px;min-height:34px;padding:2px 10px;border-radius:8px;border:1px solid #1d5fc4;background:#fff;color:#1d5fc4;font-weight:700;font-size:13px;cursor:pointer}'+
+ '#coreBan .tg{display:inline-block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;border-radius:6px;padding:1px 6px;background:#e3e8f0;color:#26303d}#coreBan .tg-c{background:#e7f0ff;color:#0f3f8a}#coreBan .tg-f{background:#fde0dc;color:#9b1c1c}#coreBan .tg-b{background:#ffe9cc;color:#8a4b00}'+
+ '#coreBan .lv{font-size:12px;font-weight:700;color:#9b1c1c}#coreBan .nt{font-size:13px;color:#4b5563;margin-top:2px}'+
+ '#coreBan .ws{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}#coreBan .ws button{min-height:40px;padding:4px 14px;border-radius:8px;border:2px solid #b8c2d0;background:#fff;color:#1b2430;font-weight:700;font-size:14px;cursor:pointer}'+
+ '#coreBan .ws button.on.fx{border-color:#1b8a3a;background:#1b8a3a;color:#fff}#coreBan .ws button.on.op{border-color:#c62828;background:#c62828;color:#fff}#coreBan .ws input{flex:1;min-width:160px;min-height:40px;border:1px solid #b8c2d0;border-radius:8px;padding:4px 8px;font-size:15px}'+
+ '#coreBan details{margin-top:6px}#coreBan summary{cursor:pointer;font-weight:700}';
+function css(){if(document.getElementById('corexCss'))return;var s=document.createElement('style');s.id='corexCss';s.textContent=CSS;(document.head||document.documentElement).appendChild(s);}
+
+window.Core={pendClear:pendClear,dec:dec,pack:pack,json:json,start:start,resume:resume,check:check,soon:soon,mount:mount,refresh:refresh,bannerHtml:function(r,o){css();return bannerHtml(r,o);},
+ pdf:pdf,pdfLines:pdfLines,mailTxt:mailTxt,gateText:gateText,warnOf:warnOf,openCount:openCount,formOf:formOf,pending:pending,changes:changes,issues:issues,
+ dk:dk,idOf:idOf,devOfId:devOfId,LBL:LBL,ORDER:ORDER,REV:REV,REVK:REVK,TRACK_REV:TRACK_REV,FORM:FORM,KIND:KIND,same:same,fd:fd,today:today,label:label,
+ use:function(A){AD=A;css();}};
+})();
 </script><script>/* ===== shared: camera (Ravi, 2026-10-29) =====
    1) Photos: "Take photo" opens the tablet's own camera app (asked for the back camera), as before Rev 10.
       Every "Add photo" dialog also gets a small "Back camera (in form)" button: a camera inside the form
@@ -13399,12 +13674,12 @@ function render(){if(S.view==='home')return renderHome();if(S.view==='admin')ret
 /* ----- home ----- */
 async function renderHome(){S.recs=(await dbAll('recs')).sort((a,b)=>b.updated-a.updated);
  app.innerHTML=`<div class="top"><div class="bar"><img src="${LOGO2}" alt="Teledyne FLIR"><div class="brand">${APP}<small>${esc(curTpl().revision||'')}</small></div>${HOMELINK}</div></div>
- <div class="wrap"><div class="card"><div class="row"><button class="pri" data-act="new">＋ New inspection</button><button class="pri" data-act="scan">📷 Scan QR (new / audit / continue)</button></div><div class="row" style="margin-top:8px"><button data-act="copyfrom">📋 Copy from a previous report</button><button data-act="backup">Backup file</button><button data-act="restore">Restore from backup file</button><button data-act="admin">Admin</button></div>
+ <div class="wrap"><div class="card"><div class="row"><button class="pri" data-act="new">＋ New inspection</button><button class="pri" data-act="scan">📷 Scan QR (new / audit / continue)</button></div>
  <div class="row" style="margin:4px 0 8px"><button class="${saveOn()?'pri':''}" data-act="savecopies" style="min-height:40px">${saveOn()?'☑':'☐'} Save a copy of every photo I take to the tablet</button></div>
  <p class="muted">Everything is stored on this tablet and works with no internet. Scan the QR code on a previous report to start a new inspection with that LVSS's serial numbers, or copy everything from a report saved on this tablet.</p></div>
  ${S.recs.length?'':'<div class="card muted">No inspections yet.</div>'}
  ${S.recs.map(r=>{const st=stats(r);return `<div class="card home-c"><div class="gr"><b style="font-size:18px">${esc(snD(r)||title(r))}</b> <span class="tag">${r.step>=4?'Report ready':'In progress – step '+r.step+' of 4'}</span>${(r.audit&&r.audit.done)?`<span class="tag" style="background:${r.audit.verdict==='pass'?'#d6f0de':'#fdecec'}">Audit ${r.audit.verdict==='pass'?'PASSED':'FAILED'}</span>`:''}<br><span class="muted">${esc(r.hdr.tech||'No tech')} · ${esc(fmtD(r.hdr.date))} · updated ${new Date(r.updated).toLocaleString()}</span><br><span class="muted">${st.f} failed · ${st.open} open${st.blk?` · ${st.blk} not tested`:''}${st.dno?` · <b style="color:#c62828">${st.dno} DO NOT OPERATE</b>`:''}</span></div>
- <button class="pri" data-act="open" data-rid="${r.id}">Open</button>${(r.step>=4&&r.verdict)?`<button data-act="auditrec" data-rid="${r.id}" style="border-color:#6b3fa0;color:#6b3fa0;font-weight:700">🔍 Audit</button>`:''}<button class="dng" data-act="del" data-rid="${r.id}">Delete</button></div>`}).join('')}</div>`;}
+ <button class="pri" data-act="open" data-rid="${r.id}">Open</button>${(r.step>=4&&r.verdict)?`<button data-act="auditrec" data-rid="${r.id}" style="border-color:#6b3fa0;color:#6b3fa0;font-weight:700">🔍 Audit</button>`:''}<button class="dng" data-act="del" data-rid="${r.id}">Delete</button></div>`}).join('')}<div class="card home-more"><div class="muted" style="font-size:13px;margin:0 0 6px">More options</div><div class="row"><button data-act="copyfrom">📋 Copy from a previous report</button><button data-act="backup">Backup file</button><button data-act="restore">Restore from backup file</button><button data-act="admin">Admin</button></div></div></div>`;}
 
 function newDlg(){S.newType=null;S.techDraft=S.techDraft||'';modal(`<h3>New inspection</h3><label class="f">Platform type (required)</label><div class="row" style="flex-wrap:wrap;gap:6px">${platBtns('ptype-new',null)}</div><p class="need" id="ptNeed" style="display:none;margin:6px 0 0">Choose the platform type.</p><div class="sp"></div><label class="f">Platform Serial Number (required – names the saved file)</label><input id="n-sn"><div class="sp"></div><label class="f">TDY FLIR Technician</label><input id="n-te" value="${esc(S.techDraft||'')}">${techChips()}<button class="pri" data-act="start">Start inspection</button><button data-act="scan">📷 Scan a QR code instead</button><button data-act="copyfrom">📋 Copy from a previous report</button><button data-act="mclose">Cancel</button>`);}
 
@@ -13433,19 +13708,20 @@ function scanPhoto(cam){const i=document.createElement('input');i.type='file';i.
   if(bad){const left=!!$('#scanMsg');if(left)msg((fs.length>1?`${bad} of ${fs.length} photos had no readable QR code. `:'No QR code found in that photo. ')+'Get closer so the code fills about half the picture, keep it flat and in focus, avoid glare, and try again. Codes already read are kept.');}};
  i.click();done();}
 async function scanDone(txt){if(String(txt).startsWith('WIP1~')){wipChunk(txt);return;}scanStop();const o=qrParse(txt);let xo=null;try{xo=JSON.parse(txt)}catch(e){}
- if(!o&&xo&&(xo.a==='CAL'||xo.a==='FLR'||xo.a==='ATP')){closeModal();const frm=xo.a==='CAL'?'calibration':xo.a==='FLR'?'floor test':'ATP inspection',csn=snShow(xo.sn);if(xo.rv!=='P'){await notice('The '+frm+(csn?' for '+csn:'')+' is '+(xo.rv==='F'?'FAILED':xo.rv==='I'?'INCOMPLETE':'missing a pass result (open that report and scan its latest QR code)')+'. Its information can\u2019t be used here until it passes.',{title:'Not passed'});return;}
-  if(!await ask('The '+frm+(csn?' for '+csn:'')+' passed. Start a new inspection with the serial number filled in?',{title:'Start from QR code?',ok:'Continue'}))return;newDlg();const t0=snType(csn);if(t0){S.newType=ptOfCode(t0);document.querySelectorAll('[data-act=ptype-new]').forEach(x=>x.classList.toggle('pri',x.dataset.v===S.newType));}const ne=$('#n-sn');if(ne)ne.value=t0?snDig(csn):csn;return;}
+ if(!o&&xo&&(xo.a==='CAL'||xo.a==='FLR'||xo.a==='ATP')){closeModal();const frm=xo.a==='CAL'?'calibration':xo.a==='FLR'?'floor test':'ATP inspection',csn=snShow(xo.sn);let W0=null;if(xo.rv!=='P'){if(!await ask(Core.gateText(xo,frm,csn),{title:'Not passed',ok:'Start anyway',no:'Cancel'}))return;W0=Core.warnOf(xo);}
+  else if(!await ask('The '+frm+(csn?' for '+csn:'')+' passed. Start a new inspection with the core details filled in?',{title:'Start from QR code?',ok:'Continue'}))return;S.pendCore={C:Core.dec(xo),sn:csn,warn:W0};newDlg();const t0=snType(csn);if(t0){S.newType=ptOfCode(t0);document.querySelectorAll('[data-act=ptype-new]').forEach(x=>x.classList.toggle('pri',x.dataset.v===S.newType));}const ne=$('#n-sn');if(ne)ne.value=t0?snDig(csn):csn;return;}
  if(!o){const m=$('#scanMsg');if(m)m.textContent='That is not an LVSS QR code. Try again.';if($('#scanV')&&$('#scanV').style.display!=='none')scanDlg();return;}
  closeModal();if(o.k==='A'){const n=o.f.length;if(!await ask(`Start an audit of ${o.sn?lv(o.sn):'this platform'} (RMA ${o.rma||'-'}) with ${n} fault${n===1?'':'s'} from the tech's punch list?\n\nThe tech's photos are not in the QR code. Mark each fault Verified or Not acceptable, add your own photos and details, then submit the audit.`,{title:'Start audit from QR code?',ok:'Start audit'}))return;
   S.rec=auFromQr(o);S.photos={};S.view='rec';S.audit=true;S.open=-1;S.detail={};S.dirty=true;await save();render();return;}
- const n=o.s.length;if(!await ask(`Start a new inspection for ${o.sn?(snType(o.sn)?o.sn:lv(o.sn)):'LVSS (no serial)'} with the core data filled in from the ${o.qc?'site quick capture ':o.it?'truck intake ':''}QR code (${n} serial number${n===1?'':'s'}, VIN, plate, kilo${o.it?', RMA, SVO and account':''}; revisions and mileage/hours shown as the last reading)?\n\nYou still take a fresh photo of each serial plate.`,{title:'Start from QR code?',ok:'Start inspection'}))return;
+ const n=o.s.length;const RC=await coreReAsk(o);if(RC==='x')return;if(!RC&&!await ask(`Start a new inspection for ${o.sn?(snType(o.sn)?o.sn:lv(o.sn)):'LVSS (no serial)'} with the core data filled in from the ${o.qc?'site quick capture ':o.it?'truck intake ':''}QR code (${n} serial number${n===1?'':'s'}, VIN, plate, kilo${o.it?', RMA, SVO and account':''}; revisions and mileage/hours shown as the last reading)?\n\nYou still take a fresh photo of each serial plate.`,{title:'Start from QR code?',ok:'Start inspection'}))return;
  S.rec=newRec({sn:o.sn||'',tech:'',ptype:ptOfCode(o.p)});if(o.it||o.rma){Object.assign(S.rec.hdr,{rma:o.rma||'',so:o.so||'',acct:o.ac||''});}if(o.qc&&/^\d{4}-\d\d-\d\d$/.test(String(o.pu||''))){S.rec.hdr.recvDate=o.pu;S.rec.hdr.recvType='depot';}setTv(S.rec,'vin',o.vin);setTv(S.rec,'plate',o.pl);setTv(S.rec,'kilo',o.kl);if(o.i&&typeof o.i==='object')S.rec.prev=o.i;const used=new Set();
  o.s.forEach(p=>{const nm=String(p[0]||''),val=String(p[1]||'');const g=S.rec.gear.find(x=>!used.has(x.id)&&gKey(x.t)===gKey(nm));if(g){g.s=val;used.add(g.id);}else{const x={id:'eq'+uid(),t:nm||'Other device',s:val,ph:[],na:false,custom:true};S.rec.gear.push(x);used.add(x.id);}});
- if(Array.isArray(o.w)&&o.w.length){const xn=+o.wx||0;
+ coreScan(S.rec,o,RC==='r');if(RC==='r'){coreImported(S.rec,coreLoadW(S.rec,o,'From the original report'));}
+ else if(Array.isArray(o.w)&&o.w.length){const xn=+o.wx||0;
   if(await ask(`This code also carries ${o.w.length} item${o.w.length===1?'':'s'} from the ${o.qc?'site quick capture':'truck intake'}: the customer-reported issues, the lines that failed, and the tech's notes.\n\nLoad them as this inspection's issues, so each one gets repaired / advised / courtesy on the punch list?`+(xn?`\n\n${xn} more item${xn===1?'':'s'} did not fit in the code - see the Intake PDF.`:''),{title:'Load the Intake work list?',ok:'Load work list',no:'Start from scratch'})){
    const rs=repSecOf(S.rec),ns=S.rec.tpl.sections.find(z=>z.kind==='new')||rs;
    o.w.forEach(a=>{const k=a[0],sec=k==='c'?rs:ns;if(!sec)return;const x={id:'x'+uid(),t:String(a[1]||'')};(S.rec.extra[sec.id]=S.rec.extra[sec.id]||[]).push(x);const d=itm(x.id);d.st='fail';d.war=a[2]==='w'?'w':a[2]==='n'?'nw':'';d.lvl=a[4]||'';d.note=(k==='b'?'Not tested at intake. ':'')+String(a[3]||'');d.fromIntake=true;});
-   S.rec.wlN=o.w.length;S.rec.wlX=xn;}}
+   S.rec.wlN=o.w.length;S.rec.wlX=xn;coreImported(S.rec,o.w.length);}}
  S.photos={};S.view='rec';S.open=-1;S.dirty=true;await save();render();}
 
 /* ----- record shell ----- */
@@ -13457,7 +13733,7 @@ function renderRec(){if(S.audit&&S.rec)return renderAudit();const r=S.rec;const 
  <div class="wrap" id="body"></div>${r.step===2?'<button id="fab" class="pri" data-act="newissue">＋ New issue</button>':''}`;
  paintSave();const b=$('#body');
  if(r.step===1)b.innerHTML=infoHtml();else if(r.step===2)b.innerHTML=inspectHtml();else if(r.step===3)b.innerHTML=punchHtml();else{b.innerHTML=reportHtml();prepPdfs();}
- wipBanner($('#body'));window.scrollTo(0,0);}
+ wipBanner($('#body'));if(r.step===1||r.step===4)Core.mount($('#body'),r);window.scrollTo(0,0);}
 function go(n){S.exp={};S.pin=null;save();S.rec.step=n;S.open=(n===2&&S.rec.tpl.sections.length&&isIss(S.rec.tpl.sections[0]))?0:-1;S.dirty=true;save();renderRec();}
 
 /* ----- bound inputs ----- */
@@ -13633,8 +13909,20 @@ function punchHtml(){const r=S.rec,P=punch(r),st=stats(r),IC=issueCounts(r);if(S
 
 /* ----- step 4: report ----- */
 const qrVerFields=r=>((r.tpl.versionInfo||{}).fields||[]).filter(f=>!f.noqr);
-function qrPayload(r){const i={};qrVerFields(r).forEach(f=>{const v=cl((r.ver||{})[f.key]||'').trim();if(v)i[f.key]=v;});return JSON.stringify({a:'LVSS',v:2,rv:r.verdict==='pass'?'P':r.verdict==='fail'?'F':'I',p:codeOfPt(r.hdr.ptype),sn:cl(snD(r)||''),rma:cl(r.hdr.rma||''),vin:cl(tv(r,'vin')),pl:cl(tv(r,'plate')),kl:cl(tv(r,'kilo')),d:r.hdr.date||'',s:finalSerials(r).map(x=>[cl(x.n),cl(x.s)]),i});}
-function qrMake(r){const q=window.qrcode(0,'M');q.addData(qrPayload(r));q.make();return q;}
+function wlList(r,nn,tn,mx){tn=tn||140;const T=(x,n)=>n?cl(x||'').trim().slice(0,n):'';const out=[];
+ /* each issue carries what this post-repair did about it: repaired = fixed; advised / TBD = still open */
+ const ST=d=>d.rep?['fx','Repaired']:d.adv?['op','Advised']:d.tbd?['op','TBD']:['',''];
+ flat(r).forEach(x=>{const d=r.items[x.id]||{};const isRep=x.sec.kind==='rep',isNew=x.sec.kind==='new',s=ST(d),z=[s[0],s[1],s[0]?'PR':''];
+  if(isRep){if(!((d.st&&d.st!=='na')||((x.t||'').trim()&&!d.st&&x.extra)))return;out.push(['c',T(x.t,tn),'',T([d.note,...kidsOf(r,x).map(y=>'Confirmed during inspection: '+kidTxt(r,y))].filter(q=>String(q||'').trim()).join(' | '),nn),d.lvl||'','PR',...z]);return;}
+  if(isNew){if(!((d.st&&d.st!=='na')||((x.t||'').trim()&&!d.st&&x.extra)))return;out.push(['f',T(x.t,tn),d.war==='w'?'w':d.war==='nw'?'n':'',T(d.note,nn),d.lvl||'','PR',...z]);return;}
+  if((d.st==='fail'&&!repOf(r,x))||d.st==='blk')out.push([d.st==='blk'?'b':'f',T(x.t,tn),d.war==='w'?'w':d.war==='nw'?'n':'',T(d.note,nn),d.lvl||'','PR',...z]);});
+ return mx==null?out:out.slice(0,mx);}
+function qrPayload(r,nn,tn,mx){const i={};qrVerFields(r).forEach(f=>{const v=cl((r.ver||{})[f.key]||'').trim();if(v)i[f.key]=v;});return JSON.stringify({a:'LVSS',v:2,rv:r.verdict==='pass'?'P':r.verdict==='fail'?'F':'I',p:codeOfPt(r.hdr.ptype),sn:cl(snD(r)||''),rma:cl(r.hdr.rma||''),so:cl(r.hdr.so||''),ac:cl(r.hdr.acct||''),vin:cl(tv(r,'vin')),pl:cl(tv(r,'plate')),kl:cl(tv(r,'kilo')),d:r.hdr.date||'',s:finalSerials(r).map(x=>[cl(x.n),cl(x.s)]),w:wlList(r,nn===undefined?160:nn,tn,mx),wx:(mx==null?0:Math.max(0,wlList(r,0,tn).length-mx)),i});}
+function qrBest(r){const B=j=>new TextEncoder().encode(j).length;/* serials, VIN, revisions and mileage/hours are never trimmed; only the issue list shrinks */
+ for(const [nn,tn] of [[160,140],[80,140],[30,140],[0,140],[0,70],[0,40]]){const j=qrPayload(r,nn,tn);if(B(j)<=2500)return j;}
+ const n=wlList(r,0,40).length;let j='';for(let m=n-1;m>=0;m--){j=qrPayload(r,0,40,m);if(B(j)<=2500)return j;}
+ return qrPayload(r,0,40,0);}
+function qrMake(r){const j=qrBest(r),n=new TextEncoder().encode(j).length;const q=window.qrcode(0,n>1700?'L':'M');q.addData(j);q.make();return q;}
 /* ----- 2nd QR: punch list for the auditor ----- */
 const AUQ_MAX=2700;
 function auQrPayload(r){const P=auF(r);if(!P.length)return null;const base=sec=>({a:'LVSS',k:'A',v:1,rv:r.verdict==='pass'?'P':r.verdict==='fail'?'F':'I',p:codeOfPt(r.hdr.ptype),sn:cl(snD(r)||''),rma:cl(r.hdr.rma||''),so:cl(r.hdr.so||''),ac:cl(r.hdr.acct||''),d:r.hdr.date||'',t:cl(r.hdr.tech||''),vd:r.verdict==='pass'?'p':'f'});
@@ -13906,7 +14194,7 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
  if(nd)y=banner(d,y,'DO NOT OPERATE',`${nd} item(s) flagged - ${st.openDno} still open. See Punch List at front of report.`,st.openDno===0,r.verdict==='pass');
  const cell=(x,yy,w,hh,lab,val)=>{d.setDrawColor(170);d.setLineWidth(.6);d.rect(x,yy,w,hh);d.setFont('helvetica','normal');d.setFontSize(6.8);d.setTextColor(110);d.text(cl(lab),x+4,yy+8);d.setFontSize(9.5);d.setTextColor(0);d.text(wrap(d,val,w-8),x+4,yy+19);};
  const pair=(l1,v1,l2,v2)=>{d.setFontSize(9.5);const a=wrap(d,v1,262).length,b=wrap(d,v2,262).length;const hh=Math.max(26,14+Math.max(a,b)*11);ens(hh);cell(MX,y,CW/2,hh,l1,v1);cell(MX+CW/2,y,CW/2,hh,l2,v2);y+=hh;};
- {const tb=x=>String(x||'').trim()||'TBD',w3=CW/3;ens(30);[['RMA Number',tb(h.rma)],['SVO Number',tb(h.so)],['Account Indicator',tb(h.acct)]].forEach((p,j)=>{hx(d,'setFillColor','#eef3fb');d.rect(MX+j*w3,y,w3,30,'F');cell(MX+j*w3,y,w3,30,p[0],p[1]);});y+=30;}pair('Platform Serial Number',snD(r)||'','Date',fmtD(h.date));pair('TDY FLIR Technician',h.tech,'Location',h.loc);pair('Repair Completion Date',h.doneDate?fmtD(h.doneDate):'',pickLbl(h),pickVal(h));ens(26);cell(MX,y,CW,26,'Result',r.verdict==='pass'?'PASSED':r.verdict==='fail'?'FAILED':'');y+=26;if(camSwapped(r)){ens(26);cell(MX,y,CW,26,'TFU & Radar Calibration (camera/TFU swapped)',calDone(r)?'Completed'+(r.cal.date?' '+fmtD(r.cal.date):''):'NOT COMPLETED');y+=26;}const lateD=[...new Set(allD0.filter(x=>x.sec.kind==='rep'&&(r.items[x.id]||{}).rdate&&r.items[x.id].rdate!==h.repDate).map(x=>r.items[x.id].rdate))].sort().map(fmtD);pair('Concerns Reported to FLIR',fmtD(h.repDate)+(lateD.length?'  (additions: '+lateD.join(', ')+')':''),h.recvType==='field'?'Field Service Visit Date':h.recvType==='depot'?'Date Truck Received at FLIR':'Date Received / Field Visit',fmtD(h.recvDate));
+ {const tb=x=>String(x||'').trim()||'TBD',w3=CW/3;ens(30);[['RMA Number',tb(h.rma)],['SVO Number',tb(h.so)],['Account Indicator',tb(h.acct)]].forEach((p,j)=>{hx(d,'setFillColor','#eef3fb');d.rect(MX+j*w3,y,w3,30,'F');cell(MX+j*w3,y,w3,30,p[0],p[1]);});y+=30;}pair('Platform Serial Number',snD(r)||'','Date',fmtD(h.date)+(h.origDate?'  (original '+fmtD(h.origDate)+')':''));pair('TDY FLIR Technician',h.tech,'Location',h.loc);pair('Repair Completion Date',h.doneDate?fmtD(h.doneDate):'',pickLbl(h),pickVal(h));ens(26);cell(MX,y,CW,26,'Result',r.verdict==='pass'?'PASSED':r.verdict==='fail'?'FAILED':'');y+=26;if(camSwapped(r)){ens(26);cell(MX,y,CW,26,'TFU & Radar Calibration (camera/TFU swapped)',calDone(r)?'Completed'+(r.cal.date?' '+fmtD(r.cal.date):''):'NOT COMPLETED');y+=26;}const lateD=[...new Set(allD0.filter(x=>x.sec.kind==='rep'&&(r.items[x.id]||{}).rdate&&r.items[x.id].rdate!==h.repDate).map(x=>r.items[x.id].rdate))].sort().map(fmtD);pair('Concerns Reported to FLIR',fmtD(h.repDate)+(lateD.length?'  (additions: '+lateD.join(', ')+')':''),h.recvType==='field'?'Field Service Visit Date':h.recvType==='depot'?'Date Truck Received at FLIR':'Date Received / Field Visit',fmtD(h.recvDate));
  if(isAud(r)){const au=r.audit,AP=[...P,...blockedList(r)];y+=8;ens(90);hx(d,'setFillColor',au.verdict==='pass'?'#1b8a3a':'#c62828');d.rect(MX,y,CW,22,'F');d.setFont('helvetica','bold');d.setFontSize(12);d.setTextColor(255);d.text(au.verdict==='pass'?'AUDIT REVIEW - AUDIT PASSED':'AUDIT REVIEW - AUDIT FAILED',PW/2,y+15,{align:'center'});y+=22;
   pair('Auditor',au.name,'Audit Date',fmtD(au.date));
   const ac=[[0,34,'#'],[34,206,'Reported fault'],[240,74,'Tech status'],[314,86,'Audit result'],[400,140,'Auditor notes']];
@@ -13922,7 +14210,7 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
  th();
  const srow=(dev,ser)=>{d.setFont('helvetica','normal');d.setFontSize(9.5);const l=wrap(d,ser,CW-182);const hh=Math.max(17,6+l.length*11);if(y+hh>BOT){d.addPage();y=TOP;th();}d.setDrawColor(170);d.setLineWidth(.6);d.rect(MX,y,CW,hh);d.line(MX+170,y,MX+170,y+hh);d.setTextColor(0);d.setFont('helvetica','bold');d.text(wrap(d,dev,160)[0]||'',MX+6,y+12);d.setFont('helvetica','normal');d.text(l,MX+176,y+12);y+=hh;};
  r.gear.forEach(g=>{const sw=swOn(r)?r.swap.list.find(e=>e.dev===g.id):null;const nv=sw&&(sw.nw||'').trim();
-  srow(g.t,g.na?'N/A':nv?`${sw.nw}   (Old: ${sw.old||g.s||''})`:g.tk?(String(g.v||'').trim()||'Not entered'):(g.s||'Not entered'));});
+  srow(g.t,g.na?'N/A':(sw&&!nv)?`${sw.old||g.s||''}   (REMOVED - REPLACEMENT SERIAL PENDING)`:nv?`${sw.nw}   (Old: ${sw.old||g.s||''})`:g.tk?(String(g.v||'').trim()||'Not entered'):(g.s||'Not entered'));});
  r.swap.list.filter(e=>swOn(r)&&!e.dev&&(e.nw||'').trim()).forEach(e=>srow(e.t||'Other device',`${e.nw}   (Old: ${e.old||''})`));
  // swaps - itemized
  const sl=swOn(r)?r.swap.list:[];
@@ -13930,7 +14218,7 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
  if(!sl.length){cell(MX,y,CW,22,'','No serialized devices were swapped.');y+=22;}
  else{const sc=[[0,24,'#'],[24,96,'Device'],[120,96,'Old Serial #'],[216,96,'New Serial #'],[312,78,'RMA Ref'],[390,150,'Reason / notes']];
   const sh=()=>{hx(d,'setFillColor','#eef3fb');d.rect(MX,y,CW,15,'F');d.setDrawColor(170);d.setLineWidth(.6);d.rect(MX,y,CW,15);d.setFont('helvetica','bold');d.setFontSize(8.5);d.setTextColor(30);sc.forEach((c,i)=>{if(i)d.line(MX+c[0],y,MX+c[0],y+15);d.text(c[2],MX+c[0]+4,y+10.5);});y+=15;};sh();
-  sl.forEach((e,i)=>{d.setFont('helvetica','normal');d.setFontSize(9);const cs=[String(i+1),e.t||'',e.old||'',e.nw||'',rmaOk(e.rma),e.reason||''];const ls=cs.map((t,k)=>wrap(d,t,sc[k][1]-8));const hh=Math.max(18,6+Math.max(...ls.map(z=>z.length))*10.5);if(y+hh>BOT){d.addPage();y=TOP;sh();}
+  sl.forEach((e,i)=>{d.setFont('helvetica','normal');d.setFontSize(9);const cs=[String(i+1),e.t||'',e.old||'',e.nw||'PENDING - to follow',rmaOk(e.rma),e.reason||''];const ls=cs.map((t,k)=>wrap(d,t,sc[k][1]-8));const hh=Math.max(18,6+Math.max(...ls.map(z=>z.length))*10.5);if(y+hh>BOT){d.addPage();y=TOP;sh();}
    d.setDrawColor(170);d.setLineWidth(.6);d.rect(MX,y,CW,hh);sc.forEach((c,k)=>{if(k)d.line(MX+c[0],y,MX+c[0],y+hh);d.setTextColor(0);d.text(ls[k],MX+c[0]+4,y+12);});y+=hh;});}
 
  // version / revision changes and failed units (RMA) - same format as the swaps table
@@ -13971,7 +14259,7 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
  // comments & parts
  ens(120);hx(d,'setFillColor','#5b8dd6');d.rect(MX,y,CW,22,'F');d.setFont('helvetica','bold');d.setFontSize(12);d.setTextColor(255);d.text('ADDITIONAL COMMENTS',PW/2,y+15,{align:'center'});y+=22;
  const block=(t,v)=>{y+=10;ens(50);d.setFont('helvetica','bold');d.setFontSize(9.5);d.setTextColor(0);d.text(cl(t),MX,y+8);y+=12;d.setFont('helvetica','normal');d.setFontSize(9);const ls=wrap(d,v||'-',CW-8);ls.forEach(l=>{ens(12);d.text(l,MX+4,y+8);y+=11;});};
- block('General comments',r.comments);
+ block('General comments',r.comments);y=Core.pdf(d,y,{x:MX,w:CW,ens:(yy,n)=>{y=yy;ens(n);return y;}},r);
 
  // photo appendix - compact 3-column grid, grouped, flows across the page
  const cells=[];const addC=(grp,title,sub,list)=>{(list||[]).map(p=>(S.zimg&&S.zimg[p])||S.photos[p]).filter(Boolean).forEach((p,i,a)=>cells.push({grp,t:title+(a.length>1?` (${i+1}/${a.length})`:''),sub,p}));};
@@ -14015,7 +14303,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  switch(a){
  case 'new':newDlg();break;
  case 'mclose':closeModal();break;
- case 'start':{const sn=$('#n-sn').value.trim(),te=$('#n-te').value.trim();if(!S.newType){const e=$('#ptNeed');if(e)e.style.display='block';break;}if(!sn){notice('Enter the platform serial number to start.',{title:'Serial number needed',fix:()=>{S.techDraft=te;newDlg();const e=$('#n-sn');e&&e.focus()},fixLabel:'Take me there'});break;}closeModal();S.rec=newRec({sn:/^\d+$/.test(sn)?snMake(codeOfPt(S.newType),sn):isEm(S.newType)?plSn(S.newType,sn):sn,tech:te,ptype:S.newType});techRemember(te);S.techDraft='';S.photos={};S.view='rec';S.open=-1;S.dirty=true;await save();render();break;}
+ case 'start':{const sn=$('#n-sn').value.trim(),te=$('#n-te').value.trim();if(!S.newType){const e=$('#ptNeed');if(e)e.style.display='block';break;}if(!sn){notice('Enter the platform serial number to start.',{title:'Serial number needed',fix:()=>{S.techDraft=te;newDlg();const e=$('#n-sn');e&&e.focus()},fixLabel:'Take me there'});break;}closeModal();S.rec=newRec({sn:/^\d+$/.test(sn)?snMake(codeOfPt(S.newType),sn):isEm(S.newType)?plSn(S.newType,sn):sn,tech:te,ptype:S.newType});techRemember(te);coreStart(S.rec);S.techDraft='';S.photos={};S.view='rec';S.open=-1;S.dirty=true;await save();render();break;}
  case 'scan':scanDlg();break;
  case 'copyfrom':{const L=S.recs||[];modal(`<h3>Copy from a previous report</h3>${L.length?'<p class="muted">Pick the report to copy into a new inspection.</p>'+L.map(x=>`<button data-act="copypick" data-rid="${x.id}" style="text-align:left">${esc(title(x))} – ${esc(fmtD(x.hdr.date))}${x.hdr.rma?' · RMA '+esc(x.hdr.rma):''}</button>`).join(''):'<p class="muted">No saved reports on this tablet yet. Use <b>Restore from backup file</b> to bring in reports from another tablet.</p>'}<button data-act="mclose">Cancel</button>`);break;}
  case 'copypick':{const x=(S.recs||[]).find(y=>y.id===b.dataset.rid);if(!x)break;const ck=(i,t,on)=>`<label style="display:flex;gap:10px;align-items:center;margin:8px 0;font-size:16px"><input type="checkbox" id="${i}" ${on?'checked':''} style="width:22px;height:22px"> ${t}</label>`;modal(`<h3>Copy ${esc(title(x))}</h3><p class="muted">Choose what to bring into the new inspection. Today's date is used for the new report. You can edit everything afterward.</p>${ck('cp-info','Header info, serial numbers and swaps',1)}${ck('cp-ver','Version info (not mileage, engine hours or idle hours – enter those fresh)',1)}${ck('cp-items','Issues, checklist results, notes and consumed parts',1)}${ck('cp-photos','Photos (serial plates, issues, HMI)',1)}<button class="pri" data-act="copygo" data-rid="${x.id}">Create new inspection</button><button data-act="mclose">Cancel</button>`);break;}
@@ -14405,7 +14693,7 @@ function fyiList(r){const L=[];
  r.gear.forEach((g,i)=>{if(g.na||g.tk)return;const hs=(g.s||'').trim(),hp=(g.ph||[]).length;const m=[];if(!hs)m.push('Serial number not entered (or mark N/A)');if(hs&&!hp&&!r.noPhoto)m.push('Photo of the serial plate missing');if(!m.length)return;
   L.push({k:'g'+g.id,t:g.t,miss:m,h:`<div class="row" style="flex-wrap:nowrap"><input data-b="gear.${i}.s" value="${esc(g.s||'')}" placeholder="Serial number" style="flex:1">${camBtn(g.id)}<button data-act="gna" data-id="${g.id}" style="min-height:40px;padding:4px 10px">N/A</button></div>${thumbs(g.id)}`});});
  r.swap.list.forEach((e,i)=>{const dg=e.dev?r.gear.find(x=>x.id===e.dev):null;const op=dg?(dg.ph||[]):(e.oldPh||[]);const m=[];
-  if(!(e.old||'').trim())m.push('Old serial number not entered');if(!op.length&&!r.noPhoto)m.push('Photo of the old serial plate missing');if(!(e.nw||'').trim())m.push('New serial number not entered');if(!(e.newPh||[]).length&&!r.noPhoto)m.push('Photo of the new serial plate missing');if(!(e.reason||'').trim())m.push('Reason for the swap not entered');
+  if(!(e.old||'').trim())m.push('Old serial number not entered');if(!op.length&&!r.noPhoto)m.push('Photo of the old serial plate missing');if(!(e.nw||'').trim())m.push('Replacement serial to follow - enter it when the new device is installed (does not stop the report)');if((e.nw||'').trim()&&!(e.newPh||[]).length&&!r.noPhoto)m.push('Photo of the new serial plate missing');if(!(e.reason||'').trim())m.push('Reason for the swap not entered');
   if(!rmaOk(e.rma)&&e.rma!=='TBD')m.push('RMA number not entered – enter it or tap RMA TBD');
   if(m.length)L.push({k:'s'+e.id,t:'Swap – '+(e.t||'device'),miss:m,rmaMiss:(!rmaOk(e.rma)&&e.rma!=='TBD'),h:swEntryHtml(e,i,1)});});
  failedUnits(r).forEach(u=>{const m=u.m;if(rmaOk(m.rma)||m.rma==='TBD')return;L.push({k:'m'+m.id,t:'Failed unit '+u.e.t+' '+m.s,miss:['RMA number not entered – enter it or tap RMA TBD'],rmaMiss:true,h:rmaCard(u)});});
@@ -14928,7 +15216,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New eMSC-L serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='0cf14daa7d';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='dea80566c2';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
@@ -14979,4 +15267,57 @@ window.addEventListener('scroll',place,true);window.addEventListener('resize',pl
 var t=null;function sched(){if(t)return;t=setTimeout(function(){t=null;markAll();},150);}
 function boot(){markAll();if(window.MutationObserver)new MutationObserver(sched).observe(document.documentElement,{childList:true,subtree:true});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
-window.__isSerialInput=isSer;})();</script></body></html>
+window.__isSerialInput=isSer;})();</script><script>/* ===== core details: Intake / Post-Repair / Quick Capture (Ravi, 2026-10-29) ===== */
+(function(){
+var FORMC='PR';
+function T(v){return String(v==null?'':v).trim();}
+function fields(r){var F={},K=r.core;
+ if(!(K&&K.osn)&&!(r.hdr&&r.hdr.purpose==='upfit'))F.sn=T(typeof snD==='function'?snD(r):r.hdr.sn);
+ F.vin=tv(r,'vin');F.pl=tv(r,'plate');F.kl=tv(r,'kilo');
+ (r.gear||[]).forEach(function(g){if(g.tk)return;var k=Core.dk(g.t);if(!k)return;var id=Core.idOf(k);if(id in F)return;F[id]=g.na?null:T(g.s);});
+ (((r.tpl&&r.tpl.versionInfo)||{}).fields||[]).forEach(function(f){var v=(r.ver||{})[f.key];if(Core.TRACK_REV.indexOf(f.key)>=0)F[f.key]=v==='N/A'?null:T(v);});
+ return F;}
+function swList(r){if(!(r.swap&&r.swap.list))return [];try{if(typeof swOn==='function'&&!swOn(r))return [];}catch(e){}return r.swap.list;}
+function swDev(r,e){var g=e.dev?(r.gear||[]).find(function(x){return x.id===e.dev;}):null;return {k:Core.dk(g?g.t:e.t),g:g};}
+/* a swap recorded on this form is a change too: "Device replaced", or "Removed - new serial to follow" while the new serial is blank */
+function swaps(r){return swList(r).map(function(e){var q=swDev(r,e);if(!q.k)return null;var nw=T(e.nw);
+ return [Core.idOf(q.k),T(e.old||(q.g&&q.g.s)),nw,nw?'r':'p',FORMC,T(r.hdr&&r.hdr.date)||Core.today(),[T(e.reason),(e.rma&&e.rma!=='TBD')?'RMA '+T(e.rma):''].filter(Boolean).join(' - ')];}).filter(Boolean);}
+function pend(r){return swList(r).filter(function(e){return !T(e.nw);}).map(function(e){var q=swDev(r,e);return q.k?[q.k,T(e.old||(q.g&&q.g.s))]:null;}).filter(Boolean);}
+Core.use({form:FORMC,rec:function(){return (S&&S.view==='rec'&&!S.audit)?S.rec:null;},fields:fields,dirty:function(){try{markDirty();}catch(e){S.dirty=true;}},swaps:swaps,pend:pend});
+
+/* the QR code carries the core details this form has no field for, the change history, pending serials and issues */
+var q0=qrPayload;
+qrPayload=function(r,nn,tn,mx){var j=q0.apply(this,arguments);if(!r||!(r.core||(r.cxl||[]).length||swList(r).length))return j;
+ try{var o=JSON.parse(j),cx=Core.pack(r,o);if(!Object.keys(cx).length)return j;return Core.json(o,cx,mx===0?2500:1e9);}catch(e){return j;}};
+
+/* fill a new record from any form's code (ATP / Floor Test / Calibration codes go through the new-inspection dialog) */
+function fill(r,C){
+ (r.gear||[]).forEach(function(g){if(g.tk)return;var k=Core.dk(g.t);if(k&&C.s[k]&&!T(g.s))g.s=C.s[k];});
+ setTv(r,'vin',C.vin);setTv(r,'plate',C.pl);setTv(r,'kilo',C.kl);
+ if(!T(r.hdr.rma)&&C.rma)r.hdr.rma=C.rma;if(!T(r.hdr.so)&&C.so)r.hdr.so=C.so;if(!T(r.hdr.acct)&&C.ac)r.hdr.acct=C.ac;
+ if(Object.keys(C.r).length)r.prev=Object.assign({},C.r,r.prev||{});}
+window.coreStart=function(r){var P=S.pendCore;S.pendCore=null;if(!P||!r)return;if(P.sn&&!Core.same(P.sn,r.hdr.sn))return;fill(r,P.C);clearPend(r,P.C);Core.start(r,P.C,{warn:P.warn});};
+function gearOf(r,k){return (r.gear||[]).find(function(g){return !g.tk&&Core.dk(g.t)===k;});}
+function clearPend(r,C){Core.pendClear(C,function(k){var g=gearOf(r,k);return g?T(g.s):'';},function(k){var g=gearOf(r,k);if(g)g.s='';});}
+window.coreScan=function(r,o,re){var C=Core.dec(o);if(!C||!r)return;var tag=re?[Core.formOf(o),T(o.d)]:null;Core.start(r,C,{re:tag});
+ if(C.so&&!T(r.hdr.so))r.hdr.so=C.so;if(C.ac&&!T(r.hdr.acct))r.hdr.acct=C.ac;if(C.rma&&!T(r.hdr.rma))r.hdr.rma=C.rma;
+ if(C.vin&&!tv(r,'vin'))setTv(r,'vin',C.vin);if(C.pl&&!tv(r,'plate'))setTv(r,'plate',C.pl);if(C.kl&&!tv(r,'kilo'))setTv(r,'kilo',C.kl);
+ (r.gear||[]).forEach(function(g){if(g.tk)return;var k=Core.dk(g.t);if(k&&C.s[k]&&!T(g.s))g.s=C.s[k];});
+ if(Object.keys(C.r).length)r.prev=Object.assign({},C.r,r.prev||{});clearPend(r,C);
+ if(re){r.ver=Object.assign({},C.r,r.ver||{});r.hdr.origDate=T(o.d);r.hdr.date=Core.today();r.noPhoto=true;r.noPhotoWhy='Re-created from the report dated '+Core.fd(o.d)+' - the photos are on the original report';}};
+/* the scanned code's issues were loaded as this record's own issues: they are no longer shown as carried */
+window.coreImported=function(r,n){var K=r&&r.core;if(!K)return;n=Math.min(n||0,K.w.length);K.w=K.w.slice(0,K.w.length-n);if(!K.w.length)K.wi=1;};
+/* re-create: a code from this same form */
+window.coreReAsk=async function(o){if(Core.formOf(o)!==FORMC)return '';var nm=Core.FORM[FORMC];
+ var v=await choose(nm+' QR code scanned','This code is from a '+nm+' report'+(o.d?' dated '+Core.fd(o.d):'')+(o.sn?' for '+o.sn:'')+'.\n\nRe-create it in the current version of this form: the serial numbers, revisions, mileage/hours, VIN, plate, kilo, RMA/SVO/account and the issues come across. Photos and the tech name do not. The date is today, with the original date in parentheses.',
+  [{v:'r',t:'Re-create this report in the current form',c:'pri'},{v:'n',t:'Start a new '+nm+' with the core details filled in'},{v:'x',t:'Cancel'}]);return v||'x';};
+/* load the code's issues into this record (re-create) */
+window.coreLoadW=function(r,o,from){var W=(o.w||[]).filter(function(a){return Array.isArray(a)&&T(a[1]);});if(!W.length)return 0;
+ var rs=repSecOf(r),ns=r.tpl.sections.find(function(z){return z.kind==='new';})||rs;
+ W.forEach(function(a){var k=a[0],sec=k==='c'?rs:ns;if(!sec)return;var x={id:'x'+uid(),t:T(a[1])};(r.extra[sec.id]=r.extra[sec.id]||[]).push(x);var d=itm(x.id);d.lvl=a[4]||'';d.war=a[2]==='w'?'w':a[2]==='n'?'nw':'';
+  var nt=T(a[3]);d.note=from+(k==='b'?' - not tested there':'')+(nt?': '+nt:'.');
+  if(FORMC!=='PR'&&k!=='c')d.st=k==='b'?'blk':'fail';
+  if(FORMC==='PR'){d.st='fail';if(a[7]==='Repaired')d.rep=true;else if(a[7]==='Advised')d.adv=true;else if(a[7]==='TBD')d.tbd=true;}});
+ if(o.d&&!r.hdr.repDate&&W.some(function(a){return a[0]==='c';}))r.hdr.repDate=o.d;return W.length;};
+})();
+</script></body></html>
