@@ -12969,10 +12969,52 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
 /***/ })
 /******/ ])["default"];
-});</script><script>/* ===== shared: camera (Ravi, 2026-10-29) =====
-   1) Photos: every "take a photo" button (a file input with the capture attribute) opens a camera
-      inside the form. It starts on the back camera, has Switch camera, Light (when the camera has one),
-      a shutter, then Retake / Use this photo. The tablet's own camera app stays available as a backup.
+});</script><script>/* ===== shared: Back gesture guard (Ravi, 2026-10-29) =====
+   Inside an inspection, the tablet's Back swipe, Back button or the browser's back arrow asks
+   "Leave this inspection?" - Stay (the default) keeps your place, Leave goes back as usual.
+   The work is saved either way. Closing the tab or switching apps can't be caught by a web page. */
+(function(){
+var VIEWS={rec:1,insp:1,review:1,audit:1};
+/* forms whose code is wrapped (ATP) tell the guard through window.__bgIn / window.__bgSave */
+function inRec(){try{if(typeof window.__bgIn==='function')return !!window.__bgIn();return typeof S!=='undefined'&&!!S&&!!VIEWS[S.view];}catch(e){return false;}}
+var armed=false,skip=0,dlg=null,left=false;
+function canPush(){var u=navigator.userActivation;return !u||u.isActive;}
+function arm(){if(armed||dlg||!inRec())return;try{history.pushState({bg:1},'',location.href);armed=true;}catch(e){}}
+function disarm(){if(!armed)return;armed=false;try{if(history.state&&history.state.bg){skip++;history.back();}}catch(e){}}
+/* the guard entry is added during a tap (browsers ignore entries added without one) */
+document.addEventListener('click',function(){setTimeout(function(){if(inRec())arm();},0);},true);
+setInterval(function(){if(dlg)return;if(inRec()){if(!armed&&canPush())arm();}else if(armed)disarm();},500);
+function saveNow(){try{if(typeof window.__bgSave==='function')return Promise.resolve(window.__bgSave());if(typeof S!=='undefined'&&S&&S.dirty&&typeof save==='function')return save();}catch(e){}return Promise.resolve();}
+window.addEventListener('pagehide',function(){left=true;saveNow();});
+window.addEventListener('popstate',function(e){
+ if(skip>0){skip--;return;}
+ var st=e.state||{};if(st.bg||st.camx)return;
+ if(!armed)return;armed=false;
+ if(!inRec())return;
+ saveNow();show();});
+function css(){if(document.getElementById('bgxCss'))return;var s=document.createElement('style');s.id='bgxCss';s.textContent=
+ '#bgx{position:fixed;inset:0;z-index:2147483500;background:rgba(10,20,35,.55);display:flex;align-items:center;justify-content:center;padding:16px;font:16px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif}'+
+ '#bgx .bx{background:#fff;color:#1b2430;border-radius:14px;max-width:420px;width:100%;padding:20px 18px 16px;box-shadow:0 10px 40px rgba(0,0,0,.35)}'+
+ '#bgx h3{margin:0 0 6px;font-size:21px}#bgx p{margin:0 0 14px;color:#5b6574}'+
+ '#bgx button{display:block;width:100%;min-height:54px;border-radius:10px;font:700 18px system-ui,sans-serif;cursor:pointer;margin:0 0 10px}'+
+ '#bgx .st{background:#1b8a3a;border:2px solid #14692b;color:#fff}#bgx .lv{background:#fff;border:2px solid #9aa4b2;color:#1b2430;font-weight:600;min-height:48px;margin:0}';
+ document.head.appendChild(s);}
+function show(){if(dlg)return;css();dlg=document.createElement('div');dlg.id='bgx';dlg.setAttribute('role','dialog');dlg.setAttribute('aria-modal','true');
+ dlg.innerHTML='<div class="bx"><h3>Leave this inspection?</h3><p>Your work is saved on this tablet.</p><button type="button" class="st" data-bg="stay">Stay on this inspection</button><button type="button" class="lv" data-bg="leave">Leave</button></div>';
+ document.body.appendChild(dlg);
+ dlg.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-bg]');if(!b)return;e.preventDefault();e.stopPropagation();var a=b.getAttribute('data-bg');
+  dlg.remove();dlg=null;
+  if(a==='stay'){arm();return;}
+  Promise.resolve(saveNow()).then(function(){try{history.back();}catch(x){}
+   /* nothing to go back to: show the form's own list instead */
+   setTimeout(function(){if(left)return;var h=document.querySelector('[data-act=home]');if(h)h.click();},700);});},true);
+ var st=dlg.querySelector('.st');if(st)st.focus();}
+window.BackGuard={show:show};
+})();
+</script><script>/* ===== shared: camera (Ravi, 2026-10-29) =====
+   1) Photos: "Take photo" opens the tablet's own camera app (asked for the back camera), as before Rev 10.
+      Every "Add photo" dialog also gets a small "Back camera (in form)" button: a camera inside the form
+      that always starts on the back camera (Switch camera, Light, shutter, Retake / Use this photo).
    2) QR scanners: live scanning starts on the back camera (or the camera picked last time) and gets a
       Switch camera button.
    The camera choice is remembered on this tablet for every form (localStorage 'camPick'). */
@@ -13046,10 +13088,19 @@ function resumeLive(list){if(!list.length)return;setTimeout(function(){list.forE
 
 /* ---------- photos: camera inside the form ---------- */
 var oClick=HTMLInputElement.prototype.click;
-function want(el){return OK&&el&&el.tagName==='INPUT'&&el.type==='file'&&(el.hasAttribute('capture')||!!el.capture)&&!el.disabled&&!el.__camNative&&!el.hasAttribute('data-nativecam');}
+/* only for the next photo after "Back camera (in form)" is tapped; every other photo uses the camera app */
+var inNext=0;
+function want(el){return OK&&inNext&&Date.now()-inNext<3000&&el&&el.tagName==='INPUT'&&el.type==='file'&&(el.hasAttribute('capture')||!!el.capture)&&!el.disabled&&!el.__camNative&&!el.hasAttribute('data-nativecam');}
 function nativeOpen(inp){inp.__camNative=true;try{oClick.call(inp);}finally{setTimeout(function(){inp.__camNative=false;},0);}}
-HTMLInputElement.prototype.click=function(){if(want(this)){openCam(this);return;}return oClick.apply(this,arguments);};
-document.addEventListener('click',function(e){var t=e.target;if(want(t)){e.preventDefault();openCam(t);}},true);
+HTMLInputElement.prototype.click=function(){if(want(this)){inNext=0;openCam(this);return;}return oClick.apply(this,arguments);};
+document.addEventListener('click',function(e){var t=e.target;if(want(t)){inNext=0;e.preventDefault();openCam(t);}},true);
+/* "Back camera (in form)" button under every "Take photo" button in the Add photo dialogs */
+function addInForm(){if(!OK)return;document.querySelectorAll('[data-act=cam-take]').forEach(function(b){if(b.__cxIn)return;b.__cxIn=1;
+ var lib=b.parentNode&&b.parentNode.querySelector('[data-act=cam-lib]'),x=document.createElement('button');x.type='button';x.className=(lib&&lib.className)||'';x.setAttribute('data-cxin','1');
+ x.style.cssText='font-size:14px;min-height:40px;padding:6px 10px';x.textContent='📷 Back camera (in form)';x.title='A camera inside the form that always starts on the back camera';
+ x.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();inNext=Date.now();b.click();setTimeout(function(){inNext=0;},3000);});
+ (lib||b).insertAdjacentElement('afterend',x);});}
+try{new MutationObserver(addInForm).observe(document.documentElement,{childList:true,subtree:true});}catch(e){}
 var did=false;function css(){if(did)return;did=true;var st=document.createElement('style');st.textContent=
  '#camx{position:fixed;inset:0;z-index:2147483600;background:#000;color:#fff;display:flex;flex-direction:column;font:600 16px/1.3 system-ui,-apple-system,sans-serif;touch-action:manipulation;user-select:none}'+
  '#camx .cx-top{display:flex;align-items:center;gap:10px;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top))}#camx .cx-name{flex:1;min-width:0;font-size:17px}'+
@@ -13106,7 +13157,7 @@ async function openCam(input){if(ov)return;css();
    input.dispatchEvent(new Event('change',{bubbles:true}));}});
  try{var s0=await openBest(VC);if(done){s0.getTracks().forEach(function(t){t.stop();});return;}await show(trackOf(s0));}catch(e){if(!done)fail(e);}
 }
-window.CamFix={open:function(i){openCam(i);},native:nativeOpen,pick:lsGet};
+window.CamFix={open:function(i){openCam(i);},native:nativeOpen,pick:lsGet,inForm:function(){inNext=Date.now();}};
 })();
 </script><script>/* ===== shared: report recipients (Ravi, 2026-10-29) =====
    Every report, pass or fail: TSC@teledyne.com is always copied (Cc).
@@ -13731,7 +13782,7 @@ document.addEventListener('focusout',e=>{histCommit(e.target);setTimeout(()=>{if
 document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='4fdaec9a64';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='f342c9d600';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';

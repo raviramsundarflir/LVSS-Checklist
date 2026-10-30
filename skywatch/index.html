@@ -12921,10 +12921,52 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
 /***/ })
 /******/ ])["default"];
-});</script><script>/* ===== shared: camera (Ravi, 2026-10-29) =====
-   1) Photos: every "take a photo" button (a file input with the capture attribute) opens a camera
-      inside the form. It starts on the back camera, has Switch camera, Light (when the camera has one),
-      a shutter, then Retake / Use this photo. The tablet's own camera app stays available as a backup.
+});</script><script>/* ===== shared: Back gesture guard (Ravi, 2026-10-29) =====
+   Inside an inspection, the tablet's Back swipe, Back button or the browser's back arrow asks
+   "Leave this inspection?" - Stay (the default) keeps your place, Leave goes back as usual.
+   The work is saved either way. Closing the tab or switching apps can't be caught by a web page. */
+(function(){
+var VIEWS={rec:1,insp:1,review:1,audit:1};
+/* forms whose code is wrapped (ATP) tell the guard through window.__bgIn / window.__bgSave */
+function inRec(){try{if(typeof window.__bgIn==='function')return !!window.__bgIn();return typeof S!=='undefined'&&!!S&&!!VIEWS[S.view];}catch(e){return false;}}
+var armed=false,skip=0,dlg=null,left=false;
+function canPush(){var u=navigator.userActivation;return !u||u.isActive;}
+function arm(){if(armed||dlg||!inRec())return;try{history.pushState({bg:1},'',location.href);armed=true;}catch(e){}}
+function disarm(){if(!armed)return;armed=false;try{if(history.state&&history.state.bg){skip++;history.back();}}catch(e){}}
+/* the guard entry is added during a tap (browsers ignore entries added without one) */
+document.addEventListener('click',function(){setTimeout(function(){if(inRec())arm();},0);},true);
+setInterval(function(){if(dlg)return;if(inRec()){if(!armed&&canPush())arm();}else if(armed)disarm();},500);
+function saveNow(){try{if(typeof window.__bgSave==='function')return Promise.resolve(window.__bgSave());if(typeof S!=='undefined'&&S&&S.dirty&&typeof save==='function')return save();}catch(e){}return Promise.resolve();}
+window.addEventListener('pagehide',function(){left=true;saveNow();});
+window.addEventListener('popstate',function(e){
+ if(skip>0){skip--;return;}
+ var st=e.state||{};if(st.bg||st.camx)return;
+ if(!armed)return;armed=false;
+ if(!inRec())return;
+ saveNow();show();});
+function css(){if(document.getElementById('bgxCss'))return;var s=document.createElement('style');s.id='bgxCss';s.textContent=
+ '#bgx{position:fixed;inset:0;z-index:2147483500;background:rgba(10,20,35,.55);display:flex;align-items:center;justify-content:center;padding:16px;font:16px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif}'+
+ '#bgx .bx{background:#fff;color:#1b2430;border-radius:14px;max-width:420px;width:100%;padding:20px 18px 16px;box-shadow:0 10px 40px rgba(0,0,0,.35)}'+
+ '#bgx h3{margin:0 0 6px;font-size:21px}#bgx p{margin:0 0 14px;color:#5b6574}'+
+ '#bgx button{display:block;width:100%;min-height:54px;border-radius:10px;font:700 18px system-ui,sans-serif;cursor:pointer;margin:0 0 10px}'+
+ '#bgx .st{background:#1b8a3a;border:2px solid #14692b;color:#fff}#bgx .lv{background:#fff;border:2px solid #9aa4b2;color:#1b2430;font-weight:600;min-height:48px;margin:0}';
+ document.head.appendChild(s);}
+function show(){if(dlg)return;css();dlg=document.createElement('div');dlg.id='bgx';dlg.setAttribute('role','dialog');dlg.setAttribute('aria-modal','true');
+ dlg.innerHTML='<div class="bx"><h3>Leave this inspection?</h3><p>Your work is saved on this tablet.</p><button type="button" class="st" data-bg="stay">Stay on this inspection</button><button type="button" class="lv" data-bg="leave">Leave</button></div>';
+ document.body.appendChild(dlg);
+ dlg.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-bg]');if(!b)return;e.preventDefault();e.stopPropagation();var a=b.getAttribute('data-bg');
+  dlg.remove();dlg=null;
+  if(a==='stay'){arm();return;}
+  Promise.resolve(saveNow()).then(function(){try{history.back();}catch(x){}
+   /* nothing to go back to: show the form's own list instead */
+   setTimeout(function(){if(left)return;var h=document.querySelector('[data-act=home]');if(h)h.click();},700);});},true);
+ var st=dlg.querySelector('.st');if(st)st.focus();}
+window.BackGuard={show:show};
+})();
+</script><script>/* ===== shared: camera (Ravi, 2026-10-29) =====
+   1) Photos: "Take photo" opens the tablet's own camera app (asked for the back camera), as before Rev 10.
+      Every "Add photo" dialog also gets a small "Back camera (in form)" button: a camera inside the form
+      that always starts on the back camera (Switch camera, Light, shutter, Retake / Use this photo).
    2) QR scanners: live scanning starts on the back camera (or the camera picked last time) and gets a
       Switch camera button.
    The camera choice is remembered on this tablet for every form (localStorage 'camPick'). */
@@ -12998,10 +13040,19 @@ function resumeLive(list){if(!list.length)return;setTimeout(function(){list.forE
 
 /* ---------- photos: camera inside the form ---------- */
 var oClick=HTMLInputElement.prototype.click;
-function want(el){return OK&&el&&el.tagName==='INPUT'&&el.type==='file'&&(el.hasAttribute('capture')||!!el.capture)&&!el.disabled&&!el.__camNative&&!el.hasAttribute('data-nativecam');}
+/* only for the next photo after "Back camera (in form)" is tapped; every other photo uses the camera app */
+var inNext=0;
+function want(el){return OK&&inNext&&Date.now()-inNext<3000&&el&&el.tagName==='INPUT'&&el.type==='file'&&(el.hasAttribute('capture')||!!el.capture)&&!el.disabled&&!el.__camNative&&!el.hasAttribute('data-nativecam');}
 function nativeOpen(inp){inp.__camNative=true;try{oClick.call(inp);}finally{setTimeout(function(){inp.__camNative=false;},0);}}
-HTMLInputElement.prototype.click=function(){if(want(this)){openCam(this);return;}return oClick.apply(this,arguments);};
-document.addEventListener('click',function(e){var t=e.target;if(want(t)){e.preventDefault();openCam(t);}},true);
+HTMLInputElement.prototype.click=function(){if(want(this)){inNext=0;openCam(this);return;}return oClick.apply(this,arguments);};
+document.addEventListener('click',function(e){var t=e.target;if(want(t)){inNext=0;e.preventDefault();openCam(t);}},true);
+/* "Back camera (in form)" button under every "Take photo" button in the Add photo dialogs */
+function addInForm(){if(!OK)return;document.querySelectorAll('[data-act=cam-take]').forEach(function(b){if(b.__cxIn)return;b.__cxIn=1;
+ var lib=b.parentNode&&b.parentNode.querySelector('[data-act=cam-lib]'),x=document.createElement('button');x.type='button';x.className=(lib&&lib.className)||'';x.setAttribute('data-cxin','1');
+ x.style.cssText='font-size:14px;min-height:40px;padding:6px 10px';x.textContent='📷 Back camera (in form)';x.title='A camera inside the form that always starts on the back camera';
+ x.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();inNext=Date.now();b.click();setTimeout(function(){inNext=0;},3000);});
+ (lib||b).insertAdjacentElement('afterend',x);});}
+try{new MutationObserver(addInForm).observe(document.documentElement,{childList:true,subtree:true});}catch(e){}
 var did=false;function css(){if(did)return;did=true;var st=document.createElement('style');st.textContent=
  '#camx{position:fixed;inset:0;z-index:2147483600;background:#000;color:#fff;display:flex;flex-direction:column;font:600 16px/1.3 system-ui,-apple-system,sans-serif;touch-action:manipulation;user-select:none}'+
  '#camx .cx-top{display:flex;align-items:center;gap:10px;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top))}#camx .cx-name{flex:1;min-width:0;font-size:17px}'+
@@ -13058,7 +13109,7 @@ async function openCam(input){if(ov)return;css();
    input.dispatchEvent(new Event('change',{bubbles:true}));}});
  try{var s0=await openBest(VC);if(done){s0.getTracks().forEach(function(t){t.stop();});return;}await show(trackOf(s0));}catch(e){if(!done)fail(e);}
 }
-window.CamFix={open:function(i){openCam(i);},native:nativeOpen,pick:lsGet};
+window.CamFix={open:function(i){openCam(i);},native:nativeOpen,pick:lsGet,inForm:function(){inNext=Date.now();}};
 })();
 </script>
 <script>const HOMELINK=(location.protocol==='http:'||location.protocol==='https:')?'<a href="../" class="homelnk">⌂ All forms</a>':'';
@@ -13143,6 +13194,15 @@ const blkBy=(rec,q)=>(q.by||[]).map(id=>{const x=flat(rec).find(y=>y.id===id);re
 const blkTxt=(rec,q)=>{const b=blkBy(rec,q);if(q.pend)return 'PENDING RETEST - to be tested once '+(b.length?b.join(', ')+' (suspected cause) is':'the suspected cause is')+' resolved'+((q.why||'').trim()?'. '+q.why.trim():'')+'.';return 'NOT TESTED'+(b.length?' - blocked by '+b.join(', '):'')+((q.why||'').trim()?'. '+q.why.trim():'')+'.';};
 const fails=rec=>flat(rec).filter(x=>(rec.items[x.id]||{}).st==='fail');
 const lvRank=l=>l?LVK[l].r:9;
+/* ---- a failed item linked to a customer-reported issue (Ravi, 2026-10-29): optional; d.cu = customer issue ids.
+   The punch item says "Customer reported - #1 ..." and the customer issue list says which item confirmed it. ---- */
+function swCuL(r){(r.cust||[]).forEach(c=>{if(!c.id)c.id='c'+uid();});return (r.cust||[]).filter(c=>(c.t||'').trim());}
+function swCuOf(r,x){const q=r.items[x.id]||{};if(q.st!=='fail'||!(q.cu||[]).length)return [];const L=swCuL(r);return q.cu.map(id=>{const i=L.findIndex(c=>c.id===id);return i>=0?{n:i+1,c:L[i]}:null}).filter(Boolean);}
+const swCuTxt=(r,x)=>{const a=swCuOf(r,x);return a.length?'Customer reported - '+a.map(z=>'#'+z.n+' '+z.c.t.trim()).join('; '):'';};
+function swCuLine(x){const t=swCuTxt(S.rec,x);return t?`<div class="cuk" style="margin:6px 0;padding:5px 8px;border-radius:6px;background:#e8f1fc;color:#163f78;font-size:14px">${esc(t)}</div>`:'';}
+function swCuRef(r,c){const P=flat(r).filter(x=>{const q=r.items[x.id]||{};return q.st==='fail'&&(q.cu||[]).includes(c.id);});return P.length?'  - confirmed during the inspection: item '+P.map(x=>'#'+x.label).join(', ')+' (see the punch list)':'';}
+function swCuHtml(x,d){const L=swCuL(S.rec);if(!L.length)return '';const on=d.cu||[];
+ return `<div class="culink" style="margin:8px 0;padding:8px 10px;border:1px solid #9cbbe6;border-radius:8px;background:#f1f7fe"><label class="f" style="margin-top:0">Customer reported this? <span class="muted" style="font-weight:400">(optional – tap the customer issue it confirms)</span></label><div class="chips" style="flex-direction:column;align-items:stretch">${L.map((c,i)=>{const o=on.includes(c.id);return `<button class="chip ${o?'on':''}" data-act="swcu" data-id="${x.id}" data-c="${c.id}" style="text-align:left;white-space:normal${o?';background:#1f5fae;color:#fff;border-color:#1f5fae':''}">${o?'✓ ':''}#${i+1} ${esc(c.t.trim().slice(0,80))}</button>`}).join('')}</div></div>`;}
 function punch(rec){return fails(rec).sort((a,b)=>lvRank((rec.items[a.id]||{}).lvl)-lvRank((rec.items[b.id]||{}).lvl)||0);}
 function stats(rec){const all=flat(rec);let blk=0,p=0,f=0,na=0,bl=0,dno=0,open=0,nolv=0,nowar=0,quote=0,nwun=0,undis=0;
  all.forEach(x=>{const d=rec.items[x.id]||{};if(d.st==='pass')p++;else if(d.st==='fail'){f++;if(d.lvl==='dno')dno++;if(!d.rep)open++;if(!d.lvl&&!(d.rep||d.adv||d.courtesy||d.tbd))nolv++;if(!d.war&&!(d.rep||d.adv||d.courtesy||d.tbd))nowar++;if(!(d.rep||d.adv||d.courtesy||d.tbd))undis++;if(d.war==='nw'&&!d.courtesy){quote++;if(!d.rep&&!d.adv)nwun++}}else if(d.st==='blk')blk++;else if(d.st==='na')na++;else if(!x.extra)bl++;});
@@ -13247,14 +13307,14 @@ function infoHtml(){const r=S.rec;
 function rowHtml(x){const r=S.rec,d=r.items[x.id]||{st:'',lvl:'',note:'',ph:[],v:{}};const open=S.detail[x.id]||d.st==='fail'||d.st==='blk'||(d.note||(d.ph&&d.ph.length));
  const fl=x.f.length?`<div class="fl">${x.f.map((n,i)=>`<label>${esc(n)}<input data-b="items.${x.id}.v.${i}" value="${esc((d.v||{})[i]||'')}"></label>`).join('')}</div>`:'';
  const txt=x.extra?`<input data-b="extraT.${x.id}" value="${esc(x.t)}" placeholder="Describe the added item…">`:esc(x.t);
- return `<div class="it ${d.st}" id="r-${x.id}" data-id="${x.id}"><div class="n">${x.label}</div><div class="tx">${txt}${fl}</div>
+ return `<div class="it ${d.st}" id="r-${x.id}" data-id="${x.id}"><div class="n">${x.label}</div><div class="tx">${txt}${fl}${swCuLine(x)}</div>
  <button class="ic" data-act="cam" data-id="${x.id}" title="Photo">📷${(d.ph||[]).length?`<b>${d.ph.length}</b>`:''}</button>
  <button class="ic" data-act="det" data-id="${x.id}" title="Notes">✎</button>
  <button class="box ${d.st} ${d.st==='fail'&&d.rep?'fixed':''}" data-act="tog" data-id="${x.id}">${STL[d.st||'']}${d.st==='fail'&&d.rep?'<span class="fx">✓</span>':''}</button>
  ${x.extra&&!x.t?'':`<button class="tgl ${d.st==='blk'?'on':''}" data-act="cnt" data-id="${x.id}" role="switch" aria-checked="${d.st==='blk'}"><span class="sw"></span>Could not test</button>`}
  ${open?panelHtml(x,d):''}</div>`;}
 function panelHtml(x,d){if(d.st==='blk')return blkPanel(x,d);return `<div class="pnl">${d.st==='fail'?`${!d.lvl?'<p class="need">Select a concern level for this failed item:</p>':''}<div class="chips">${LV.map(l=>`<button class="chip ${l.k} ${d.lvl===l.k?'on':''}" data-act="lvl" data-id="${x.id}" data-l="${l.k}">${l.n}</button>`).join('')}</div>`:''}
- ${d.st==='fail'?`<label class="f">Coverage</label><div class="chips"><button class="chip war ${d.war==='w'?'on':''}" data-act="war" data-id="${x.id}" data-w="w">Warranty</button><button class="chip nwr ${d.war==='nw'?'on':''}" data-act="war" data-id="${x.id}" data-w="nw">Non-warranty</button>${d.war==='nw'?`<button class="chip cour ${d.courtesy?'on':''}" data-act="courtesy" data-id="${x.id}">${d.courtesy?'✓ ':''}Courtesy repair performed</button>`:''}</div>`:''}<textarea data-b="items.${x.id}.note" placeholder="${d.st==='fail'?'Describe the issue…':'Notes (optional)'}">${esc(d.note||'')}</textarea>
+ ${d.st==='fail'?swCuHtml(x,d):''}${d.st==='fail'?`<label class="f">Coverage</label><div class="chips"><button class="chip war ${d.war==='w'?'on':''}" data-act="war" data-id="${x.id}" data-w="w">Warranty</button><button class="chip nwr ${d.war==='nw'?'on':''}" data-act="war" data-id="${x.id}" data-w="nw">Non-warranty</button>${d.war==='nw'?`<button class="chip cour ${d.courtesy?'on':''}" data-act="courtesy" data-id="${x.id}">${d.courtesy?'✓ ':''}Courtesy repair performed</button>`:''}</div>`:''}<textarea data-b="items.${x.id}.note" placeholder="${d.st==='fail'?'Describe the issue…':'Notes (optional)'}">${esc(d.note||'')}</textarea>
  ${d.st==='fail'?`<div class="row" style="margin-top:6px"><button class="${d.adv?'pri':''}" data-act="adv" data-id="${x.id}" style="min-width:130px">${d.adv?'✓ Advised':'☐ Advised'}</button><button class="${d.rep?'pri':''}" data-act="rep" data-id="${x.id}" style="min-width:170px">${d.rep?'✓ Repaired':'☐ Mark repaired'}</button><button class="${d.tbd?'pri':''}" data-act="tbd" data-id="${x.id}" style="min-width:90px">${d.tbd?'✓ TBD':'☐ TBD'}</button><span class="muted">${d.rep?'Shows as repaired on the report.':d.adv?'Advised – shows as ADVISED on the report.':'Repaired on site, or advised? Mark it here, or later on the punch list.'}</span></div>`:''}
  <div class="ph">${(d.ph||[]).map(p=>S.photos[p]?`<div class="t"><img src="${S.photos[p].d}" data-act="zoomph" data-id="${x.id}" data-p="${p}" style="cursor:zoom-in"><button data-act="rmph" data-id="${x.id}" data-p="${p}">✕</button></div>`:'').join('')}</div>
  ${x.extra?`<div style="margin-top:8px"><button class="dng" data-act="rmx" data-id="${x.id}">Remove this added line item</button></div>`:''}</div>`;}
@@ -13293,7 +13353,7 @@ const GARW=`<svg width="72" height="44" viewBox="0 0 72 44"><path d="M0 14h42V0l
 function punchCard(x){const r=S.rec,d=r.items[x.id],nw=d.war==='nw',quote=nw&&!d.courtesy;const tg=S.need===x.id;
  return `<div class="card pl ${d.lvl||''} ${d.rep?'rep':''} ${tg?'target':''}" id="pl-${x.id}">${tg?`<div class="garrow">${GARW}<span>Finish this item: ${[!d.lvl?'choose a concern level':'',!d.war?'choose Warranty or Non-warranty':''].filter(Boolean).join(' and ')}</span></div>`:''}<div class="row"><b style="font-size:18px">#${x.label}</b>${lvlChip(d.lvl,d.rep)}${nw?'<span class="tag" style="background:#e6d9f5">Non-warranty</span>':d.war==='w'?'<span class="tag" style="background:#d6f0de">Warranty</span>':''}<span class="tag">Section ${x.si+1}: ${esc(x.sec.title)}</span><span style="flex:1"></span>
   <div style="display:flex;flex-direction:column;gap:6px"><button class="${d.adv?'pri':''}" data-act="adv" data-id="${x.id}" style="min-width:150px">${d.adv?'✓ Advised':'☐ Advised'}</button><button class="${d.rep?'pri':''}" data-act="rep" data-id="${x.id}" style="min-width:150px">${d.rep?'✓ Repaired':'☐ Mark repaired'}</button><button class="${d.tbd?'pri':''}" data-act="tbd" data-id="${x.id}" style="min-width:150px">${d.tbd?'✓ TBD':'☐ TBD'}</button>${d.rep?'':`<button data-act="pblk" data-id="${x.id}" style="min-width:150px;border-color:#b58900;color:#7a5c00;font-weight:700">⏸ Could not test</button>`}</div></div>
-  <div style="margin:6px 0"><b>${esc(x.t)}</b></div>
+  <div style="margin:6px 0"><b>${esc(x.t)}</b></div>${swCuLine(x)}
   ${d.note?`<div class="muted" style="margin-bottom:6px">Issue: ${esc(d.note)}</div>`:''}
   <div class="ph">${(d.ph||[]).map(p=>S.photos[p]?`<div class="t"><img src="${S.photos[p].d}" data-act="zoomph" data-id="${x.id}" data-p="${p}" style="cursor:zoom-in"></div>`:'').join('')}</div>
   <div class="sp"></div><label class="f">Concern level</label><div class="chips">${LV.map(l=>`<button class="chip ${l.k} ${d.lvl===l.k?'on':''}" data-act="plvl" data-id="${x.id}" data-l="${l.k}">${l.n}</button>`).join('')}</div>
@@ -13433,7 +13493,7 @@ function blkPanel(x,d){const r=S.rec,cands=punch(r).filter(y=>y.id!==x.id);
  <button data-act="blkpend" data-id="${x.id}" style="width:100%;margin-top:6px;${d.pend?'background:#b58900;border-color:#b58900;color:#fff;font-weight:700':'border-color:#b58900;color:#7a5c00;font-weight:700'}">${d.pend?'✓ ':'⏳ '}Pending retest – test after the suspected cause is fixed</button>
  <div class="row" style="margin-top:8px"><button data-act="unblk" data-id="${x.id}">↩ It can be tested now – back to failed</button></div></div>`;}
 function blkCard(x,inl){const r=S.rec,d=r.items[x.id],by=(d.by||[]).map(id=>({id,x:flat(r).find(y=>y.id===id)})).filter(b=>b.x),allRep=by.length&&by.every(b=>(r.items[b.id]||{}).rep);
- return `<div class="card ${inl?'':'pl'}" id="${inl?'fl-':'pl-'}${x.id}" style="border-left:6px solid #b58900"><div class="row"><b style="font-size:18px">#${x.label}</b><span class="tag" style="background:#fff3cd">${d.pend?'⏳ Pending retest':'⏸ Not tested'}</span><span class="tag">${esc(secLabel(r,x.si))}</span>${allRep?'<span class="tag" style="background:#d6f0de">Blocker repaired – retest now</span>':''}</div><div style="margin:6px 0"><b>${esc(x.t)}</b></div>
+ return `<div class="card ${inl?'':'pl'}" id="${inl?'fl-':'pl-'}${x.id}" style="border-left:6px solid #b58900"><div class="row"><b style="font-size:18px">#${x.label}</b><span class="tag" style="background:#fff3cd">${d.pend?'⏳ Pending retest':'⏸ Not tested'}</span><span class="tag">${esc(secLabel(r,x.si))}</span>${allRep?'<span class="tag" style="background:#d6f0de">Blocker repaired – retest now</span>':''}</div><div style="margin:6px 0"><b>${esc(x.t)}</b></div>${swCuLine(x)}
  ${by.length?`<div class="muted" style="margin-bottom:4px">Blocked by: ${by.map(b=>`#${b.x.label} ${(r.items[b.id]||{}).rep?'(repaired ✓)':'(still open)'}`).join(', ')}</div>`:''}${(d.why||'').trim()?`<div style="margin-bottom:4px">${esc(d.why)}</div>`:''}${d.note?`<div class="muted">${esc(d.note)}</div>`:''}
  <button data-act="blkpend" data-id="${x.id}" style="width:100%;margin-top:8px;${d.pend?'background:#b58900;border-color:#b58900;color:#fff;font-weight:700':'border-color:#b58900;color:#7a5c00;font-weight:700'}">${d.pend?'✓ ':'⏳ '}Pending retest – test after the suspected cause is fixed</button>${d.pend?`<div class="muted" style="margin:4px 0 0;font-size:13px">Will be tested once ${by.length?by.map(b=>'#'+b.x.label).join(', ')+' (the suspected cause) is':'the suspected cause is'} resolved. This is how it shows on the report.</div>`:''}
  <div class="row" style="margin-top:8px"><button data-act="pblk" data-id="${x.id}" style="flex:1;border-color:#b58900;color:#7a5c00;font-weight:700">✎ Change blocker</button></div><div class="row" style="margin-top:8px"><button data-act="blkpass" data-id="${x.id}" style="flex:1;border-color:#1b8a3a;color:#1b8a3a;font-weight:700">✓ Retested – it passes</button><button data-act="blkfail" data-id="${x.id}" style="flex:1;border-color:#c62828;color:#c62828;font-weight:700">✗ Retested – it fails</button></div><p class="muted" style="margin:6px 0 0;font-size:13px">Retest it on the unit once the blocker is fixed, then choose the result. A failed retest moves it to the punch list for a concern level and coverage.</p></div>`;}
@@ -13466,7 +13526,7 @@ function auMissing(r){const au=auEns(r),P=auF(r),m=[];P.forEach(x=>{const q=au.i
  if(!(au.name||'').trim())m.push('Auditor name');if(!au.date)m.push('Audit date');if(!au.verdict)m.push('Audit result (Pass or Fail)');else if(au.verdict==='pass'&&P.some(x=>(au.items[x.id]||{}).r!=='ok'))m.push('The audit cannot pass while a fault is not verified');return m;}
 function auCard(x){const r=S.rec,au=r.audit,d=r.items[x.id],q=au.items[x.id]||{},nw=d.war==='nw';
  return `<div class="card pl ${d.lvl||''}" id="au-${x.id}"><div class="row"><b style="font-size:18px">#${x.label}</b>${lvlChip(d.lvl,d.rep)}${nw?'<span class="tag" style="background:#e6d9f5">Non-warranty'+(d.courtesy?' – courtesy':'')+'</span>':d.war==='w'?'<span class="tag" style="background:#d6f0de">Warranty</span>':''}<span class="tag">${esc(secLabel(r,x.si))}</span><span style="flex:1"></span><span class="tag" style="background:${d.st==='blk'?'#fff3cd':d.rep?'#d6f0de':'#fdecec'}">${d.st==='blk'?'Tech: NOT TESTED (blocked)':d.rep?'Tech: repaired':'Tech: NOT repaired'}</span></div>
-  <div style="margin:6px 0"><b>${esc(x.t)}</b></div>
+  <div style="margin:6px 0"><b>${esc(x.t)}</b></div>${swCuLine(x)}
   ${d.st==='blk'?`<div style="margin-bottom:4px">${esc(blkTxt(r,d))}</div>`:''}${d.note?`<div class="muted" style="margin-bottom:4px">Issue: ${esc(d.note)}</div>`:''}${d.res?`<div style="margin-bottom:4px"><span class="muted">Resolution:</span> ${esc(d.res)}</div>`:''}${(d.parts||[]).some(p=>p.desc||p.pn)?`<div class="muted" style="margin-bottom:4px">Parts used: ${esc((d.parts||[]).filter(p=>p.desc||p.pn).map(p=>[p.desc,p.pn,p.qty?'x'+p.qty:''].filter(Boolean).join(' ')).join('; '))}</div>`:''}
   <div class="ph">${(d.ph||[]).map(p=>S.photos[p]?`<div class="t"><img src="${S.photos[p].d}" data-act="zoomph" data-id="${x.id}" data-p="${p}" style="cursor:zoom-in"></div>`:'').join('')}</div>${(d.ph||[]).length?'<div class="muted" style="font-size:13px">Tap a photo to zoom and rotate it.</div>':''}
   <div class="row" style="margin-top:8px;flex-wrap:nowrap"><button class="${q.r==='ok'?'pri':''}" data-act="auok" data-id="${x.id}" style="flex:1;${q.r==='ok'?'background:#1b8a3a;border-color:#1b8a3a':''}">${q.r==='ok'?'✓ ':''}Verified</button><button class="${q.r==='no'?'dng':''}" data-act="auno" data-id="${x.id}" style="flex:1;${q.r==='no'?'background:#c62828;color:#fff;border-color:#c62828':''}">${q.r==='no'?'✗ ':''}Not acceptable</button></div>
@@ -13611,14 +13671,14 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
  d.setFont('helvetica','bold');d.setFontSize(15);d.setTextColor(0);d.text(cl(`Punch List Items - SN: ${h.towerSerial||'________'}`),MX,y+12);
  if(r.verdict){d.setFontSize(14);hx(d,'setTextColor',r.verdict==='pass'?'#1b8a3a':'#c62828');d.text(r.verdict==='pass'?'PASSED':'FAILED',PW-MX,y+12,{align:'right'});}y+=18;
  d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(80);d.text(cl(`${h.customer||''}   |   ${P.length} failed   |   ${P.filter(x=>r.items[x.id].rep).length} repaired   |   ${st.open} open${st.quote?`   |   ${st.quote} to be quoted`:''}   |   Sorted: Do Not Operate, High, Medium, Low`),MX,y+6);y+=16;
- {const cu=(r.cust||[]).filter(c=>(c.t||'').trim());if(cu.length){ens(24);d.setFont('helvetica','bold');d.setFontSize(9);d.setTextColor(30);d.text('Customer-reported issues',MX,y+6);y+=12;d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(0);cu.forEach((c,i)=>{const dt=fmtD(c.d||h.repDate);const ls=wrap(d,(i+1)+'. '+c.t.trim()+(dt?'  (reported '+dt+')':''),CW);ens(ls.length*10.5+2);d.text(ls,MX,y+6);y+=ls.length*10.5;});y+=8;}}
+ {const cu=(r.cust||[]).filter(c=>(c.t||'').trim());if(cu.length){ens(24);d.setFont('helvetica','bold');d.setFontSize(9);d.setTextColor(30);d.text('Customer-reported issues',MX,y+6);y+=12;d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(0);cu.forEach((c,i)=>{const dt=fmtD(c.d||h.repDate);const ls=wrap(d,(i+1)+'. '+c.t.trim()+(dt?'  (reported '+dt+')':'')+swCuRef(r,c),CW);ens(ls.length*10.5+2);d.text(ls,MX,y+6);y+=ls.length*10.5;});y+=8;}}
  const G=[['PUNCH LIST - WARRANTY ITEMS',P.filter(x=>r.items[x.id].war!=='nw'),'#1f5fae','Resolution'],['REPAIRS TO BE QUOTED - NON-WARRANTY',P.filter(x=>{const q=r.items[x.id];return q.war==='nw'&&!q.courtesy}),'#b35c00','Quote notes'],['COURTESY REPAIRS PERFORMED - NON-WARRANTY',P.filter(x=>{const q=r.items[x.id];return q.war==='nw'&&q.courtesy}),'#0b7285','Resolution'],['NOT TESTED - BLOCKED BY OTHER ISSUES',blockedList(r),'#8a6d00','Blocked by / notes']];
  const pc=[[0,40],[40,194],[234,84],[318,76],[394,146]];
  const drawG=gi=>{const g=G[gi];if(gi>0&&!g[1].length)return;if(gi===1){d.addPage();y=TOP;}ens(60);
   const ph=()=>{hx(d,'setFillColor','#111111');d.rect(MX,y,CW,16,'F');d.setFont('helvetica','bold');d.setFontSize(8.5);d.setTextColor(255);['Item #','Description / Issue','Concern','Status',g[3]].forEach((t,i)=>d.text(t,MX+pc[i][0]+4,y+11));y+=16;};
   hx(d,'setFillColor',g[2]);d.rect(MX,y,CW,18,'F');d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(255);d.text(`${g[0]}  (${g[1].length})`,MX+6,y+12.5);y+=18;ph();
   if(!g[1].length){d.setFont('helvetica','italic');d.setFontSize(9);d.setTextColor(60);d.text('No failed items.',MX+4,y+14);y+=22;}
-  g[1].forEach(x=>{const q=r.items[x.id];d.setFontSize(8.6);d.setFont('helvetica','bold');const dl=wrap(d,x.t,192);d.setFont('helvetica','normal');const sub=cl(`Section ${x.si+1}: ${x.sec.title}${(q.war||q.st==='blk')?'':'  -  WARRANTY STATUS NOT SET'}`);const sl=wrap(d,sub,192);const nl=q.note?wrap(d,'Issue: '+q.note,192):[];
+  g[1].forEach(x=>{const q=r.items[x.id];d.setFontSize(8.6);d.setFont('helvetica','bold');const dl=wrap(d,x.t,192);d.setFont('helvetica','normal');const sub=cl(`Section ${x.si+1}: ${x.sec.title}${(q.war||q.st==='blk')?'':'  -  WARRANTY STATUS NOT SET'}`);const sl=wrap(d,sub,192);const nl=[...(q.note?wrap(d,'Issue: '+q.note,192):[]),...(swCuTxt(r,x)?wrap(d,swCuTxt(r,x),192):[])];
    const rt=q.st==='blk'?blkTxt(r,q):(q.courtesy?'Courtesy repair performed. ':'')+(gi===1?q.quote:q.res)||'';const rl=wrap(d,rt,134);
    const hh=Math.max(q.tbd?48:36,8+dl.length*10.5+sl.length*9+nl.length*10+4,8+rl.length*10.5);if(y+hh>BOT){d.addPage();y=TOP;ph();}
    if(q.lvl==='dno'){hx(d,'setFillColor','#ffeaea');d.rect(MX,y,CW,hh,'F');}else if(q.st==='blk'){hx(d,'setFillColor','#fff8e0');d.rect(MX,y,CW,hh,'F');}
@@ -13663,7 +13723,7 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
    if(x.g!==g){g=x.g;ens(36);hx(d,'setFillColor','#dbe6f6');d.rect(MX,y,CW,15,'F');d.setFont('helvetica','bold');d.setFontSize(8.5);d.setTextColor(30);d.text(wrap(d,g,CW-8)[0],MX+4,y+10.5);y+=15;}
    d.setFont('helvetica','normal');d.setFontSize(8.8);const tl=wrap(d,x.t||'(untitled added item)',300);
    const rd=x.f.map((f,i)=>(q.v&&q.v[i])?`${f}: ${q.v[i]}`:'').filter(Boolean).join('    ');
-   const nt=[q.st==='blk'?blkTxt(r,q):'',q.note?('Note: '+q.note):'',(q.ph&&q.ph.length)?`[${q.ph.length} photo(s) - see Photo Appendix]`:''].filter(Boolean).join('  ');d.setFontSize(8);const nl=nt?wrap(d,nt,300):[];
+   const nt=[swCuTxt(r,x),q.st==='blk'?blkTxt(r,q):'',q.note?('Note: '+q.note):'',(q.ph&&q.ph.length)?`[${q.ph.length} photo(s) - see Photo Appendix]`:''].filter(Boolean).join('  ');d.setFontSize(8);const nl=nt?wrap(d,nt,300):[];
    d.setFont('helvetica','bold');d.setFontSize(8);const rdl=rd?wrap(d,rd,300):[];const hh=Math.max(q.st==='fail'&&(q.rep||q.adv)?29:0,6+tl.length*10.5+rdl.length*10+nl.length*9.5);ens(hh);
    if(q.st==='fail'){hx(d,'setFillColor','#fff1f1');d.rect(MX,y,CW,hh,'F');}else if(q.st==='blk'){hx(d,'setFillColor','#fff8e0');d.rect(MX,y,CW,hh,'F');}
    d.setDrawColor(220);d.setLineWidth(.4);d.line(MX,y+hh,MX+CW,y+hh);
@@ -13835,6 +13895,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'courtesy':{const onP=!!$('#pl-'+id);if(onP)pinCard(id);const q=itm(id);q.courtesy=!q.courtesy;if(q.courtesy){if(!q.rep){q.rep=true;q.repAuto=true}}else if(q.repAuto){q.rep=false;q.repAuto=false}markDirty();if(onP)repunch();else rerenderRow(id);break;}
  case 'verdict':{const v=b.dataset.v;if(r.verdict===v)r.verdict='';else{if(v==='pass'&&stats(r).openDno&&!confirm('Do Not Operate item(s) are still open. Mark the tower as PASSED anyway?'))break;r.verdict=v;}markDirty();repunch();break;}
  case 'tog':{const q=itm(id);q.st=q.st==='blk'?'na':STS[(STS.indexOf(q.st)+1)%4];markDirty();rerenderRow(id);break;}
+ case 'swcu':{const q=itm(id);q.cu=q.cu||[];const c=b.dataset.c,i=q.cu.indexOf(c);if(i>=0)q.cu.splice(i,1);else q.cu.push(c);markDirty();rerenderRow(id);break;}
  case 'lvl':{const q=itm(id);q.lvl=q.lvl===b.dataset.l?'':b.dataset.l;markDirty();rerenderRow(id);break;}
  case 'plvl':{pinCard(id);const q=itm(id);q.lvl=q.lvl===b.dataset.l?'':b.dataset.l;markDirty();repunch();break;}
  case 'tbd':{if($('#pl-'+id)&&!b.dataset.fin)pinCard(id);const q=itm(id);q.tbd=!q.tbd;markDirty();if($('#pl-'+id))repunch();else rerenderRow(id);break;}
@@ -14069,8 +14130,8 @@ function rmaTbdList(r){const o=[];r.swap.list.forEach(e=>{if(e.rma==='TBD')o.pus
 function fyiTarget(k){if(k[0]==='i'){const e=$('#pl-'+k.slice(1));if(e)return e;}return document.querySelector('#fyiBox .fyiE[data-k="'+k+'"]');}
 function fyiGo(k){const e=fyiTarget(k);if(!e)return false;e.scrollIntoView({behavior:'smooth',block:'center'});e.classList.add('target');setTimeout(()=>e.classList.remove('target'),5000);S.fyiLast=k;showFyiNext();return true;}
 function showFyiNext(){let b=$('#fyiNext');const L=fyiList(S.rec);if(!L.length||!S.rec||(S.rec.step!==3&&S.rec.step!==4&&S.rec.step!==5)){if(b)b.remove();return;}
- if(!b){b=document.createElement('div');b.id='fyiNext';b.style.cssText='position:fixed;left:12px;bottom:78px;z-index:50;display:flex;gap:6px';document.body.appendChild(b);}
- b.innerHTML='<button class="pri" data-act="fyinext" style="min-height:46px;padding:6px 14px;box-shadow:0 2px 8px rgba(0,0,0,.35)">Next missing item →</button><button data-act="fyiclose" style="min-height:46px;padding:6px 12px;background:#fff">✕</button>';}
+ if(!b){b=document.createElement('div');b.id='fyiNext';b.style.cssText='position:fixed;left:12px;top:50%;transform:translateY(-50%);z-index:50;display:flex;flex-direction:column;align-items:stretch;gap:6px;width:56px';document.body.appendChild(b);}
+ b.innerHTML='<button class="pri" data-act="fyinext" style="writing-mode:vertical-rl;transform:rotate(180deg);width:56px;min-width:56px;min-height:200px;padding:14px 0;margin:0;font-size:17px;font-weight:700;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.35);white-space:nowrap;line-height:1">Next missing item →</button><button data-act="fyiclose" aria-label="Hide" style="width:56px;min-width:56px;min-height:46px;padding:0;margin:0;background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.25)">✕</button>';}
 function fyiNextKey(){const L=fyiList(S.rec),ks=L.map(y=>y.k);if(!ks.length)return null;const i=ks.indexOf(S.fyiLast);return ks[(i+1)%ks.length];}
 function rmaTbdList(r){const o=[];r.swap.list.forEach(e=>{if(e.rma==='TBD')o.push((e.t||'device')+' (swap)');(e.mid||[]).forEach(m=>{if(m.rma==='TBD')o.push((e.t||'device')+' '+m.s+' (failed unit)');});});return o;}
 async function proceedCheck(){const r=S.rec,L=fyiList(r),tbd=rmaTbdList(r);if(!L.length&&!tbd.length)return true;
@@ -14491,11 +14552,11 @@ function qrPageTop(d,o){
 /* orange "to do" box with a blank check box and an initials line; returns its height */
 function tbdBox(d,x,yy,w,txt){d.setFont('helvetica','bold');d.setFontSize(10);d.setFillColor(255,243,224);d.setDrawColor(230,120,0);d.setLineWidth(1.5);var wl=d.splitTextToSize(qrSnText(txt),w-70);var wh=Math.max(46,wl.length*12+16);d.rect(x,yy,w,wh,'FD');d.setDrawColor(230,120,0);d.setLineWidth(1.5);d.rect(x+8,yy+8,14,14);d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(200,90,0);d.text(wl,x+30,yy+19);d.setFont('helvetica','normal');d.setFontSize(8.5);d.setTextColor(120);d.text('Initials:',x+w-110,yy+wh-8);d.setDrawColor(120);d.setLineWidth(.6);d.line(x+w-72,yy+wh-8,x+w-8,yy+wh-8);return wh;}
 
-/* ---- photo viewer layout: green Done on top, zoom row, rotate row, then title/tip/serial, photo last ---- */
+/* ---- photo viewer layout: zoom row, rotate row, title/tip/serial, green Done, then the photo right under it ---- */
 function pvReorder(){try{var zs=document.getElementById('zs'),zo=document.getElementById('zbOut'),rv=document.getElementById('rv1');if(!zs||!zo||!rv)return;var col=zs.parentNode,zoom=zo.parentNode,rot=rv.parentNode;var done=col.querySelector('[data-act=ocrskip],[data-act=close-modal]'),del=col.querySelector('[data-act=del-photo]');if(!done)return;
  var doneHost=done.parentNode;done.style.cssText+=';width:100%;flex:none;margin:0 0 8px;min-height:52px;font-size:19px;font-weight:800;background:#1b8a3a;color:#fff;border:2px solid #14692b';
- col.insertBefore(done,col.firstChild);if(doneHost!==col){if(del){doneHost.innerHTML='';doneHost.appendChild(del);del.style.flex='1';doneHost.style.marginTop='8px';col.appendChild(doneHost);}else doneHost.remove();}
- zoom.style.margin='0 0 6px';rot.style.margin='0 0 8px';col.insertBefore(zoom,done.nextSibling);col.insertBefore(rot,zoom.nextSibling);
+ col.insertBefore(done,zs);if(doneHost!==col){if(del){doneHost.innerHTML='';doneHost.appendChild(del);del.style.flex='1';doneHost.style.marginTop='8px';col.appendChild(doneHost);}else doneHost.remove();}
+ zoom.style.margin='0 0 6px';rot.style.margin='0 0 8px';col.insertBefore(zoom,col.firstChild);col.insertBefore(rot,zoom.nextSibling);
  col.querySelectorAll('h2,h3').forEach(function(h){h.style.marginTop='0';});}catch(e){}}
 
 /* ---- truck identification (VIN / plate / kilo) + "old S/N" handling for Calibration and Floor Test ---- */
@@ -14508,7 +14569,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New eMSC-L serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='1781c57677';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='51f6d58574';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
