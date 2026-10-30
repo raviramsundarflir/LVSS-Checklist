@@ -13486,6 +13486,29 @@ window.Core={pendClear:pendClear,dec:dec,pack:pack,json:json,start:start,resume:
  dk:dk,idOf:idOf,devOfId:devOfId,LBL:LBL,ORDER:ORDER,REV:REV,REVK:REVK,TRACK_REV:TRACK_REV,FORM:FORM,KIND:KIND,same:same,fd:fd,today:today,label:label,
  use:function(A){AD=A;css();}};
 })();
+</script><script>/* ===== shared: photo appendix boxes (Ravi, 2026-10-29) =====
+   Each photo sits in one bordered box with its label on a shaded strip at the top (item, then the serial number /
+   value / note), so it is always clear which information goes with which picture. */
+(function(){
+function lines(d,t,w,max,cl){t=String(t==null?'':t).trim();if(!t)return [];return d.splitTextToSize(cl?cl(t):t,w).slice(0,max);}
+/* cells: [{src, w, h, t, s}] (src = image data URL or null) ; o: {MX, CWc, GAP, IH, cl, tMax, sMax, ens(n)->y}
+   returns the y below the row */
+function row(d,y,cells,o){var CWc=o.CWc,GAP=o.GAP,IH=o.IH,tw=CWc-10;
+ d.setFont('helvetica','bold');d.setFontSize(8);var T=cells.map(function(c){return lines(d,c.t,tw,o.tMax||2,o.cl);});
+ d.setFont('helvetica','normal');d.setFontSize(7.8);var Ss=cells.map(function(c){return lines(d,c.s,tw,o.sMax||2,o.cl);});
+ var nl=0,ns=0;cells.forEach(function(c,i){nl=Math.max(nl,T[i].length);ns=Math.max(ns,Ss[i].length);});
+ var capH=6+nl*9.5+ns*9+4,H=capH+IH;if(o.ens)y=o.ens(H+12);
+ cells.forEach(function(c,i){var x0=o.MX+i*(CWc+GAP);
+  d.setFillColor(234,241,251);d.rect(x0,y,CWc,capH,'F');
+  var ty=y+11;d.setFont('helvetica','bold');d.setFontSize(8);d.setTextColor(0,0,0);T[i].forEach(function(l){d.text(l,x0+5,ty);ty+=9.5;});
+  d.setFont('helvetica','normal');d.setFontSize(7.8);d.setTextColor(35,35,35);Ss[i].forEach(function(l){d.text(l,x0+5,ty);ty+=9;});
+  var src=c.src,pw=c.w,ph=c.h;
+  if(src){try{if(!pw||!ph){var pr=d.getImageProperties(src);pw=pr.width;ph=pr.height;}var k=Math.min((CWc-6)/pw,(IH-6)/ph),w=pw*k,hh=ph*k;d.addImage(src,'JPEG',x0+(CWc-w)/2,y+capH+(IH-hh)/2,w,hh);}catch(e){}}
+  else{d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(110);d.text('Photo omitted',x0+CWc/2,y+capH+IH/2,{align:'center'});}
+  d.setDrawColor(120,130,148);d.setLineWidth(.4);d.line(x0,y+capH,x0+CWc,y+capH);d.setLineWidth(.9);d.rect(x0,y,CWc,H);});
+ d.setTextColor(0,0,0);d.setDrawColor(0,0,0);d.setLineWidth(.5);return y+H+12;}
+window.PhotoBox={row:row};
+})();
 </script><script>/* ===== shared: camera (Ravi, 2026-10-29) =====
    1) Photos: "Take photo" opens the tablet's own camera app (asked for the back camera), as before Rev 10.
       Every "Add photo" dialog also gets a small "Back camera (in form)" button: a camera inside the form
@@ -14386,16 +14409,10 @@ function atpPdf(mode){
     d.addPage(); y=TOP; d.setFont('helvetica','bold'); d.setFontSize(15); d.setTextColor(0); d.text('Photos',MX,y+12); y+=26;
     var GAP=8, CWc=(CW-2*GAP)/3, IH=118;
     for(var k=0;k<photos.length;k+=3){
-      var rowp=photos.slice(k,k+3), rh=IH+46; ens(rh);
-      rowp.forEach(function(p,j){
-        var x0=MX+j*(CWc+GAP); d.setDrawColor(190); d.setLineWidth(.5); d.rect(x0,y,CWc,IH);
-        try{ var pr=d.getImageProperties(pzd(p)), kk=Math.min((CWc-4)/pr.width,(IH-4)/pr.height), w=pr.width*kk, hh2=pr.height*kk; d.addImage(pzd(p),'JPEG',x0+(CWc-w)/2,y+(IH-hh2)/2,w,hh2); }catch(e){}
-        var r=a.rows.find(function(q){ return q.num===p.num; }), dd=itemOf(rec,p.num), s2=dd.s||0;
+      var rowp=photos.slice(k,k+3);
+      y=PhotoBox.row(d,y,rowp.map(function(p){ var r=a.rows.find(function(q){ return q.num===p.num; }), dd=itemOf(rec,p.num), s2=dd.s||0;
         var status=r&&counts(r,dd)?(s2===0?'Not inspected':s2===5?'Not tested':STAT[s2].label.replace(' (awaiting parts)','')):'';
-        var ty=y+IH+10; d.setFont('helvetica','bold'); d.setFontSize(7.5); d.setTextColor(0); wrap(d,(typeof p.num==='string'?(p.num.indexOf('dd:')===0?ddCap(rec,p):swCap(rec,p)):'Item '+p.num+(status?' - '+status:'')),CWc).slice(0,1).forEach(function(l){ d.text(l,x0,ty); ty+=9; });
-        d.setFont('helvetica','normal'); d.setTextColor(70); wrap(d,r?lineText(r,dd):'',CWc).slice(0,3).forEach(function(l){ d.text(l,x0,ty); ty+=9; });
-      });
-      y+=rh;
+        return {src:pzd(p),t:(typeof p.num==='string'?(p.num.indexOf('dd:')===0?ddCap(rec,p):swCap(rec,p)):'Item '+p.num+(status?' - '+status:'')),s:r?lineText(r,dd):''}; }),{MX:MX,CWc:CWc,GAP:GAP,IH:IH,cl:cl,sMax:3,ens:function(n){ ens(n); return y; }});
     }
   }
   // auditor QR page
@@ -14835,11 +14852,8 @@ function atpAuditPdf(rec){
     d.addPage(); y=TOP; d.setFont('helvetica','bold'); d.setFontSize(15); d.setTextColor(0); d.text('Audit Photos',MX,y+12); y+=26;
     var GAP=8, CWc=(CW-2*GAP)/3, IH=118;
     for(var i=0;i<cells.length;i+=3){
-      var row=cells.slice(i,i+3), rh=IH+40; ens(rh);
-      row.forEach(function(c,j){ var x0=MX+j*(CWc+GAP); d.setDrawColor(190); d.setLineWidth(.5); d.rect(x0,y,CWc,IH);
-        try{ var pr=d.getImageProperties(c.p.data), k=Math.min((CWc-4)/pr.width,(IH-4)/pr.height), w=pr.width*k, hh=pr.height*k; d.addImage(c.p.data,'JPEG',x0+(CWc-w)/2,y+(IH-hh)/2,w,hh); }catch(e){}
-        var ty=y+IH+10; d.setFont('helvetica','bold'); d.setFontSize(7.5); d.setTextColor(0); wrap(d,c.t,CWc).slice(0,1).forEach(function(l){ d.text(l,x0,ty); ty+=9; }); d.setFont('helvetica','normal'); d.setTextColor(70); wrap(d,c.sub||'',CWc).slice(0,2).forEach(function(l){ d.text(l,x0,ty); ty+=9; }); });
-      y+=rh;
+      var row=cells.slice(i,i+3);
+      y=PhotoBox.row(d,y,row.map(function(c){ return {src:c.p.data,t:c.t,s:c.sub}; }),{MX:MX,CWc:CWc,GAP:GAP,IH:IH,cl:cl,ens:function(n){ ens(n); return y; }});
     }
   }
   footers(d,rec,'eMSC-L ATP Audit Report',skip);
@@ -16236,7 +16250,7 @@ SendTo.init({rec:function(){ return S.rec; },dirty:function(){ markDirty(); save
 })();
 
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='bafad8a8ab';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='9a099d8218';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';

@@ -13609,7 +13609,7 @@ function buildAuditPdf(r){const d=pdfNew(),au=r.audit,h=r.hdr,skip=new Set([1]);
  const cells=[];const addC=(title,sub,list)=>(list||[]).map(p=>S.photos[p]).filter(Boolean).forEach((p,i,a)=>cells.push({t:title+(a.length>1?` (${i+1}/${a.length})`:''),sub,p}));
  AP.forEach(x=>{const a=au.items[x.id];if(a&&(a.ph||[]).length)addC('Audit - Fault #'+x.label,(a.n||'').replace(/\s+/g,' ').slice(0,80),a.ph);});addC('Audit - additional findings',(au.find||'').replace(/\s+/g,' ').slice(0,80),au.ph);
  if(cells.length){d.addPage();y=TOP;d.setFont('helvetica','bold');d.setFontSize(15);d.setTextColor(0);d.text('Audit Photos',MX,y+12);y+=26;const GAP=8,CWc=(CW-2*GAP)/3,IH=118;
-  for(let i=0;i<cells.length;i+=3){const row=cells.slice(i,i+3),rh=IH+40;ens(rh);row.forEach((c,j)=>{const x0=MX+j*(CWc+GAP);d.setDrawColor(190);d.setLineWidth(.5);d.rect(x0,y,CWc,IH);const k=Math.min((CWc-4)/c.p.w,(IH-4)/c.p.h),w=c.p.w*k,hh=c.p.h*k;d.addImage(c.p.d,'JPEG',x0+(CWc-w)/2,y+(IH-hh)/2,w,hh);let ty=y+IH+10;d.setFont('helvetica','bold');d.setFontSize(7.5);d.setTextColor(0);wrap(d,c.t,CWc).slice(0,1).forEach(l=>{d.text(l,x0,ty);ty+=9;});d.setFont('helvetica','normal');d.setTextColor(70);wrap(d,c.sub||'',CWc).slice(0,2).forEach(l=>{d.text(l,x0,ty);ty+=9;});});y+=rh;}}
+  for(let i=0;i<cells.length;i+=3){const row=cells.slice(i,i+3);y=PhotoBox.row(d,y,row.map(c=>({src:c.p.d,w:c.p.w,h:c.p.h,t:c.t,s:c.sub})),{MX,CWc,GAP,IH,cl,ens:n=>{ens(n);return y;}});}}
  footers(d,r,true,skip);return d;}
 /* ---------- step 5: e-mail ---------- */
 const mails=x=>(x||'').split(/[;,\s]+/).filter(Boolean);
@@ -14569,7 +14569,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New eMSC-L serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='e0a1591c42';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='71abb77b9f';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
@@ -14620,4 +14620,27 @@ window.addEventListener('scroll',place,true);window.addEventListener('resize',pl
 var t=null;function sched(){if(t)return;t=setTimeout(function(){t=null;markAll();},150);}
 function boot(){markAll();if(window.MutationObserver)new MutationObserver(sched).observe(document.documentElement,{childList:true,subtree:true});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
-window.__isSerialInput=isSer;})();</script></body></html>
+window.__isSerialInput=isSer;})();</script><script>/* ===== shared: photo appendix boxes (Ravi, 2026-10-29) =====
+   Each photo sits in one bordered box with its label on a shaded strip at the top (item, then the serial number /
+   value / note), so it is always clear which information goes with which picture. */
+(function(){
+function lines(d,t,w,max,cl){t=String(t==null?'':t).trim();if(!t)return [];return d.splitTextToSize(cl?cl(t):t,w).slice(0,max);}
+/* cells: [{src, w, h, t, s}] (src = image data URL or null) ; o: {MX, CWc, GAP, IH, cl, tMax, sMax, ens(n)->y}
+   returns the y below the row */
+function row(d,y,cells,o){var CWc=o.CWc,GAP=o.GAP,IH=o.IH,tw=CWc-10;
+ d.setFont('helvetica','bold');d.setFontSize(8);var T=cells.map(function(c){return lines(d,c.t,tw,o.tMax||2,o.cl);});
+ d.setFont('helvetica','normal');d.setFontSize(7.8);var Ss=cells.map(function(c){return lines(d,c.s,tw,o.sMax||2,o.cl);});
+ var nl=0,ns=0;cells.forEach(function(c,i){nl=Math.max(nl,T[i].length);ns=Math.max(ns,Ss[i].length);});
+ var capH=6+nl*9.5+ns*9+4,H=capH+IH;if(o.ens)y=o.ens(H+12);
+ cells.forEach(function(c,i){var x0=o.MX+i*(CWc+GAP);
+  d.setFillColor(234,241,251);d.rect(x0,y,CWc,capH,'F');
+  var ty=y+11;d.setFont('helvetica','bold');d.setFontSize(8);d.setTextColor(0,0,0);T[i].forEach(function(l){d.text(l,x0+5,ty);ty+=9.5;});
+  d.setFont('helvetica','normal');d.setFontSize(7.8);d.setTextColor(35,35,35);Ss[i].forEach(function(l){d.text(l,x0+5,ty);ty+=9;});
+  var src=c.src,pw=c.w,ph=c.h;
+  if(src){try{if(!pw||!ph){var pr=d.getImageProperties(src);pw=pr.width;ph=pr.height;}var k=Math.min((CWc-6)/pw,(IH-6)/ph),w=pw*k,hh=ph*k;d.addImage(src,'JPEG',x0+(CWc-w)/2,y+capH+(IH-hh)/2,w,hh);}catch(e){}}
+  else{d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(110);d.text('Photo omitted',x0+CWc/2,y+capH+IH/2,{align:'center'});}
+  d.setDrawColor(120,130,148);d.setLineWidth(.4);d.line(x0,y+capH,x0+CWc,y+capH);d.setLineWidth(.9);d.rect(x0,y,CWc,H);});
+ d.setTextColor(0,0,0);d.setDrawColor(0,0,0);d.setLineWidth(.5);return y+H+12;}
+window.PhotoBox={row:row};
+})();
+</script></body></html>
