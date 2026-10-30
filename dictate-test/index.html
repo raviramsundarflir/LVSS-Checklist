@@ -1,0 +1,275 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#1d3b6a"><meta name="robots" content="noindex"><title>Dictation Test</title>
+<style>
+:root{--bg:#eef1f6;--card:#fff;--tx:#14213d;--mu:#5a6478;--bd:#d9dfeb;--pri:#1d3b6a;--acc:#5b8dd6;--ok:#1d7a3e;--okb:#e5f4ea;--bad:#b42318;--badb:#fdecea;--live:#c2410c;--liveb:#fff1e6;--chip:#eef3fc;--sh:0 1px 2px rgba(20,33,61,.06),0 6px 18px rgba(20,33,61,.07)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e131b;--card:#18202d;--tx:#e8edf7;--mu:#98a3b8;--bd:#2a3447;--pri:#8fb2f0;--acc:#5b8dd6;--ok:#6fd394;--okb:#15301f;--bad:#ff8a80;--badb:#3a1a18;--live:#ffb27a;--liveb:#3a2414;--chip:#22304a;--sh:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35)}}
+:root[data-theme="dark"]{--bg:#0e131b;--card:#18202d;--tx:#e8edf7;--mu:#98a3b8;--bd:#2a3447;--pri:#8fb2f0;--acc:#5b8dd6;--ok:#6fd394;--okb:#15301f;--bad:#ff8a80;--badb:#3a1a18;--live:#ffb27a;--liveb:#3a2414;--chip:#22304a}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+header{background:#fff;border-bottom:6px solid var(--acc);box-shadow:0 4px 20px rgba(20,33,61,.12);padding:calc(16px + env(safe-area-inset-top)) 16px 14px}
+header .in{max-width:860px;margin:0 auto;color:#14213d}header small{display:block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#5a6478;font-weight:700}header b{display:block;font-size:24px;font-weight:800;line-height:1.2}
+main{max-width:860px;margin:0 auto;padding:18px 16px 8px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px 16px;margin:0 0 14px;box-shadow:var(--sh)}
+h2{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--mu);margin:0 0 10px;font-weight:800}
+p{margin:0 0 8px}.mu{color:var(--mu);font-size:14px}
+ol{margin:0;padding-left:20px}ol li{margin:2px 0}
+.stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:8px}
+.stat div{border:1px solid var(--bd);border-radius:10px;padding:8px 10px;font-size:14px}.stat div span{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);font-weight:700}
+.stat .y{color:var(--ok)}.stat .n{color:var(--bad)}
+.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.seg{display:inline-flex;border:2px solid var(--pri);border-radius:12px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--pri);font:inherit;font-weight:800;font-size:17px;padding:10px 22px;min-height:48px;min-width:84px;cursor:pointer}
+.seg button.on{background:var(--pri);color:var(--card)}
+.big{font-size:20px;font-weight:800}
+.fld{border-top:1px solid var(--bd);padding:12px 0 6px}.fld:first-of-type{border-top:0;padding-top:2px}
+.fld label{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-weight:700;margin-bottom:6px}
+.fld label .say{font-weight:600;color:var(--mu);font-size:14px}.fld label .say code{font:700 15px/1 ui-monospace,Menlo,Consolas,monospace;color:var(--tx);background:var(--chip);border-radius:6px;padding:2px 6px}
+.row{display:flex;gap:8px;align-items:stretch}
+input[type=text],textarea,select{width:100%;font:inherit;font-size:18px;color:var(--tx);background:var(--card);border:2px solid var(--bd);border-radius:10px;padding:10px 12px;min-height:50px}
+textarea{min-height:84px;resize:vertical}
+input.mono{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.04em}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--acc)}
+.fld.listening input,.fld.listening textarea{border-color:var(--live);background:var(--liveb)}
+.mode{flex:none;width:112px;border:2px solid var(--bd);border-radius:10px;background:var(--card);color:var(--tx);font:inherit;font-weight:700;font-size:15px;cursor:pointer;min-height:50px}
+.mode.v{border-color:var(--pri);color:var(--pri);background:var(--chip)}
+body.off .mode{display:none}
+.st{min-height:42px;font-size:14px;line-height:1.4;padding:4px 2px 0;color:var(--mu)}
+.st.live{color:var(--live);font-weight:700}.st.err{color:var(--bad)}.st b.ok{color:var(--ok)}.st b.bad{color:var(--bad)}
+.alts{min-height:36px;display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;align-items:center;font-size:13px;color:var(--mu)}
+.alts button{flex:none;border:1px solid var(--bd);background:var(--chip);color:var(--tx);border-radius:16px;padding:5px 12px;font:600 14px/1.2 ui-monospace,Menlo,Consolas,monospace;cursor:pointer;min-height:32px}
+.btn{border:2px solid var(--pri);background:var(--pri);color:var(--card);font:inherit;font-weight:700;border-radius:10px;padding:10px 16px;min-height:46px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--pri)}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.meter{height:14px;border-radius:7px;background:var(--chip);overflow:hidden;margin-top:8px;border:1px solid var(--bd)}.meter i{display:block;height:100%;width:0;background:var(--ok);transition:width .08s}
+.ex{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.ex button{border:1px solid var(--bd);background:var(--chip);color:var(--tx);border-radius:16px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.out{font:700 20px/1.3 ui-monospace,Menlo,Consolas,monospace;min-height:30px;margin-top:8px;word-break:break-all}
+#res{font:13px/1.45 ui-monospace,Menlo,Consolas,monospace;min-height:150px;white-space:pre}
+.note{border-left:5px solid var(--acc);padding:6px 0 6px 12px;font-size:14px;color:var(--mu)}
+footer{text-align:center;font-size:11px;color:var(--mu);opacity:.7;padding:10px 10px calc(14px + env(safe-area-inset-bottom))}
+</style></head><body>
+<header><div class="in"><small>Tucson Service Center · test page</small><b>Dictation test</b></div></header>
+<main>
+<div class="card">
+ <p><b>Not part of any form.</b> Nothing here goes into a report. It checks whether speaking serial numbers and revisions works on this tablet and in this browser.</p>
+ <ol class="mu">
+  <li>Turn <b>Dictate ON</b>, then tap a field and read the code shown next to it.</li>
+  <li>If the browser asks for the microphone, tap <b>Allow</b>.</li>
+  <li>Try the same fields in <b>Brave</b> and in <b>Chrome</b>.</li>
+  <li>Tap <b>Copy results</b> at the bottom and paste them back to Claude.</li>
+ </ol>
+</div>
+
+<div class="card"><h2>This browser</h2><div class="stat" id="stat"></div></div>
+
+<div class="card">
+ <div class="top"><span class="big">Dictate</span><div class="seg" role="group" aria-label="Dictate"><button data-act="on" data-v="0">OFF</button><button data-act="on" data-v="1">ON</button></div></div>
+ <p class="mu" id="onTxt" style="margin-top:8px;min-height:42px"></p>
+</div>
+
+<div class="card" id="flds"><h2>Read these out loud</h2></div>
+
+<div class="card">
+ <h2>Tips for speaking codes</h2>
+ <p class="note">Say one character at a time with a short gap. For letters, the call-sign words work best: <b>alpha, bravo, charlie … x-ray</b>. “Zero” or “oh” becomes <b>0</b>; say <b>oscar</b> for the letter O. “Dash” adds <b>-</b>, “point” or “dot” adds <b>.</b>, “double five” gives <b>55</b>.</p>
+</div>
+
+<div class="card">
+ <h2>Microphone check</h2>
+ <p class="mu">Shows whether the tablet hears you at all. If this bar moves but dictation gives nothing back, the microphone is fine and it is the browser’s speech service that is missing.</p>
+ <div class="btns"><button class="btn ghost" data-act="mic">Check microphone (5 s)</button></div>
+ <div class="meter"><i id="lvl"></i></div><p class="mu" id="micTxt" style="margin-top:6px;min-height:21px"></p>
+</div>
+
+<div class="card">
+ <h2>Clean-up check (no speaking needed)</h2>
+ <p class="mu">Type what the dictation might hear. The result is what would go into the field.</p>
+ <div class="row"><input type="text" id="sc" placeholder="e.g. x-ray two six bravo one four zero zero five seven" autocomplete="off" spellcheck="false"><select id="sck" style="width:140px;flex:none"><option value="serial">Serial</option><option value="version">Revision</option><option value="number">Number</option></select></div>
+ <div class="out" id="sco"></div>
+ <div class="ex" id="scx"></div>
+</div>
+
+<div class="card">
+ <h2>Results</h2>
+ <textarea id="res" readonly></textarea>
+ <div class="btns"><button class="btn" data-act="copy">Copy results</button><button class="btn ghost" data-act="share" id="shareB" hidden>Share…</button><button class="btn ghost" data-act="clear">Clear results</button></div>
+ <p class="mu" id="copyTxt" style="margin-top:6px;min-height:21px"></p>
+</div>
+</main>
+<footer>Designed &amp; developed by Ravi Ramsundar · Dictation test · 10/30/2026</footer>
+
+<script>
+/* ===== shared: dictation (same file the forms would use) ===== */
+(function(){
+var SR=window.SpeechRecognition||window.webkitSpeechRecognition||null;
+var NATO={alpha:'a',alfa:'a',bravo:'b',charlie:'c',delta:'d',echo:'e',foxtrot:'f',golf:'g',hotel:'h',india:'i',juliet:'j',juliett:'j',kilo:'k',lima:'l',mike:'m',november:'n',oscar:'o',papa:'p',quebec:'q',romeo:'r',sierra:'s',tango:'t',uniform:'u',victor:'v',whiskey:'w',whisky:'w',xray:'x',yankee:'y',zulu:'z'};
+var LET={bee:'b',be:'b',see:'c',sea:'c',cee:'c',dee:'d',eff:'f',gee:'g',aitch:'h',jay:'j',kay:'k',pee:'p',pea:'p',cue:'q',queue:'q',are:'r',tee:'t',tea:'t',you:'u',vee:'v',why:'y',zee:'z',zed:'z'};
+var UNIT={zero:'0',oh:'0',owe:'0',one:'1',won:'1',two:'2',to:'2',too:'2',three:'3',four:'4',for:'4',five:'5',six:'6',seven:'7',eight:'8',ate:'8',nine:'9'};
+var TEEN={ten:'10',eleven:'11',twelve:'12',thirteen:'13',fourteen:'14',fifteen:'15',sixteen:'16',seventeen:'17',eighteen:'18',nineteen:'19'};
+var TENS={twenty:'2',thirty:'3',forty:'4',fifty:'5',sixty:'6',seventy:'7',eighty:'8',ninety:'9'};
+var SYM={dash:'-',hyphen:'-',minus:'-',point:'.',dot:'.',period:'.',decimal:'.',slash:'/'};
+var NV={zero:0,oh:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,forty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90};
+function numWords(toks){/* "sixty six thousand eight hundred nineteen" -> 66819 */
+ var tot=0,cur=0,any=false,out='';
+ toks.forEach(function(w){if(/^\d+$/.test(w)){if(any){out+=String(tot+cur);tot=cur=0;any=false;}out+=w;return;}
+  if(NV[w]!=null){cur+=NV[w];any=true;}else if(w==='hundred'){cur=(cur||1)*100;any=true;}else if(w==='thousand'){tot+=(cur||1)*1000;cur=0;any=true;}});
+ if(any)out+=String(tot+cur);return out;}
+function clean(raw,kind){kind=kind||'serial';
+ var t=String(raw||'').toLowerCase().replace(/x[\s-]ray/g,'xray').replace(/double[\s-]you/g,'w').replace(/(\d),(?=\d)/g,'$1').replace(/,/g,' ');
+ var toks=t.split(/\s+/).map(function(w){return w.replace(/[^a-z0-9.\-\/]/g,'');}).filter(Boolean);
+ if(kind==='number'){if(toks.some(function(w){return w==='hundred'||w==='thousand';}))return numWords(toks.filter(function(w){return w!=='and';}));}
+ var out=[],rep=1,tens=null;
+ var push=function(v){for(var i=0;i<rep;i++)out.push(v);rep=1;};
+ toks.forEach(function(w){
+  if(tens!==null){if(UNIT[w]&&UNIT[w]!=='0'){push(tens+UNIT[w]);tens=null;return;}push(tens+'0');tens=null;}
+  if(w==='double'){rep=2;return;}if(w==='triple'){rep=3;return;}
+  if(TENS[w]){tens=TENS[w];return;}
+  var v=NATO[w]!=null?NATO[w]:UNIT[w]!=null?UNIT[w]:TEEN[w]!=null?TEEN[w]:SYM[w]!=null?SYM[w]:(kind!=='number'&&LET[w]!=null)?LET[w]:w;push(v);});
+ if(tens!==null)push(tens+'0');
+ var s=out.join('');
+ if(kind==='number')return s.replace(/[^0-9.]/g,'');
+ if(kind==='version')return s.replace(/[^a-z0-9.\-\/]/gi,'');
+ return s.toUpperCase().replace(/[^A-Z0-9\-\/.]/g,'');}
+var cur=null;
+function listen(o){o=o||{};if(!SR){o.onError&&o.onError('unsupported','This browser has no speech recognition. Use the keyboard’s microphone key instead.');return null;}
+ stop();var r=new SR(),got=false,heard=false,ended=false;r.lang=o.lang||'en-US';r.interimResults=true;r.maxAlternatives=4;r.continuous=false;
+ var st=function(t,k){o.onState&&o.onState(t,k);};
+ r.onstart=function(){st('Listening… speak now, then pause.','start');};
+ r.onaudiostart=function(){st('Listening… microphone on. Speak now, then pause.','audio');};
+ r.onspeechstart=function(){heard=true;st('Hearing you…','speech');};
+ r.onresult=function(e){var res=e.results[e.results.length-1];var alts=[];for(var i=0;i<res.length;i++)alts.push(res[i].transcript);
+  if(!res.isFinal){st('Heard so far: “'+alts[0]+'”','interim');return;}got=true;o.onResult&&o.onResult(alts[0],alts);};
+ r.onerror=function(e){var c=e.error||'error',m={
+   'not-allowed':'The microphone is blocked for this page. Allow the microphone for this site in the browser settings, then try again.',
+   'service-not-allowed':'This browser does not allow speech recognition here.',
+   'network':'The speech service could not be reached. It needs internet, and some browsers (Brave is a known case) do not provide it.',
+   'no-speech':'Nothing was heard. Tap the field and try again, a little closer to the tablet.',
+   'audio-capture':'No microphone was found.','aborted':'Stopped.'}[c]||('Speech recognition error: '+c);got=true;o.onError&&o.onError(c,m);};
+ r.onend=function(){if(ended)return;ended=true;cur=null;if(!got)o.onError&&o.onError('empty',heard?'Speech was heard but no text came back. This browser may not support dictation (Brave is a known case). Use the keyboard’s microphone key instead.':'Nothing came back from the speech service. Tap the field and try again, or use the keyboard’s microphone key.');o.onEnd&&o.onEnd();};
+ try{r.start();}catch(e){o.onError&&o.onError('start',String(e&&e.message||e));return null;}cur=r;return r;}
+function stop(){if(cur){try{cur.abort();}catch(e){}cur=null;}}
+window.Dictate={supported:!!SR,clean:clean,listen:listen,stop:stop};
+})();
+</script>
+<script>
+(function(){
+var $=function(s,el){return (el||document).querySelector(s);};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
+var LS={get:function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set:function(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
+/* sample codes are made up, in the same shapes as real ones */
+var F=[{id:'srv',label:'Server serial',kind:'serial',say:'X26B140057'},
+ {id:'rad',label:'Radar serial',kind:'serial',say:'20023041186'},
+ {id:'cli',label:'Client serial',kind:'serial',say:'EX24E310092'},
+ {id:'hmi',label:'HMI version',kind:'version',say:'214j'},
+ {id:'fw',label:'Radar firmware',kind:'version',say:'1.96c'},
+ {id:'km',label:'Vehicle mileage',kind:'number',say:'48207'},
+ {id:'nt',label:'Notes (free text, not cleaned)',kind:'text',say:''}];
+var S={on:!!LS.get('dt_on',false),mode:LS.get('dt_mode',{}),log:LS.get('dt_log',[]),act:null,env:{}};
+var SP={serial:'Serial',version:'Revision',number:'Number',text:'Notes'};
+function modeOf(f){return S.mode[f.id]||'voice';}
+function voiceOn(f){return S.on&&modeOf(f)==='voice';}
+function now(){var d=new Date();return d.toLocaleTimeString([], {hour:'numeric',minute:'2-digit',second:'2-digit'});}
+/* ---------- fields ---------- */
+var box=$('#flds');
+box.insertAdjacentHTML('beforeend',F.map(function(f){var tag=f.kind==='text'?'textarea':'input';
+ return '<div class="fld" data-id="'+f.id+'"><label for="f-'+f.id+'"><span>'+esc(f.label)+'</span>'+(f.say?'<span class="say">Say: <code>'+esc(f.say)+'</code></span>':'<span class="say">Say anything</span>')+'</label>'+
+  '<div class="row">'+(tag==='input'?'<input type="text" class="mono" id="f-'+f.id+'" autocomplete="off" autocapitalize="characters" spellcheck="false">':'<textarea id="f-'+f.id+'" spellcheck="true"></textarea>')+
+  '<button class="mode" data-act="mode" data-id="'+f.id+'"></button></div><div class="st" id="st-'+f.id+'"></div><div class="alts" id="al-'+f.id+'"></div></div>';}).join(''));
+function el(f){return $('#f-'+f.id);}
+function setSt(f,html,cls){var s=$('#st-'+f.id);s.className='st'+(cls?' '+cls:'');s.innerHTML=html;}
+function paint(){
+ document.body.classList.toggle('off',!S.on);
+ document.querySelectorAll('[data-act=on]').forEach(function(b){b.classList.toggle('on',(b.dataset.v==='1')===S.on);b.setAttribute('aria-pressed',(b.dataset.v==='1')===S.on);});
+ $('#onTxt').innerHTML=S.on?(Dictate.supported?'On: tapping a field listens instead of opening the keyboard. Use the <b>⌨ Keyboard</b> button on a field to type in that one instead.':'<span style="color:var(--bad)">On, but this browser has no speech recognition. Use the keyboard’s own microphone key; the clean-up still runs when you leave a field.</span>'):'Off: fields use the keyboard as usual. Serial and revision fields are still cleaned up when you leave them, so the keyboard’s own microphone key can be tested too.';
+ F.forEach(function(f){var i=el(f),b=document.querySelector('.mode[data-id="'+f.id+'"]');var v=voiceOn(f);
+  if(v)i.setAttribute('inputmode','none');else i.removeAttribute('inputmode');
+  b.textContent=modeOf(f)==='voice'?'🎤 Voice':'⌨ Keyboard';b.classList.toggle('v',modeOf(f)==='voice');
+  b.setAttribute('aria-label',f.label+': '+(modeOf(f)==='voice'?'voice, tap to use keyboard':'keyboard, tap to use voice'));
+  if(!$('#st-'+f.id).innerHTML)setSt(f,v?'Tap the field, then speak.':(f.kind==='text'?'':'Type, or use the keyboard’s microphone key.'));});
+}
+function cmp(f,v){if(!f.say)return '';return String(v).toLowerCase()===f.say.toLowerCase()?' <b class="ok">✓ matches</b>':' <b class="bad">✗ expected '+esc(f.say)+'</b>';}
+function addLog(e){S.log.push(e);if(S.log.length>200)S.log.shift();LS.set('dt_log',S.log);res();}
+function putVal(f,v){var i=el(f);if(f.kind==='text'){var c=i.value.trim();i.value=(c?c+' ':'')+v;}else i.value=v;}
+function cleanOf(f,raw){if(f.kind==='text'){var t=String(raw).trim();return t.charAt(0).toUpperCase()+t.slice(1);}return Dictate.clean(raw,f.kind);}
+function alts(f,list,best){var a=$('#al-'+f.id);a.innerHTML='';if(f.kind==='text')return;
+ var seen={};seen[best.toLowerCase()]=1;var c=[];list.forEach(function(r){var v=cleanOf(f,r);if(v&&!seen[v.toLowerCase()]){seen[v.toLowerCase()]=1;c.push(v);}});
+ if(!c.length)return;a.innerHTML='<span>Or:</span>'+c.map(function(v){return '<button data-act="alt" data-id="'+f.id+'" data-v="'+esc(v)+'">'+esc(v)+'</button>';}).join('');}
+var dog=null;
+function startListen(f){
+ stopListen();S.act=f.id;var fe=$('.fld[data-id="'+f.id+'"]');fe.classList.add('listening');$('#al-'+f.id).innerHTML='';
+ var t0=Date.now(),evs=[],done=false;
+ setSt(f,'Starting the microphone…','live');
+ var finish=function(){done=true;clearTimeout(dog);fe.classList.remove('listening');if(S.act===f.id)S.act=null;};
+ dog=setTimeout(function(){if(done)return;finish();Dictate.stop();
+  setSt(f,'No answer from the speech service after 10 seconds. This browser may not support dictation here (Brave is a known case). Use the keyboard’s microphone key instead.','err');
+  addLog({t:now(),f:f.label,how:'voice',err:'timeout (10 s)',ev:evs.join('>')});},10000);
+ Dictate.listen({onState:function(t,k){evs.push(k);if(!done)setSt(f,'🔴 '+esc(t),'live');},
+  onResult:function(best,list){if(done)return;finish();var v=cleanOf(f,best);putVal(f,v);
+   var shown=f.kind==='text'?el(f).value:v;
+   setSt(f,'Heard “'+esc(best.trim())+'” → entered <b>'+esc(v||'(nothing)')+'</b>'+cmp(f,shown)+' <span class="mu">('+((Date.now()-t0)/1000).toFixed(1)+' s)</span>');
+   alts(f,list,v);addLog({t:now(),f:f.label,how:'voice',heard:best.trim(),alts:list.slice(1).map(function(s){return s.trim();}),entered:v,target:f.say,ok:f.say?String(shown).toLowerCase()===f.say.toLowerCase():null,sec:+((Date.now()-t0)/1000).toFixed(1)});},
+  onError:function(c,m){if(done)return;finish();if(S.env.brave&&/^(empty|network|service-not-allowed)$/.test(c))m+=' In Brave this usually means its speech service is off. Try the same field in Chrome.';setSt(f,esc(m),c==='aborted'?'':'err');if(c!=='aborted')addLog({t:now(),f:f.label,how:'voice',err:c,ev:evs.join('>')});},
+  onEnd:function(){if(!done)finish();}});
+}
+function stopListen(){clearTimeout(dog);if(S.act){var p=$('.fld[data-id="'+S.act+'"]');p&&p.classList.remove('listening');var f=F.find(function(x){return x.id===S.act;});S.act=null;Dictate.stop();f&&setSt(f,'Stopped. Tap the field to try again.');}}
+box.addEventListener('click',function(e){var i=e.target.closest('input,textarea');if(!i)return;var f=F.find(function(x){return 'f-'+x.id===i.id;});if(!f||!voiceOn(f))return;
+ if(S.act===f.id){stopListen();return;}startListen(f);});
+box.addEventListener('change',function(e){var i=e.target.closest('input');if(!i)return;var f=F.find(function(x){return 'f-'+x.id===i.id;});if(!f||f.kind==='text')return;
+ var raw=i.value;if(!raw.trim())return;var v=Dictate.clean(raw,f.kind);i.value=v;
+ setSt(f,(v!==raw?'Typed “'+esc(raw)+'” → cleaned to <b>'+esc(v)+'</b>':'Entered <b>'+esc(v)+'</b>')+cmp(f,v));
+ addLog({t:now(),f:f.label,how:'keyboard',heard:raw,entered:v,target:f.say,ok:f.say?v.toLowerCase()===f.say.toLowerCase():null});});
+/* ---------- buttons ---------- */
+document.addEventListener('click',function(e){var b=e.target.closest('[data-act]');if(!b)return;var a=b.dataset.act;
+ if(a==='on'){S.on=b.dataset.v==='1';LS.set('dt_on',S.on);if(!S.on)stopListen();F.forEach(function(f){setSt(f,'');});paint();env();}
+ else if(a==='mode'){var f=F.find(function(x){return x.id===b.dataset.id;});if(S.act===f.id)stopListen();S.mode[f.id]=modeOf(f)==='voice'?'keys':'voice';LS.set('dt_mode',S.mode);setSt(f,'');paint();
+  if(modeOf(f)==='keys'){var i=el(f);i.focus();}}
+ else if(a==='alt'){var f2=F.find(function(x){return x.id===b.dataset.id;});el(f2).value=b.dataset.v;setSt(f2,'Picked <b>'+esc(b.dataset.v)+'</b>'+cmp(f2,b.dataset.v));addLog({t:now(),f:f2.label,how:'picked other',entered:b.dataset.v,target:f2.say,ok:f2.say?b.dataset.v.toLowerCase()===f2.say.toLowerCase():null});}
+ else if(a==='mic')micCheck(b);
+ else if(a==='copy')copy();
+ else if(a==='share'){try{navigator.share({title:'Dictation test results',text:resText()}).catch(function(){});}catch(x){}}
+ else if(a==='clear'){S.log=[];LS.set('dt_log',S.log);res();$('#copyTxt').textContent='Results cleared.';}
+ else if(a==='ex'){$('#sc').value=b.dataset.v;$('#sck').value=b.dataset.k;sc();}
+});
+/* ---------- this browser ---------- */
+function env(){var ua=navigator.userAgent,E=S.env,m;
+ E.os=/Android/.test(ua)?('Android '+((m=ua.match(/Android ([\d.]+)/))?m[1]:'')):/iPad|iPhone|Macintosh/.test(ua)&&'ontouchend' in document?'iPadOS/iOS':/Windows/.test(ua)?'Windows':/Mac/.test(ua)?'macOS':/Linux/.test(ua)?'Linux':'other';
+ E.br=E.brave?'Brave':(m=ua.match(/SamsungBrowser\/(\d+)/))?'Samsung Internet '+m[1]:(m=ua.match(/EdgA?\/(\d+)/))?'Edge '+m[1]:(m=ua.match(/Firefox\/(\d+)/))?'Firefox '+m[1]:(m=ua.match(/Chrome\/(\d+)/))?'Chrome '+m[1]:'other';
+ if(E.brave&&(m=ua.match(/Chrome\/(\d+)/)))E.br='Brave (Chromium '+m[1]+')';
+ E.sr=window.SpeechRecognition?'yes':window.webkitSpeechRecognition?'yes (webkit)':'no';
+ E.on=navigator.onLine?'yes':'no';E.sec=window.isSecureContext?'yes':'no';E.mic=E.mic||'not asked yet';
+ var y=function(v){return /^yes|granted/.test(v)?'y':/^no|denied/.test(v)?'n':'';};
+ $('#stat').innerHTML=[['Browser',E.br],['Device',E.os],['Speech recognition',E.sr],['Internet',E.on],['Microphone',E.mic],['Secure page',E.sec]].map(function(r){return '<div><span>'+r[0]+'</span><b class="'+y(r[1])+'">'+esc(r[1])+'</b></div>';}).join('');res();}
+try{if(navigator.brave&&navigator.brave.isBrave)navigator.brave.isBrave().then(function(v){S.env.brave=!!v;env();});}catch(e){}
+try{navigator.permissions.query({name:'microphone'}).then(function(p){var u=function(){S.env.mic=p.state==='granted'?'granted':p.state==='denied'?'denied (blocked)':'will ask';env();};u();p.onchange=u;}).catch(function(){});}catch(e){}
+window.addEventListener('online',env);window.addEventListener('offline',env);
+/* ---------- mic check ---------- */
+function micCheck(b){if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$('#micTxt').textContent='This browser cannot open the microphone from a web page.';return;}
+ stopListen();b.disabled=true;$('#micTxt').textContent='Opening the microphone…';
+ navigator.mediaDevices.getUserMedia({audio:true}).then(function(st){var AC=window.AudioContext||window.webkitAudioContext,ac=new AC(),src=ac.createMediaStreamSource(st),an=ac.createAnalyser();an.fftSize=512;src.connect(an);
+  var buf=new Uint8Array(an.fftSize),peak=0,t0=Date.now();$('#micTxt').textContent='Talk now…';
+  (function tick(){an.getByteTimeDomainData(buf);var mx=0;for(var i=0;i<buf.length;i++)mx=Math.max(mx,Math.abs(buf[i]-128));var lv=Math.min(100,mx/1.28*1.6);peak=Math.max(peak,lv);$('#lvl').style.width=lv+'%';
+   if(Date.now()-t0<5000)requestAnimationFrame(tick);else{st.getTracks().forEach(function(t){t.stop();});try{ac.close();}catch(e){}$('#lvl').style.width='0';b.disabled=false;
+    var ok=peak>12;$('#micTxt').textContent=ok?'The microphone hears you (peak '+Math.round(peak)+'%).':'Very little sound came through (peak '+Math.round(peak)+'%). Check that nothing covers the microphone.';
+    addLog({t:now(),f:'Microphone check',how:'mic',entered:'peak '+Math.round(peak)+'%',ok:ok});}})();
+ }).catch(function(e){b.disabled=false;$('#micTxt').textContent='The microphone could not be opened: '+(e&&e.name==='NotAllowedError'?'permission was refused.':(e&&e.message||e));addLog({t:now(),f:'Microphone check',how:'mic',err:e&&e.name||String(e)});});}
+/* ---------- clean-up check ---------- */
+var EX=[['x-ray two six bravo one four zero zero five seven','serial'],['two double zero two three zero four one one eight six','serial'],['E X twenty four echo three ten zero nine two','serial'],['two one four juliet','version'],['one point nine six charlie','version'],['forty eight thousand two hundred seven','number'],['48,207','number']];
+$('#scx').innerHTML=EX.map(function(x){return '<button data-act="ex" data-v="'+esc(x[0])+'" data-k="'+x[1]+'">'+esc(x[0])+'</button>';}).join('');
+function sc(){var v=$('#sc').value;$('#sco').textContent=v.trim()?'→ '+(Dictate.clean(v,$('#sck').value)||'(nothing)'):'';}
+$('#sc').addEventListener('input',sc);$('#sck').addEventListener('change',sc);
+/* ---------- results ---------- */
+function resText(){var E=S.env,L=[];
+ L.push('Dictation test results - '+new Date().toLocaleString());
+ L.push('Browser: '+E.br+' on '+E.os+' | Speech recognition: '+E.sr+' | Internet: '+E.on+' | Microphone: '+E.mic+' | Dictate: '+(S.on?'ON':'OFF'));
+ L.push('');L.push('Fields now:');
+ F.forEach(function(f){if(f.kind==='text')return;var v=el(f).value;L.push('  '+f.label+': '+(v||'-')+(f.say?(v?(v.toLowerCase()===f.say.toLowerCase()?'  OK':'  expected '+f.say):''):''));});
+ L.push('');L.push('Attempts ('+S.log.length+'):');
+ S.log.forEach(function(e){L.push('  '+e.t+'  '+e.f+'  ['+e.how+']  '+(e.err?'ERROR '+e.err+(e.ev?' (events: '+e.ev+')':''):((e.how==='keyboard'?'typed':'heard')+' "'+(e.heard||'')+'" -> '+(e.entered||'')+(e.ok===true?'  OK':e.ok===false?'  WRONG (want '+(e.target||'')+')':'')+(e.sec!=null?'  '+e.sec+'s':'')+(e.alts&&e.alts.length?'  others: '+e.alts.join(' | '):''))));});
+ L.push('');L.push('Device: '+navigator.userAgent);return L.join('\n');}
+function res(){$('#res').value=resText();}
+function copy(){var t=resText(),ok=function(){$('#copyTxt').textContent='Copied. Paste it into the chat with Claude.';};
+ var fb=function(){var a=$('#res');a.value=t;a.focus();a.select();try{document.execCommand('copy')?ok():($('#copyTxt').textContent='Select the text above and copy it.');}catch(e){$('#copyTxt').textContent='Select the text above and copy it.';}};
+ try{navigator.clipboard.writeText(t).then(ok,fb);}catch(e){fb();}}
+if(navigator.share)$('#shareB').hidden=false;
+env();paint();
+})();
+</script>
+</body></html>
