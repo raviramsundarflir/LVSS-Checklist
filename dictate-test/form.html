@@ -16,9 +16,9 @@ input:focus{outline:none;border-color:var(--acc)}
 table{width:100%;border-collapse:collapse;font-size:15px}td{border-bottom:1px solid var(--bd);padding:6px 4px}td:last-child{font:700 15px ui-monospace,Menlo,Consolas,monospace;text-align:right}
 footer{text-align:center;font-size:11px;color:var(--mu);opacity:.7;padding:10px 10px calc(14px + env(safe-area-inset-bottom))}
 </style></head><body>
-<header><div class="in"><small>Tucson Service Center · test page</small><b>Dictation test 2 – waits for you to finish</b></div></header>
+<header><div class="in"><small>Tucson Service Center · test page</small><b>Dictation test 2 – asks before it stops</b></div></header>
 <main>
-<div class="card"><p><b>Not part of any form.</b> Nothing here is saved. This is the new dictation for the forms: it keeps listening through short pauses. After <b>4 seconds of quiet</b> it asks <b>“Is that everything?”</b> – tap <b>Yes, done</b>, <b>Keep going</b> or <b>Start over</b>. You can also tap <b>✓ Done</b> any time while it listens.</p>
+<div class="card"><p><b>Not part of any form.</b> Nothing here is saved. This is the new dictation for the forms: <b>one beep</b> when you tap a field. When you pause and the tablet stops listening, it asks <b>“Is that everything?”</b> – tap <b>Yes, done</b>, <b>Keep going</b> (adds more, one beep) or <b>Start over</b>. You can also tap <b>✓ Done</b> any time while it listens, or tap the field again to keep going.</p>
 <p class="mu">Try reading a whole VIN with pauses, e.g. “one foxtrot tango seven … whiskey two bravo alpha … two tango echo charlie”.</p></div>
 <div class="card" id="ser"><h2>Serial numbers</h2>
  <div class="dev"><b>License plate #</b><input data-tk="plate" placeholder="e.g. 201838" autocomplete="off"></div>
@@ -95,18 +95,20 @@ function listen(o){o=o||{};if(!SR){o.onError&&o.onError('unsupported','This brow
  r.onend=function(){if(ended)return;ended=true;cur=null;if(!got)o.onError&&o.onError('empty',heard?'Speech was heard but no text came back. This browser may not support dictation (Brave is a known case). Use the keyboard’s microphone key instead.':'Nothing came back from the speech service. Tap the field and try again, or use the keyboard’s microphone key.');o.onEnd&&o.onEnd();};
  try{r.start();}catch(e){o.onError&&o.onError('start',String(e&&e.message||e));return null;}cur=r;return r;}
 function stop(){if(cur){try{cur.abort();}catch(e){}cur=null;}}
-/* listen until the tech is finished (Ravi, 2026-10-30: a short pause ended it). Keeps listening through pauses - the
-   browser's recogniser is restarted when it stops on its own - and only ends after o.pause ms with nothing new heard
-   (then onSilence) or when done() is called. o={lang,pause,firstWait,onText(text),onSilence(text),onError(code,msg,text)}
+/* listen until the tech is finished (Ravi, 2026-10-30). Where the browser keeps listening (desktop Chrome) it ends after
+   o.pause ms with nothing new heard (onSilence). Where the browser ends on its own after a pause (Android), it ends there
+   and calls onSilence too, so the form can ask "Is that everything?". o.restart:true restarts instead (beeps on Android). o={lang,pause,firstWait,onText(text),onSilence(text),onError(code,msg,text)}
    returns {done()->text, abort()} */
 var MSG={'not-allowed':'The microphone is blocked for this page. Allow the microphone for this site in the browser settings, then try again.',
  'service-not-allowed':'This browser does not allow speech recognition here.',
  'network':'The speech service could not be reached. It needs internet, and some browsers (Brave is a known case) do not provide it.',
  'audio-capture':'No microphone was found.'};
 var EMPTY='Nothing came back from the speech service. Tap the field and try again, or use the keyboard and its microphone key.';
+var NOHEAR='Didn\u2019t catch anything. Tap \ud83c\udfa4 Try again and speak right after the beep.';
 function listenLong(o){o=o||{};if(!SR){o.onError&&o.onError('unsupported','This browser has no speech recognition. Use the keyboard’s microphone key instead.','');return null;}
  stop();
  var on=true,parts=[],fin=[],intr='',got=false,silT=null,dogT=null,rec=null,starts=0,lastStart=0,PAUSE=o.pause||4000,FIRST=o.firstWait||12000;
+ var RESTART=o.restart===true;
  function dd(L){var out=[];L.forEach(function(t){t=String(t||'').trim();if(!t)return;var p=out.length?out[out.length-1]:null,a=t.toLowerCase(),b=p&&p.toLowerCase();
   if(p&&a.indexOf(b)===0){out[out.length-1]=t;return;}if(p&&b.indexOf(a)===0)return;out.push(t);});return out;}
  function text(){var all=parts.concat(dd(fin));if(intr)all.push(intr);return all.join(' ').replace(/\s+/g,' ').trim();}
@@ -118,7 +120,10 @@ function listenLong(o){o=o||{};if(!SR){o.onError&&o.onError('unsupported','This 
   r.onresult=function(e){if(rec!==r||!on)return;var F=[],I='';for(var i=0;i<e.results.length;i++){var x=e.results[i],t=(x[0]&&x[0].transcript)||'';if(x.isFinal)F.push(t);else I+=(I?' ':'')+t;}
    fin=F;intr=I.trim();if(text()){got=true;clearTimeout(dogT);}o.onText&&o.onText(text());arm();};
   r.onerror=function(e){if(rec!==r||!on)return;var c=e.error||'error';if(c==='no-speech'||c==='aborted')return;if(c==='network'&&got)return;fail(c,MSG[c]||('Speech recognition error: '+c));};
-  r.onend=function(){if(rec!==r||!on)return;commit();if(starts>=40){if(got){var t=text();halt();o.onSilence&&o.onSilence(t);}else fail('empty',EMPTY);return;}
+  r.onend=function(){if(rec!==r||!on)return;commit();
+   /* no automatic restart (Ravi, 2026-10-30): on Android every restart beeps. When the browser ends after a pause, ask. */
+   if(!RESTART){var t0=text();halt();if(t0)o.onSilence&&o.onSilence(t0);else o.onError&&o.onError('no-speech',NOHEAR,'');return;}
+   if(starts>=40){if(got){var t=text();halt();o.onSilence&&o.onSilence(t);}else fail('empty',EMPTY);return;}
    setTimeout(function(){if(on&&rec===r)one();},Date.now()-lastStart<800?600:150);};
   try{r.start();}catch(e){fail('start',String(e&&e.message||e));}}
  var H={abort:function(){halt();},done:function(){if(!on)return text();commit();var t=text();halt();return t;},text:text};
@@ -129,8 +134,8 @@ window.Dictate={supported:!!SR,clean:clean,spoken:spoken,listen:listen,listenLon
 
 /* ===== shared: dictation in the forms (Ravi, 2026-10-30) =====
    Dictate On/Off is chosen when an inspection starts, and again at the top of the serial numbers (switch any time).
-   With it on, tapping a serial-number or version field listens instead of opening the keyboard. It keeps listening through
-   short pauses; after 4 s of quiet it asks "Is that everything?" (Yes, done / Keep going / Start over). "Type instead"
+   With it on, tapping a serial-number or version field listens instead of opening the keyboard (one beep). It keeps listening through
+   short pauses where the browser allows it; when it stops it asks "Is that everything?" (Yes, done / Keep going / Start over). "Type instead"
    opens the keyboard for that field.
    Text from the keyboard's own microphone key ("x-ray two six…") is cleaned up when the field is left, Dictate on or off.
    Each form sets window.DICTATE_FIELDS = [{sel, kind}] (kind: serial | version | number). */
@@ -187,7 +192,7 @@ function setLive(el,v){el.value=v;el.dispatchEvent(new Event('input',{bubbles:tr
 function listen(el,more){var k=kindOf(el);if(!k)return;stop();st.el=el;place();st.busy=true;st.ask=false;el.classList.add('dk-live');var lb=esc(labelOf(el));
  if(!more){st.before=el.value;st.raw='';}
  var base=st.raw||'',B='<button class="p" data-dk-x="fin">✓ Done</button><button data-dk-x="kbd">⌨ Type instead</button>';
- show('live','Listening – '+lb,more?'Keep going – it adds to <code>'+esc(el.value)+'</code>.':'Say it one character at a time. Short pauses are fine – it waits until you stop for '+(PAUSE/1000)+' seconds.',B);
+ show('live','Listening – '+lb,more?'Keep going – it adds to <code>'+esc(el.value)+'</code>.':'Speak after the beep, one character at a time. When you pause, it asks if that is everything.',B);
  st.h=Dictate.listenLong({pause:PAUSE,firstWait:12000,
   onText:function(t){var raw=(base+' '+t).trim(),v=Dictate.clean(raw,k);setLive(el,v);
    show('live','Listening – '+lb,'<code>'+esc(v)+'</code><br><span style="color:#6b7686">Heard “'+esc(raw)+'”</span>',B);},
@@ -211,7 +216,7 @@ function finish(quiet){var el=st.el;if(!el)return;var k=kindOf(el);if(st.h){var 
 document.addEventListener('pointerdown',function(e){var el=e.target;if(!on()||!kindOf(el))return;if(!kbd.has(el))el.setAttribute('inputmode','none');},true);
 document.addEventListener('click',function(e){var el=e.target;
  if(el.closest&&el.closest('.dk-seg button')){setOn(el.closest('button').getAttribute('data-dk')==='1');return;}
- if(!on()||!kindOf(el)||kbd.has(el))return;if((st.busy||st.ask)&&st.el===el){finish();return;}if((st.busy||st.ask)&&st.el&&st.el!==el)finish(true);listen(el);},true);
+ if(!on()||!kindOf(el)||kbd.has(el))return;if(st.ask&&st.el===el){listen(el,true);return;}if(st.busy&&st.el===el){finish();return;}if((st.busy||st.ask)&&st.el&&st.el!==el)finish(true);listen(el);},true);
 P.addEventListener('pointerdown',function(e){e.preventDefault();});P.addEventListener('mousedown',function(e){e.preventDefault();});
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-dk-x],[data-dk-alt]');if(!b)return;var x=b.getAttribute('data-dk-x'),el=st.el;
  if(x==='pill'){setOn(!on());return;}
