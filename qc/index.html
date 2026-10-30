@@ -13242,39 +13242,38 @@ function qcCoreMissing(r){const ne=[],np=[];(r.gear||[]).forEach(g=>{if(g.na)ret
  const m=[];if(!r.hdr.visit)m.push('Not answered: serviced at the site or picked up');if(ne.length)m.push('Not entered: '+ne.join(', '));if(np.length)m.push('Entered without a photo: '+np.join(', '));
  if(r.hdr.visit==='pickup'){const xp=extNoPhoto(r);if(xp.length)m.push('Truck exterior photos missing: '+xp.map(a=>a[1]).join(', '));const nd=extDamage(r).filter(z=>!String(z.l.note||'').trim());if(nd.length)m.push('Exterior damage without a description: '+nd.map(z=>z.n+' '+(z.i+1)).join(', '));}return m;}
 /* e-mail: functions check results, issues, anything not recorded */
-function emailText(r){const all=flat(r),one=t=>String(t||'').replace(/\s+/g,' ').trim(),eh=esc;
- const used=x=>{const q=r.items[x.id]||{};return (q.st&&q.st!=='na')||((x.t||'').trim()&&!q.st&&x.extra);};
- const R=all.filter(x=>x.sec.kind==='rep'&&used(x)),O=all.filter(x=>x.sec.kind==='new'&&used(x)),F=all.filter(x=>x.sec.id==='sQ'),sevL=qcSevLine(r);
- const fres=q=>q.st==='pass'?'PASS':q.st==='fail'?'FAIL':q.st==='na'?'N/A':q.st==='blk'?'NOT TESTED':'NOT CHECKED';
- const ires=q=>q.st==='fail'?'Confirmed':q.st==='pass'?'Checked - no issue found':q.st==='blk'?'Could not test':'Not checked';
- const lvt=q=>q.st==='fail'&&q.lvl&&LVK[q.lvl]?(LVK[q.lvl].n+(q.lvl==='dno'?'':' concern')):'';
- const nt=q=>one(q.st==='blk'?[blkTxt(r,q).replace(/^NOT TESTED\s*-\s*/,''),q.note].filter(Boolean).join(' '):q.note);
- const c={p:0,f:0,na:0,b:0,o:0};F.forEach(x=>{const s=(r.items[x.id]||{}).st;if(s==='pass')c.p++;else if(s==='fail')c.f++;else if(s==='na')c.na++;else if(s==='blk')c.b++;else c.o++;});
- const sn=snD(r)||'(serial number)',tech=r.hdr.tech||'',dt=fmtD(r.hdr.date),loc=one(r.hdr.loc),cm=qcCoreMissing(r),subj=mailSubj(r);
+/* e-mail (Rev 15): only the reported issues - each once, customer-reported first (checks that confirm them inside),
+   then issues found by the tech, failed or untested checks, and exterior damage at pickup. The full functions
+   check, the exterior table and the not-recorded list stay in the attached PDF. */
+function emailText(r){const one=t=>String(t||'').replace(/\s+/g,' ').trim(),eh=esc,L=qcLists(r),sv=qcSev(r);
+ const sn=snD(r)||'(serial number)',tech=r.hdr.tech||'',dt=fmtD(r.hdr.date),loc=one(r.hdr.loc),subj=mailSubj(r);
  const notes=String(r.techNotes||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>({sub:/^(--|–|—)/.test(l),t:l.replace(/^(--+|[-–—•●o◦]+)\s*/,'')}));
- const sum=`${c.p} pass, ${c.f} fail${c.b?', '+c.b+' not tested':''}${c.na?', '+c.na+' N/A':''}${c.o?', '+c.o+' not checked':''} (of ${F.length})`;
- const FR=F.map(x=>{const q=r.items[x.id]||{},p=repOf(r,x);return [String(x.label),one(x.t),fres(q)+(lvt(q)?' - '+lvt(q):''),[p?'Customer reported - #'+p.label:'',nt(q)].filter(Boolean).join(' - ')];});
- const XD=r.hdr.visit==='pickup'?extOf(r):null,ph=n=>n?n+' photo'+(n===1?'':'s'):'No photo';
- const XR=XD?XAREAS.map(([k,n],i)=>{const a=XD.a[k],L=a.dmg?a.l:[];return [String(i+1),n,ph(a.ph.length),L.length?'DAMAGED - '+L.length+' spot'+(L.length===1?'':'s'):'No damage noted',L.map((l,j)=>(j+1)+') '+(one(l.note)||'(no description)')+' ['+ph(l.ph.length).toLowerCase()+']').join('  ')];}):[];
  const vis=r.hdr.visit==='pickup'?'The truck is being picked up from the customer site and brought to TSC'+(qcPuD(r.hdr)?' (pickup date '+fmtD(qcPuD(r.hdr))+')':'')+'.':r.hdr.visit==='service'?'The truck was serviced at the customer site.':'';
- const IR=L=>L.map((x,i)=>{const q=r.items[x.id]||{},k=kidsOf(r,x).map(y=>'Confirmed during the check: '+one(kidTxt(r,y)));return [String(i+1),one(x.t)||'(no description)',ires(q)+(lvt(q)?' - '+lvt(q):''),[nt(q),...k].filter(Boolean).join(' | ')];});
- const TD='border:1px solid #999;padding:5px 7px;vertical-align:top;';
- const tbl=(hd,rows)=>`<table style="border-collapse:collapse;width:100%;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#000"><tr>${hd.map((x,i)=>`<th style="${TD}background:#eeeeee;text-align:left;${i===0?'width:4%':''}">${x}</th>`).join('')}</tr>${rows.map(rw=>`<tr>${rw.map((v,i)=>`<td style="${TD}${(i===2||i===3)&&/^(FAIL|NOT TESTED|Confirmed|DAMAGED)/.test(v)?'color:#c62828;font-weight:bold;':''}">${eh(v)}</td>`).join('')}</tr>`).join('')}</table>`;
+ const RED='#c62828',ORG='#e07b00',GRN='#1b8a3a',GRY='#666666';
+ const blk=q=>one(blkTxt(r,q).replace(/^NOT TESTED\s*-\s*/,'').replace(/^TO BE TESTED LATER/,'To be tested later').replace(/^PENDING RETEST/,'Pending retest').replace(/^NOT TESTED\.?/,'').replace(/\.\.+/g,'.'));
+ const sev=q=>q.st==='fail'?(q.lvl&&LVK[q.lvl]?LVK[q.lvl].n:'Not set'):'-';
+ const stat=(x,q)=>{if(q.st==='blk')return ['Not tested',ORG];const k=x.sec.kind;if(k==='rep')return q.st==='fail'?['Confirmed',RED]:q.st==='pass'?['No issue found',GRN]:['Not checked',GRY];if(k==='new')return ['Found',RED];return ['Failed',RED];};
+ const kind=(x,q)=>x.sec.kind==='rep'?'Customer reported':x.sec.kind==='new'?'Found by the tech':q.st==='blk'?'Check not tested':'Failed check';
+ const note=q=>one([q.st==='blk'?blk(q):'',q.note].filter(Boolean).join(' '));
+ const rows=[];
+ const add=(x,kid)=>{const q=r.items[x.id]||{},s=stat(x,q);rows.push({kid,n:kid?'':String(x.label),t:kid?'Confirmed during the check: #'+x.label+' '+one(x.t):one(x.t)||'(no description)',k:kid?'':kind(x,q),s:s[0],c:s[1],v:sev(q),no:note(q)});};
+ L.R.forEach(x=>{add(x,false);kidsOf(r,x).forEach(y=>add(y,true));});L.O.forEach(x=>add(x,false));L.K.forEach(x=>add(x,false));
+ extDamage(r).forEach((z,i)=>rows.push({kid:false,n:'X'+(i+1),t:'Exterior damage at pickup - '+z.n,k:'Truck exterior',s:'Damaged',c:RED,v:'-',no:one(z.l.note)+(z.l.ph.length?' ('+z.l.ph.length+' photo'+(z.l.ph.length===1?'':'s')+' in the report)':'')}));
+ const top=rows.filter(w=>!w.kid).length,xd=extDamage(r).length,p=[];
+ LV.slice().sort((a,b)=>a.r-b.r).forEach(l=>{if(sv.c[l.k])p.push(sv.c[l.k]+' '+l.n);});if(sv.c.none)p.push(sv.c.none+' with no severity');if(sv.nt)p.push(sv.nt+' could not be tested');if(xd)p.push(xd+' exterior damage spot'+(xd===1?'':'s'));
+ const head=`REPORTED ISSUES (${top})`+(p.length?': '+p.join(', '):'');
+ const TD='border:1px solid #999;padding:5px 7px;vertical-align:top;text-align:left;';
  let h=`<p>Attached is the site quick capture report for ${eh(sn)}${loc?' at '+eh(loc):''} (site visit ${eh(dt)}).</p>${vis?`<p>${eh(vis)}</p>`:''}`;
  if(notes.length){h+='<p><b>Tech notes:</b></p><ul>';let op=false;notes.forEach(z=>{if(z.sub){if(!op){h+='<ul>';op=true;}h+=`<li>${eh(z.t)}</li>`;}else{if(op){h+='</ul>';op=false;}h+=`<li>${eh(z.t)}</li>`;}});if(op)h+='</ul>';h+='</ul>';}
- h+=`<p><b>ISSUES:</b> ${eh(sevL)}</p><p><b>MAIN FUNCTIONS CHECK:</b> ${eh(sum)}</p>`+tbl(['#','Check','Result','Notes'],FR);
- if(XD){const xd=XR.filter(a=>a[3]!=='No damage noted').length;h+=`<p style="margin-top:14px"><b>TRUCK EXTERIOR AT PICKUP:</b> ${xd?xd+' area'+(xd===1?'':'s')+' damaged':'no damage noted'}</p>`+(XD.pin?'<p>&quot;Desert pinstriping&quot; noted on the truck - cosmetic only, not damage.</p>':'')+tbl(['#','Area','Record photos','Condition','Damage notes'],XR);}
- const sec=(t,L)=>`<p style="margin-top:14px"><b>${t} (${L.length})</b></p>`+(L.length?tbl(['#','Issue','Status','Notes'],IR(L)):'<p>None.</p>');
- h+=sec('CUSTOMER-REPORTED ISSUES',R)+sec('ISSUES FOUND BY THE TECH',O);
- if(cm.length)h+=`<p style="margin-top:14px"><b>Not recorded on this visit</b></p><ul>${cm.map(x=>`<li>${eh(x)}</li>`).join('')}</ul>`;
+ h+=`<p><b>REPORTED ISSUES (${top})${p.length?':':''}</b>${p.length?' '+eh(p.join(', ')):''}</p>`;
+ if(rows.length)h+=`<table style="border-collapse:collapse;width:100%;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#000"><tr>${[['#','6%'],['Issue','38%'],['Status','14%'],['Severity','12%'],['Notes','']].map(t=>`<th style="${TD}background:#eeeeee;${t[1]?'width:'+t[1]:''}">${t[0]}</th>`).join('')}</tr>${rows.map(w=>`<tr${w.kid?' style="background:#f3f7fd"':''}><td style="${TD}">${eh(w.n)}</td><td style="${TD}${w.kid?'padding-left:20px;':''}">${w.kid?'&#8627; ':''}${eh(w.t)}${w.k?`<br><i>${eh(w.k)}</i>`:''}</td><td style="${TD}color:${w.c};font-weight:bold">${eh(w.s)}</td><td style="${TD}">${eh(w.v)}</td><td style="${TD}">${eh(w.no)}</td></tr>`).join('')}</table>`;
+ else h+='<p>No issues were found on this visit.</p>';
  h+=`<p>Thank you,<br>${eh(tech)}</p>`;
  const T=[`Attached is the site quick capture report for ${sn}${loc?' at '+loc:''} (site visit ${dt}).`,''];if(vis)T.push(vis,'');
  if(notes.length){T.push('Tech notes:');notes.forEach(z=>T.push(z.sub?'      ◦ '+z.t:'   • '+z.t));T.push('');}
- T.push('ISSUES: '+sevL,'','MAIN FUNCTIONS CHECK: '+sum,'');FR.forEach(a=>T.push(`${a[0]}) ${a[1]}: ${a[2]}${a[3]?' - '+a[3]:''}`));T.push('');
- if(XD){T.push('TRUCK EXTERIOR AT PICKUP','');if(XD.pin)T.push('"Desert pinstriping" noted on the truck - cosmetic only, not damage.','');XR.forEach(a=>T.push(`${a[0]}) ${a[1]}: ${a[2]}, ${a[3]}${a[4]?' - '+a[4]:''}`));T.push('');}
- [['CUSTOMER-REPORTED ISSUES',R],['ISSUES FOUND BY THE TECH',O]].forEach(([t,L])=>{T.push(`${t} (${L.length})`);if(!L.length)T.push('None.');IR(L).forEach(a=>T.push(`${a[0]}) ${a[1]}: ${a[2]}${a[3]?' - '+a[3]:''}`));T.push('');});
- if(cm.length){T.push('NOT RECORDED ON THIS VISIT');cm.forEach(x=>T.push('- '+x));T.push('');}
- T.push('Thank you,',tech);
+ T.push(head,'');if(!rows.length)T.push('No issues were found on this visit.');
+ rows.forEach(w=>T.push(w.kid?`      Confirmed during the check: ${w.t.replace(/^Confirmed during the check: /,'')}: ${w.s}${w.v!=='-'?' - '+w.v:''}${w.no?' - '+w.no:''}`:`${w.n}) ${w.t} (${w.k.toLowerCase()}): ${w.s}${w.v!=='-'?' - Severity: '+w.v:''}${w.no?' - '+w.no:''}`));
+ T.push('','Thank you,',tech);
  return {subj,html:h,text:T.join('\n')};}
 
 /* ===== truck serviced at the site, or picked up? exterior photos at pickup (Ravi, 2026-10-29) =====
@@ -15256,7 +15255,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New eMSC-L serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='e0a4238b08';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='95131eeee7';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
