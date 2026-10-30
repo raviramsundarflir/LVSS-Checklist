@@ -14665,6 +14665,8 @@ async function serEdit(t){const p=t.dataset&&t.dataset.b;if(!p||!S.rec)return;co
  const btn=[{t:'Correction – just fix the serial number',v:'fix',c:'pri'},{t:'Actual swap – record the old and new serial',v:'swap'},{t:'Undo – keep '+ov,v:'undo'}];
  m=/^gear\.(\d+)\.s$/.exec(p);
  if(m){const g=r.gear[+m[1]];if(!g)return;const ex=r.swap.list.find(e=>e.dev===g.id);if(ex){ex.old=nv;markDirty();return;}
+  /* a serial carried in from an earlier form: the core prompt ("Correction or actually changed?") asks instead - one question */
+  if(r.core&&r.core.s&&typeof Core!=='undefined'){const ck=Core.dk(g.t);if(ck&&String(r.core.s[ck]||'').trim())return;}
   const c=await choose('Serial number changed',`${g.t}\n${ov}  →  ${nv}\n\nIs this a correction (typo / misread), or was the device actually swapped?`,btn);
   if(c==='undo')g.s=ov;
   else if(c==='swap'){g.s=ov;r.swap.list.push({id:'sw'+uid(),dev:g.id,t:g.t,old:ov,nw:nv,reason:'',rma:'',newPh:[],mid:[]});}
@@ -15286,7 +15288,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New eMSC-L serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='e96502afa8';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='8f06f02dbe';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
@@ -15353,7 +15355,14 @@ function swDev(r,e){var g=e.dev?(r.gear||[]).find(function(x){return x.id===e.de
 function swaps(r){return swList(r).map(function(e){var q=swDev(r,e);if(!q.k)return null;var nw=T(e.nw);
  return [Core.idOf(q.k),T(e.old||(q.g&&q.g.s)),nw,nw?'r':'p',FORMC,T(r.hdr&&r.hdr.date)||Core.today(),[T(e.reason),(e.rma&&e.rma!=='TBD')?'RMA '+T(e.rma):''].filter(Boolean).join(' - ')];}).filter(Boolean);}
 function pend(r){return swList(r).filter(function(e){return !T(e.nw);}).map(function(e){var q=swDev(r,e);return q.k?[q.k,T(e.old||(q.g&&q.g.s))]:null;}).filter(Boolean);}
-Core.use({form:FORMC,rec:function(){return (S&&S.view==='rec'&&!S.audit)?S.rec:null;},fields:fields,dirty:function(){try{markDirty();}catch(e){S.dirty=true;}},swaps:swaps,pend:pend});
+Core.use({form:FORMC,rec:function(){return (S&&S.view==='rec'&&!S.audit)?S.rec:null;},fields:fields,dirty:function(){try{toSwap();}catch(e){}try{markDirty();}catch(e){S.dirty=true;}},swaps:swaps,pend:pend});
+/* one question for a carried serial (Ravi, 2026-10-30): "Device replaced" / "Swapped between platforms" in the core prompt
+   also record the swap row, as the form's own "Actual swap" did (device keeps the old serial, the swap row has the new one) */
+function toSwap(){var r=S&&S.rec;if(!r||!r.cxl||!r.swap||!r.swap.list)return;var ch=false;
+ for(var i=r.cxl.length-1;i>=0;i--){var e=r.cxl[i],dv=Core.devOfId(e[0]);if(!dv||(e[3]!=='r'&&e[3]!=='s')||!T(e[2])||!T(e[1])||e[6]==='Replacement serial entered')continue;
+  var g=(r.gear||[]).find(function(x){return !x.tk&&Core.dk(x.t)===dv;});if(!g||r.swap.list.some(function(w){return w.dev===g.id;}))continue;
+  g.s=e[1];r.swap.list.push({id:'sw'+uid(),dev:g.id,t:g.t,old:e[1],nw:e[2],reason:[e[3]==='s'?'Swapped between platforms':'',T(e[6])].filter(Boolean).join(' - '),rma:'',newPh:[],mid:[]});r.cxl.splice(i,1);ch=true;}
+ if(ch)setTimeout(function(){try{rerenderSwap();}catch(x){}},0);}
 
 /* the QR code carries the core details this form has no field for, the change history, pending serials and issues */
 var q0=qrPayload;
@@ -15490,7 +15499,7 @@ window.PhotoBox={row:row};
    version = keeps "point" -> . and lower-case letters; number = digits only ("forty eight thousand..." works). */
 (function(){
 var SR=window.SpeechRecognition||window.webkitSpeechRecognition||null;
-var NATO={alpha:'a',alfa:'a',bravo:'b',charlie:'c',delta:'d',echo:'e',foxtrot:'f',golf:'g',hotel:'h',india:'i',juliet:'j',juliett:'j',kilo:'k',lima:'l',mike:'m',november:'n',oscar:'o',papa:'p',quebec:'q',romeo:'r',sierra:'s',tango:'t',uniform:'u',victor:'v',whiskey:'w',whisky:'w',xray:'x',yankee:'y',zulu:'z'};
+var NATO={alpha:'a',alfa:'a',bravo:'b',charlie:'c',delta:'d',echo:'e',foxtrot:'f',golf:'g',hotel:'h',india:'i',juliet:'j',juliett:'j',kilo:'k',lima:'l',mike:'m',michael:'m',november:'n',oscar:'o',papa:'p',quebec:'q',romeo:'r',sierra:'s',tango:'t',uniform:'u',victor:'v',whiskey:'w',whisky:'w',xray:'x',yankee:'y',zulu:'z'};
 var LET={bee:'b',be:'b',see:'c',sea:'c',cee:'c',dee:'d',eff:'f',gee:'g',aitch:'h',jay:'j',kay:'k',pee:'p',pea:'p',cue:'q',queue:'q',are:'r',tee:'t',tea:'t',you:'u',vee:'v',why:'y',zee:'z',zed:'z'};
 var UNIT={zero:'0',oh:'0',owe:'0',one:'1',won:'1',two:'2',to:'2',too:'2',three:'3',four:'4',for:'4',five:'5',six:'6',seven:'7',eight:'8',ate:'8',nine:'9'};
 var TEEN={ten:'10',eleven:'11',twelve:'12',thirteen:'13',fourteen:'14',fifteen:'15',sixteen:'16',seventeen:'17',eighteen:'18',nineteen:'19'};
