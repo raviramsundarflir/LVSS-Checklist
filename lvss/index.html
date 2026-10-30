@@ -14911,10 +14911,10 @@ function qrPageTop(d,o){
 /* orange "to do" box with a blank check box and an initials line; returns its height */
 function tbdBox(d,x,yy,w,txt){d.setFont('helvetica','bold');d.setFontSize(10);d.setFillColor(255,243,224);d.setDrawColor(230,120,0);d.setLineWidth(1.5);var wl=d.splitTextToSize(qrSnText(txt),w-70);var wh=Math.max(46,wl.length*12+16);d.rect(x,yy,w,wh,'FD');d.setDrawColor(230,120,0);d.setLineWidth(1.5);d.rect(x+8,yy+8,14,14);d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(200,90,0);d.text(wl,x+30,yy+19);d.setFont('helvetica','normal');d.setFontSize(8.5);d.setTextColor(120);d.text('Initials:',x+w-110,yy+wh-8);d.setDrawColor(120);d.setLineWidth(.6);d.line(x+w-72,yy+wh-8,x+w-8,yy+wh-8);return wh;}
 
-/* ---- photo viewer layout: zoom row, rotate row, title/tip/serial, green Done, then the photo right under it ---- */
+/* ---- photo viewer layout: zoom row, rotate row, title/tip, small centered green Done, serial field, then the photo ---- */
 function pvReorder(){try{var zs=document.getElementById('zs'),zo=document.getElementById('zbOut'),rv=document.getElementById('rv1');if(!zs||!zo||!rv)return;var col=zs.parentNode,zoom=zo.parentNode,rot=rv.parentNode;var done=col.querySelector('[data-act=ocrskip],[data-act=close-modal]'),del=col.querySelector('[data-act=del-photo]');if(!done)return;
- var doneHost=done.parentNode;done.style.cssText+=';width:100%;flex:none;margin:0 0 8px;min-height:52px;font-size:19px;font-weight:800;background:#1b8a3a;color:#fff;border:2px solid #14692b';
- col.insertBefore(done,zs);if(doneHost!==col){if(del){doneHost.innerHTML='';doneHost.appendChild(del);del.style.flex='1';doneHost.style.marginTop='8px';col.appendChild(doneHost);}else doneHost.remove();}
+ var doneHost=done.parentNode;done.style.cssText+=';display:block;width:20%;min-width:96px;flex:none;align-self:center;margin:0 auto 8px;min-height:52px;font-size:19px;font-weight:800;background:#1b8a3a;color:#fff;border:2px solid #14692b';
+ var ed=col.querySelector('#zsSer,.zsEd'),at=zs;if(ed){at=ed;while(at.parentNode&&at.parentNode!==col)at=at.parentNode;if(at.parentNode!==col)at=zs;}col.insertBefore(done,at);if(doneHost!==col){if(del){doneHost.innerHTML='';doneHost.appendChild(del);del.style.flex='1';doneHost.style.marginTop='8px';col.appendChild(doneHost);}else doneHost.remove();}
  zoom.style.margin='0 0 6px';rot.style.margin='0 0 8px';col.insertBefore(zoom,col.firstChild);col.insertBefore(rot,zoom.nextSibling);
  col.querySelectorAll('h2,h3').forEach(function(h){h.style.marginTop='0';});}catch(e){}}
 
@@ -14928,7 +14928,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New eMSC-L serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='d8af8bdbdf';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='0cf14daa7d';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
