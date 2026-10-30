@@ -18,7 +18,7 @@ footer{text-align:center;font-size:11px;color:var(--mu);opacity:.7;padding:10px 
 </style></head><body>
 <header><div class="in"><small>Tucson Service Center · test page</small><b>Dictation test 2 – asks before it stops</b></div></header>
 <main>
-<div class="card"><p><b>Not part of any form.</b> Nothing here is saved. This is the new dictation for the forms: <b>one beep</b> when you tap a field. When you pause and the tablet stops listening, it asks <b>“Is that everything?”</b> – tap <b>Yes, done</b>, <b>Keep going</b> (adds more, one beep) or <b>Start over</b>. You can also tap <b>✓ Done</b> any time while it listens.</p><p>To fix something in the middle: tap the spot in the field (or use <b>◀ ▶</b>), <b>⌫</b> deletes the character before the cursor, then <b>🎤 Speak here</b> – it goes in at the cursor. <b>Clear</b> (on the right) empties the field.</p>
+<div class="card"><p><b>Not part of any form.</b> Nothing here is saved. This is the new dictation for the forms: <b>one beep</b> when you tap a field. When you pause and the tablet stops listening, it asks <b>“Is that everything?”</b> – tap <b>Yes, done</b>, <b>Keep going</b> (adds more, one beep) or <b>Start over</b>. You can also tap <b>✓ Done</b> any time while it listens.</p><p>Tapping a field that already has something in it <b>replaces</b> it. To fix something in the middle instead: tap <b>◀ ▶</b> (or tap the spot in the field while the panel is open), <b>⌫</b> deletes the character before the cursor, then <b>🎤 Speak here</b> – it goes in at the cursor. <b>Clear</b> (on the right) empties the field.</p>
 <p class="mu">Try reading a whole VIN with pauses, e.g. “one foxtrot tango seven … whiskey two bravo alpha … two tango echo charlie”.</p></div>
 <div class="card" id="ser"><h2>Serial numbers</h2>
  <div class="dev"><b>License plate #</b><input data-tk="plate" placeholder="e.g. 201838" autocomplete="off"></div>
@@ -142,7 +142,7 @@ window.Dictate={supported:!!SR,clean:clean,spoken:spoken,listen:listen,listenLon
 (function(){
 if(!window.Dictate)return;
 var KEY=window.DICTATE_KEY||'dictate_on',kbd=typeof WeakSet==='function'?new WeakSet():{has:function(){return false;},add:function(){},delete:function(){}};
-var st={el:null,busy:false,ask:false,h:null,raw:'',before:'',last:null,hideT:null};
+var st={el:null,busy:false,ask:false,rep:false,h:null,raw:'',before:'',last:null,hideT:null};
 function on(){try{return localStorage.getItem(KEY)==='1';}catch(e){return false;}}
 function setOn(v){try{localStorage.setItem(KEY,v?'1':'0');}catch(e){}if(!v){if(st.busy||st.ask)finish(true);stop();hide();}paint();}
 function cfg(){return window.DICTATE_FIELDS||[];}
@@ -198,21 +198,22 @@ function shown(el){var v=el.value,c=Math.max(0,Math.min(st.caret==null?v.length:
  return '<code style="'+CODE+';white-space:pre">'+esc(v.slice(0,c))+'<span class="dk-car"></span>'+esc(v.slice(c))+'</code>'+(v?'':' <span style="color:#6b7686">(empty)</span>');}
 var EDIT='<span class="dk-ed"><button data-dk-x="left" aria-label="Move cursor left">◀</button><button data-dk-x="right" aria-label="Move cursor right">▶</button><button data-dk-x="bksp" aria-label="Delete the character before the cursor">⌫</button></span><button class="dk-clr" data-dk-x="clear">Clear</button>';
 function listen(el,more){var k=kindOf(el);if(!k)return;stop();st.el=el;place();st.busy=true;st.ask=false;el.classList.add('dk-live');var lb=esc(labelOf(el));
- if(!more){st.before=el.value;var sc=null;try{if(document.activeElement===el)sc=el.selectionStart;}catch(e){}st.caret=sc==null?el.value.length:sc;st.start=st.caret;}
- var c0=Math.max(0,Math.min(st.caret,el.value.length)),pre=el.value.slice(0,c0),post=el.value.slice(c0),ins='',heard='';
+ /* first tap on a field that already has a value replaces it (like a selected value); later taps / Speak here insert at the cursor */
+ if(!more){st.before=el.value;st.rep=!!el.value;st.caret=el.value.length;st.start=0;}else st.rep=false;
+ var c0=Math.max(0,Math.min(st.caret,el.value.length)),pre=st.rep?'':el.value.slice(0,c0),post=st.rep?'':el.value.slice(c0),ins='',heard='';
  var B='<button class="p" data-dk-x="fin">✓ Done</button><button data-dk-x="kbd">⌨ Type instead</button>';
  var paint=function(msg){show('live','Listening – '+lb,shown(el)+'<br><span style="color:#6b7686">'+msg+'</span>',B,EDIT);};
- st.caret=c0;paint(el.value?'Speak after the beep – it goes in at the cursor.':'Speak after the beep, one character at a time. When you pause, it asks if that is everything.');
+ st.caret=c0;paint(st.rep?'Speak after the beep – it <b>replaces</b> what is there. To change just part of it, tap ◀ ▶ first.':el.value?'Speak after the beep – it goes in at the cursor.':'Speak after the beep, one character at a time. When you pause, it asks if that is everything.');
  st.ins=function(t){heard=t;ins=Dictate.clean(t,k);setLive(el,pre+ins+post);caretTo(el,pre.length+ins.length);};
  st.h=Dictate.listenLong({pause:PAUSE,firstWait:12000,
   onText:function(t){st.ins(t);paint('Heard “'+esc(t)+'”');},
-  onSilence:function(t){st.h=null;st.busy=false;el.classList.remove('dk-live');st.ins(t);st.heard=heard;askDone(el);},
-  onError:function(c,m,t){st.h=null;st.busy=false;el.classList.remove('dk-live');if(String(t||'').trim()){st.ins(t);st.heard=heard;askDone(el);return;}
+  onSilence:function(t){st.h=null;st.busy=false;st.rep=false;el.classList.remove('dk-live');st.ins(t);st.heard=heard;askDone(el);},
+  onError:function(c,m,t){st.h=null;st.busy=false;st.rep=false;el.classList.remove('dk-live');if(String(t||'').trim()){st.ins(t);st.heard=heard;askDone(el);return;}
    if(el.value){st.heard='';askDone(el,'Didn’t catch anything that time.');return;}
    show('err',lb,esc(m),'<button class="p" data-dk-x="again">🎤 Try again</button><button data-dk-x="kbd">⌨ Type instead</button>');}});
  if(!st.h){st.busy=false;el.classList.remove('dk-live');}}
 /* stop listening but keep what was heard (an edit button was tapped while listening) */
-function pause(){var el=st.el;if(!el||!st.h)return;var t=st.h.done();st.h=null;st.busy=false;el.classList.remove('dk-live');if(t)st.ins(t);}
+function pause(){var el=st.el;if(!el||!st.h)return;var t=st.h.done();st.h=null;st.busy=false;el.classList.remove('dk-live');if(t)st.ins(t);st.rep=false;}
 function askDone(el,note){st.ask=true;var lb=esc(labelOf(el));
  show('ask','Is that everything? '+lb,shown(el)+'<br><span style="color:#6b7686">'+(note||(st.heard?'Heard “'+esc(st.heard)+'”.':'Move the cursor, delete or clear, then speak again.'))+'</span>',
   '<button class="p" data-dk-x="fin">✓ Yes, done</button><button data-dk-x="more">🎤 Speak here</button><button data-dk-x="again">Start over</button><button data-dk-x="kbd">⌨ Type</button>',EDIT);}
@@ -243,7 +244,7 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
  if(x==='fin'){finish();return;}
  if(x==='close'){if(st.busy||st.ask)finish(true);else{stop();hide();}return;}
  if(x==='more'&&el){listen(el,true);return;}
- if(x==='again'&&el){stop();var b0=(st.busy||st.ask||P.className==='ok')?(st.last&&st.last.el===el&&P.className==='ok'?st.last.before:st.before):el.value;setLive(el,b0||'');st.caret=st.start==null?(b0||'').length:Math.min(st.start,(b0||'').length);caretTo(el,st.caret);st.before=b0||'';listen(el,true);return;}
+ if(x==='again'&&el){stop();var b0=(st.busy||st.ask||P.className==='ok')?(st.last&&st.last.el===el&&P.className==='ok'?st.last.before:st.before):el.value;setLive(el,b0||'');caretTo(el,(b0||'').length);listen(el);return;}
  if(x==='undo'&&st.last){stop();st.ask=false;put(st.last.el,st.last.before);show('','Undone','The field is back to what it was.','<button class="p" data-dk-x="close">Close</button>');return;}
  if(x==='kbd'&&el){if(st.busy||st.ask)finish(true);stop();hide();kbd.add(el);el.removeAttribute('inputmode');el.classList.add('dk-kbd');el.blur();el.focus();return;}
  if(x==='voice'&&el){kbd.delete(el);el.classList.remove('dk-kbd');el.setAttribute('inputmode','none');el.blur();el.focus();listen(el);return;}},true);

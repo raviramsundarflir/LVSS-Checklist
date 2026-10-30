@@ -14075,7 +14075,7 @@ document.addEventListener('focusout',e=>{histCommit(e.target);setTimeout(()=>{if
 document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='190e30c1af';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='9ced103a25';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
@@ -14192,21 +14192,56 @@ function listen(o){o=o||{};if(!SR){o.onError&&o.onError('unsupported','This brow
  r.onend=function(){if(ended)return;ended=true;cur=null;if(!got)o.onError&&o.onError('empty',heard?'Speech was heard but no text came back. This browser may not support dictation (Brave is a known case). Use the keyboard’s microphone key instead.':'Nothing came back from the speech service. Tap the field and try again, or use the keyboard’s microphone key.');o.onEnd&&o.onEnd();};
  try{r.start();}catch(e){o.onError&&o.onError('start',String(e&&e.message||e));return null;}cur=r;return r;}
 function stop(){if(cur){try{cur.abort();}catch(e){}cur=null;}}
-window.Dictate={supported:!!SR,clean:clean,spoken:spoken,listen:listen,stop:stop};
+/* listen until the tech is finished (Ravi, 2026-10-30). Where the browser keeps listening (desktop Chrome) it ends after
+   o.pause ms with nothing new heard (onSilence). Where the browser ends on its own after a pause (Android), it ends there
+   and calls onSilence too, so the form can ask "Is that everything?". o.restart:true restarts instead (beeps on Android). o={lang,pause,firstWait,onText(text),onSilence(text),onError(code,msg,text)}
+   returns {done()->text, abort()} */
+var MSG={'not-allowed':'The microphone is blocked for this page. Allow the microphone for this site in the browser settings, then try again.',
+ 'service-not-allowed':'This browser does not allow speech recognition here.',
+ 'network':'The speech service could not be reached. It needs internet, and some browsers (Brave is a known case) do not provide it.',
+ 'audio-capture':'No microphone was found.'};
+var EMPTY='Nothing came back from the speech service. Tap the field and try again, or use the keyboard and its microphone key.';
+var NOHEAR='Didn\u2019t catch anything. Tap \ud83c\udfa4 Try again and speak right after the beep.';
+function listenLong(o){o=o||{};if(!SR){o.onError&&o.onError('unsupported','This browser has no speech recognition. Use the keyboard’s microphone key instead.','');return null;}
+ stop();
+ var on=true,parts=[],fin=[],intr='',got=false,silT=null,dogT=null,rec=null,starts=0,lastStart=0,PAUSE=o.pause||4000,FIRST=o.firstWait||12000;
+ var RESTART=o.restart===true;
+ function dd(L){var out=[];L.forEach(function(t){t=String(t||'').trim();if(!t)return;var p=out.length?out[out.length-1]:null,a=t.toLowerCase(),b=p&&p.toLowerCase();
+  if(p&&a.indexOf(b)===0){out[out.length-1]=t;return;}if(p&&b.indexOf(a)===0)return;out.push(t);});return out;}
+ function text(){var all=parts.concat(dd(fin));if(intr)all.push(intr);return all.join(' ').replace(/\s+/g,' ').trim();}
+ function commit(){parts=parts.concat(dd(fin));if(intr)parts.push(intr);fin=[];intr='';}
+ function halt(){on=false;clearTimeout(silT);clearTimeout(dogT);var r=rec;rec=null;if(r){try{r.abort();}catch(e){}}if(cur===H)cur=null;}
+ function arm(){clearTimeout(silT);silT=setTimeout(function(){if(!on)return;commit();var t=text();halt();o.onSilence&&o.onSilence(t);},PAUSE);}
+ function fail(c,m){if(!on)return;commit();var t=text();halt();o.onError&&o.onError(c,m,t);}
+ function one(){if(!on)return;var r=new SR();rec=r;starts++;lastStart=Date.now();r.lang=o.lang||'en-US';r.interimResults=true;r.maxAlternatives=1;r.continuous=true;
+  r.onresult=function(e){if(rec!==r||!on)return;var F=[],I='';for(var i=0;i<e.results.length;i++){var x=e.results[i],t=(x[0]&&x[0].transcript)||'';if(x.isFinal)F.push(t);else I+=(I?' ':'')+t;}
+   fin=F;intr=I.trim();if(text()){got=true;clearTimeout(dogT);}o.onText&&o.onText(text());arm();};
+  r.onerror=function(e){if(rec!==r||!on)return;var c=e.error||'error';if(c==='no-speech'||c==='aborted')return;if(c==='network'&&got)return;fail(c,MSG[c]||('Speech recognition error: '+c));};
+  r.onend=function(){if(rec!==r||!on)return;commit();
+   /* no automatic restart (Ravi, 2026-10-30): on Android every restart beeps. When the browser ends after a pause, ask. */
+   if(!RESTART){var t0=text();halt();if(t0)o.onSilence&&o.onSilence(t0);else o.onError&&o.onError('no-speech',NOHEAR,'');return;}
+   if(starts>=40){if(got){var t=text();halt();o.onSilence&&o.onSilence(t);}else fail('empty',EMPTY);return;}
+   setTimeout(function(){if(on&&rec===r)one();},Date.now()-lastStart<800?600:150);};
+  try{r.start();}catch(e){fail('start',String(e&&e.message||e));}}
+ var H={abort:function(){halt();},done:function(){if(!on)return text();commit();var t=text();halt();return t;},text:text};
+ dogT=setTimeout(function(){if(!got)fail('empty',EMPTY);},FIRST);
+ cur=H;one();return H;}
+window.Dictate={supported:!!SR,clean:clean,spoken:spoken,listen:listen,listenLong:listenLong,stop:stop};
 })();
 
 /* ===== shared: dictation in the forms (Ravi, 2026-10-30) =====
    Dictate On/Off is chosen when an inspection starts, and again at the top of the serial numbers (switch any time).
-   With it on, tapping a serial-number or version field listens instead of opening the keyboard. A panel at the bottom of
-   the screen shows what was heard and what was entered; "Type instead" opens the keyboard for that field.
+   With it on, tapping a serial-number or version field listens instead of opening the keyboard (one beep). It keeps listening through
+   short pauses where the browser allows it; when it stops it asks "Is that everything?" (Yes, done / Keep going / Start over). "Type instead"
+   opens the keyboard for that field.
    Text from the keyboard's own microphone key ("x-ray two six…") is cleaned up when the field is left, Dictate on or off.
    Each form sets window.DICTATE_FIELDS = [{sel, kind}] (kind: serial | version | number). */
 (function(){
 if(!window.Dictate)return;
-var KEY='dictate_on',kbd=typeof WeakSet==='function'?new WeakSet():{has:function(){return false;},add:function(){},delete:function(){}};
-var st={el:null,busy:false,dog:null,last:null};
+var KEY=window.DICTATE_KEY||'dictate_on',kbd=typeof WeakSet==='function'?new WeakSet():{has:function(){return false;},add:function(){},delete:function(){}};
+var st={el:null,busy:false,ask:false,rep:false,h:null,raw:'',before:'',last:null,hideT:null};
 function on(){try{return localStorage.getItem(KEY)==='1';}catch(e){return false;}}
-function setOn(v){try{localStorage.setItem(KEY,v?'1':'0');}catch(e){}if(!v){stop();hide();}paint();}
+function setOn(v){try{localStorage.setItem(KEY,v?'1':'0');}catch(e){}if(!v){if(st.busy||st.ask)finish(true);stop();hide();}paint();}
 function cfg(){return window.DICTATE_FIELDS||[];}
 function kindOf(el){if(!el||el.tagName!=='INPUT'||el.type==='date'||el.disabled||el.readOnly)return null;var F=cfg();for(var i=0;i<F.length;i++){try{if(el.matches(F[i].sel))return F[i].kind||'serial';}catch(e){}}return null;}
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -14217,12 +14252,14 @@ var css=document.createElement('style');css.textContent=
  'input.dk-kbd{background-image:none!important}'+
  'input.dk-live{border-color:#c2410c!important;background-color:#fff1e6!important;box-shadow:0 0 0 3px rgba(194,65,12,.18)!important}'+
  '#dkPanel{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom));width:min(680px,calc(100% - 20px));background:#fff;color:#14213d;border:1px solid #d5dce6;border-left:6px solid #1d5fc4;border-radius:14px;box-shadow:0 10px 30px rgba(20,33,61,.25);padding:10px 12px;z-index:900;font-size:15px;display:none}'+
- '#dkPanel.live{border-left-color:#c2410c}#dkPanel.err{border-left-color:#c62828}#dkPanel.ok{border-left-color:#1b8a3a}'+
+ '#dkPanel.live{border-left-color:#c2410c}#dkPanel.ask{border-left-color:#e0a000}#dkPanel.err{border-left-color:#c62828}#dkPanel.ok{border-left-color:#1b8a3a}'+
  '#dkPanel .t{display:flex;align-items:center;gap:8px;min-height:24px}#dkPanel .t b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
  '#dkPanel .m{color:#4a5568;font-size:14px;min-height:40px;margin-top:2px;line-height:1.4}#dkPanel .m code{font:700 16px/1.2 ui-monospace,Menlo,Consolas,monospace;color:#14213d}'+
  '#dkPanel .b{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;align-items:center;min-height:44px;margin-top:4px}'+
  '#dkPanel button{min-height:40px;padding:4px 12px;border-radius:10px;border:1px solid #c7d0dd;background:#fff;font:inherit;font-size:14px;font-weight:700;color:#14213d;white-space:nowrap;flex:none}'+
  '#dkPanel button.p{background:#1d5fc4;border-color:#1d5fc4;color:#fff}#dkPanel button.alt{font-family:ui-monospace,Menlo,Consolas,monospace;background:#eef3fc}'+
+ '#dkPanel .e{display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed #d5dce6}#dkPanel .dk-ed{display:flex;gap:8px}#dkPanel .dk-ed button{min-width:64px;min-height:48px;font-size:20px}#dkPanel button.dk-clr{margin-left:auto;min-width:90px;min-height:48px;color:#b42318;border-color:#e8b4ae}'+
+ '#dkPanel .dk-car{display:inline-block;width:3px;height:1.25em;background:#c2410c;border-radius:2px;vertical-align:-4px;margin:0 2px;animation:dkp 1s infinite}'+
  '#dkPanel .dot{width:12px;height:12px;border-radius:50%;background:#c2410c;flex:none;animation:dkp 1s infinite}@keyframes dkp{50%{opacity:.25}}'+
  '.dk-pill{min-height:40px;padding:4px 10px;font-weight:800;white-space:nowrap;flex:none}.dk-pill.on{background:#1d5fc4!important;border-color:#1d5fc4!important;color:#fff!important}'+
  '.dk-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#eef3fc;border:1px solid #c9d8f0;border-radius:10px;padding:8px 10px;margin:10px 0}.dk-row span{flex:1 1 200px;font-weight:700}.dk-row small{display:block;font-weight:400;color:#5a6478}'+
@@ -14231,7 +14268,7 @@ document.head.appendChild(css);
 var P=document.createElement('div');P.id='dkPanel';P.setAttribute('role','status');P.setAttribute('aria-live','polite');
 function mount(){if(!P.parentNode)document.body.appendChild(P);}
 function place(){var el=st.el,top=false;try{if(el){var r=el.getBoundingClientRect();top=(r.top+r.bottom)/2>window.innerHeight*0.55;}}catch(e){}P.style.top=top?'calc(70px + env(safe-area-inset-top))':'auto';P.style.bottom=top?'auto':'calc(10px + env(safe-area-inset-bottom))';}
-function show(cls,title,msg,btns){mount();if(P.style.display!=='block')place();P.className=cls||'';P.innerHTML='<div class="t">'+(cls==='live'?'<span class="dot"></span>':'')+'<b>'+title+'</b><button data-dk-x="close" aria-label="Close">✕</button></div><div class="m">'+(msg||'')+'</div><div class="b">'+(btns||'')+'</div>';P.style.display='block';}
+function show(cls,title,msg,btns,ed){mount();if(P.style.display!=='block')place();P.className=cls||'';P.innerHTML='<div class="t">'+(cls==='live'?'<span class="dot"></span>':'')+'<b>'+title+'</b><button data-dk-x="close" aria-label="Close">✕</button></div><div class="m">'+(msg||'')+'</div><div class="b">'+(btns||'')+'</div>'+(ed?'<div class="e">'+ed+'</div>':'');P.style.display='block';}
 function hide(){P.style.display='none';}
 /* ---------- marks on the fields ---------- */
 function paint(){var o=on();document.querySelectorAll('input').forEach(function(el){var k=kindOf(el);if(!k){el.classList.remove('dk-mic');return;}
@@ -14247,36 +14284,66 @@ if(document.body)start();else document.addEventListener('DOMContentLoaded',start
 window.DictUI={rowHtml:function(){return '<div class="dk-row"><span>🎤 Dictate serial numbers and versions<small>Tap a field and say it instead of typing. You can switch it here any time.</small></span><div class="dk-seg"><button type="button" data-dk="0">Off</button><button type="button" data-dk="1">On</button></div></div>';},paint:paint,on:on,setOn:setOn};
 /* ---------- putting a value in, the same way typing does ---------- */
 function put(el,v){el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));try{el.blur();}catch(e){}el.dispatchEvent(new Event('change',{bubbles:true}));}
-/* ---------- listening ---------- */
-function stop(){clearTimeout(st.dog);if(st.busy){st.busy=false;Dictate.stop();}if(st.el)st.el.classList.remove('dk-live');}
-function listen(el){var k=kindOf(el);if(!k)return;stop();st.el=el;place();st.busy=true;el.classList.add('dk-live');var lb=esc(labelOf(el)),before=el.value,t0=Date.now(),done=false;
- var kb='<button data-dk-x="kbd">⌨ Type instead</button>';
- show('live','Listening – '+lb,'Say it one character at a time, then pause.',kb);
- var fin=function(){done=true;st.busy=false;clearTimeout(st.dog);el.classList.remove('dk-live');};
- st.dog=setTimeout(function(){if(done)return;fin();Dictate.stop();show('err',lb,'No answer from the speech service. This browser may not support dictation (Brave is a known case). Use the keyboard and its microphone key.','<button class="p" data-dk-x="again">🎤 Try again</button><button data-dk-x="kbd">⌨ Type instead</button>');},10000);
- Dictate.listen({onState:function(t,kd){if(done)return;if(kd==='interim')show('live','Listening – '+lb,esc(t),kb);},
-  onResult:function(best,alts){if(done)return;fin();var v=Dictate.clean(best,k);
-   if(!v){show('err',lb,'Heard “'+esc(best)+'” but no letters or numbers came out of it.','<button class="p" data-dk-x="again">🎤 Try again</button><button data-dk-x="kbd">⌨ Type instead</button>');return;}
-   st.last={el:el,before:before};put(el,v);
-   var seen={},o=[];seen[v.toLowerCase()]=1;(alts||[]).forEach(function(a){var c=Dictate.clean(a,k);if(c&&!seen[c.toLowerCase()]){seen[c.toLowerCase()]=1;o.push(c);}});
-   show('ok','✓ '+lb+': <code style="font:800 16px ui-monospace,Menlo,Consolas,monospace">'+esc(v)+'</code>','Heard “'+esc(best.trim())+'”.'+(o.length?' Not right? Tap one of the others, or try again.':' Not right? Try again or type it.'),
-    o.map(function(c){return '<button class="alt" data-dk-alt="'+esc(c)+'">'+esc(c)+'</button>';}).join('')+'<button data-dk-x="again">🎤 Again</button><button data-dk-x="undo">Undo</button><button data-dk-x="kbd">⌨ Type</button><button class="p" data-dk-x="close">Done</button>');},
-  onError:function(c,m){if(done)return;fin();if(c==='aborted'){hide();return;}show('err',lb,esc(m),'<button class="p" data-dk-x="again">🎤 Try again</button><button data-dk-x="kbd">⌨ Type instead</button>');},
-  onEnd:function(){if(!done)fin();}});}
+/* ---------- listening. Speech goes in at the cursor (Ravi, 2026-10-30): tap where it should go, or move the cursor
+   with ◀ ▶; ⌫ deletes the character before the cursor; Clear (set apart on the right) empties the field.
+   When the browser stops listening after a pause it asks "Is that everything?". ---------- */
+var PAUSE=4000,CODE='font:800 16px ui-monospace,Menlo,Consolas,monospace';
+function stop(){clearTimeout(st.hideT);if(st.h){try{st.h.abort();}catch(e){}st.h=null;}st.busy=false;if(st.el)st.el.classList.remove('dk-live');}
+function setLive(el,v){el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));}
+function caretTo(el,c){c=Math.max(0,Math.min(c,el.value.length));st.caret=c;try{if(document.activeElement!==el)el.focus();el.setSelectionRange(c,c);}catch(e){}}
+function shown(el){var v=el.value,c=Math.max(0,Math.min(st.caret==null?v.length:st.caret,v.length));
+ return '<code style="'+CODE+';white-space:pre">'+esc(v.slice(0,c))+'<span class="dk-car"></span>'+esc(v.slice(c))+'</code>'+(v?'':' <span style="color:#6b7686">(empty)</span>');}
+var EDIT='<span class="dk-ed"><button data-dk-x="left" aria-label="Move cursor left">◀</button><button data-dk-x="right" aria-label="Move cursor right">▶</button><button data-dk-x="bksp" aria-label="Delete the character before the cursor">⌫</button></span><button class="dk-clr" data-dk-x="clear">Clear</button>';
+function listen(el,more){var k=kindOf(el);if(!k)return;stop();st.el=el;place();st.busy=true;st.ask=false;el.classList.add('dk-live');var lb=esc(labelOf(el));
+ /* first tap on a field that already has a value replaces it (like a selected value); later taps / Speak here insert at the cursor */
+ if(!more){st.before=el.value;st.rep=!!el.value;st.caret=el.value.length;st.start=0;}else st.rep=false;
+ var c0=Math.max(0,Math.min(st.caret,el.value.length)),pre=st.rep?'':el.value.slice(0,c0),post=st.rep?'':el.value.slice(c0),ins='',heard='';
+ var B='<button class="p" data-dk-x="fin">✓ Done</button><button data-dk-x="kbd">⌨ Type instead</button>';
+ var paint=function(msg){show('live','Listening – '+lb,shown(el)+'<br><span style="color:#6b7686">'+msg+'</span>',B,EDIT);};
+ st.caret=c0;paint(st.rep?'Speak after the beep – it <b>replaces</b> what is there. To change just part of it, tap ◀ ▶ first.':el.value?'Speak after the beep – it goes in at the cursor.':'Speak after the beep, one character at a time. When you pause, it asks if that is everything.');
+ st.ins=function(t){heard=t;ins=Dictate.clean(t,k);setLive(el,pre+ins+post);caretTo(el,pre.length+ins.length);};
+ st.h=Dictate.listenLong({pause:PAUSE,firstWait:12000,
+  onText:function(t){st.ins(t);paint('Heard “'+esc(t)+'”');},
+  onSilence:function(t){st.h=null;st.busy=false;st.rep=false;el.classList.remove('dk-live');st.ins(t);st.heard=heard;askDone(el);},
+  onError:function(c,m,t){st.h=null;st.busy=false;st.rep=false;el.classList.remove('dk-live');if(String(t||'').trim()){st.ins(t);st.heard=heard;askDone(el);return;}
+   if(el.value){st.heard='';askDone(el,'Didn’t catch anything that time.');return;}
+   show('err',lb,esc(m),'<button class="p" data-dk-x="again">🎤 Try again</button><button data-dk-x="kbd">⌨ Type instead</button>');}});
+ if(!st.h){st.busy=false;el.classList.remove('dk-live');}}
+/* stop listening but keep what was heard (an edit button was tapped while listening) */
+function pause(){var el=st.el;if(!el||!st.h)return;var t=st.h.done();st.h=null;st.busy=false;el.classList.remove('dk-live');if(t)st.ins(t);st.rep=false;}
+function askDone(el,note){st.ask=true;var lb=esc(labelOf(el));
+ show('ask','Is that everything? '+lb,shown(el)+'<br><span style="color:#6b7686">'+(note||(st.heard?'Heard “'+esc(st.heard)+'”.':'Move the cursor, delete or clear, then speak again.'))+'</span>',
+  '<button class="p" data-dk-x="fin">✓ Yes, done</button><button data-dk-x="more">🎤 Speak here</button><button data-dk-x="again">Start over</button><button data-dk-x="kbd">⌨ Type</button>',EDIT);}
+function edit(x){var el=st.el;if(!el)return;if(st.busy)pause();var v=el.value,c=Math.max(0,Math.min(st.caret==null?v.length:st.caret,v.length));
+ if(x==='left')caretTo(el,c-1);else if(x==='right')caretTo(el,c+1);
+ else if(x==='bksp'){if(c>0){setLive(el,v.slice(0,c-1)+v.slice(c));caretTo(el,c-1);}}
+ else if(x==='clear'){setLive(el,'');caretTo(el,0);}
+ st.heard='';askDone(el,x==='clear'?'Cleared. Tap 🎤 Speak here to say it again.':'');}
+/* finish: tell the form, the same way typing does (input + change after leaving the field) */
+function finish(quiet){var el=st.el;if(!el)return;if(st.h)pause();st.busy=false;st.ask=false;el.classList.remove('dk-live');
+ if(el.value===st.before){try{el.blur();}catch(e){}if(!quiet)hide();return;}
+ st.last={el:el,before:st.before};put(el,el.value);
+ if(quiet){hide();return;}
+ show('ok','✓ '+esc(labelOf(el))+': <code style="'+CODE+'">'+esc(el.value||'(empty)')+'</code>','Saved.','<button data-dk-x="undo">Undo</button><button data-dk-x="edit">✏ Edit</button><button data-dk-x="again">🎤 Again</button><button class="p" data-dk-x="close">Close</button>');
+ clearTimeout(st.hideT);st.hideT=setTimeout(function(){if(P.className==='ok')hide();},5000);}
 /* ---------- taps ---------- */
 document.addEventListener('pointerdown',function(e){var el=e.target;if(!on()||!kindOf(el))return;if(!kbd.has(el))el.setAttribute('inputmode','none');},true);
 document.addEventListener('click',function(e){var el=e.target;
  if(el.closest&&el.closest('.dk-seg button')){setOn(el.closest('button').getAttribute('data-dk')==='1');return;}
- if(!on()||!kindOf(el)||kbd.has(el))return;if(st.busy&&st.el===el){stop();hide();return;}listen(el);},true);
+ if(!on()||!kindOf(el)||kbd.has(el))return;if(st.ask&&st.el===el){try{st.caret=el.selectionStart;}catch(x){}listen(el,true);return;}if(st.busy&&st.el===el){var tc=null;try{tc=el.selectionStart;}catch(x){}pause();if(tc!=null)caretTo(el,tc);st.heard='';askDone(el,'Stopped listening. The cursor is where you tapped.');return;}if((st.busy||st.ask)&&st.el&&st.el!==el)finish(true);listen(el);},true);
 P.addEventListener('pointerdown',function(e){e.preventDefault();});P.addEventListener('mousedown',function(e){e.preventDefault();});
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-dk-x],[data-dk-alt]');if(!b)return;var x=b.getAttribute('data-dk-x'),el=st.el;
  if(x==='pill'){setOn(!on());return;}
  e.stopPropagation();
  if(b.hasAttribute('data-dk-alt')){if(el){put(el,b.getAttribute('data-dk-alt'));show('ok','✓ '+esc(labelOf(el))+': <code style="font:800 16px ui-monospace,Menlo,Consolas,monospace">'+esc(b.getAttribute('data-dk-alt'))+'</code>','Picked from the other matches.','<button data-dk-x="undo">Undo</button><button class="p" data-dk-x="close">Done</button>');}return;}
- if(x==='close'){stop();hide();return;}
- if(x==='again'&&el){el.focus();listen(el);return;}
- if(x==='undo'&&st.last){put(st.last.el,st.last.before);show('','Undone','The field is back to what it was.','<button class="p" data-dk-x="close">Done</button>');return;}
- if(x==='kbd'&&el){stop();hide();kbd.add(el);el.removeAttribute('inputmode');el.classList.add('dk-kbd');el.blur();el.focus();return;}
+ if(x==='left'||x==='right'||x==='bksp'||x==='clear'){edit(x);return;}
+ if(x==='edit'&&el){clearTimeout(st.hideT);st.before=el.value;st.start=el.value.length;el.setAttribute('inputmode','none');caretTo(el,el.value.length);st.heard='';askDone(el,'Move the cursor, delete or clear, then speak again.');return;}
+ if(x==='fin'){finish();return;}
+ if(x==='close'){if(st.busy||st.ask)finish(true);else{stop();hide();}return;}
+ if(x==='more'&&el){listen(el,true);return;}
+ if(x==='again'&&el){stop();var b0=(st.busy||st.ask||P.className==='ok')?(st.last&&st.last.el===el&&P.className==='ok'?st.last.before:st.before):el.value;setLive(el,b0||'');caretTo(el,(b0||'').length);listen(el);return;}
+ if(x==='undo'&&st.last){stop();st.ask=false;put(st.last.el,st.last.before);show('','Undone','The field is back to what it was.','<button class="p" data-dk-x="close">Close</button>');return;}
+ if(x==='kbd'&&el){if(st.busy||st.ask)finish(true);stop();hide();kbd.add(el);el.removeAttribute('inputmode');el.classList.add('dk-kbd');el.blur();el.focus();return;}
  if(x==='voice'&&el){kbd.delete(el);el.classList.remove('dk-kbd');el.setAttribute('inputmode','none');el.blur();el.focus();listen(el);return;}},true);
 /* field in keyboard mode: offer to switch back to voice */
 document.addEventListener('focusin',function(e){var el=e.target;if(!on()||!kindOf(el)||!kbd.has(el))return;st.el=el;place();show('','⌨ Typing – '+esc(labelOf(el)),'The keyboard is open for this field.','<button class="p" data-dk-x="voice">🎤 Speak instead</button><button data-dk-x="close">Done</button>');});
