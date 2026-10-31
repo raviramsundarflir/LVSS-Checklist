@@ -121,6 +121,17 @@ a.homelnk,a.homelnk:visited,a.homelnk:hover,a.homelnk:active{background:var(--bl
 .arw{display:flex;align-items:center;gap:6px;color:#c8202a;font-weight:800;font-size:13px;margin-bottom:4px}.arw i{font-style:normal;font-size:22px;line-height:1;display:inline-block;animation:arwb .7s ease-in-out infinite alternate}
 @keyframes arwb{from{transform:translateX(0)}to{transform:translateX(9px)}}@media (prefers-reduced-motion:reduce){.arw i{animation:none}}
 .cmpl{background:#177a3c!important;border-color:#177a3c!important;color:#fff!important}
+</style><style>/* ===== phone-width top bar and steps (Ravi, 2026-10-30): no clipped or off-screen buttons ===== */
+@media(max-width:640px){
+.top .bar{column-gap:6px}
+.top .bar>button,.top .bar>a.homelnk{min-width:0;flex:1 1 0;white-space:normal;line-height:1.15;font-size:14px;padding:4px 6px;min-height:44px;margin-left:0}
+.top .bar>button.save{flex:1.1 1 0;font-size:12px}
+.top .bar>button.cmpl{flex:1.3 1 0}
+.top .bar>button[data-act=home]{flex:.8 1 0}
+.steps{flex-wrap:wrap;overflow-x:visible;row-gap:4px}
+.steps button{flex:1 1 0;min-width:0;font-size:13px;padding:6px 4px;line-height:1.15;white-space:normal}
+.steps button:first-child:nth-last-child(n+5),.steps button:first-child:nth-last-child(n+5)~button{flex:1 1 calc(33.333% - 4px)}
+}
 </style></head><body>
 <div id="app"></div>
 <script id="tpl-data" type="application/json">{"title":"Site Quick Capture","revision":"Rev 1","stamp":1,"sections":[{"id":"sR","title":"Customer Reported Issues","kind":"rep","groups":[{"title":"","items":[]}]},{"id":"sN","title":"Additional Issues Identified by Tech","kind":"new","groups":[{"title":"","items":[]}]},{"id":"sQ","title":"Main Functions Check","groups":[{"title":"","items":[{"id":"q1","t":"Cameleon Advanced tab: all systems are green"},{"id":"q2","t":"Camera can be controlled with the mouse"},{"id":"q3","t":"Camera can be controlled with the on-screen controls"},{"id":"q4","t":"Camera can be controlled with the LCU"},{"id":"q5","t":"LCU is functional"},{"id":"q6","t":"EO and IR video are both present"},{"id":"q7","t":"No BIT errors"},{"id":"q8","t":"Radar is operational: transmitting and picking up targets"},{"id":"q9","t":"Pan tilt is operational"},{"id":"q10","t":"Click a target on the radar map: the camera slews to the target and tracks it while the target is still active"},{"id":"q11","t":"Truck is charging off engine power"},{"id":"q12","t":"Truck is charging off shore power (mark N/A if shore power is not available at the site)"}]}]}],"versionInfo":{"note":"Mileage, engine hours and idle hours from the dashboard (one photo can cover all three), plus any software versions you can read.","fields":[{"key":"v0s","label":"Server Image (created date)"},{"key":"v0c","label":"Client Image (created date)"},{"key":"v1","label":"PMU Version"},{"key":"v2","label":"PCM Version"},{"key":"v3","label":"HMI Version"},{"key":"v4","label":"PSR Version"},{"key":"v5","label":"Rim 1 Version"},{"key":"v6","label":"Rim 2 Version"},{"key":"v7","label":"Vehicle Mileage"},{"key":"v8","label":"Engine Hours"},{"key":"v9","label":"Idle Hours"}]},"devices":["Pan tilt","Radar","Camera","Server","Trimble","Gear box","LCU","Client"]}</script>
@@ -15531,7 +15542,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New eMSC-L serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='b5dafe3882';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='a3b06f661b';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
