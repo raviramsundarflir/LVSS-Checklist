@@ -14241,11 +14241,11 @@ function wipShow(){
   ${wipBtn('wip-close','Close','')}`);}
 function wipBuildPdf(){
   const rec=WA.rec(),p=S.wip.p,d=new window.jspdf.jsPDF({unit:'pt',format:'letter',compress:true}),n=p.parts.length,pg=p.pg||{};
-  const FN={LVSS:(typeof APP==='string'&&/intake/i.test(APP))?'Truck Intake Inspection':'LVSS / eMSC-L Post-Repair Checklist',SKYW:'SkyWatch Inspection',ATP:'eMSC-L ATP Inspection'}[WA.app]||'Inspection';
+  const FN={LVSS:(typeof APP==='string'&&/intake/i.test(APP))?'Intake – Long Form':'LVSS / eMSC-L Post-Repair Checklist',SKYW:'SkyWatch Inspection',ATP:'eMSC-L ATP Inspection'}[WA.app]||'Inspection';
   const h=rec.hdr||rec.header||{},tech=String(h.tech||h.inspector||h.technician||h.techName||'').trim(),sn=WA.sn(rec)||'(no serial entered)';
   const now=new Date(),ts=now.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
   p.parts.forEach((t,k)=>{if(k)d.addPage();
-    d.setFillColor(30,70,140);d.rect(0,0,612,64,'F');d.setTextColor(255);d.setFont('helvetica','bold');d.setFontSize(18);d.text(('PAUSED '+({LVSS:(typeof APP==='string'&&/intake/i.test(APP))?'TRUCK INTAKE':'POST-REPAIR',SKYW:'SKYWATCH',ATP:'ATP'}[WA.app]||'INSPECTION')+' QR CODE'),36,30);
+    d.setFillColor(30,70,140);d.rect(0,0,612,64,'F');d.setTextColor(255);d.setFont('helvetica','bold');d.setFontSize(18);d.text(('PAUSED '+({LVSS:(typeof APP==='string'&&/intake/i.test(APP))?'INTAKE LONG FORM':'POST-REPAIR',SKYW:'SKYWATCH',ATP:'ATP'}[WA.app]||'INSPECTION')+' QR CODE'),36,30);
     d.setFontSize(10);d.setFont('helvetica','normal');d.text(FN+'  -  leave with the equipment for the next technician',36,48);
     d.setTextColor(0);let y=92;
     const row=(a,b)=>{d.setFont('helvetica','bold');d.setFontSize(11);d.text(a,36,y);d.setFont('helvetica','normal');d.text(String(b),150,y);y+=17;};
@@ -14399,7 +14399,7 @@ function techRemember(n){n=(n||'').trim();if(!n)return;const L=[n,...techNames()
 function techPick(i){const n=techNames()[i],el=$('#n-te');if(n&&el){el.value=n;S.techDraft=n;}}
 /* shared: ask at the start of each inspection whether the tech has a good connection; offline readiness check */
 (function(){
-var FORMS=[['intake','Truck Intake'],['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch'],['qc','Quick Capture']];
+var FORMS=[['intake','Intake (long form)'],['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch'],['qc','Intake (short form)']];
 var ME=(location.pathname.split('/').filter(Boolean).slice(-1)[0]||'').replace(/\.html?$/,'');
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
 if(!ls('off:since'))ls('off:since',String(Date.now()));
@@ -14517,7 +14517,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'10/30/2026'};
+const CREDIT={by:'Ravi Ramsundar',built:'10/31/2026'};
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14580,7 +14580,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New eMSC-L serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='e16d8acb6e';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='eb4d8254c6';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';

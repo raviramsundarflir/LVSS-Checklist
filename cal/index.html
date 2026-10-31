@@ -13017,7 +13017,7 @@ var ALIAS={'starlink antenna':'starlink','cisco switch (driver side)':'cisco swi
 var REV=[['v0s','Server Image (created date)'],['v0c','Client Image (created date)'],['v1','PMU Version'],['v2','PCM Version'],['v3','HMI Version'],['v4','PSR Version'],['v5','Rim 1 Version'],['v6','Rim 2 Version'],['v7','Vehicle Mileage'],['v8','Engine Hours'],['v9','Idle Hours']];
 var REVK={};REV.forEach(function(f){REVK[f[0]]=f[1];});
 var TRACK_REV=['v0s','v0c','v1','v2','v3','v4','v5','v6']; /* mileage and hours change every visit: carried, never questioned */
-var FORM={QC:'Quick Capture',IN:'Intake',PR:'Post-Repair',ATP:'ATP',FLR:'Floor Test',CAL:'Calibration',FIN:'Final Inspection'};
+var FORM={QC:'Intake (short form)',IN:'Intake (long form)',PR:'Post-Repair',ATP:'ATP',FLR:'Floor Test',CAL:'Calibration',FIN:'Final Inspection'};
 var KIND={c:'Correction',r:'Device replaced',s:'Swapped between platforms',p:'Removed - new serial to follow',u:'Updated',x:'Actually changed',o:'Other','':'Reason not given yet'};
 var WK={c:'Customer reported',f:'Failed',b:'Not tested'};
 function T(v){return String(v==null?'':v).trim();}
@@ -13545,7 +13545,7 @@ function techRemember(n){n=(n||'').trim();if(!n)return;const L=[n,...techNames()
 function techPick(i){const n=techNames()[i],el=$('#n-te');if(n&&el){el.value=n;S.techDraft=n;}}
 /* shared: ask at the start of each inspection whether the tech has a good connection; offline readiness check */
 (function(){
-var FORMS=[['intake','Truck Intake'],['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch'],['qc','Quick Capture']];
+var FORMS=[['intake','Intake (long form)'],['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch'],['qc','Intake (short form)']];
 var ME=(location.pathname.split('/').filter(Boolean).slice(-1)[0]||'').replace(/\.html?$/,'');
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
 if(!ls('off:since'))ls('off:since',String(Date.now()));
@@ -13808,7 +13808,7 @@ function qrTry(im){const W=im.width,H=im.height;const one=(sx,sy,sw,sh,M)=>{cons
 function scanPhoto(cam){const i=document.createElement('input');i.type='file';i.accept='image/*';if(cam)i.capture='environment';i.style.cssText='position:fixed;left:-9999px;top:0;opacity:0';document.body.appendChild(i);
  i.onchange=()=>{const f=i.files&&i.files[0];setTimeout(()=>{try{i.remove()}catch(e){}},60000);if(!f)return;scanMsg('Reading the photo…');const url=URL.createObjectURL(f),im=new Image();
   im.onload=()=>setTimeout(()=>{let t=null;try{t=qrTry(im)}catch(e){}URL.revokeObjectURL(url);if(t)scanDone(t);else scanMsg('No QR code found in that photo. Get closer so the code fills about half the picture, keep it flat and in focus, avoid glare, and try again.');},30);im.onerror=()=>{URL.revokeObjectURL(url);scanMsg('That photo could not be read.');};im.src=url;};i.click();}
-async function scanDone(txt){scanStop();let o=null;try{o=JSON.parse(txt);}catch(e){}if(o&&(o.a==='ATP'||o.a==='LVSS'||o.a==='FLR')){closeModal();const frm=o.a==='ATP'?'ATP inspection':o.a==='FLR'?'floor test':(o.it?'truck intake inspection':'LVSS / eMSC-L post-repair inspection'),sn0=snShow(o.a==='LVSS'&&o.up&&o.nsn?o.nsn:o.sn);
+async function scanDone(txt){scanStop();let o=null;try{o=JSON.parse(txt);}catch(e){}if(o&&(o.a==='ATP'||o.a==='LVSS'||o.a==='FLR')){closeModal();const frm=o.a==='ATP'?'ATP inspection':o.a==='FLR'?'floor test':(o.it?'intake inspection':'LVSS / eMSC-L post-repair inspection'),sn0=snShow(o.a==='LVSS'&&o.up&&o.nsn?o.nsn:o.sn);
   let W0=null;if(o.rv!=='P'){if(!await ask(Core.gateText(o,frm,sn0?'truck '+sn0:''),{title:'Not passed',ok:'Start anyway',no:'Cancel'}))return;W0=Core.warnOf(o);}S.pendCore={C:Core.dec(o),warn:W0};
   const iv=o.a==='LVSS'?(o.i||{}):o.a==='ATP'&&Array.isArray(o.rr)?{v1:o.rr[2],v3:o.rr[4]}:{};const un={};if(o.a==='ATP'&&Array.isArray(o.sv)){un.cam=o.sv[1];un.rad=o.sv[2];un.pt=o.sv[4];}else if(o.a==='LVSS'&&Array.isArray(o.s)){o.s.forEach(p=>{const n=String(p[0]||'').toLowerCase();if(n==='camera')un.cam=p[1];else if(n==='radar')un.rad=p[1];else if(/^(pan\/tilt|pan tilt|radar pan tilt|pan-tilt)$/.test(n))un.pt=p[1];});}else if(o.a==='FLR'&&o.dv){un.cam=(o.dv.cam||[])[0];un.rad=(o.dv.radar||[])[0];un.pt=(o.dv.pt||[])[0];}Object.keys(un).forEach(k=>{if(!String(un[k]||'').trim())delete un[k];});
   await fromQr({a:'CAL',k:'S',sn:sn0,t:'',un:un,cf:o.a==='ATP'?'ATP':o.a==='FLR'?'Floor Test':o.it?'Intake':'Post-Repair',sv:{pmu:iv.v1||'',hmi:iv.v3||''},rma:o.rma||'',vin:o.vin,pl:o.pl,kl:o.kl,os:(o.a==='LVSS'&&!(o.up&&o.nsn))?1:0});return;}
@@ -13936,7 +13936,7 @@ document.addEventListener('click',e=>{const t=e.target;if(t&&t.id==='hdX'){hdSto
 function curTpl(){return TPL}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'10/30/2026'};
+const CREDIT={by:'Ravi Ramsundar',built:'10/31/2026'};
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14056,7 +14056,7 @@ document.addEventListener('focusout',e=>{histCommit(e.target);setTimeout(()=>{if
 document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='b6c9abed50';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='aba233435b';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
