@@ -13165,7 +13165,7 @@ function dec(o){
   if(Array.isArray(o.rr))o.rr.forEach(function(v,i){R_(RK[i],v);});
   (o.wk||[]).forEach(function(w){var k=HK[w[0]]||dk(w[1]);if(!k)return;if(T(w[3]))C.s[k]=T(w[3]);else C.pd.push([k,T(w[2])]);});}
  else if(o.a==='FLR'){C.sn=T(o.sn);if(o.kd==='up')C.osn=T(o.ol);
-  Object.keys(o.dv||{}).forEach(function(k){var a=o.dv[k];if(a&&!a[1])S_(FK[k],a[0]);});
+  Object.keys(o.dv||{}).forEach(function(k){var a=o.dv[k];if(a&&!a[1]&&!a[2])S_(FK[k],a[0]);});
   Object.keys(o.rv2||{}).forEach(function(k){var a=o.rv2[k];if(a&&!a[1])R_(FR[k],a[0]);});}
  else if(o.a==='CAL'){C.sn=T(o.sn);var u=o.un||{};S_('camera',u.cam);S_('radar',u.rad);S_('pan tilt',u.pt);var sv=o.sv||{};R_('v1',sv.pmu);R_('v3',sv.hmi);}
  else if(o.a==='FIN'){C.sn=T(o.sn);C.osn=T(o.ol);var F=o.f||{};C.vin=T(F.vin);C.pl=T(F.plate);C.kl=T(F.kilo);Object.keys(NK).forEach(function(k){S_(NK[k],F[k]);});}
@@ -14704,7 +14704,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.i
 function folderSteps(r){const up=r.hdr.purpose==='upfit',cs=camSwapped(r);
  const cal=cs?['TFU & Radar Calibration','REQUIRED - a camera/TFU was swapped at intake',1]:['TFU & Radar Calibration','only if a camera/TFU gets swapped',0];
  return up?[
-  ['Skid prep','remove inverter bracket, bolt on retrofit adapters',0],
+  ['Vehicle prep','engine bay, undercarriage, cable runs, skid runners, cab',3],
+  ['Skid prep','reconfigure enclosures, fit skid adapters, bolt on network enclosure',0],
   ['Floor Test','must pass before the enclosure is mounted',0],
   ['Mount network enclosure','2000 W inverter, onto the retrofit adapters',0],
   ['Reinstall and power on','console, skid, cabling; behaves as in Floor Test',0],
@@ -14750,8 +14751,8 @@ function buildFolderPdf(r,dIn){const d=dIn||pdfNew(),h=r.hdr,up=h.purpose==='upf
  d.setFont('helvetica','bold');d.setFontSize(11);d.setTextColor(0);d.text('NEXT STEPS - check off on paper as each is completed',MX,y+4);y+=10;
  hx(d,'setFillColor','#0B3D6B');d.rect(MX,y,CW,16,'F');d.setFont('helvetica','bold');d.setFontSize(8.5);d.setTextColor(255);d.text('DONE',MX+6,y+11);d.text('STEP',MX+44,y+11);d.text('DATE',MX+CW-132,y+11);d.text('TECH INITIALS',MX+CW-70,y+11);y+=16;
  const S2=folderSteps(r),RH=Math.max(19,Math.min(30,(712-y)/S2.length));
- S2.forEach((s,i)=>{d.setDrawColor(170);d.setLineWidth(.6);if(s[2]){hx(d,'setFillColor','#FFF3D6');d.rect(MX,y,CW,RH,'F');}d.rect(MX,y,CW,RH);d.setDrawColor(0);d.setLineWidth(1);d.rect(MX+10,y+RH/2-6,12,12);
-  d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(0);d.text(cl((i+1)+'. '+s[0]),MX+44,y+RH/2-(s[1]?1:-3));if(s[1]){d.setFont('helvetica','normal');d.setFontSize(7.8);d.setTextColor(s[2]?161:90,s[2]?92:90,s[2]?7:90);d.text(wrap(d,s[1],CW-190).slice(0,1),MX+44,y+RH/2+8);}
+ S2.forEach((s,i)=>{d.setDrawColor(170);d.setLineWidth(.6);if(s[2]===3){hx(d,'setFillColor','#EEF3F9');d.rect(MX,y,CW,RH,'F');}else if(s[2]){hx(d,'setFillColor','#FFF3D6');d.rect(MX,y,CW,RH,'F');}d.rect(MX,y,CW,RH);d.setDrawColor(0);d.setLineWidth(1);d.rect(MX+10,y+RH/2-6,12,12);
+  d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(0);d.text(cl((i+1)+'. '+s[0]),MX+44,y+RH/2-(s[1]?1:-3));if(s[1]){d.setFont('helvetica','normal');d.setFontSize(7.8);d.setTextColor(s[2]===1?161:90,s[2]===1?92:90,s[2]===1?7:90);d.text(wrap(d,s[1],CW-190).slice(0,1),MX+44,y+RH/2+8);}
   d.setDrawColor(150);d.setLineWidth(.6);d.line(MX+CW-134,y+RH-6,MX+CW-78,y+RH-6);d.line(MX+CW-70,y+RH-6,MX+CW-8,y+RH-6);y+=RH;});
  if(!dIn)footers(d,r,false,new Set());return d;}
 function ocrTarget(id){const r=S.rec;if(id.startsWith('au:'))return null;
@@ -15376,7 +15377,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/01/2026',site:'33'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/01/2026',site:'34'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -15440,7 +15441,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='a707406be9';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='861d866738';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
