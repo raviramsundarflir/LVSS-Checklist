@@ -13152,7 +13152,7 @@ var OLDCG={sn:'sn',vin:'vin',plate:'pl',kilo:'kl',cam:'#g',rad:'#e',pt:'#f'};
 window.srChk=function(o){try{if(o&&o.sr&&window.SITE_REV&&(+o.sr)>(+window.SITE_REV))newer(+o.sr);}catch(e){}};var NEWER_SEEN={};function newer(sr){if(NEWER_SEEN[sr])return;NEWER_SEEN[sr]=1;try{var b=document.createElement('div');b.id='newerWarn';b.setAttribute('style','position:fixed;left:10px;right:10px;top:10px;z-index:99999;background:#fff3e0;border:2px solid #e67700;border-radius:12px;padding:12px 14px;font:16px system-ui,sans-serif;color:#222;box-shadow:0 6px 24px rgba(0,0,0,.25)');b.innerHTML='<b>Update this tablet first.</b> That QR code was made on a newer version (Rev '+sr+'); this tablet has Rev '+(window.SITE_REV||'?')+'. Connect to the internet and reload this page, then scan it again, or some details may be missed. <button style="margin-left:8px;min-height:40px;padding:4px 14px;border-radius:8px;border:1px solid #e67700;background:#fff;font-weight:700">OK</button>';b.querySelector('button').onclick=function(){b.remove();};(document.body||document.documentElement).appendChild(b);}catch(e){}}
 function dec(o){
  var f=formOf(o);if(!f)return null;if(o.sr&&window.SITE_REV&&(+o.sr)>(+window.SITE_REV))newer(+o.sr);
- var C={f:f,d:T(o.d),rv:o.rv||'',sn:'',osn:'',p:'',rma:T(o.rma),so:T(o.so),po:T(o.po),fs:T(o.fs),ac:T(o.ac),vin:T(o.vin),pl:T(o.pl),kl:T(o.kl),s:{},r:{},w:[],x:[],pd:[],h:[],n:0,wn:0};
+ var C={f:f,d:T(o.d),rv:o.rv||'',sn:'',osn:'',p:'',rma:T(o.rma),so:T(o.so),po:T(o.po),fs:T(o.fs),wb:T(o.wb),ac:T(o.ac),vin:T(o.vin),pl:T(o.pl),kl:T(o.kl),s:{},r:{},w:[],x:[],pd:[],h:[],n:0,wn:0};
  var S_=function(k,v){v=T(v);if(k&&v&&!/^(n\/a|pdx)$/i.test(v))C.s[k]=v;};
  var R_=function(k,v){v=T(v);if(k&&REVK[k]&&v&&!/^n\/a$/i.test(v))C.r[k]=v;};
  if(o.a==='LVSS'){var up=!!o.up;C.sn=T(up?o.nsn:o.sn);if(up){C.osn=T(o.sn);C.up=1;C.np=T(o.np);}C.p=T(o.p);
@@ -13173,7 +13173,7 @@ function dec(o){
  if(!o.cx)(o.cg||[]).forEach(function(a){var id=OLDCG[a[0]];if(id&&(T(a[1])||T(a[2])))C.x.push([id,T(a[1]),T(a[2]),'',f,C.d,T(a[4])]);});
  var cx=o.cx;
  if(cx&&typeof cx==='object'){
-  ['sn','osn','p','rma','so','po','fs','ac','vin','pl','kl'].forEach(function(k){if(!C[k]&&T(cx[k])&&!(k==='sn'&&C.up))C[k]=T(cx[k]);});if(T(cx.cu)){C.cu=T(cx.cu);C.cg=+cx.cg||0;}
+  ['sn','osn','p','rma','so','po','fs','wb','ac','vin','pl','kl'].forEach(function(k){if(!C[k]&&T(cx[k])&&!(k==='sn'&&C.up))C[k]=T(cx[k]);});if(T(cx.cu)){C.cu=T(cx.cu);C.cg=+cx.cg||0;}
   var s=cx.s||{};Object.keys(s).forEach(function(l){var k=devOfL(l);if(k&&!C.s[k])S_(k,s[l]);});
   var r=cx.r||{};Object.keys(r).forEach(function(k){if(!C.r[k])R_(k,r[k]);});
   if(Array.isArray(cx.w)){var nat=C.w;C.w=[];cx.w.forEach(function(a){if(Array.isArray(a)&&T(a[1]))C.w.push([a[0]||'f',T(a[1]),a[2]||'',T(a[3]),a[4]||'',a[5]||'',a[6]||'',T(a[7]),a[8]||'']);});C.w=C.w.concat(nat);}
@@ -13203,7 +13203,7 @@ function pack(r,nat){
  if(K){cx.k=1;
   /* a value this form left blank is carried on (still the last known), unless it is N/A here or was changed on purpose */
   var keep=function(id){return F[id]!==null&&!T(F[id])&&!(r.cxl||[]).some(function(e){return e[0]===id;});};
-  ['sn','osn','p','rma','so','po','fs','ac','vin','pl','kl'].forEach(function(k){if(K[k]&&!own[k]&&keep(k))cx[k]=K[k];});
+  ['sn','osn','p','rma','so','po','fs','wb','ac','vin','pl','kl'].forEach(function(k){if(K[k]&&!own[k]&&keep(k))cx[k]=K[k];});
   var s={};Object.keys(K.s).forEach(function(k){if(!own.s[k]&&keep(idOf(k)))s[L(k)]=K.s[k];});if(Object.keys(s).length)cx.s=s;
   var rv={};Object.keys(K.r).forEach(function(k){if(!own.r[k]&&keep(k))rv[k]=K.r[k];});if(Object.keys(rv).length)cx.r=rv;}
  /* issues: the ones carried in (with the Fixed / Still open marks made here) and this form's own */
@@ -13627,7 +13627,7 @@ async function scanDone(txt){if(String(txt).startsWith('WIP1~')){wipChunk(txt);r
  S.photos={};S.view='rec';S.open=-1;S.dirty=true;await save();render();}
 /* info page: core data first, then what the customer reports at the site */
 function infoHtml(){const r=S.rec;
- return `<div class="card"><h2>Truck info</h2><p class="muted">Intake short form: core data, issues and a main functions check. The platform serial number names this record and its PDF file.</p>${SEC('Truck')}${ptHtml()}${SEC('Visit')}${purpHtml()}${visitHtml()}${SEC('Record details')}<div class="grid">${inp('hdr.sn','Platform Serial Number (required)')}${inp('hdr.loc','Site / location')}${inp('hdr.tech','TDY FLIR Technician')}${inp('hdr.date','Date of the site visit',{type:'date'})}${inp('hdr.custEmail','Customer e-mail',{type:'email',ph:'customer@example.com'})}${inp('hdr.rma','RMA Number (if there is one)')}${inp('hdr.so','SVO Number (if there is one)')}${acctHtml()}${inp('hdr.po','Customer PO (optional)')}${inp('hdr.fso','FLIR sales order (optional)')}</div></div>
+ return `<div class="card"><h2>Truck info</h2><p class="muted">Intake short form: core data, issues and a main functions check. The platform serial number names this record and its PDF file.</p>${SEC('Truck')}${ptHtml()}${SEC('Visit')}${purpHtml()}${visitHtml()}${SEC('Record details')}<div class="grid">${inp('hdr.sn','Platform Serial Number (required)')}${inp('hdr.loc','Site / location')}${inp('hdr.tech','TDY FLIR Technician')}${inp('hdr.date','Date of the site visit',{type:'date'})}${inp('hdr.custEmail','Customer e-mail',{type:'email',ph:'customer@example.com'})}${inp('hdr.rma','RMA Number (if there is one)')}${inp('hdr.so','SVO Number (if there is one)')}${acctHtml()}${inp('hdr.po','Customer PO (optional)')}${inp('hdr.fso','FLIR sales order (optional)')}${inp('hdr.wbs','WBS / project code (if used)')}</div></div>
  <div class="card" id="infoExt" style="${qcArr(r.hdr)?'':'display:none'}">${extHtml()}</div>
  <div class="card" id="infoSer">${serHtml()}</div>
  <div class="card" id="infoVer">${verHtml()}</div>
@@ -13970,7 +13970,7 @@ const ddmmyy=s=>{const m=/^(\d{4})-(\d\d)-(\d\d)/.exec(s||'');return m?`${m[3]}.
 /* e-mail subject (Ravi, 2026-10-29): "Inspection of LVSS 100", or "Inspection of LVSS 100 - picked up on 10/29/2026" */
 const mailSubj=r=>'Inspection of '+platNum(r)+(r.hdr&&r.hdr.visit==='pickup'?' - picked up on '+fmtD(r.hdr.puDate||r.hdr.date):r.hdr&&r.hdr.visit==='dropoff'?' - dropped off on '+fmtD(r.hdr.puDate||r.hdr.date):'');
 const PURP=h=>h.purpose==='upfit'?'Upfit / Upgrade to '+nsnShow(h):'Repair';
-const repFile=r=>stdName(r.hdr.rma,platNum(r),'INTAKE-SHORT',r.hdr.date);
+const repFile=r=>stdName(WB(r)?null:r.hdr.rma,platNum(r),'INTAKE-SHORT',r.hdr.date);
 const fileSafe=s=>String(s).replace(/[\\\/:*?"<>|]+/g,'-').replace(/\s+/g,' ').trim();
 function issueCounts(r){const all=flat(r);let total=0,rep=0,adv=0;all.forEach(x=>{const q=r.items[x.id]||{};if(q.st==='fail'){if(repOf(r,x))return;total++;if(q.rep)rep++;if(q.adv)adv++;}else if(x.sec.kind==='rep'&&q.st==='pass'){total++;rep++;}});return {total,rep,adv,open:total-rep};}
 const safeName=s=>String(s||'').replace(/[^\w.\-]+/g,'_').replace(/^_+|_+$/g,'')||'unit';
@@ -14303,7 +14303,7 @@ function wlList(r,nn,tn,mx){tn=tn||140;const T=(x,n)=>n?cl(x||'').trim().slice(0
   if(isNew){if(repOf(r,x))return;if(!((d.st&&d.st!=='na')||((x.t||'').trim()&&!d.st&&x.extra)))return;out.push(['f',T(x.t,tn),d.war==='w'?'w':d.war==='nw'?'n':'',T([d.note,...kidsOf(r,x).map(y=>'Related: '+kidTxt(r,y))].filter(z=>String(z||'').trim()).join(' | '),nn),(grpLvl(r,x)||d.lvl||'')]);return;}
   if(!repOf(r,x)&&(d.st==='fail'||d.st==='blk'))out.push([d.st==='blk'?'b':'f',T(x.sec.id==='sX'?'Exterior damage at pickup - '+String(x.t).replace(/\s+-\s+no\b.*$/i,''):x.t,tn),d.war==='w'?'w':d.war==='nw'?'n':'',T([d.note,...kidsOf(r,x).map(y=>'Related: '+kidTxt(r,y))].filter(z=>String(z||'').trim()).join(' | '),nn),(grpLvl(r,x)||d.lvl||'')]);});
  return mx==null?out:out.slice(0,mx);}
-function qrPayload(r,nn,tn,mx){const i={};qrVerFields(r).forEach(f=>{const v=cl((r.ver||{})[f.key]||'').trim();if(v)i[f.key]=v;});return JSON.stringify({a:'LVSS',v:2,it:1,qc:1,rv:'P',pu:((r.hdr.visit==='pickup'||r.hdr.visit==='dropoff')?(r.hdr.puDate||r.hdr.date||''):''),vd:(r.hdr.visit==='dropoff'?1:undefined),p:codeOfPt(r.hdr.ptype),sn:cl(snD(r)||''),d:r.hdr.date||'',rma:cl(r.hdr.rma||''),so:cl(r.hdr.so||''),...(String(r.hdr.po||'').trim()?{po:cl(r.hdr.po)}:{}),...(String(r.hdr.fso||'').trim()?{fs:cl(r.hdr.fso)}:{}),ac:cl(r.hdr.acct||''),vin:cl(tv(r,'vin')),pl:cl(tv(r,'plate')),kl:cl(tv(r,'kilo')),up:r.hdr.purpose==='upfit'?1:0,nsn:cl(nsnFull(r.hdr)),np:(r.hdr.purpose==='upfit'&&r.hdr.nptype?codeOfPt(r.hdr.nptype):undefined),s:finalSerials(r).map(x=>[cl(x.n),cl(x.s)]),w:wlList(r,nn===undefined?160:nn,tn,mx),wx:(mx==null?0:Math.max(0,wlList(r,0,tn).length-mx)),i});}
+function qrPayload(r,nn,tn,mx){const i={};qrVerFields(r).forEach(f=>{const v=cl((r.ver||{})[f.key]||'').trim();if(v)i[f.key]=v;});return JSON.stringify({a:'LVSS',v:2,it:1,qc:1,rv:'P',pu:((r.hdr.visit==='pickup'||r.hdr.visit==='dropoff')?(r.hdr.puDate||r.hdr.date||''):''),vd:(r.hdr.visit==='dropoff'?1:undefined),p:codeOfPt(r.hdr.ptype),sn:cl(snD(r)||''),d:r.hdr.date||'',rma:cl(r.hdr.rma||''),so:cl(r.hdr.so||''),...(String(r.hdr.po||'').trim()?{po:cl(r.hdr.po)}:{}),...(String(r.hdr.fso||'').trim()?{fs:cl(r.hdr.fso)}:{}),...(String(r.hdr.wbs||'').trim()?{wb:cl(r.hdr.wbs)}:{}),ac:cl(r.hdr.acct||''),vin:cl(tv(r,'vin')),pl:cl(tv(r,'plate')),kl:cl(tv(r,'kilo')),up:r.hdr.purpose==='upfit'?1:0,nsn:cl(nsnFull(r.hdr)),np:(r.hdr.purpose==='upfit'&&r.hdr.nptype?codeOfPt(r.hdr.nptype):undefined),s:finalSerials(r).map(x=>[cl(x.n),cl(x.s)]),w:wlList(r,nn===undefined?160:nn,tn,mx),wx:(mx==null?0:Math.max(0,wlList(r,0,tn).length-mx)),i});}
 function qrPayloadOld(r){const i={};qrVerFields(r).forEach(f=>{const v=cl((r.ver||{})[f.key]||'').trim();if(v)i[f.key]=v;});return JSON.stringify({a:'LVSS',v:2,rv:r.verdict==='pass'?'P':r.verdict==='fail'?'F':'I',p:codeOfPt(r.hdr.ptype),sn:cl(snD(r)||''),d:r.hdr.date||'',s:finalSerials(r).map(x=>[cl(x.n),cl(x.s)]),i});}
 function qrBest(r){const B=j=>new TextEncoder().encode(j).length,wlMax=1;/* serials, VIN, revisions and mileage/hours are never trimmed; only the work list shrinks */
  for(const [nn,tn] of [[160,140],[80,140],[30,140],[0,140],[0,70],[0,40]]){const j=qrPayload(r,nn,tn);if(B(j)<=2500)return j;}
@@ -14312,7 +14312,7 @@ function qrBest(r){const B=j=>new TextEncoder().encode(j).length,wlMax=1;/* seri
 function qrMake(r){const j=qrBest(r),n=new TextEncoder().encode(j).length;const q=window.qrcode(0,n>1700?'L':'M');q.addData(j);q.make();return q;}
 /* ----- 2nd QR: punch list for the auditor ----- */
 const AUQ_MAX=2700;
-function auQrPayload(r){return null;const P=auF(r);if(!P.length)return null;const base=sec=>({a:'LVSS',k:'A',v:1,rv:r.verdict==='pass'?'P':r.verdict==='fail'?'F':'I',p:codeOfPt(r.hdr.ptype),sn:cl(snD(r)||''),rma:cl(r.hdr.rma||''),so:cl(r.hdr.so||''),...(String(r.hdr.po||'').trim()?{po:cl(r.hdr.po)}:{}),...(String(r.hdr.fso||'').trim()?{fs:cl(r.hdr.fso)}:{}),ac:cl(r.hdr.acct||''),d:r.hdr.date||'',t:cl(r.hdr.tech||''),vd:r.verdict==='pass'?'p':'f'});
+function auQrPayload(r){return null;const P=auF(r);if(!P.length)return null;const base=sec=>({a:'LVSS',k:'A',v:1,rv:r.verdict==='pass'?'P':r.verdict==='fail'?'F':'I',p:codeOfPt(r.hdr.ptype),sn:cl(snD(r)||''),rma:cl(r.hdr.rma||''),so:cl(r.hdr.so||''),...(String(r.hdr.po||'').trim()?{po:cl(r.hdr.po)}:{}),...(String(r.hdr.fso||'').trim()?{fs:cl(r.hdr.fso)}:{}),...(String(r.hdr.wbs||'').trim()?{wb:cl(r.hdr.wbs)}:{}),ac:cl(r.hdr.acct||''),d:r.hdr.date||'',t:cl(r.hdr.tech||''),vd:r.verdict==='pass'?'p':'f'});
  const T=(x,n)=>n?cl(x||'').trim().slice(0,n):'';
  const levels=[[90,90,60],[45,45,40],[25,0,0],[0,0,0]];let out=null;
  for(let li=0;li<levels.length;li++){const [nn,rn,wn]=levels[li];
@@ -14485,7 +14485,7 @@ const hx=(d,k,h)=>{const n=parseInt(h.slice(1),16);d[k](n>>16,(n>>8)&255,n&255)}
 const pdfNew=()=>new window.jspdf.jsPDF({unit:'pt',format:'letter',compress:true});
 function wrap(d,t,w){return d.splitTextToSize(cl(t),w)}
 function hdFit(d,t,w){let fs=d.getFontSize();while(d.getTextWidth(t)>w&&fs>12){fs-=1;d.setFontSize(fs);}return t;}
-function idLine(r,full){const h=r.hdr||{},v=x=>String(x||'').trim()||'-';return cl(`${snD(r)||'-'}  |  RMA ${v(h.rma)}  |  SVO ${v(h.so)}  |  Acct ${v(h.acct)}`);}
+function idLine(r,full){const h=r.hdr||{},v=x=>String(x||'').trim()||'-';return cl(WB(r)?`${snD(r)||'-'}  |  WBS ${WB(r)}`:`${snD(r)||'-'}  |  RMA ${v(h.rma)}  |  SVO ${v(h.so)}  |  Acct ${v(h.acct)}`);}
 function binPage(d,r){const h=r.hdr,up=h.purpose==='upfit';d.addPage('letter','landscape');const W=d.internal.pageSize.getWidth(),CWL=W-2*MX,T=50;
  const fit=(txt,max,fs0)=>{let fs=fs0;d.setFont('helvetica','bold');d.setFontSize(fs);while(d.getTextWidth(txt)>max&&fs>14){fs-=2;d.setFontSize(fs);}return fs;};
  hx(d,'setFillColor','#1d3b6a');d.rect(MX,T,CWL,84,'F');d.setFont('helvetica','bold');d.setTextColor(255);fit('CUSTOMER PROPERTY',CWL-24,50);d.text('CUSTOMER PROPERTY',W/2,T+52,{align:'center'});
@@ -14494,7 +14494,7 @@ function binPage(d,r){const h=r.hdr,up=h.purpose==='upfit';d.addPage('letter','l
  const bh=up?88:120,sn=cl(snD(r)||'________');d.setDrawColor(0);d.setLineWidth(3);d.rect(MX,y,CWL,bh);d.setTextColor(0);fit(sn,CWL-30,up?64:80);d.text(sn,W/2,y+bh/2+(up?22:28),{align:'center'});y+=bh+14;
  if(up){hx(d,'setFillColor','#1d3b6a');d.triangle(W/2-20,y,W/2+20,y,W/2,y+22,'F');y+=36;d.setTextColor(90);d.setFont('helvetica','bold');d.setFontSize(13);d.text('NEW SERIAL NUMBER AFTER UPFIT / UPGRADE',W/2,y,{align:'center'});y+=10;
   const ns=cl(nsnShow(h));d.setDrawColor(0);d.setLineWidth(3);d.rect(MX,y,CWL,88);d.setTextColor(0);fit(ns,CWL-30,64);d.text(ns,W/2,y+88/2+22,{align:'center'});y+=88+16;}
- const rows=[['Customer',CUST.of(r).n],['RMA',h.rma],['SVO',h.so],['Date received',h.date?fmtD(h.date):''],['Truck VIN',tv(r,'vin')],['License plate',tv(r,'plate')],['Kilo #',tv(r,'kilo')],['Intake tech',h.tech]].filter(x=>String(x[1]||'').trim());
+ const rows=[['Customer',CUST.of(r).n],...idRows(r,h),['Date received',h.date?fmtD(h.date):''],['Truck VIN',tv(r,'vin')],['License plate',tv(r,'plate')],['Kilo #',tv(r,'kilo')],['Intake tech',h.tech]].filter(x=>String(x[1]||'').trim());
  const half=Math.ceil(rows.length/2);d.setFontSize(10.5);rows.forEach((x,k)=>{const cx=MX+10+(k<half?0:CWL/2),cy=y+8+(k%half)*15;d.setFont('helvetica','bold');d.setTextColor(90);d.text(x[0],cx,cy);d.setFont('helvetica','normal');d.setTextColor(0);d.text(cl(String(x[1])),cx+105,cy);});
  if(h.cpTbd){const wy=Math.max(y+8+Math.ceil(rows.length/2)*15+14,T+380);tbdBox(d,MX,wy,CWL,tbdWarn());}
 }
@@ -14522,7 +14522,7 @@ function buildAuditPdf(r){const d=pdfNew(),au=r.audit,h=r.hdr,skip=new Set([1]);
  const rl=wrap(d,ref,CW-8);d.text(rl,MX+4,y+8);y+=rl.length*11+8;
  const cell=(x,yy,w,hh,lab,val)=>{d.setDrawColor(170);d.setLineWidth(.6);d.rect(x,yy,w,hh);d.setFont('helvetica','normal');d.setFontSize(6.8);d.setTextColor(110);d.text(cl(lab),x+4,yy+8);d.setFontSize(9.5);d.setTextColor(0);d.text(wrap(d,val,w-8),x+4,yy+19);};
  const pair=(l1,v1,l2,v2)=>{d.setFontSize(9.5);const a=wrap(d,v1,262).length,b=wrap(d,v2,262).length;const hh=Math.max(26,14+Math.max(a,b)*11);ens(hh);cell(MX,y,CW/2,hh,l1,v1);cell(MX+CW/2,y,CW/2,hh,l2,v2);y+=hh;};
- pair('Auditor',au.name,'Audit Date',fmtD(au.date));pair('Platform Serial Number',snD(r)||'','RMA Number',h.rma);pair('SVO Number',h.so,'Account Indicator',h.acct);pair('TDY FLIR Technician',h.tech,'Technician Result',r.verdict==='pass'?'PASSED':r.verdict==='fail'?'FAILED':'');
+ pair('Auditor',au.name,'Audit Date',fmtD(au.date));if(WB(r))pair('Platform Serial Number',snD(r)||'','WBS / project code',WB(r));else{pair('Platform Serial Number',snD(r)||'','RMA Number',h.rma);pair('SVO Number',h.so,'Account Indicator',h.acct);}pair('TDY FLIR Technician',h.tech,'Technician Result',r.verdict==='pass'?'PASSED':r.verdict==='fail'?'FAILED':'');
  y+=10;hx(d,'setFillColor','#5b8dd6');d.rect(MX,y,CW,18,'F');d.setFont('helvetica','bold');d.setFontSize(10.5);d.setTextColor(255);
  const nOk=AP.filter(x=>(au.items[x.id]||{}).r==='ok').length,nNo=AP.filter(x=>(au.items[x.id]||{}).r==='no').length;
  d.text(`FAULTS REVIEWED (${AP.length})   -   ${nOk} verified, ${nNo} not acceptable`,PW/2,y+12.5,{align:'center'});y+=18;
@@ -14550,7 +14550,7 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
  d.setFont('helvetica','bold');d.setFontSize(15);d.setTextColor(0);d.text(cl(`${snD(r)||'________'} - ${isAud(r)?'Intake Audit Report':'Intake Short Form Report'}`),MX,y+12);
  {const au0=isAud(r)?r.audit:null,vv=au0?au0.verdict:r.verdict;if(vv&&au0){d.setFontSize(14);hx(d,'setTextColor',vv==='pass'?'#1b8a3a':'#c62828');d.text((au0?'AUDIT ':'')+(vv==='pass'?'PASSED':'FAILED'),PW-MX,y+12,{align:'right'});}}y+=18;
  y+=6;
-{const tb=x=>String(x||'').trim()||'-',w3=CW/3;ens(32);[['RMA Number',tb(h.rma)],['SVO Number',tb(h.so)],['Account Indicator',tb(h.acct)]].forEach((p,j)=>{hx(d,'setFillColor','#eef3fb');d.rect(MX+j*w3,y,w3,28,'F');d.setDrawColor(185,194,211);d.setLineWidth(.5);d.rect(MX+j*w3,y,w3,28);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(100);d.text(p[0],MX+j*w3+5,y+9);d.setFont('helvetica','bold');d.setFontSize(11);d.setTextColor(0);d.text(cl(p[1]),MX+j*w3+5,y+22);});y+=36;}
+{const tb=x=>String(x||'').trim()||'-',w3=CW/idB(r,h,tb).length;ens(32);idB(r,h,tb).forEach((p,j)=>{hx(d,'setFillColor','#eef3fb');d.rect(MX+j*w3,y,w3,28,'F');d.setDrawColor(185,194,211);d.setLineWidth(.5);d.rect(MX+j*w3,y,w3,28);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(100);d.text(p[0],MX+j*w3+5,y+9);d.setFont('helvetica','bold');d.setFontSize(11);d.setTextColor(0);d.text(cl(p[1]),MX+j*w3+5,y+22);});y+=36;}
 
  const allF=flat(r),usedI=x=>{const q=r.items[x.id]||{};return q.st||(x.t||'').trim();};
  const XP=L=>{const o=[];L.forEach(x=>{o.push(x);kidsOf(r,x).forEach(y=>o.push(Object.assign({},y,{kidOf:x})));});return o;};const R_=XP(allF.filter(x=>x.sec.kind==='rep'&&usedI(x))),N_=XP(allF.filter(x=>x.sec.kind==='new'&&usedI(x)&&!repOf(r,x))),Pc=XP(P.filter(x=>!isIss(x.sec)));
@@ -14594,7 +14594,7 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
  if(nd)y=banner(d,y,'DO NOT OPERATE',`${nd} item(s) flagged - ${st.openDno} still open. See Punch List at front of report.`,st.openDno===0,r.verdict==='pass');
  const cell=(x,yy,w,hh,lab,val)=>{d.setDrawColor(170);d.setLineWidth(.6);d.rect(x,yy,w,hh);d.setFont('helvetica','normal');d.setFontSize(6.8);d.setTextColor(110);d.text(cl(lab),x+4,yy+8);d.setFontSize(9.5);d.setTextColor(0);d.text(wrap(d,val,w-8),x+4,yy+19);};
  const pair=(l1,v1,l2,v2)=>{d.setFontSize(9.5);const a=wrap(d,v1,262).length,b=wrap(d,v2,262).length;const hh=Math.max(26,14+Math.max(a,b)*11);ens(hh);cell(MX,y,CW/2,hh,l1,v1);cell(MX+CW/2,y,CW/2,hh,l2,v2);y+=hh;};
- {const tb=x=>String(x||'').trim()||'TBD',w3=CW/3;ens(30);[['RMA Number',tb(h.rma)],['SVO Number',tb(h.so)],['Account Indicator',tb(h.acct)]].forEach((p,j)=>{hx(d,'setFillColor','#eef3fb');d.rect(MX+j*w3,y,w3,30,'F');cell(MX+j*w3,y,w3,30,p[0],p[1]);});y+=30;}pair('Platform Serial Number',snD(r)||'','Date',fmtD(h.date)+(h.origDate?'  (original '+fmtD(h.origDate)+')':''));pair('TDY FLIR Technician',h.tech,'Location',h.loc);pair('Truck VIN',tv(r,'vin'),'License Plate #',tv(r,'plate'));pair('Kilo #',tv(r,'kilo'),'Visit',visitTxt(h));pair('Customer',CUST.of(r).n,'','');ens(26);cell(MX,y,CW,26,'Report type','Intake – short form'+(h.purpose==='upfit'?' - '+PURP(h):''));y+=26;if(camSwapped(r)){ens(26);cell(MX,y,CW,26,'TFU & Radar Calibration (camera/TFU swapped)',calDone(r)?'Completed'+(r.cal.date?' '+fmtD(r.cal.date):''):'NOT COMPLETED');y+=26;}const lateD=[...new Set(allD0.filter(x=>x.sec.kind==='rep'&&(r.items[x.id]||{}).rdate&&r.items[x.id].rdate!==h.repDate).map(x=>r.items[x.id].rdate))].sort().map(fmtD);pair('Site visit date',fmtD(h.date),'','');
+ {const tb=x=>String(x||'').trim()||'TBD',w3=CW/idB(r,h,tb).length;ens(30);idB(r,h,tb).forEach((p,j)=>{hx(d,'setFillColor','#eef3fb');d.rect(MX+j*w3,y,w3,30,'F');cell(MX+j*w3,y,w3,30,p[0],p[1]);});y+=30;}pair('Platform Serial Number',snD(r)||'','Date',fmtD(h.date)+(h.origDate?'  (original '+fmtD(h.origDate)+')':''));pair('TDY FLIR Technician',h.tech,'Location',h.loc);pair('Truck VIN',tv(r,'vin'),'License Plate #',tv(r,'plate'));pair('Kilo #',tv(r,'kilo'),'Visit',visitTxt(h));pair('Customer',CUST.of(r).n,'','');ens(26);cell(MX,y,CW,26,'Report type','Intake – short form'+(h.purpose==='upfit'?' - '+PURP(h):''));y+=26;if(camSwapped(r)){ens(26);cell(MX,y,CW,26,'TFU & Radar Calibration (camera/TFU swapped)',calDone(r)?'Completed'+(r.cal.date?' '+fmtD(r.cal.date):''):'NOT COMPLETED');y+=26;}const lateD=[...new Set(allD0.filter(x=>x.sec.kind==='rep'&&(r.items[x.id]||{}).rdate&&r.items[x.id].rdate!==h.repDate).map(x=>r.items[x.id].rdate))].sort().map(fmtD);pair('Site visit date',fmtD(h.date),'','');
  if(isAud(r)){const au=r.audit,AP=[...P,...blockedList(r)];y+=8;ens(90);hx(d,'setFillColor',au.verdict==='pass'?'#1b8a3a':'#c62828');d.rect(MX,y,CW,22,'F');d.setFont('helvetica','bold');d.setFontSize(12);d.setTextColor(255);d.text(au.verdict==='pass'?'AUDIT REVIEW - AUDIT PASSED':'AUDIT REVIEW - AUDIT FAILED',PW/2,y+15,{align:'center'});y+=22;
   pair('Auditor',au.name,'Audit Date',fmtD(au.date));
   const ac=[[0,34,'#'],[34,206,'Reported fault'],[240,74,'Tech status'],[314,86,'Audit result'],[400,140,'Auditor notes']];
@@ -14880,7 +14880,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
   notice('This browser cannot attach the PDF automatically, so the email will open without it. Use "Save PDF" and attach the file from Downloads.',{title:'PDF not attached'});location.href=mailHref(r,subj,body);break;}
  case 'emreset':{S.emEdited=false;const e=emailText(r);$('#emSubj').value=e.subj;$('#emBody').innerHTML=e.html;break;}
  case 'photozip':{const z=photoZip(r);if(!z){notice('There are no photos in this inspection yet.',{title:'No photos'});break;}dlBlob(z.blob,z.name);if(!isIOS())notice(z.n+' photo'+(z.n===1?'':'s')+' saved as “'+z.name+'” in the tablet\'s Downloads. Open it in the Files app and tap Extract to get a folder named “'+fileSafe(repFile(r))+'” with every photo inside.',{title:'Photo folder saved'});break;}
- case 'folderpdf':{try{const d=buildFolderPdf(r);dlBlob(d.output('blob'),fileSafe(stdName(r.hdr.rma,platNum(r),'FOLDER-FRONT',r.hdr.date))+'.pdf');}catch(e){notice('Could not make the folder front page: '+e.message,{title:'Folder front page'});}break;}
+ case 'folderpdf':{try{const d=buildFolderPdf(r);dlBlob(d.output('blob'),fileSafe(stdName(WB(r)?null:r.hdr.rma,platNum(r),'FOLDER-FRONT',r.hdr.date))+'.pdf');}catch(e){notice('Could not make the folder front page: '+e.message,{title:'Folder front page'});}break;}
  case 'dl':if(!S.pdf){notice('The PDF is still being prepared – try again in a moment.',{title:'Please wait'});break;}(async()=>{await dlBlob(S.pdf.blob,S.pdf.name);const z=photoZip(r);if(z){await new Promise(t=>setTimeout(t,600));await dlBlob(z.blob,z.name);}})();break;
  case 'share':{if(calIssues(r).length){notice('A camera/TFU was swapped, so the TFU & Radar Calibration must be completed first. Use the calibration box on this page.',{title:'Calibration required'});break;}await sendCopy(r);if(!S.pdf){notice('The PDF is still being prepared – try again in a moment.',{title:'Please wait'});break;}const files=pdfFiles();const data={files,title:mailSubj(r),text:($('#emBody')?$('#emBody').innerText:'LVSS '+(r.hdr.sn||'')+' post-repair report')};
   try{if(navigator.canShare&&navigator.canShare({files})){await navigator.share(data);}else notice('This browser cannot share files from a web page. Use "Save PDF to tablet" and attach the file from Downloads.',{title:'Cannot share'});}
@@ -14988,7 +14988,7 @@ function buildFolderPdf(r,dIn){const d=dIn||pdfNew(),h=r.hdr,up=h.purpose==='upf
  const qs=160,qx=MX+CW-qs,y0=y;
  try{const q=qrMake(r),n=q.getModuleCount(),qz=2,cs=qs/(n+2*qz);d.setFillColor(255,255,255);d.rect(qx,y,qs,qs,'F');d.setFillColor(0,0,0);for(let a=0;a<n;a++)for(let b=0;b<n;b++)if(q.isDark(a,b))d.rect(qx+(b+qz)*cs,y+(a+qz)*cs,cs+.15,cs+.15,'F');d.setDrawColor(150);d.setLineWidth(.6);d.rect(qx,y,qs,qs);}catch(e){d.setTextColor(200,0,0);d.setFontSize(9);d.text('QR code could not be made',qx,y+10);}
  d.setFont('helvetica','bold');d.setFontSize(9);d.setTextColor(0);d.text('INTAKE QR CODE',qx+qs/2,y+qs+12,{align:'center'});d.setFont('helvetica','normal');d.setFontSize(7.5);d.setTextColor(90);d.text('Scan it into any following form',qx+qs/2,y+qs+22,{align:'center'});
- const IW=CW-qs-16,rows=[['RMA',h.rma],['SVO',h.so],['Account',h.acct],...(String(h.po||'').trim()?[['Customer PO',h.po]]:[]),...(String(h.fso||'').trim()?[['FLIR sales order',h.fso]]:[]),['VIN',tv(r,'vin')],['License plate',tv(r,'plate')],['Kilo #',tv(r,'kilo')],['Intake date',fmtD(h.date)],['Intake tech',h.tech]];
+ const IW=CW-qs-16,rows=[...idRows(r,h,true),...(String(h.po||'').trim()?[['Customer PO',h.po]]:[]),...(String(h.fso||'').trim()?[['FLIR sales order',h.fso]]:[]),['VIN',tv(r,'vin')],['License plate',tv(r,'plate')],['Kilo #',tv(r,'kilo')],['Intake date',fmtD(h.date)],['Intake tech',h.tech]];
  rows.forEach(a=>{d.setDrawColor(170);d.setLineWidth(.6);d.rect(MX,y,IW,20);d.setFont('helvetica','normal');d.setFontSize(6.5);d.setTextColor(100);d.text(a[0].toUpperCase(),MX+5,y+7.5);d.setFont('helvetica','bold');d.setFontSize(10.5);d.setTextColor(0);d.text(wrap(d,String(a[1]||'-'),IW-10).slice(0,1),MX+5,y+16.5);y+=20;});
  y=Math.max(y,y0+qs+30)+12;
  /* flags */
@@ -15308,7 +15308,7 @@ function wipBuildPdf(){
       const L=d.splitTextToSize(String(rec.carryNotes).replace(/[^\x20-\x7E\n]/g,'?'),540);let cut=false;
       for(const l of L){if(y>748){cut=true;break;}d.text(l,36,y);y+=11.5;}if(cut)d.text('(more in the app - scan the codes)',36,y);}
     creditLine(d,creditCurRev());});
-  return {blob:d.output('blob'),name:stdName((rec.hdr||rec.header||{}).rma,String(WA.sn(rec)||'inspection'),'CARRYOVER',(rec.hdr||rec.header||{}).date)+'.pdf',n,pg,FN,tech,sn,ts};}
+  return {blob:d.output('blob'),name:stdName(WB(rec)?null:(rec.hdr||rec.header||{}).rma,String(WA.sn(rec)||'inspection'),'CARRYOVER',(rec.hdr||rec.header||{}).date)+'.pdf',n,pg,FN,tech,sn,ts};}
 function wipCodesPdf(){const o=wipBuildPdf();WA.dl(o.blob,o.name);}
 async function wipCopyMail(b){
   let ok=false;try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(WIP_MAIL);ok=true;}}catch(e){}
@@ -15544,9 +15544,9 @@ document.addEventListener('change',function(e){var t=e.target;if(t&&t.hasAttribu
 /* uniform report/zip file name: RMA (or X) - serial - report type - MM-DD-YY */
 function stdName(rma,sn,type,d){var cl2=function(t){return String(t==null?'':t).replace(/[\\\/:*?"<>|]+/g,'-').replace(/\s+/g,' ').trim();};
  var r=cl2(rma).replace(/^rma[\s#:\-]*/i,'').replace(/\s+/g,''),s=cl2(sn)||'no-serial',m=/^(\d{4})-(\d\d)-(\d\d)/.exec(d||''),dt;
- r=r?'RMA '+r:'X';
+ r=rma===null?'':(r?'RMA '+r:'X');
  if(m)dt=m[2]+'-'+m[3]+'-'+m[1].slice(2);else{var n=new Date(),p2=function(x){return String(x).padStart(2,'0')};dt=p2(n.getMonth()+1)+'-'+p2(n.getDate())+'-'+String(n.getFullYear()).slice(2);}
- return r+'-'+s+'-'+type+'-'+dt;}
+ return (r?r+'-':'')+s+'-'+type+'-'+dt;}
 
 /* ---- master walk order of the devices on a truck (Ravi, 2026-10-24) ----
    DISPLAY / PRINT ORDER AND NAMES ONLY. Storage keys, QR positions and saved records are untouched.
@@ -15625,7 +15625,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/01/2026',site:'31'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/01/2026',site:'32'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -15689,7 +15689,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='f2a74c617c';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='6fb435abfc';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -15775,13 +15775,13 @@ qrPayload=function(r,nn,tn,mx){var j=q0.apply(this,arguments);if(!r||!(r.core||r
 function fill(r,C){
  (r.gear||[]).forEach(function(g){if(g.tk)return;var k=Core.dk(g.t);if(k&&C.s[k]&&!T(g.s))g.s=C.s[k];});
  setTv(r,'vin',C.vin);setTv(r,'plate',C.pl);setTv(r,'kilo',C.kl);
- if(!T(r.hdr.rma)&&C.rma)r.hdr.rma=C.rma;if(!T(r.hdr.po)&&C.po)r.hdr.po=C.po;if(!T(r.hdr.fso)&&C.fs)r.hdr.fso=C.fs;if(!T(r.hdr.so)&&C.so)r.hdr.so=C.so;if(!T(r.hdr.acct)&&C.ac)r.hdr.acct=C.ac;
+ if(!T(r.hdr.rma)&&C.rma)r.hdr.rma=C.rma;if(!T(r.hdr.po)&&C.po)r.hdr.po=C.po;if(!T(r.hdr.fso)&&C.fs)r.hdr.fso=C.fs;if(!T(r.hdr.wbs)&&C.wb)r.hdr.wbs=C.wb;if(!T(r.hdr.so)&&C.so)r.hdr.so=C.so;if(!T(r.hdr.acct)&&C.ac)r.hdr.acct=C.ac;
  if(Object.keys(C.r).length)r.prev=Object.assign({},C.r,r.prev||{});}
 window.coreStart=function(r){var P=S.pendCore;S.pendCore=null;if(!P||!r)return;if(P.sn&&!Core.same(P.sn,r.hdr.sn))return;fill(r,P.C);clearPend(r,P.C);Core.start(r,P.C,{warn:P.warn});};
 function gearOf(r,k){return (r.gear||[]).find(function(g){return !g.tk&&Core.dk(g.t)===k;});}
 function clearPend(r,C){Core.pendClear(C,function(k){var g=gearOf(r,k);return g?T(g.s):'';},function(k){var g=gearOf(r,k);if(g)g.s='';});}
 window.coreScan=function(r,o,re){var C=Core.dec(o);if(!C||!r)return;var tag=re?[Core.formOf(o),T(o.d)]:null;Core.start(r,C,{re:tag});
- if(C.so&&!T(r.hdr.so))r.hdr.so=C.so;if(C.ac&&!T(r.hdr.acct))r.hdr.acct=C.ac;if(C.rma&&!T(r.hdr.rma))r.hdr.rma=C.rma;if(C.po&&!T(r.hdr.po))r.hdr.po=C.po;if(C.fs&&!T(r.hdr.fso))r.hdr.fso=C.fs;
+ if(C.so&&!T(r.hdr.so))r.hdr.so=C.so;if(C.ac&&!T(r.hdr.acct))r.hdr.acct=C.ac;if(C.rma&&!T(r.hdr.rma))r.hdr.rma=C.rma;if(C.po&&!T(r.hdr.po))r.hdr.po=C.po;if(C.fs&&!T(r.hdr.fso))r.hdr.fso=C.fs;if(C.wb&&!T(r.hdr.wbs))r.hdr.wbs=C.wb;
  if(C.vin&&!tv(r,'vin'))setTv(r,'vin',C.vin);if(C.pl&&!tv(r,'plate'))setTv(r,'plate',C.pl);if(C.kl&&!tv(r,'kilo'))setTv(r,'kilo',C.kl);
  (r.gear||[]).forEach(function(g){if(g.tk)return;var k=Core.dk(g.t);if(k&&C.s[k]&&!T(g.s))g.s=C.s[k];});
  if(Object.keys(C.r).length)r.prev=Object.assign({},C.r,r.prev||{});clearPend(r,C);
@@ -16152,7 +16152,10 @@ function qrTruckStrip(d,x,y,w,L){var HH=15,rh=15,gap=10,cw=(w-gap)/2,half=Math.c
   if(t.matches&&t.matches('[data-b="hdr.nsn"]')&&S.rec){var x=document.getElementById('upHintR');if(x)x.innerHTML=upHintTxt(Object.assign({},S.rec.hdr,{nsn:t.value}));}});
 })();
 </script><script>/* customer picker + dash tag for this form (Rev 27) */
-function dtInfo(r){const h=r.hdr||{},up=h.purpose==='upfit',ns=up?nsnShow(h):'';const kl=CUST.kl(r);return {r:r,sn:snD(r)||'',nsn:ns,stage:up?'Upfit / Upgrade':'Repair',form:(r.tpl&&r.tpl.title)||'LVSS report',date:h.date?fmtD(h.date):'',credit:creditText(r.tpl&&r.tpl.revision).replace(/[^\x20-\x7E]/g,'-'),rows:[['RMA',h.rma],['SVO',h.so],['Intake date',h.date?fmtD(h.date):''],['Truck VIN',tv(r,'vin')],['License plate',tv(r,'plate')],[kl,tv(r,'kilo')]]};}
+function WB(r){try{var h=(r&&(r.hdr||r.header))||{};return String(h.wbs||(r&&r.core&&r.core.wb)||'').trim();}catch(e){return '';}}
+function idRows(r,h,acct){var w=WB(r);return w?[['WBS',w]]:[['RMA',h.rma],['SVO',h.so]].concat(acct?[['Account',h.acct]]:[]);}
+function idB(r,h,tb){var w=WB(r);return w?[['WBS / project code',tb(w)]]:[['RMA Number',tb(h.rma)],['SVO Number',tb(h.so)],['Account Indicator',tb(h.acct)]];}
+function dtInfo(r){const h=r.hdr||{},up=h.purpose==='upfit',ns=up?nsnShow(h):'';const kl=CUST.kl(r);return {r:r,sn:snD(r)||'',nsn:ns,stage:up?'Upfit / Upgrade':'Repair',form:(r.tpl&&r.tpl.title)||'LVSS report',date:h.date?fmtD(h.date):'',credit:creditText(r.tpl&&r.tpl.revision).replace(/[^\x20-\x7E]/g,'-'),rows:[...idRows(r,h),['Intake date',h.date?fmtD(h.date):''],['Truck VIN',tv(r,'vin')],['License plate',tv(r,'plate')],[kl,tv(r,'kilo')]]};}
 CUST.cfg({inRec:function(){return S.view!=='home'&&S.view!=='admin';},tag:function(){return S.rec?dtInfo(S.rec):null;},rec:function(){return S.rec;},dirty:function(){markDirty();},anchor:{sel:'#ptBox',pos:'afterend'},after:function(r,c){const g=(r.gear||[]).find(x=>x.tk==='plate');if(g){const raw=String(g.v||'').replace(/^dhs\s*/i,'');g.pf=c.dhs;g.v=c.dhs&&raw?'DHS '+raw:raw;const e=document.getElementById('g-'+g.id);if(e)e.outerHTML=tkCardHtml(g,r.gear.indexOf(g));}markDirty();}});
 </script><script>/* Rev 28: home screen auto-update; each report drawn with its own truck's customer */
 window.__atHome=function(){try{return S.view==='home';}catch(e){return false;}};

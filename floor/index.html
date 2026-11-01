@@ -13181,7 +13181,7 @@ var OLDCG={sn:'sn',vin:'vin',plate:'pl',kilo:'kl',cam:'#g',rad:'#e',pt:'#f'};
 window.srChk=function(o){try{if(o&&o.sr&&window.SITE_REV&&(+o.sr)>(+window.SITE_REV))newer(+o.sr);}catch(e){}};var NEWER_SEEN={};function newer(sr){if(NEWER_SEEN[sr])return;NEWER_SEEN[sr]=1;try{var b=document.createElement('div');b.id='newerWarn';b.setAttribute('style','position:fixed;left:10px;right:10px;top:10px;z-index:99999;background:#fff3e0;border:2px solid #e67700;border-radius:12px;padding:12px 14px;font:16px system-ui,sans-serif;color:#222;box-shadow:0 6px 24px rgba(0,0,0,.25)');b.innerHTML='<b>Update this tablet first.</b> That QR code was made on a newer version (Rev '+sr+'); this tablet has Rev '+(window.SITE_REV||'?')+'. Connect to the internet and reload this page, then scan it again, or some details may be missed. <button style="margin-left:8px;min-height:40px;padding:4px 14px;border-radius:8px;border:1px solid #e67700;background:#fff;font-weight:700">OK</button>';b.querySelector('button').onclick=function(){b.remove();};(document.body||document.documentElement).appendChild(b);}catch(e){}}
 function dec(o){
  var f=formOf(o);if(!f)return null;if(o.sr&&window.SITE_REV&&(+o.sr)>(+window.SITE_REV))newer(+o.sr);
- var C={f:f,d:T(o.d),rv:o.rv||'',sn:'',osn:'',p:'',rma:T(o.rma),so:T(o.so),po:T(o.po),fs:T(o.fs),ac:T(o.ac),vin:T(o.vin),pl:T(o.pl),kl:T(o.kl),s:{},r:{},w:[],x:[],pd:[],h:[],n:0,wn:0};
+ var C={f:f,d:T(o.d),rv:o.rv||'',sn:'',osn:'',p:'',rma:T(o.rma),so:T(o.so),po:T(o.po),fs:T(o.fs),wb:T(o.wb),ac:T(o.ac),vin:T(o.vin),pl:T(o.pl),kl:T(o.kl),s:{},r:{},w:[],x:[],pd:[],h:[],n:0,wn:0};
  var S_=function(k,v){v=T(v);if(k&&v&&!/^(n\/a|pdx)$/i.test(v))C.s[k]=v;};
  var R_=function(k,v){v=T(v);if(k&&REVK[k]&&v&&!/^n\/a$/i.test(v))C.r[k]=v;};
  if(o.a==='LVSS'){var up=!!o.up;C.sn=T(up?o.nsn:o.sn);if(up){C.osn=T(o.sn);C.up=1;C.np=T(o.np);}C.p=T(o.p);
@@ -13202,7 +13202,7 @@ function dec(o){
  if(!o.cx)(o.cg||[]).forEach(function(a){var id=OLDCG[a[0]];if(id&&(T(a[1])||T(a[2])))C.x.push([id,T(a[1]),T(a[2]),'',f,C.d,T(a[4])]);});
  var cx=o.cx;
  if(cx&&typeof cx==='object'){
-  ['sn','osn','p','rma','so','po','fs','ac','vin','pl','kl'].forEach(function(k){if(!C[k]&&T(cx[k])&&!(k==='sn'&&C.up))C[k]=T(cx[k]);});if(T(cx.cu)){C.cu=T(cx.cu);C.cg=+cx.cg||0;}
+  ['sn','osn','p','rma','so','po','fs','wb','ac','vin','pl','kl'].forEach(function(k){if(!C[k]&&T(cx[k])&&!(k==='sn'&&C.up))C[k]=T(cx[k]);});if(T(cx.cu)){C.cu=T(cx.cu);C.cg=+cx.cg||0;}
   var s=cx.s||{};Object.keys(s).forEach(function(l){var k=devOfL(l);if(k&&!C.s[k])S_(k,s[l]);});
   var r=cx.r||{};Object.keys(r).forEach(function(k){if(!C.r[k])R_(k,r[k]);});
   if(Array.isArray(cx.w)){var nat=C.w;C.w=[];cx.w.forEach(function(a){if(Array.isArray(a)&&T(a[1]))C.w.push([a[0]||'f',T(a[1]),a[2]||'',T(a[3]),a[4]||'',a[5]||'',a[6]||'',T(a[7]),a[8]||'']);});C.w=C.w.concat(nat);}
@@ -13232,7 +13232,7 @@ function pack(r,nat){
  if(K){cx.k=1;
   /* a value this form left blank is carried on (still the last known), unless it is N/A here or was changed on purpose */
   var keep=function(id){return F[id]!==null&&!T(F[id])&&!(r.cxl||[]).some(function(e){return e[0]===id;});};
-  ['sn','osn','p','rma','so','po','fs','ac','vin','pl','kl'].forEach(function(k){if(K[k]&&!own[k]&&keep(k))cx[k]=K[k];});
+  ['sn','osn','p','rma','so','po','fs','wb','ac','vin','pl','kl'].forEach(function(k){if(K[k]&&!own[k]&&keep(k))cx[k]=K[k];});
   var s={};Object.keys(K.s).forEach(function(k){if(!own.s[k]&&keep(idOf(k)))s[L(k)]=K.s[k];});if(Object.keys(s).length)cx.s=s;
   var rv={};Object.keys(K.r).forEach(function(k){if(!own.r[k]&&keep(k))rv[k]=K.r[k];});if(Object.keys(rv).length)cx.r=rv;}
  /* issues: the ones carried in (with the Fixed / Still open marks made here) and this form's own */
@@ -13767,9 +13767,9 @@ document.addEventListener('change',function(e){var t=e.target;if(t&&t.hasAttribu
 /* uniform report/zip file name: RMA (or X) - serial - report type - MM-DD-YY */
 function stdName(rma,sn,type,d){var cl2=function(t){return String(t==null?'':t).replace(/[\\\/:*?"<>|]+/g,'-').replace(/\s+/g,' ').trim();};
  var r=cl2(rma).replace(/^rma[\s#:\-]*/i,'').replace(/\s+/g,''),s=cl2(sn)||'no-serial',m=/^(\d{4})-(\d\d)-(\d\d)/.exec(d||''),dt;
- r=r?'RMA '+r:'X';
+ r=rma===null?'':(r?'RMA '+r:'X');
  if(m)dt=m[2]+'-'+m[3]+'-'+m[1].slice(2);else{var n=new Date(),p2=function(x){return String(x).padStart(2,'0')};dt=p2(n.getMonth()+1)+'-'+p2(n.getDate())+'-'+String(n.getFullYear()).slice(2);}
- return r+'-'+s+'-'+type+'-'+dt;}
+ return (r?r+'-':'')+s+'-'+type+'-'+dt;}
 
 /* ---- master walk order of the devices on a truck (Ravi, 2026-10-24) ----
    DISPLAY / PRINT ORDER AND NAMES ONLY. Storage keys, QR positions and saved records are untouched.
@@ -13968,7 +13968,7 @@ function floorPdf(r){const d=pdfNew();let y;const ens=n=>{if(y+n>BOT){d.addPage(
 const fileOf=r=>recName(r).replace(/[^\w\-]+/g,'_');
 function floorPdfFile(r){const d=floorPdf(r);return {blob:d.output('blob'),name:stdName('',recName(r),'FLOOR-TEST',r.hdr.date)+'.pdf'};}
 /* ---- QR (pause) ---- */
-function floorPayload(r,notes){const ck={};Object.keys(r.ck||{}).forEach(k=>{const c=r.ck[k];ck[k]={s:c.s,rp:c.rep,sv:c.sev,rt:c.rt};});const o={a:'FLR',v:1,k:'P',rv:r.done.complete&&!r.done.partial?(overall(r)==='PASS'?'P':overall(r)==='FAIL'?'F':'I'):(overall(r)==='FAIL'?'F':'I'),id:r.id,u:r.updated,sn:r.hdr.sn,rma:r.hdr.rma||'',vin:r.hdr.vin,pl:r.hdr.plate,kl:r.hdr.kilo,os:isOldSn(r)?1:0,ol:r.hdr.old,kd:r.hdr.kind,d:r.hdr.date,t:r.hdr.tech,st:r.step||0,ck:ck,dn:{notes:r.done.notes,name:r.done.name,date:r.done.date}};fx(r);const dv={},rv={};Object.keys(r.dv).forEach(k=>{const c=r.dv[k];if(c&&(c.v||c.na))dv[k]=[c.v||'',c.na?1:0];});Object.keys(r.rv).forEach(k=>{const c=r.rv[k];if(c&&(c.v||c.na))rv[k]=[c.v||'',c.na?1:0];});if(Object.keys(dv).length)o.dv=dv;if(Object.keys(rv).length)o.rv2=rv;if(r.chg.length)o.cg=r.chg.map(c=>[c.k,c.o,c.n,c.f,c.why]);if(Object.keys(r.carry).length){o.cr=r.carry;o.cf=r.carryFrom||'';}if(notes)o.no=notes;return coreJ(r,strip(o));}
+function floorPayload(r,notes){const ck={};Object.keys(r.ck||{}).forEach(k=>{const c=r.ck[k];ck[k]={s:c.s,rp:c.rep,sv:c.sev,rt:c.rt};});const o={a:'FLR',v:1,k:'P',rv:r.done.complete&&!r.done.partial?(overall(r)==='PASS'?'P':overall(r)==='FAIL'?'F':'I'):(overall(r)==='FAIL'?'F':'I'),id:r.id,u:r.updated,sn:r.hdr.sn,rma:r.hdr.rma||'',wb:r.hdr.wbs||'',vin:r.hdr.vin,pl:r.hdr.plate,kl:r.hdr.kilo,os:isOldSn(r)?1:0,ol:r.hdr.old,kd:r.hdr.kind,d:r.hdr.date,t:r.hdr.tech,st:r.step||0,ck:ck,dn:{notes:r.done.notes,name:r.done.name,date:r.done.date}};fx(r);const dv={},rv={};Object.keys(r.dv).forEach(k=>{const c=r.dv[k];if(c&&(c.v||c.na))dv[k]=[c.v||'',c.na?1:0];});Object.keys(r.rv).forEach(k=>{const c=r.rv[k];if(c&&(c.v||c.na))rv[k]=[c.v||'',c.na?1:0];});if(Object.keys(dv).length)o.dv=dv;if(Object.keys(rv).length)o.rv2=rv;if(r.chg.length)o.cg=r.chg.map(c=>[c.k,c.o,c.n,c.f,c.why]);if(Object.keys(r.carry).length){o.cr=r.carry;o.cf=r.carryFrom||'';}if(notes)o.no=notes;return coreJ(r,strip(o));}
 function coreJ(r,o){try{var cx=Core.pack(r,o);return Object.keys(cx).length?Core.json(o,cx,2800):Core.json(o);}catch(e){return JSON.stringify(o);}}
 
 function sheetPdf(r,notes){const d=pdfNew();pdfHead(d,'Paused Floor Test QR Code');let y=92;d.setFont('helvetica','bold');d.setFontSize(13);d.setTextColor(0);d.text(cl(recName(r)),MX,y);y+=16;const c=ckCount(r);d.setFont('helvetica','normal');d.setFontSize(10);d.setTextColor(60);d.text(cl('Paused at: '+STEPS[r.step||0]+'   |   '+c.done+'/'+c.total+' answered   |   '+fmtD(r.hdr.date)+(r.hdr.tech?'   |   '+r.hdr.tech:'')),MX,y);y+=14;
@@ -13989,13 +13989,13 @@ async function scanDone(txt){scanStop();let o=null;try{o=JSON.parse(txt);}catch(
  if(o&&(o.a==='ATP'||o.a==='LVSS'||o.a==='CAL')){closeModal();const frm=o.a==='ATP'?'ATP inspection':o.a==='LVSS'?(o.it?'intake inspection':'post-repair inspection'):'calibration',sn0=snShow(o.a==='LVSS'&&o.up&&o.nsn?o.nsn:o.sn);
   let W0=null;if(o.rv!=='P'){if(!await ask(Core.gateText(o,frm,sn0),{title:'Not passed',ok:'Start anyway',no:'Cancel'}))return;W0=Core.warnOf(o);}
   else if(!await ask('The '+frm+(sn0?' for '+sn0:'')+' passed. Start a floor test with the core details filled in?',{title:'Start from QR code?',ok:'Start floor test'}))return;
-  const upf=o.a==='LVSS'&&!!o.up;const r0=newRec(upf&&!o.nsn?upSn(o):sn0,'',upf?'up':'');if(upf)r0.hdr.old=snShow(o.sn);r0.hdr.vin=o.vin||'';r0.hdr.plate=o.pl||'';r0.hdr.kilo=o.kl||'';r0.hdr.rma=o.rma||'';if(o.a==='LVSS'&&!upf)r0.hdr.osn=r0.hdr.sn;r0.carryFrom=o.a==='ATP'?'ATP':o.a==='CAL'?'Calibration':o.it?'Intake':'Post-Repair';r0.carry={sn:(upf&&!o.nsn)?'':r0.hdr.sn,old:r0.hdr.old,vin:r0.hdr.vin,plate:r0.hdr.plate,kilo:r0.hdr.kilo};coreFloor(r0,o,W0);S.rec=r0;S.step=0;S.dirty=true;await save();S.view='rec';render();return;}
+  const upf=o.a==='LVSS'&&!!o.up;const r0=newRec(upf&&!o.nsn?upSn(o):sn0,'',upf?'up':'');if(upf)r0.hdr.old=snShow(o.sn);r0.hdr.vin=o.vin||'';r0.hdr.plate=o.pl||'';r0.hdr.kilo=o.kl||'';r0.hdr.rma=o.rma||'';r0.hdr.wbs=o.wb||(o.cx&&o.cx.wb)||'';if(o.a==='LVSS'&&!upf)r0.hdr.osn=r0.hdr.sn;r0.carryFrom=o.a==='ATP'?'ATP':o.a==='CAL'?'Calibration':o.it?'Intake':'Post-Repair';r0.carry={sn:(upf&&!o.nsn)?'':r0.hdr.sn,old:r0.hdr.old,vin:r0.hdr.vin,plate:r0.hdr.plate,kilo:r0.hdr.kilo};coreFloor(r0,o,W0);S.rec=r0;S.step=0;S.dirty=true;await save();S.view='rec';render();return;}
  if(!(o&&o.a==='FLR'&&o.k==='P')){const m=$('#scanMsg');if(m)m.textContent='That is not a paused floor-test QR code. Try again.';if($('#scanV')&&$('#scanV').style.display!=='none')scanDlg();return;}
  closeModal();await fromQr(o);}
 async function openRec(x){S.rec=x;S.step=x.step||0;S.view='rec';render();}
 async function fromQr(o){
  const ex=S.recs.find(x=>x.id===o.id);if(ex&&!await ask('This floor test ('+(o.sn||'')+') is already on this tablet. Replace it with the version from the QR code?',{title:'Replace?',ok:'Replace',danger:1}))return;
- const r=newRec(o.sn||'',o.t||'',o.kd);r.id=o.id||r.id;r.updated=Date.now();r.hdr.date=o.d||r.hdr.date;r.hdr.old=o.ol||'';r.hdr.vin=o.vin||'';r.hdr.plate=o.pl||'';r.hdr.kilo=o.kl||'';r.hdr.rma=o.rma||'';if(o.os)r.hdr.osn=r.hdr.sn;
+ const r=newRec(o.sn||'',o.t||'',o.kd);r.id=o.id||r.id;r.updated=Date.now();r.hdr.date=o.d||r.hdr.date;r.hdr.old=o.ol||'';r.hdr.vin=o.vin||'';r.hdr.plate=o.pl||'';r.hdr.kilo=o.kl||'';r.hdr.rma=o.rma||'';r.hdr.wbs=o.wb||(o.cx&&o.cx.wb)||'';if(o.os)r.hdr.osn=r.hdr.sn;
  Object.keys(o.ck||{}).forEach(k=>{const c=o.ck[k];if(c&&c.s)r.ck[k]={s:c.s,rep:c.rp||'',sev:c.sv||'',rt:c.rt||''};});r.done.notes=(o.dn&&o.dn.notes)||'';if(o.dn){r.done.name=o.dn.name||'';r.done.date=o.dn.date||'';}
  fx(r);Object.keys(o.dv||{}).forEach(k=>{r.dv[k]={v:o.dv[k][0],na:!!o.dv[k][1]};});Object.keys(o.rv2||{}).forEach(k=>{r.rv[k]={v:o.rv2[k][0],na:!!o.rv2[k][1]};});r.chg=(o.cg||[]).map(a=>({k:a[0],o:a[1],n:a[2],f:a[3],why:a[4]||''}));r.carry=o.cr||{};r.carryFrom=o.cf||'';Core.resume(r,o,'FLR');
  S.rec=r;S.step=o.st||0;r.step=S.step;S.dirty=true;await save();S.view='rec';render();if(o.no)await notice(o.no,{title:'Hand-off notes from the previous tech'});}
@@ -14061,7 +14061,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)save();});
 function curTpl(){return TPL}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/01/2026',site:'31'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/01/2026',site:'32'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14117,10 +14117,13 @@ function pvReorder(){try{var zs=document.getElementById('zs'),zo=document.getEle
 /* ---- truck identification (VIN / plate / kilo) + "old S/N" handling for Calibration and Floor Test ---- */
 function isOldSn(r){var h=(r&&r.hdr)||{};return !!(h.osn&&String(h.sn||'').trim()===String(h.osn).trim());}
 function tkIdHtml(r){var h=r.hdr||{},e=function(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');};
- return '<div class="secl">Customer and truck</div><div id="cuSlot">'+(window.CUST?CUST.html(r):'')+'</div><div class="grid" style="margin-top:10px"><div><label class="f">RMA number (optional)</label><input data-b="hdr.rma" value="'+e(h.rma)+'" autocomplete="off"></div><div><label class="f">Truck VIN</label><input data-b="hdr.vin" value="'+e(h.vin)+'" autocomplete="off"></div><div><label class="f">License plate #</label><input data-b="hdr.plate" value="'+e(h.plate)+'" autocomplete="off"></div><div><label class="f">Kilo #</label><input data-b="hdr.kilo" value="'+e(h.kilo)+'" autocomplete="off"></div></div>'+
+ return '<div class="secl">Customer and truck</div><div id="cuSlot">'+(window.CUST?CUST.html(r):'')+'</div><div class="grid" style="margin-top:10px"><div><label class="f">RMA number (optional)</label><input data-b="hdr.rma" value="'+e(h.rma)+'" autocomplete="off"></div><div><label class="f">WBS / project code (if used)</label><input data-b="hdr.wbs" value="'+e(h.wbs)+'" autocomplete="off"></div><div><label class="f">Truck VIN</label><input data-b="hdr.vin" value="'+e(h.vin)+'" autocomplete="off"></div><div><label class="f">License plate #</label><input data-b="hdr.plate" value="'+e(h.plate)+'" autocomplete="off"></div><div><label class="f">Kilo #</label><input data-b="hdr.kilo" value="'+e(h.kilo)+'" autocomplete="off"></div></div>'+
  (isOldSn(r)?'<p style="margin:8px 0 0;color:#c25a00;font-size:14px"><b>Old S/N.</b> This is the OLD serial number that came in the QR code. Replace it with the new serial number when it is available – otherwise the PDF leaves a blank line to write it in.</p>':'');}
+function WB(r){try{var h=(r&&(r.hdr||r.header))||{};return String(h.wbs||(r&&r.core&&r.core.wb)||'').trim();}catch(e){return '';}}
+function idRows(r,h,acct){var w=WB(r);return w?[['WBS',w]]:[['RMA',h.rma],['SVO',h.so]].concat(acct?[['Account',h.acct]]:[]);}
+function idB(r,h,tb){var w=WB(r);return w?[['WBS / project code',tb(w)]]:[['RMA Number',tb(h.rma)],['SVO Number',tb(h.so)],['Account Indicator',tb(h.acct)]];}
 function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrSnText(t);};
- [['RMA number',h.rma],['Truck VIN',h.vin],['License plate #',h.plate],['Kilo #',h.kilo]].forEach(function(p,j){var x=MX+j*w3;d.setDrawColor(0);d.setLineWidth(.6);d.rect(x,y,w3,28);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text(p[0],x+5,y+9);d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(0);d.text(cl2(p[1])||'-',x+5,y+22);});y+=28;if(window.CUST){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,22);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('Customer',MX+5,y+9);d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(0);d.text(cl2(CUST.of(r).n),MX+5,y+19);y+=22;}
+ [(WB(r)?['WBS',WB(r)]:['RMA number',h.rma]),['Truck VIN',h.vin],['License plate #',h.plate],['Kilo #',h.kilo]].forEach(function(p,j){var x=MX+j*w3;d.setDrawColor(0);d.setLineWidth(.6);d.rect(x,y,w3,28);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text(p[0],x+5,y+9);d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(0);d.text(cl2(p[1])||'-',x+5,y+22);});y+=28;if(window.CUST){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,22);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('Customer',MX+5,y+9);d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(0);d.text(cl2(CUST.of(r).n),MX+5,y+19);y+=22;}
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 
@@ -14181,7 +14184,7 @@ document.addEventListener('focusout',e=>{histCommit(e.target);setTimeout(()=>{if
 document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='f2014422f2';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='d1cb0040d9';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -14252,7 +14255,7 @@ window.coreFloor=function(r,o,w){var C=Core.dec(o);if(!C)return;fx(r);
 })();</script><script>/* upfit with the new number not known yet: the new platform's prefix, or '' (Ravi, 2026-10-31) */
 function upSn(o){return ({L:'LVSS-',E:'eMSC-L ',M:'M2S2 '})[o&&o.np]||'';}
 </script><script>/* customer picker + dash tag for this form (Rev 27) */
-function dtInfo(r){const h=r.hdr||{},up=h.kind==='up',sv=String(h.sn||'').trim(),sd=snNum(sv)?snShow(sv):(sv?sv+' ________':'');return {r:r,sn:up?snShow(String(h.old||'').trim()):sd,nsn:up?(sd||'________'):'',stage:up?'Upfit':'New build',form:TPL.title,date:h.date?fmtD(h.date):'',credit:creditText(TPL.revision).replace(/[^\x20-\x7E]/g,'-'),rows:[['RMA',h.rma],['Truck VIN',h.vin],['License plate',h.plate],[CUST.kl(r),h.kilo]]};}
+function dtInfo(r){const h=r.hdr||{},up=h.kind==='up',sv=String(h.sn||'').trim(),sd=snNum(sv)?snShow(sv):(sv?sv+' ________':'');return {r:r,sn:up?snShow(String(h.old||'').trim()):sd,nsn:up?(sd||'________'):'',stage:up?'Upfit':'New build',form:TPL.title,date:h.date?fmtD(h.date):'',credit:creditText(TPL.revision).replace(/[^\x20-\x7E]/g,'-'),rows:[(WB(r)?['WBS',WB(r)]:['RMA',h.rma]),['Truck VIN',h.vin],['License plate',h.plate],[CUST.kl(r),h.kilo]]};}
 CUST.cfg({inRec:function(){return S.view==='rec';},tag:function(){return S.rec?dtInfo(S.rec):null;},rec:function(){return S.view==='rec'?S.rec:null;},dirty:function(){markDirty();},anchor:{sel:'#cuSlot',pos:'afterbegin'},after:function(r,c){if(!c.dhs){r.hdr.plate=String(r.hdr.plate||'').replace(/^dhs\s*/i,'');const e=document.querySelector('[data-b="hdr.plate"]');if(e)e.value=r.hdr.plate;}markDirty();}});
 </script><script>/* Rev 28: home screen auto-update; the report drawn with its own truck's customer */
 window.__atHome=function(){try{return S.view==='home';}catch(e){return false;}};
