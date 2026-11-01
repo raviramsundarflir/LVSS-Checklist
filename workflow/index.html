@@ -115,7 +115,8 @@ upfit:{label:'Upgrade / upfit',time:1,blurb:'Same trip through the shop, but par
   [A,'Intake PDF','Bin tag shows the serial and the updated serial.'],
   [O,'Print and file','Front page in the folder sleeve. Tech ticks downstream checks on paper.']]},
  {n:'Disassembly and build-up',s:[
-  [A,'Tear down and upfit prep','Scan the Intake QR. New serials are entered as parts go in. Cameleon Advanced tab checked.'],
+  [O,'Vehicle prep','Engine bay setup, undercarriage, cable runs, skid runners in the bed, cab preparation. Runs while the skid is prepped. First line on the folder front page.'],
+  [A,'Skid prep','Reconfigure the enclosures, fit the skid adapters, bolt the network enclosure to the skid. Scan the Intake QR. New serials are entered as parts go in. Cameleon Advanced tab checked.'],
   [A,'Floor Test','Carries RMA and the new serials forward. Photo zip downloads with the PDF. Whether upfit keeps this step is still to be confirmed.'],
   [A,'Jake\u2019s Final (ad hoc test)','Final check against the upgraded configuration, before the ATP. Also still to be confirmed for upfit.'],
   [D,'TFU or radar?','If the upgraded unit has them, run the calibration form.',['Yes','Calibration, then ATP'],['No','Straight to ATP']]]},
@@ -132,9 +133,10 @@ build:{label:'New build',proposed:1,time:1,blurb:'Proposed, not built yet. The g
  lanes:[
  {n:'Truck build',s:[
   [A,'Intake','Planned eMSC-L or M2S2 serial is the main serial. VIN, plate, kilo, mileage, condition notes and photos.'],
-  [N,'Truck prep','Wiring and cabling, mounts and brackets, truck mods and fit checks. Mark \u201cprepped, waiting on devices\u201d and park the record.']]},
+  [N,'Vehicle prep','Engine bay setup, undercarriage, cable runs, skid runners in the bed, cab preparation, fit checks. Runs while production builds the skids and enclosures. Mark \u201cprepped, waiting on devices\u201d and park the record.']]},
  {n:'Enclosures received',s:[
-  [N,'Floor Test','Bench test off the battery enclosure: camera, LCU, pan/tilt, radar. Device serials are captured here.'],
+  [O,'Skid prep','Camera, radar and TFU arrive new from the factory. Install them on the skid with the server and LCU.'],
+  [N,'Floor Test','Bench test off the battery enclosure: camera, LCU, pan/tilt, radar. Device serials are captured here. A borrowed or floated-in unit can be marked \u201cTest unit\u201d so a missing device never stops the test.'],
   [D,'Floor Test passed?','',['Yes','Install in the cab'],['No','Fix and retest']],
   [O,'Installation into the cab','Assemble and integrate on the truck.'],
   [O,'Dressing','Cable and hardware dressing.'],
