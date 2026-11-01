@@ -12999,6 +12999,117 @@ function show(){if(dlg)return;css();dlg=document.createElement('div');dlg.id='bg
  var st=dlg.querySelector('.st');if(st)st.focus();}
 window.BackGuard={show:show};
 })();
+</script><script>/* ===== shared: customer (Ravi, 2026-10-31) =====
+   The tech picks the customer on the truck details. "CBP / DHS" is built in; any other customer is typed in, kept on
+   this tablet and offered again. A CBP / DHS truck has a Kilo # and the DHS plate prefix; any other customer's truck has
+   a Fleet # (kept in the Kilo # box) and no prefix. A typed-in customer can be ticked Government (that turns on the
+   DD1149). Records and QR codes from before this update count as CBP / DHS. The customer travels in the QR code (cx.cu,
+   cx.cg) to every later form.
+   Labels: for a non-CBP truck the screen and the PDFs say "Fleet #" wherever they said "Kilo #" (one place does it for
+   the screen, one for the PDFs, so every form and report follows the customer). */
+(function(){
+'use strict';
+var DEF='CBP / DHS', KEY='cust_recent';
+var CFG={rec:function(){return null;},dirty:function(){},after:function(){},anchor:null};
+var CUR=null;
+function T(v){return String(v==null?'':v).trim();}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function rec(){if(CUR)return CUR;try{return CFG.rec();}catch(e){return null;}}
+/* the customer of a record: picked here, else carried in its QR code, else CBP / DHS */
+function of(r){if(r===undefined)r=rec();var c=r&&r.custPick;
+ if(c&&typeof c==='object'){if(c.o)return {n:T(c.n)||'Other customer',g:!!c.g,dhs:false};return {n:DEF,g:true,dhs:true};}
+ var K=r&&r.core;if(K&&T(K.cu))return {n:T(K.cu),g:!!(+K.cg),dhs:false};
+ return {n:DEF,g:true,dhs:true,def:true};}
+function recent(){try{var L=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(L)?L.filter(function(o){return o&&T(o.n);}):[];}catch(e){return [];}}
+function remember(c){if(!c||!T(c.n)||c.n==='Other customer')return;try{var L=recent().filter(function(o){return T(o.n).toLowerCase()!==T(c.n).toLowerCase();});L.unshift({n:T(c.n),g:!!c.g});localStorage.setItem(KEY,JSON.stringify(L.slice(0,8)));}catch(e){}}
+/* label words for a non-CBP truck */
+function mapS(s,c){if(typeof s!=='string'||c.dhs)return s;
+ s=s.replace(/\bKilo #/g,'Fleet #').replace(/\bKILO #/g,'FLEET #').replace(/\|  Kilo /g,'|  Fleet # ').replace(/License plate # \(DHS\)/g,'License plate #').replace(/DHS LICENSE PLATE #/g,'LICENSE PLATE #');
+ if(!c.g)s=s.replace(/Receiving \(GOV Employee\):/g,'Receiving (Customer):').replace(/Receiving \(GOV employee\) – DHS/g,'Receiving (customer)');
+ else s=s.replace(/Receiving \(GOV employee\) – DHS/g,'Receiving (GOV employee)');
+ return s;}
+function mapT(t,c){if(Array.isArray(t))return t.map(function(x){return mapS(x,c);});return mapS(t,c);}
+/* PDFs: every report drawn while a non-CBP truck is open uses its labels */
+function hookPdf(){var J=window.jspdf&&window.jspdf.jsPDF;if(!J||!J.API||J.API.__cu||!Array.isArray(J.API.events))return;J.API.__cu=1;
+ J.API.events.push(['initialized',function(){var d=this,t0=d.text;if(typeof t0!=='function')return;
+  d.text=function(){var a=Array.prototype.slice.call(arguments);try{var c=of();if(!c.dhs)a[0]=mapT(a[0],c);}catch(e){}return t0.apply(d,a);};}]);}
+/* screen: the same words on the open record's pages */
+var BUSY=false;
+function relabel(){var c;try{c=of();}catch(e){return;}if(c.dhs||!document.body)return;BUSY=true;
+ try{var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null),n,L=[];while((n=w.nextNode()))L.push(n);
+  L.forEach(function(n){var p=n.parentNode;if(!p||/^(SCRIPT|STYLE|TEXTAREA)$/.test(p.nodeName))return;var v=n.nodeValue;if(!/Kilo|KILO|DHS|GOV/.test(v))return;var m=mapS(v,c);if(m!==v)n.nodeValue=m;});}catch(e){}
+ BUSY=false;}
+function html(r){css();var c=of(r),oth=!c.dhs,R=recent(),nm=(r&&r.custPick&&r.custPick.o)?T(r.custPick.n):(oth?c.n:'');
+ return '<div id="cuBox" class="cuBox"><label class="cuL">Customer</label><div class="cuRow"><button type="button" data-cu="dhs" class="cuB'+(oth?'':' on')+'">'+DEF+'</button><button type="button" data-cu="oth" class="cuB'+(oth?' on':'')+'">Other customer</button></div>'+
+  (oth?'<input id="cuName" class="cuIn" data-cu-in="1" data-nohist list="cuDL" value="'+esc(nm)+'" placeholder="Customer name" autocomplete="off" autocapitalize="words">'+
+   '<datalist id="cuDL">'+R.map(function(o){return '<option value="'+esc(o.n)+'">';}).join('')+'</datalist>'+
+   (R.length?'<div class="cuChips"><span>Used on this tablet:</span>'+R.map(function(o,i){return '<button type="button" data-cu="pick" data-i="'+i+'">'+esc(o.n)+(o.g?' (gov.)':'')+'</button>';}).join('')+'</div>':'')+
+   '<label class="cuG"><input type="checkbox" data-cu-g="1"'+(c.g?' checked':'')+'> Government customer – needs a DD1149</label>'+
+   '<p class="cuNote">Not CBP / DHS: the number box is called Fleet # for this truck, and the license plate has no DHS prefix.</p>':'')+'</div>';}
+function css(){if(document.getElementById('cuCss')||!document.head)return;var s=document.createElement('style');s.id='cuCss';
+ s.textContent='.cuBox{margin:6px 0 12px}.cuL{display:block;font-weight:700;font-size:14px;color:#555;margin:0 0 4px}.cuRow{display:flex;gap:6px;flex-wrap:wrap}.cuB{flex:1;min-width:130px;min-height:44px;border-radius:8px;border:1.5px solid #8a94a6;background:#fff;color:#222;font-weight:700;font-size:15px}.cuB.on{background:#1d3b6a;border-color:#1d3b6a;color:#fff}'+
+  '.cuIn{width:100%;box-sizing:border-box;margin-top:8px;min-height:44px;font-size:16px;padding:6px 10px;border:1.5px solid #b8c0cc;border-radius:8px}.cuChips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;font-size:13px;color:#666}.cuChips button{min-height:36px;padding:4px 10px;border-radius:8px;border:1px solid #9aa3b2;background:#f5f7fa;font-size:14px}'+
+  '.cuG{display:flex;gap:8px;align-items:center;margin-top:8px;font-size:15px}.cuG input{width:22px;height:22px}.cuNote{margin:6px 0 0;font-size:13px;color:#666}';
+ document.head.appendChild(s);}
+function anchorEl(){var a=CFG.anchor;if(!a)return null;try{if(typeof a==='function')return a();var el=document.querySelector(a.sel);if(!el)return null;return {el:el,pos:a.pos||'afterend'};}catch(e){return null;}}
+/* the forms draw the picker in their own pages (no jump after a redraw); this only fills in if a page has no picker */
+function mount(){var r;try{r=CFG.rec();}catch(e){r=null;}if(!r)return;css();var box=document.getElementById('cuBox');if(box){box.__r=r;return;}
+ var A=anchorEl();if(!A||!A.el)return;A.el.insertAdjacentHTML(A.pos,html(r));box=document.getElementById('cuBox');if(box)box.__r=r;}
+function redraw(r){var box=document.getElementById('cuBox');if(!box)return mount();box.outerHTML=html(r);box=document.getElementById('cuBox');if(box)box.__r=r;}
+function changed(r){try{CFG.dirty(r);}catch(e){}try{CFG.after(r,of(r));}catch(e){}redraw(r);relabel();}
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-cu]');if(!b)return;var r=CFG.rec();if(!r)return;e.preventDefault();var a=b.getAttribute('data-cu');
+ if(a==='dhs'){if(of(r).dhs&&r.custPick&&!r.custPick.o)return;r.custPick={o:0};}
+ else if(a==='oth'){if(r.custPick&&r.custPick.o)return;var c=of(r);r.custPick={o:1,n:c.dhs?'':c.n,g:c.dhs?false:c.g};}
+ else if(a==='pick'){var o=recent()[+b.getAttribute('data-i')];if(!o)return;r.custPick={o:1,n:o.n,g:!!o.g};}
+ changed(r);});
+document.addEventListener('input',function(e){var t=e.target;if(!t||!t.getAttribute||!t.getAttribute('data-cu-in'))return;var r=CFG.rec();if(!r)return;r.custPick=r.custPick&&r.custPick.o?r.custPick:{o:1,n:'',g:false};r.custPick.n=t.value;
+ var m=recent().filter(function(o){return T(o.n).toLowerCase()===T(t.value).toLowerCase();})[0];if(m&&r.custPick.g!==!!m.g){r.custPick.g=!!m.g;var g=document.querySelector('[data-cu-g]');if(g)g.checked=r.custPick.g;}
+ try{CFG.dirty(r);}catch(e2){}});
+document.addEventListener('change',function(e){var t=e.target;if(!t||!t.getAttribute)return;var r=CFG.rec();if(!r||!r.custPick||!r.custPick.o)return;
+ if(t.getAttribute('data-cu-g')){r.custPick.g=!!t.checked;remember(r.custPick);try{CFG.dirty(r);}catch(e2){}try{CFG.after(r,of(r));}catch(e3){}return;}
+ if(t.getAttribute('data-cu-in')){r.custPick.n=T(t.value);remember(r.custPick);try{CFG.dirty(r);}catch(e2){}}});
+var Q=0;function soon(){if(Q)return;Q=requestAnimationFrame(function(){Q=0;hookPdf();mount();relabel();});}
+function start(){hookPdf();try{new MutationObserver(function(){if(!BUSY)soon();}).observe(document.body,{childList:true,subtree:true});}catch(e){}soon();}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+/* ---- DASH TAG: one landscape page at the end of every truck form's report, to put on the dash facing out ----
+   I = {r: record, sn: serial (or incoming serial for an upfit), nsn: new serial after an upfit ('' = not an upfit),
+        stage: 'Repair' / 'Upfit / Upgrade' / 'New build', rows: [[label, value]...], form: form name, date, credit} */
+function dashTag(d,I){var r=I.r,c=of(r);var p=CUR;CUR=r;try{
+ d.addPage('letter','landscape');var W=d.internal.pageSize.getWidth(),H=d.internal.pageSize.getHeight(),MX=36,CWL=W-2*MX,T=36;
+ var cl=function(t){return String(t==null?'':t).replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[–—]/g,'-').replace(/…/g,'...').replace(/[^\x09\x0A\x20-\x7E\xA0-\xFF]/g,'?');};
+ var col=function(k,h){var n=parseInt(h.slice(1),16);d[k](n>>16,(n>>8)&255,n&255);};
+ var fit=function(txt,max,fs0){var fs=fs0;d.setFont('helvetica','bold');d.setFontSize(fs);while(d.getTextWidth(txt)>max&&fs>14){fs-=2;d.setFontSize(fs);}return fs;};
+ col('setFillColor','#0f5c4d');d.rect(MX,T,CWL,84,'F');d.setTextColor(255);fit('DASH TAG',CWL-24,50);d.text('DASH TAG',W/2,T+50,{align:'center'});
+ d.setFont('helvetica','bold');d.setFontSize(12);d.text('Place on the vehicle dash, facing out through the windshield - truck identification',W/2,T+72,{align:'center'});
+ var y=T+114;d.setTextColor(90);d.setFontSize(12);d.text('CUSTOMER',MX,y);d.setTextColor(0);d.setFontSize(20);d.text(cl(c.n),MX+82,y+1);
+ d.setTextColor(90);d.setFontSize(12);d.text(cl(I.stage||''),W-MX,y,{align:'right'});y+=34;
+ var up=!!I.nsn,bh=up?140:170,fs=up?92:120;d.setFont('helvetica','bold');d.setTextColor(90);d.setFontSize(12);
+ if(up){var bw=(CWL-50)/2;d.text('INCOMING SERIAL NUMBER',MX+bw/2,y,{align:'center'});d.text('NEW SERIAL NUMBER AFTER UPFIT / UPGRADE',MX+bw+50+bw/2,y,{align:'center'});y+=8;
+  d.setDrawColor(0);d.setLineWidth(3);d.rect(MX,y,bw,bh);d.rect(MX+bw+50,y,bw,bh);var a=cl(I.sn||'________'),b=cl(I.nsn);
+  d.setTextColor(0);fit(a,bw-24,fs);d.text(a,MX+bw/2,y+bh/2+fs*0.35,{align:'center'});fit(b,bw-24,fs);d.text(b,MX+bw+50+bw/2,y+bh/2+fs*0.35,{align:'center'});
+  col('setFillColor','#0f5c4d');d.triangle(MX+bw+12,y+bh/2-14,MX+bw+12,y+bh/2+14,MX+bw+38,y+bh/2,'F');}
+ else{d.text('PLATFORM SERIAL NUMBER',W/2,y,{align:'center'});y+=8;d.setDrawColor(0);d.setLineWidth(3);d.rect(MX,y,CWL,bh);var s1=cl(I.sn||'________');d.setTextColor(0);fit(s1,CWL-30,fs);d.text(s1,W/2,y+bh/2+fs*0.35,{align:'center'});}
+ y+=bh+26;d.setLineWidth(.6);
+ var rows=(I.rows||[]).filter(function(x){return T_(x[1]);}),half=Math.ceil(rows.length/2);
+ rows.forEach(function(x,k){var cx=MX+10+(k<half?0:CWL/2),cy=y+(k%half)*28;d.setFont('helvetica','bold');d.setFontSize(14);d.setTextColor(90);d.text(cl(x[0]),cx,cy);d.setTextColor(0);d.setFontSize(18);d.text(cl(x[1]),cx+130,cy,{maxWidth:CWL/2-150});});
+ d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(150);d.text('Teledyne Confidential; Commercially Sensitive Business Data',MX,H-20);
+ d.text(cl('From the '+(I.form||'report')+(I.date?' - '+I.date:'')),W-MX,H-20,{align:'right'});
+ d.setFontSize(6.5);d.text(cl(I.credit||''),W/2,H-8,{align:'center'});d.setTextColor(0);
+}finally{CUR=p;}}
+function T_(v){return String(v==null?'':v).trim();}
+/* ---- sections (Ravi, Rev 27): a coloured bar on top of every card and labelled lines between the groups in a card,
+   in each form's own colour, so the pages do not blend together when scrolling ---- */
+(function(){try{var s=document.createElement('style');s.id='secCss';s.textContent='.card{border-top:6px solid var(--blue,var(--navy,#1d3b6a));margin-bottom:20px}'+
+ '.secl{display:flex;align-items:center;gap:10px;margin:18px 0 10px;color:var(--blue,var(--navy,#1d3b6a));font:800 13px system-ui,-apple-system,sans-serif;letter-spacing:.06em;text-transform:uppercase}'+
+ '.secl:after{content:"";flex:1;height:3px;background:currentColor;opacity:.55;border-radius:3px}.card>h2+.secl,.card>h2+p+.secl{margin-top:8px}';(document.head||document.documentElement).appendChild(s);}catch(e){}})();
+window.SEC=function(t){return '<div class="secl">'+esc(t)+'</div>';};
+/* the DHS plate prefix: on for CBP / DHS unless the tech turned it off; off for anyone else unless turned on */
+function pf(v){return v===true||(v!==false&&of().dhs);}
+window.CUST={DEF:DEF,of:of,pf:pf,html:html,dashTag:dashTag,mapS:function(s,r){return mapS(s,of(r));},kl:function(r){return of(r).dhs?'Kilo #':'Fleet #';},
+ cfg:function(o){for(var k in o)CFG[k]=o[k];soon();},refresh:soon,
+ /* draw a report for a record that is not the open one (e.g. a DD1149 from a scanned code) */
+ with:function(r,fn){var p=CUR;CUR=r;try{return fn();}finally{CUR=p;}}};
+})();
 </script><script>/* ===== shared: core details carried through every form (Ravi, 2026-10-29) =====
    Serial numbers, revisions, mileage/hours, VIN / plate / kilo, RMA / SVO / account and the reported issues travel
    in each report's QR code to the next form, so the truck can be tracked from the first look to the final inspection.
@@ -13067,12 +13178,12 @@ function dec(o){
   Object.keys(o.dv||{}).forEach(function(k){var a=o.dv[k];if(a&&!a[1])S_(FK[k],a[0]);});
   Object.keys(o.rv2||{}).forEach(function(k){var a=o.rv2[k];if(a&&!a[1])R_(FR[k],a[0]);});}
  else if(o.a==='CAL'){C.sn=T(o.sn);var u=o.un||{};S_('camera',u.cam);S_('radar',u.rad);S_('pan tilt',u.pt);var sv=o.sv||{};R_('v1',sv.pmu);R_('v3',sv.hmi);}
- else if(o.a==='FIN'){C.sn=T(o.sn);var F=o.f||{};C.vin=T(F.vin);C.pl=T(F.plate);C.kl=T(F.kilo);Object.keys(NK).forEach(function(k){S_(NK[k],F[k]);});}
+ else if(o.a==='FIN'){C.sn=T(o.sn);C.osn=T(o.ol);var F=o.f||{};C.vin=T(F.vin);C.pl=T(F.plate);C.kl=T(F.kilo);Object.keys(NK).forEach(function(k){S_(NK[k],F[k]);});}
  /* changes recorded the old way (Floor Test / Calibration before this update) */
  if(!o.cx)(o.cg||[]).forEach(function(a){var id=OLDCG[a[0]];if(id&&(T(a[1])||T(a[2])))C.x.push([id,T(a[1]),T(a[2]),'',f,C.d,T(a[4])]);});
  var cx=o.cx;
  if(cx&&typeof cx==='object'){
-  ['sn','osn','p','rma','so','ac','vin','pl','kl'].forEach(function(k){if(!C[k]&&T(cx[k])&&!(k==='sn'&&C.up))C[k]=T(cx[k]);});
+  ['sn','osn','p','rma','so','ac','vin','pl','kl'].forEach(function(k){if(!C[k]&&T(cx[k])&&!(k==='sn'&&C.up))C[k]=T(cx[k]);});if(T(cx.cu)){C.cu=T(cx.cu);C.cg=+cx.cg||0;}
   var s=cx.s||{};Object.keys(s).forEach(function(l){var k=devOfL(l);if(k&&!C.s[k])S_(k,s[l]);});
   var r=cx.r||{};Object.keys(r).forEach(function(k){if(!C.r[k])R_(k,r[k]);});
   if(Array.isArray(cx.w)){var nat=C.w;C.w=[];cx.w.forEach(function(a){if(Array.isArray(a)&&T(a[1]))C.w.push([a[0]||'f',T(a[1]),a[2]||'',T(a[3]),a[4]||'',a[5]||'',a[6]||'',T(a[7]),a[8]||'']);});C.w=C.w.concat(nat);}
@@ -13114,6 +13225,7 @@ function pack(r,nat){
  var pd=pending(r);if(pd.length)cx.pd=pd.map(function(p){return [L(p[0]),p[1]];});
  if(K&&K.h&&K.h.length)cx.h=K.h.slice(-8);
  if(r.coreWarn)cx.ws=r.coreWarn;if(r.coreRe)cx.rc=r.coreRe;
+ try{var cu=window.CUST&&CUST.of(r);if(cu&&!cu.dhs){cx.cu=cu.n;if(cu.g)cx.cg=1;}}catch(e){}
  return cx;}
 function carriedW(r){var K=r&&r.core;if(!K||K.wi)return [];var st=r.wst||{};
  return (K.w||[]).map(function(a,i){var m=st[i];return m?a.slice(0,6).concat([m[0],m[1]||'',m[2]||'']):a.slice();});}
@@ -13134,7 +13246,7 @@ function json(o,cx,lim){lim=lim||2800;if(window.SITE_REV)o=Object.assign({sr:+wi
   function(){while(c.w&&c.w.length&&B(J())>lim){c.w.shift();}if(c.w&&!c.w.length)delete c.w;if(c.wn&&(!c.w||c.wn>c.w.length))c.wn=c.w?c.w.length:0;},
   function(){(c.x||[]).forEach(function(a){a[6]='';});while(c.x&&c.x.length>(c.n||0)&&B(J())>lim){c.x.shift();}}];
  for(var i=0;i<steps.length;i++){steps[i]();j=J();if(B(j)<=lim)return j;}
- c={k:c.k,s:c.s,r:c.r,pd:c.pd,vin:c.vin,pl:c.pl,kl:c.kl,sn:c.sn};Object.keys(c).forEach(function(k){if(c[k]==null)delete c[k];});j=J();
+ c={k:c.k,s:c.s,r:c.r,pd:c.pd,vin:c.vin,pl:c.pl,kl:c.kl,sn:c.sn,cu:c.cu,cg:c.cg};Object.keys(c).forEach(function(k){if(c[k]==null)delete c[k];});j=J();
  return B(j)<=lim+150?j:JSON.stringify(o);}
 
 /* a removed device's old serial is not its current serial */
@@ -13691,7 +13803,7 @@ function homeHtml(){const act=S.recs.filter(r=>!r.archived);
  const row=r=>{const c=ckCount(r),st=r.done.complete?'Complete':`In progress – ${STEPS[r.step||0]} · checklist ${c.done+c.na}/${c.total}`;
   return `<div class="it2"><div class="gr"><b>Skid ${esc(recName(r))}</b><div class="muted">${esc(st)} · ${esc(fmtD(r.hdr.date))}${r.hdr.tech?' · '+esc(r.hdr.tech):''}</div></div><button data-act="open" data-id="${r.id}" class="pri">Open</button><button data-act="delrec" data-id="${r.id}" class="dng" title="Delete">🗑</button></div>`;};
  return bar('Home',`${HOMELINK?'<a class="homelnk" href="../">⌂ All forms</a>':''}`)+`<div class="wrap"><div class="card"><h2>${esc(TPL.title)}</h2><p class="muted">Final inspection of a new-build eMSC-L after its ATP. Start it any time: scan the Auditor QR code on the ATP report to fill in the skid S/N, VIN and any serials the ATP captured, or start a blank one.</p>
- <div class="row"><button class="pri" data-act="scan" style="flex:1 1 220px;min-height:56px;font-size:17px">📷 Scan QR from ATP report (or a paused form)</button><button data-act="new" style="flex:1 1 220px;min-height:56px;font-size:17px">＋ New blank final inspection</button></div></div>
+ <div class="row"><button class="pri" data-act="scan" style="flex:1 1 220px;min-height:56px;font-size:17px">📷 Scan QR from an earlier report (or a paused form)</button><button data-act="new" style="flex:1 1 220px;min-height:56px;font-size:17px">＋ New blank final inspection</button></div></div>
  <div class="card list"><h3>Final inspections on this tablet</h3>${act.length?act.map(row).join(''):'<p class="muted">None yet. Tap Scan QR (from the ATP report) or New blank final inspection.</p>'}</div></div>`;}
 function stepsBar(r){return `<div class="steps">${STEPS.map((s,i)=>`<button class="${i===S.step?'on':''}${stepDone(r,i)?' dn':''}" data-act="step" data-i="${i}">${i+1}. ${s}</button>`).join('')}</div>`;}
 function stepDone(r,i){if(i===0)return /\d/.test(r.hdr.sn||'')&&blankFields(r).length===0;if(i===1)return ckCount(r).left===0;return !!r.done.complete;}
@@ -13701,17 +13813,17 @@ function tkHas(r,k){return (r.ph||[]).some(p=>p.k==='tk:'+k);}
 function tkMissing(r){return TKK.filter(k=>!tkHas(r,k)&&!(r.tkOm||{})[k]);}
 function tkLbl(k){const x=TPL.fields.find(y=>y.k===k);return x?x.l:k;}
 function tkRow(r,x){const k=x.k,v=(r.f||{})[k]||'',n=(r.ph||[]).filter(p=>p.k==='tk:'+k).length,om=(r.tkOm||{})[k]&&!n;let ip;
- if(k==='plate'){const on=r.tkPf!==false,sh=on?String(v).replace(/^dhs\s*/i,''):v;ip=`<div style="display:flex;gap:6px"><button data-act="tkpf" class="${on?'pri':''}" style="min-height:44px;padding:4px 12px;font-weight:800">${on?'DHS':'no prefix'}</button><input data-tkplate="1" value="${esc(sh)}" placeholder="e.g. 201838" autocomplete="off" autocapitalize="characters" style="flex:1"></div>`;}
+ if(k==='plate'){const on=CUST.pf(r.tkPf),sh=on?String(v).replace(/^dhs\s*/i,''):v;ip=`<div style="display:flex;gap:6px"><button data-act="tkpf" class="${on?'pri':''}" style="min-height:44px;padding:4px 12px;font-weight:800">${on?'DHS':'no prefix'}</button><input data-tkplate="1" value="${esc(sh)}" placeholder="e.g. 201838" autocomplete="off" autocapitalize="characters" style="flex:1"></div>`;}
  else ip=`<input data-b="f.${k}" value="${esc(v)}" autocomplete="off" autocapitalize="characters">`;
  return `<div class="ser${String(v).trim()?'':' miss'}" id="tk-${k}"><div class="lb">${esc(x.l)}<div class="muted" style="font-size:12px">${n?'✓ photo':om?'photo omitted':'photo needed'}</div></div><div style="display:flex;gap:6px;align-items:center"><div style="flex:1">${ip}</div><button class="cam" data-act="tkcam" data-k="${k}" title="Photo of ${esc(x.l)}">📷${n?' '+n:''}</button></div></div>`;}
 function tkPrompt(then){const r=S.rec,m=tkMissing(r);if(!m.length){closeModal();if(then)then();return;}S.tkThen=then||null;modal(`<h3>Truck photos needed</h3><p class="muted">Take a photo of each one, or omit it (no reason needed).</p>${m.map(k=>`<div class="card" style="margin:6px 0"><b>${esc(tkLbl(k))}</b>${(r.f||{})[k]?' – '+esc(r.f[k]):''}<div class="row" style="margin-top:6px"><button class="pri" data-act="tkcam" data-k="${k}" style="flex:1">📷 Take the photo</button><button data-act="tkomit" data-k="${k}" style="flex:1">Omit</button></div></div>`).join('')}<button data-act="mclose">Close</button>`);}
-document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset||!t.dataset.tkplate||!S.rec)return;const r=S.rec;let v=String(t.value||'').trim();r.f=r.f||{};if(r.tkPf!==false){v=v.replace(/^dhs\s*/i,'');r.f.plate=v?'DHS '+v:'';}else r.f.plate=v;markDirty();});
+document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset||!t.dataset.tkplate||!S.rec)return;const r=S.rec;let v=String(t.value||'').trim();r.f=r.f||{};if(CUST.pf(r.tkPf)){v=v.replace(/^dhs\s*/i,'');r.f.plate=v?'DHS '+v:'';}else r.f.plate=v;markDirty();});
 function serHtml(r){const f=TPL.fields.filter(x=>!TKK.includes(x.k));
  const inp=(x)=>{const v=(r.f||{})[x.k]||'';if(x.o==='date')return `<input type="date" data-b="f.${x.k}" value="${esc(v)}">`;
   return `<input data-b="f.${x.k}" ${x.o==='nohist'?'data-nohist ':''}value="${esc(v)}" autocomplete="off" autocapitalize="characters">`;};
  return `<div class="card"><h2>Unit and technician</h2>${r.hdr.src?`<div class="warn" style="background:#eaf3ff;border-color:#9bbbe8"><b>Started from the ATP report</b> (${esc(r.hdr.src)}). Skid S/N, VIN and any serials the ATP recorded are filled in below - check them against the unit.</div>`:''}
  <div class="grid"><div><label class="f">Skid serial number (required)</label><input id="n-sn" data-snin="1" data-b="hdr.sn" value="${esc(r.hdr.sn)}" placeholder="e.g. eMSC-L 0056" autocomplete="off">${snTg('n-sn',r.hdr.sn)}</div><div><label class="f">Inspection date</label><input type="date" data-b="hdr.date" value="${esc(r.hdr.date)}"></div><div><label class="f">RMA number (optional)</label><input data-b="hdr.rma" value="${esc(r.hdr.rma||'')}" autocomplete="off"></div></div>${whoHtml(r,true)}</div>
- <div class="card"><h2>Truck identification</h2><p class="muted">Photo of each is required – take it, or omit it when asked.</p>${TKK.map(k=>tkRow(r,TPL.fields.find(x=>x.k===k))).join('')}</div>
+ <div class="card"><h2>Truck identification</h2>${CUST.html(r)}${SEC('Plate, Kilo # and VIN')}<p class="muted">Photo of each is required – take it, or omit it when asked.</p>${TKK.map(k=>tkRow(r,TPL.fields.find(x=>x.k===k))).join('')}</div>
  <div class="card"><h2>Component serial numbers</h2><p class="muted">Fill in what is on the unit. Tap 📷 to add a picture of a label or an issue. Anything left blank stays yellow and shows as missing in the report.</p>${f.map(x=>serRow(r,x)).join('')}</div>`;}
 function serInp(x,v){if(x.o==='date')return `<input type="date" data-b="f.${x.k}" value="${esc(v)}">`;return `<input data-b="f.${x.k}" ${x.o==='nohist'?'data-nohist ':''}value="${esc(v)}" autocomplete="off" autocapitalize="characters">`;}
 function serRow(r,x){const v=(r.f||{})[x.k]||'',k='sn:'+x.k,n=phCount(r,k);return `<div class="ser${String(v).trim()?'':' miss'}" id="ser-${x.k}"><div class="lb">${esc(x.l)}</div><div style="display:flex;gap:6px;align-items:center"><div style="flex:1">${serInp(x,v)}</div>${x.o==='date'?'':`<button class="cam" data-act="sercam" data-k="${x.k}" title="Picture for ${esc(x.l)}">📷${n?' '+n:''}</button>`}</div>${phStrip(r,k)}</div>`;}
@@ -13745,7 +13857,7 @@ function doneHtml(r){const d=r.done;
  <label class="f" style="margin-top:10px">Technician signature (sign with your finger)</label><canvas id="sigc" class="sigc" width="900" height="260"></canvas><div class="row" style="margin-top:6px"><button data-act="sigclr">Clear signature</button><span class="muted" id="sigMsg">${d.sig?'Signature saved.':'Not signed yet.'}</span></div></div>
  ${photosHtml(r)}
  ${d.complete?doneActions(r):`<div class="card"><div id="finNeed"></div><button class="pri" data-act="finish" style="width:100%;min-height:56px;font-size:18px">✓ Finish final inspection</button></div>`}`;}
-function doneActions(r){return SendTo.card(r)+`<div class="card" style="border:2px solid var(--pass)"><h3>Final inspection complete</h3><div class="row"><button class="emailbig" data-act="email">✉ Email report (PDF attached)<small>Recommended - opens your email app with the PDF attached, addressed to the Send to list above</small></button><button data-act="pdf" style="flex:1 1 150px">⬇ Save PDF</button>${(r.ph||[]).length&&r.done.incPh==='1'?'<button data-act="phzip" style="flex:1 1 150px">⬇ Save photos (ZIP)</button>':''}<button data-act="copymail" style="flex:1 1 150px">Copy To</button><button data-act="copysubj" style="flex:1 1 150px">Copy subject</button><button data-act="reopen" style="flex:1 1 150px">Re-open to edit</button></div></div>`;}
+function doneActions(r){return SendTo.card(r)+`<div class="card" style="border:2px solid var(--pass)"><h3>Final inspection complete</h3><div class="row"><button class="emailbig" data-act="email">✉ Email report (PDF attached)<small>Recommended - opens your email app with the PDF attached, addressed to the Send to list above</small></button><button data-act="pdf" style="flex:1 1 150px">⬇ Save PDF</button>${(r.ph||[]).length&&r.done.incPh==='1'?'<button data-act="phzip" style="flex:1 1 150px">⬇ Save photos (ZIP)</button>':''}<button data-act="copymail" style="flex:1 1 150px">Copy To</button><button data-act="copysubj" style="flex:1 1 150px">Copy subject</button><button data-act="reopen" style="flex:1 1 150px">Re-open to edit</button></div></div>`+atpNextHtml(r);}
 function optHtml(r){return `<div class="card"><h3>Pause</h3><div class="row optb"><button data-act="pause">⏸ Pause – QR code to continue later</button></div></div>`;}
 function recHtml(r){const bdy=[serHtml,ckHtml,doneHtml][S.step](r);
  return bar('Skid '+recName(r),`<button id="saveInd" class="save" data-act="save"></button><button data-act="home">Home</button>`)+stepsBar(r)+`<div class="wrap">${(S.step===0||S.step===2)?Core.bannerHtml(r,{noChain:S.step===2}):''}${bdy}<div class="row" style="margin-bottom:12px"><button data-act="prev" ${S.step===0?'disabled':''} style="flex:1">‹ Back</button><button class="pri" data-act="next" ${S.step===2?'disabled':''} style="flex:1">Next ›</button></div>${r.done.complete?'':optHtml(r)}</div>`;}
@@ -13828,13 +13940,13 @@ function phRefresh(){const r=S.rec;if(!r)return;const bx=$('#phBox');if(bx)bx.in
 const phStrip=(r,k)=>{const L=(r.ph||[]).filter(p=>p.k===k);return L.length?`<div class="row" style="gap:6px;margin-top:6px">${L.map(p=>`<img src="${p.d}" data-act="phview" data-id="${p.id}" alt="picture" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:pointer">`).join('')}<span class="muted" style="align-self:center">tap a picture to rotate</span></div>`:'';};
 /* ---- PDF (mirrors the "Print Me" sheet) ---- */
 function footers(d,r){const n=d.getNumberOfPages();for(let i=1;i<=n;i++){d.setPage(i);creditLine(d,TPL.revision);d.setFont('helvetica','normal');d.setFontSize(7.5);d.setTextColor(120);d.text(cl('Skid S/N '+(r.hdr.sn||'-')+'  |  '+TPL.title),PW/2,770,{align:'center'});d.text('Page '+i+' of '+n,PW-MX,770,{align:'right'});}}
-function pdfRows(r){const rows=[['Skid Serial Number',/\d/.test(r.hdr.sn||'')?r.hdr.sn:(String(r.hdr.sn||'').trim()?String(r.hdr.sn).trim()+' ________':''),!/\d/.test(r.hdr.sn||'')]];TPL.fields.forEach(x=>{const v0=String((r.f||{})[x.k]||'').trim();let v=x.o==='date'?fmtD(v0):v0;if(!v0)v='Missing';if(TKK.includes(x.k)){const n=(r.ph||[]).filter(p=>p.k==='tk:'+x.k).length;v=v+(n?'   (photo taken)':(r.tkOm||{})[x.k]?'   (Photo omitted)':'');}else{const n=phCount(r,'sn:'+x.k);if(n)v=v+'   (see picture'+(n===1?'':'s')+')';}rows.push([x.l,v,!v0]);});return rows;}
+function pdfRows(r){const rows=[['Skid Serial Number',/\d/.test(r.hdr.sn||'')?r.hdr.sn:(String(r.hdr.sn||'').trim()?String(r.hdr.sn).trim()+' ________':''),!/\d/.test(r.hdr.sn||'')],['Customer',CUST.of(r).n,false]];TPL.fields.forEach(x=>{const v0=String((r.f||{})[x.k]||'').trim();let v=x.o==='date'?fmtD(v0):v0;if(!v0)v='Missing';if(TKK.includes(x.k)){const n=(r.ph||[]).filter(p=>p.k==='tk:'+x.k).length;v=v+(n?'   (photo taken)':(r.tkOm||{})[x.k]?'   (Photo omitted)':'');}else{const n=phCount(r,'sn:'+x.k);if(n)v=v+'   (see picture'+(n===1?'':'s')+')';}rows.push([x.l,v,!v0]);});return rows;}
 function ckText(r,k){const c=ckOf(r,k);return c.n?'N/A':c.x?(fmtD(c.d||'')+'   '+(c.i||'')).trim():'';}
 function finalPdf(r){const d=pdfNew();let y;const ens=n=>{if(y+n>BOT){d.addPage();y=TOP;}};
  pdfHead(d,TPL.title);y=88;
  d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(60);d.text(cl('Inspection date: '+fmtD(r.hdr.date)+'    Technician: '+(r.hdr.tech||'-')+(r.hdr.ini?' ('+r.hdr.ini+')':'')+(r.hdr.src?'    Started from: '+r.hdr.src:'')),MX,y);y+=8;
  const LW=300;d.setFont('helvetica','normal');d.setFontSize(9.5);const nL=wrap(d,(r.done.notes||'').trim()||'(none)',CW-12);let exN=0;TPL.items.forEach(i=>{const c=ckOf(r,i.k);if(c.u){d.setFontSize(7.8);exN+=(c.rev?1:0)+(c.nt?Math.min(4,wrap(d,'Notes: '+c.nt,LW-14).length):0);}});
- const nRows=1+TPL.fields.length+TPL.items.length,fixed=y+8+30+8+6+14+nL.length*11+3+66+4;const RH=Math.max(10.2,Math.min(11.7,(BOT-fixed-exN*9.4)/nRows));
+ const nRows=2+TPL.fields.length+TPL.items.length,fixed=y+8+30+8+6+14+nL.length*11+3+66+4;const RH=Math.max(10.2,Math.min(11.7,(BOT-fixed-exN*9.4)/nRows));
 
  const head=(a,b)=>{ens(RH+14);d.setFillColor(17,17,17);d.rect(MX,y,CW,15,'F');d.setFont('helvetica','bold');d.setFontSize(9.5);d.setTextColor(255);d.text(cl(a),MX+5,y+10.6);d.text(cl(b),MX+LW+5,y+10.6);y+=15;};
  const row=(a,b,st,ex)=>{ex=ex||[];const hh=RH+ex.length*9.4;ens(hh);if(st==='miss'){d.setFillColor(255,236,140);d.rect(MX,y,CW,hh,'F');}d.setDrawColor(150);d.setLineWidth(.5);d.rect(MX,y,CW,hh);d.line(MX+LW,y,MX+LW,y+hh);d.setFont('helvetica','normal');d.setFontSize(8.4);d.setTextColor(0);d.text(cl(a),MX+4,y+8.5);if(st==='na')d.setTextColor(110);if(st==='miss')d.setTextColor(110,80,0);d.setFont('helvetica',st==='done'?'bold':st==='miss'?'bolditalic':'normal');d.text(cl(b),MX+LW+4,y+8.5);d.setFont('helvetica','normal');d.setFontSize(7.8);d.setTextColor(60);ex.forEach((l,j)=>d.text(cl(l),MX+LW+4,y+17.5+j*9.4));y+=hh;};
@@ -13844,7 +13956,7 @@ function finalPdf(r){const d=pdfNew();let y;const ens=n=>{if(y+n>BOT){d.addPage(
  wrap(d,(r.done.notes||'').trim()||'(none)',CW-12).forEach(l=>{ens(12);d.text(l,MX+6,y+8);y+=11;});y+=3;
  ens(66);const hh=62;d.setDrawColor(150);d.setLineWidth(.6);d.rect(MX,y,CW,hh);d.line(MX+300,y,MX+300,y+hh);d.setFontSize(6.8);d.setTextColor(110);d.text('Technician signature',MX+4,y+8);d.text('Print name',MX+304,y+8);d.text('Date completed',MX+304,y+36);d.setFontSize(10);d.setTextColor(0);d.text(cl(r.done.name||r.hdr.tech||''),MX+304,y+22);d.text(cl(fmtD(r.done.date)),MX+304,y+50);
  if(r.done.sig){try{d.addImage(r.done.sig,'PNG',MX+8,y+11,190,48);}catch(e){}}
- y=Core.pdf(d,y+hh+6,{x:MX,w:CW,top:TOP,bot:BOT},r);finPhotos(d,r);footers(d,r);return d;}
+ y=Core.pdf(d,y+hh+6,{x:MX,w:CW,top:TOP,bot:BOT},r);finPhotos(d,r);footers(d,r);CUST.dashTag(d,dtInfo(r));return d;}
 /* picture appendix: truck IDs, serials, checklist lines in form order, then general pictures */
 function phOrder(r){const L=r.ph||[],key=p=>{const k=String(p.k||'');if(k.indexOf('tk:')===0)return [0,TKK.indexOf(k.slice(3))];if(k.indexOf('sn:')===0)return [1,TPL.fields.findIndex(x=>x.k===k.slice(3))];const x=TPL.items.findIndex(i=>i.k===k);return x>=0?[2,x]:[3,0];};return L.map((p,n)=>({p,n,o:key(p)})).sort((a,b)=>a.o[0]-b.o[0]||a.o[1]-b.o[1]||a.n-b.n).map(z=>z.p);}
 function phCell(r,p){const k=String(p.k||''),cap=String(p.cap||'').trim();let t='General',sub='';
@@ -13910,7 +14022,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'step':{const ti=+b.dataset.i;if(S.step===0&&ti>0&&!S.tkSkip&&tkMissing(r).length){tkPrompt(()=>{S.tkSkip=0;goStep(ti);});break;}S.tkSkip=0;goStep(ti);break;}
  case 'tkcam':closeModal();pickPhotos(true,'tk:'+b.dataset.k);break;
  case 'tkomit':{r.tkOm=r.tkOm||{};r.tkOm[b.dataset.k]=true;markDirty();{const left=tkMissing(r).length;tkPrompt(S.tkThen);if(left&&S.step===0)render();}break;}
- case 'tkpf':{const raw=String((r.f||{}).plate||'').replace(/^dhs\s*/i,'');r.tkPf=r.tkPf===false;r.f.plate=(r.tkPf!==false&&raw)?'DHS '+raw:raw;markDirty();render();break;}
+ case 'tkpf':{const raw=String((r.f||{}).plate||'').replace(/^dhs\s*/i,'');r.tkPf=!CUST.pf(r.tkPf);r.f.plate=(CUST.pf(r.tkPf)&&raw)?'DHS '+raw:raw;markDirty();render();break;}
  case 'prev':goStep(S.step-1);break;
  case 'next':goStep(S.step+1);break;
  case 'tech-pick':{techPick(+b.dataset.i);if(r){r.hdr.tech=($('#n-te')||{}).value||r.hdr.tech;if(!String(r.hdr.ini||'').trim()||r.hdr.ini===initialsOf(S.prevTech)){r.hdr.ini=initialsOf(r.hdr.tech);}markDirty();render();}break;}
@@ -13940,6 +14052,8 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
   if(!/\d/.test(r.hdr.sn||'')&&!await ask('The skid serial number is still blank. The report will show '+(String(r.hdr.sn||'').trim()||'the serial')+' ____ so it can be written in.\n\nFinish anyway?',{title:'Serial number not entered',ok:'Finish anyway',no:'Go back'}))break;const bf=blankFields(r),cL=ckLeft(r),nm=bf.length+cL.length;if(nm&&!await ask('These are not filled in. The report will show them highlighted in yellow.'+(bf.length?'\n\nSerial numbers:\n'+bf.map(x=>'  • '+x).join('\n'):'')+(cL.length?'\n\nChecklist (not completed):\n'+cL.map(o=>'  • '+(o.x+1)+'. '+o.i.t).join('\n'):'')+'\n\nFinish anyway?',{title:nm+' item'+(nm===1?'':'s')+' missing',ok:'Finish anyway',no:'Go back'}))break;
   if((r.ph||[]).length&&r.done.incPh===''){const inc=await ask('The '+r.ph.length+' picture'+(r.ph.length===1?' is':'s are')+' in the PDF report. Also send '+(r.ph.length===1?'it':'them')+' as a separate ZIP (full size)?',{title:'Pictures',ok:'Also send ZIP',no:'PDF only'});r.done.incPh=inc?'1':'0';}
   r.done.complete=true;if(!r.done.name)r.done.name=r.hdr.tech;if(!r.done.date)r.done.date=today();techRemember(r.done.name);markDirty();await save();render();break;}
+ case 'toatp':{try{localStorage.setItem('qrHandoff',JSON.stringify({q:finDone(r),t:Date.now(),k:'atp'}));}catch(e){}location.href='../atp/';break;}
+ case 'atpqr':{modal(`<h3 style="margin-top:0">Start the ATP</h3><p class="muted">In the <b>eMSC-L / M2S2 ATP Inspection</b> form tap <b>Scan QR</b> and scan this code. The skid serial, VIN, plate, ${esc(CUST.kl(r))} and serial numbers are filled in.</p><img src="${qrPng(finDone(r),560)}" alt="QR code for the ATP" style="width:100%;max-width:420px;display:block;margin:0 auto"><button id="atpQrX" style="width:100%;margin-top:10px">Close</button>`);const x=$('#atpQrX');if(x)x.onclick=closeModal;break;}
  case 'reopen':r.done.complete=false;markDirty();render();break;
  case 'pdf':{const f=finalPdfFile(r);(async()=>{await dlBlob(f.blob,f.name);const z=photoZipFile(r);if(z){await new Promise(t=>setTimeout(t,600));await dlBlob(z.blob,z.name);}})();break;}
  case 'email':await emailReport();break;
@@ -13957,7 +14071,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)save();});
 function curTpl(){return TPL}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'10/31/2026',site:'26'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'10/31/2026',site:'27'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14013,10 +14127,10 @@ function pvReorder(){try{var zs=document.getElementById('zs'),zo=document.getEle
 /* ---- truck identification (VIN / plate / kilo) + "old S/N" handling for Calibration and Floor Test ---- */
 function isOldSn(r){var h=(r&&r.hdr)||{};return !!(h.osn&&String(h.sn||'').trim()===String(h.osn).trim());}
 function tkIdHtml(r){var h=r.hdr||{},e=function(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');};
- return '<div class="grid" style="margin-top:10px"><div><label class="f">RMA number (optional)</label><input data-b="hdr.rma" value="'+e(h.rma)+'" autocomplete="off"></div><div><label class="f">Truck VIN</label><input data-b="hdr.vin" value="'+e(h.vin)+'" autocomplete="off"></div><div><label class="f">License plate #</label><input data-b="hdr.plate" value="'+e(h.plate)+'" autocomplete="off"></div><div><label class="f">Kilo #</label><input data-b="hdr.kilo" value="'+e(h.kilo)+'" autocomplete="off"></div></div>'+
+ return '<div class="secl">Customer and truck</div><div id="cuSlot">'+(window.CUST?CUST.html(r):'')+'</div><div class="grid" style="margin-top:10px"><div><label class="f">RMA number (optional)</label><input data-b="hdr.rma" value="'+e(h.rma)+'" autocomplete="off"></div><div><label class="f">Truck VIN</label><input data-b="hdr.vin" value="'+e(h.vin)+'" autocomplete="off"></div><div><label class="f">License plate #</label><input data-b="hdr.plate" value="'+e(h.plate)+'" autocomplete="off"></div><div><label class="f">Kilo #</label><input data-b="hdr.kilo" value="'+e(h.kilo)+'" autocomplete="off"></div></div>'+
  (isOldSn(r)?'<p style="margin:8px 0 0;color:#c25a00;font-size:14px"><b>Old S/N.</b> This is the OLD serial number that came in the QR code. Replace it with the new serial number when it is available – otherwise the PDF leaves a blank line to write it in.</p>':'');}
 function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrSnText(t);};
- [['RMA number',h.rma],['Truck VIN',h.vin],['License plate #',h.plate],['Kilo #',h.kilo]].forEach(function(p,j){var x=MX+j*w3;d.setDrawColor(0);d.setLineWidth(.6);d.rect(x,y,w3,28);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text(p[0],x+5,y+9);d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(0);d.text(cl2(p[1])||'-',x+5,y+22);});y+=28;
+ [['RMA number',h.rma],['Truck VIN',h.vin],['License plate #',h.plate],['Kilo #',h.kilo]].forEach(function(p,j){var x=MX+j*w3;d.setDrawColor(0);d.setLineWidth(.6);d.rect(x,y,w3,28);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text(p[0],x+5,y+9);d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(0);d.text(cl2(p[1])||'-',x+5,y+22);});y+=28;if(window.CUST){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,22);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('Customer',MX+5,y+9);d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(0);d.text(cl2(CUST.of(r).n),MX+5,y+19);y+=22;}
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 
@@ -14077,7 +14191,7 @@ document.addEventListener('focusout',e=>{histCommit(e.target);setTimeout(()=>{if
 document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='feb9c48407';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='7da94df68e';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
@@ -14359,4 +14473,9 @@ window.DICTATE_FIELDS=[
  {sel:'input[data-b^="f."]',kind:'serial'},{sel:'input[data-tkplate]',kind:'serial'},{sel:'input[data-b$=".rev"]',kind:'version'}];
 (function(){var _s=serHtml;serHtml=function(r){return _s(r).replace('<div class="card"><h2>Unit and technician</h2>','<div class="card"><h2>Unit and technician</h2>'+DictUI.rowHtml());};})();</script><script>/* upfit with the new number not known yet: the new platform's prefix, or '' (Ravi, 2026-10-31) */
 function upSn(o){return ({L:'LVSS-',E:'eMSC-L ',M:'M2S2 '})[o&&o.np]||'';}
+</script><script>/* customer picker, dash tag and the hand-off to the ATP for Jake's Final (Rev 27) */
+function finDone(r){const o={a:'FIN',v:1,k:'D',rv:r.done.complete?'P':'I',id:r.id,sn:r.hdr.sn,rma:r.hdr.rma||'',d:r.done.date||r.hdr.date,t:r.hdr.tech,f:r.f};if(r.hdr.was)o.ol=r.hdr.was;return coreJ(r,strip(o));}
+function atpNextHtml(r){return `<div class="card" style="border:2px solid #1d3b6a"><h3>Next: the ATP inspection</h3><p class="muted">Jake's Final is done before the ATP. Start the ATP with this skid's serial numbers, VIN, plate and ${esc(CUST.kl(r))} filled in.</p><div class="row"><button class="pri" data-act="toatp" style="flex:1 1 200px">Open the ATP now</button><button data-act="atpqr" style="flex:1 1 200px">Show the QR code for the ATP</button></div></div>`;}
+function dtInfo(r){const h=r.hdr||{},F=r.f||{},was=String(h.was||'').trim(),sv=String(h.sn||'').trim(),sd=/\d/.test(sv)?snShow(sv):(sv?sv+' ________':'');return {r:r,sn:was?was:sd,nsn:was?(sd||'________'):'',stage:was?'Upfit':'New build',form:TPL.title,date:h.date?fmtD(h.date):'',credit:creditText(TPL.revision).replace(/[^\x20-\x7E]/g,'-'),rows:[['RMA',h.rma],['Truck VIN',F.vin],['License plate',F.plate],[CUST.kl(r),F.kilo]]};}
+CUST.cfg({rec:function(){return S.view==='rec'?S.rec:null;},dirty:function(){markDirty();},anchor:function(){const h=[...document.querySelectorAll('h2')].find(x=>x.textContent.trim()==='Truck identification');return h?{el:h,pos:'afterend'}:null;},after:function(r,c){r.f=r.f||{};const raw=String(r.f.plate||'').replace(/^dhs\s*/i,'');r.tkPf=c.dhs;r.f.plate=c.dhs&&raw?'DHS '+raw:raw;markDirty();const y=window.scrollY;render();window.scrollTo(0,y);}});
 </script></body></html>

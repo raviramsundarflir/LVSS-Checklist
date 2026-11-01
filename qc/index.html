@@ -12982,6 +12982,117 @@ function show(){if(dlg)return;css();dlg=document.createElement('div');dlg.id='bg
  var st=dlg.querySelector('.st');if(st)st.focus();}
 window.BackGuard={show:show};
 })();
+</script><script>/* ===== shared: customer (Ravi, 2026-10-31) =====
+   The tech picks the customer on the truck details. "CBP / DHS" is built in; any other customer is typed in, kept on
+   this tablet and offered again. A CBP / DHS truck has a Kilo # and the DHS plate prefix; any other customer's truck has
+   a Fleet # (kept in the Kilo # box) and no prefix. A typed-in customer can be ticked Government (that turns on the
+   DD1149). Records and QR codes from before this update count as CBP / DHS. The customer travels in the QR code (cx.cu,
+   cx.cg) to every later form.
+   Labels: for a non-CBP truck the screen and the PDFs say "Fleet #" wherever they said "Kilo #" (one place does it for
+   the screen, one for the PDFs, so every form and report follows the customer). */
+(function(){
+'use strict';
+var DEF='CBP / DHS', KEY='cust_recent';
+var CFG={rec:function(){return null;},dirty:function(){},after:function(){},anchor:null};
+var CUR=null;
+function T(v){return String(v==null?'':v).trim();}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function rec(){if(CUR)return CUR;try{return CFG.rec();}catch(e){return null;}}
+/* the customer of a record: picked here, else carried in its QR code, else CBP / DHS */
+function of(r){if(r===undefined)r=rec();var c=r&&r.custPick;
+ if(c&&typeof c==='object'){if(c.o)return {n:T(c.n)||'Other customer',g:!!c.g,dhs:false};return {n:DEF,g:true,dhs:true};}
+ var K=r&&r.core;if(K&&T(K.cu))return {n:T(K.cu),g:!!(+K.cg),dhs:false};
+ return {n:DEF,g:true,dhs:true,def:true};}
+function recent(){try{var L=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(L)?L.filter(function(o){return o&&T(o.n);}):[];}catch(e){return [];}}
+function remember(c){if(!c||!T(c.n)||c.n==='Other customer')return;try{var L=recent().filter(function(o){return T(o.n).toLowerCase()!==T(c.n).toLowerCase();});L.unshift({n:T(c.n),g:!!c.g});localStorage.setItem(KEY,JSON.stringify(L.slice(0,8)));}catch(e){}}
+/* label words for a non-CBP truck */
+function mapS(s,c){if(typeof s!=='string'||c.dhs)return s;
+ s=s.replace(/\bKilo #/g,'Fleet #').replace(/\bKILO #/g,'FLEET #').replace(/\|  Kilo /g,'|  Fleet # ').replace(/License plate # \(DHS\)/g,'License plate #').replace(/DHS LICENSE PLATE #/g,'LICENSE PLATE #');
+ if(!c.g)s=s.replace(/Receiving \(GOV Employee\):/g,'Receiving (Customer):').replace(/Receiving \(GOV employee\) – DHS/g,'Receiving (customer)');
+ else s=s.replace(/Receiving \(GOV employee\) – DHS/g,'Receiving (GOV employee)');
+ return s;}
+function mapT(t,c){if(Array.isArray(t))return t.map(function(x){return mapS(x,c);});return mapS(t,c);}
+/* PDFs: every report drawn while a non-CBP truck is open uses its labels */
+function hookPdf(){var J=window.jspdf&&window.jspdf.jsPDF;if(!J||!J.API||J.API.__cu||!Array.isArray(J.API.events))return;J.API.__cu=1;
+ J.API.events.push(['initialized',function(){var d=this,t0=d.text;if(typeof t0!=='function')return;
+  d.text=function(){var a=Array.prototype.slice.call(arguments);try{var c=of();if(!c.dhs)a[0]=mapT(a[0],c);}catch(e){}return t0.apply(d,a);};}]);}
+/* screen: the same words on the open record's pages */
+var BUSY=false;
+function relabel(){var c;try{c=of();}catch(e){return;}if(c.dhs||!document.body)return;BUSY=true;
+ try{var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null),n,L=[];while((n=w.nextNode()))L.push(n);
+  L.forEach(function(n){var p=n.parentNode;if(!p||/^(SCRIPT|STYLE|TEXTAREA)$/.test(p.nodeName))return;var v=n.nodeValue;if(!/Kilo|KILO|DHS|GOV/.test(v))return;var m=mapS(v,c);if(m!==v)n.nodeValue=m;});}catch(e){}
+ BUSY=false;}
+function html(r){css();var c=of(r),oth=!c.dhs,R=recent(),nm=(r&&r.custPick&&r.custPick.o)?T(r.custPick.n):(oth?c.n:'');
+ return '<div id="cuBox" class="cuBox"><label class="cuL">Customer</label><div class="cuRow"><button type="button" data-cu="dhs" class="cuB'+(oth?'':' on')+'">'+DEF+'</button><button type="button" data-cu="oth" class="cuB'+(oth?' on':'')+'">Other customer</button></div>'+
+  (oth?'<input id="cuName" class="cuIn" data-cu-in="1" data-nohist list="cuDL" value="'+esc(nm)+'" placeholder="Customer name" autocomplete="off" autocapitalize="words">'+
+   '<datalist id="cuDL">'+R.map(function(o){return '<option value="'+esc(o.n)+'">';}).join('')+'</datalist>'+
+   (R.length?'<div class="cuChips"><span>Used on this tablet:</span>'+R.map(function(o,i){return '<button type="button" data-cu="pick" data-i="'+i+'">'+esc(o.n)+(o.g?' (gov.)':'')+'</button>';}).join('')+'</div>':'')+
+   '<label class="cuG"><input type="checkbox" data-cu-g="1"'+(c.g?' checked':'')+'> Government customer – needs a DD1149</label>'+
+   '<p class="cuNote">Not CBP / DHS: the number box is called Fleet # for this truck, and the license plate has no DHS prefix.</p>':'')+'</div>';}
+function css(){if(document.getElementById('cuCss')||!document.head)return;var s=document.createElement('style');s.id='cuCss';
+ s.textContent='.cuBox{margin:6px 0 12px}.cuL{display:block;font-weight:700;font-size:14px;color:#555;margin:0 0 4px}.cuRow{display:flex;gap:6px;flex-wrap:wrap}.cuB{flex:1;min-width:130px;min-height:44px;border-radius:8px;border:1.5px solid #8a94a6;background:#fff;color:#222;font-weight:700;font-size:15px}.cuB.on{background:#1d3b6a;border-color:#1d3b6a;color:#fff}'+
+  '.cuIn{width:100%;box-sizing:border-box;margin-top:8px;min-height:44px;font-size:16px;padding:6px 10px;border:1.5px solid #b8c0cc;border-radius:8px}.cuChips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;font-size:13px;color:#666}.cuChips button{min-height:36px;padding:4px 10px;border-radius:8px;border:1px solid #9aa3b2;background:#f5f7fa;font-size:14px}'+
+  '.cuG{display:flex;gap:8px;align-items:center;margin-top:8px;font-size:15px}.cuG input{width:22px;height:22px}.cuNote{margin:6px 0 0;font-size:13px;color:#666}';
+ document.head.appendChild(s);}
+function anchorEl(){var a=CFG.anchor;if(!a)return null;try{if(typeof a==='function')return a();var el=document.querySelector(a.sel);if(!el)return null;return {el:el,pos:a.pos||'afterend'};}catch(e){return null;}}
+/* the forms draw the picker in their own pages (no jump after a redraw); this only fills in if a page has no picker */
+function mount(){var r;try{r=CFG.rec();}catch(e){r=null;}if(!r)return;css();var box=document.getElementById('cuBox');if(box){box.__r=r;return;}
+ var A=anchorEl();if(!A||!A.el)return;A.el.insertAdjacentHTML(A.pos,html(r));box=document.getElementById('cuBox');if(box)box.__r=r;}
+function redraw(r){var box=document.getElementById('cuBox');if(!box)return mount();box.outerHTML=html(r);box=document.getElementById('cuBox');if(box)box.__r=r;}
+function changed(r){try{CFG.dirty(r);}catch(e){}try{CFG.after(r,of(r));}catch(e){}redraw(r);relabel();}
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-cu]');if(!b)return;var r=CFG.rec();if(!r)return;e.preventDefault();var a=b.getAttribute('data-cu');
+ if(a==='dhs'){if(of(r).dhs&&r.custPick&&!r.custPick.o)return;r.custPick={o:0};}
+ else if(a==='oth'){if(r.custPick&&r.custPick.o)return;var c=of(r);r.custPick={o:1,n:c.dhs?'':c.n,g:c.dhs?false:c.g};}
+ else if(a==='pick'){var o=recent()[+b.getAttribute('data-i')];if(!o)return;r.custPick={o:1,n:o.n,g:!!o.g};}
+ changed(r);});
+document.addEventListener('input',function(e){var t=e.target;if(!t||!t.getAttribute||!t.getAttribute('data-cu-in'))return;var r=CFG.rec();if(!r)return;r.custPick=r.custPick&&r.custPick.o?r.custPick:{o:1,n:'',g:false};r.custPick.n=t.value;
+ var m=recent().filter(function(o){return T(o.n).toLowerCase()===T(t.value).toLowerCase();})[0];if(m&&r.custPick.g!==!!m.g){r.custPick.g=!!m.g;var g=document.querySelector('[data-cu-g]');if(g)g.checked=r.custPick.g;}
+ try{CFG.dirty(r);}catch(e2){}});
+document.addEventListener('change',function(e){var t=e.target;if(!t||!t.getAttribute)return;var r=CFG.rec();if(!r||!r.custPick||!r.custPick.o)return;
+ if(t.getAttribute('data-cu-g')){r.custPick.g=!!t.checked;remember(r.custPick);try{CFG.dirty(r);}catch(e2){}try{CFG.after(r,of(r));}catch(e3){}return;}
+ if(t.getAttribute('data-cu-in')){r.custPick.n=T(t.value);remember(r.custPick);try{CFG.dirty(r);}catch(e2){}}});
+var Q=0;function soon(){if(Q)return;Q=requestAnimationFrame(function(){Q=0;hookPdf();mount();relabel();});}
+function start(){hookPdf();try{new MutationObserver(function(){if(!BUSY)soon();}).observe(document.body,{childList:true,subtree:true});}catch(e){}soon();}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+/* ---- DASH TAG: one landscape page at the end of every truck form's report, to put on the dash facing out ----
+   I = {r: record, sn: serial (or incoming serial for an upfit), nsn: new serial after an upfit ('' = not an upfit),
+        stage: 'Repair' / 'Upfit / Upgrade' / 'New build', rows: [[label, value]...], form: form name, date, credit} */
+function dashTag(d,I){var r=I.r,c=of(r);var p=CUR;CUR=r;try{
+ d.addPage('letter','landscape');var W=d.internal.pageSize.getWidth(),H=d.internal.pageSize.getHeight(),MX=36,CWL=W-2*MX,T=36;
+ var cl=function(t){return String(t==null?'':t).replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[–—]/g,'-').replace(/…/g,'...').replace(/[^\x09\x0A\x20-\x7E\xA0-\xFF]/g,'?');};
+ var col=function(k,h){var n=parseInt(h.slice(1),16);d[k](n>>16,(n>>8)&255,n&255);};
+ var fit=function(txt,max,fs0){var fs=fs0;d.setFont('helvetica','bold');d.setFontSize(fs);while(d.getTextWidth(txt)>max&&fs>14){fs-=2;d.setFontSize(fs);}return fs;};
+ col('setFillColor','#0f5c4d');d.rect(MX,T,CWL,84,'F');d.setTextColor(255);fit('DASH TAG',CWL-24,50);d.text('DASH TAG',W/2,T+50,{align:'center'});
+ d.setFont('helvetica','bold');d.setFontSize(12);d.text('Place on the vehicle dash, facing out through the windshield - truck identification',W/2,T+72,{align:'center'});
+ var y=T+114;d.setTextColor(90);d.setFontSize(12);d.text('CUSTOMER',MX,y);d.setTextColor(0);d.setFontSize(20);d.text(cl(c.n),MX+82,y+1);
+ d.setTextColor(90);d.setFontSize(12);d.text(cl(I.stage||''),W-MX,y,{align:'right'});y+=34;
+ var up=!!I.nsn,bh=up?140:170,fs=up?92:120;d.setFont('helvetica','bold');d.setTextColor(90);d.setFontSize(12);
+ if(up){var bw=(CWL-50)/2;d.text('INCOMING SERIAL NUMBER',MX+bw/2,y,{align:'center'});d.text('NEW SERIAL NUMBER AFTER UPFIT / UPGRADE',MX+bw+50+bw/2,y,{align:'center'});y+=8;
+  d.setDrawColor(0);d.setLineWidth(3);d.rect(MX,y,bw,bh);d.rect(MX+bw+50,y,bw,bh);var a=cl(I.sn||'________'),b=cl(I.nsn);
+  d.setTextColor(0);fit(a,bw-24,fs);d.text(a,MX+bw/2,y+bh/2+fs*0.35,{align:'center'});fit(b,bw-24,fs);d.text(b,MX+bw+50+bw/2,y+bh/2+fs*0.35,{align:'center'});
+  col('setFillColor','#0f5c4d');d.triangle(MX+bw+12,y+bh/2-14,MX+bw+12,y+bh/2+14,MX+bw+38,y+bh/2,'F');}
+ else{d.text('PLATFORM SERIAL NUMBER',W/2,y,{align:'center'});y+=8;d.setDrawColor(0);d.setLineWidth(3);d.rect(MX,y,CWL,bh);var s1=cl(I.sn||'________');d.setTextColor(0);fit(s1,CWL-30,fs);d.text(s1,W/2,y+bh/2+fs*0.35,{align:'center'});}
+ y+=bh+26;d.setLineWidth(.6);
+ var rows=(I.rows||[]).filter(function(x){return T_(x[1]);}),half=Math.ceil(rows.length/2);
+ rows.forEach(function(x,k){var cx=MX+10+(k<half?0:CWL/2),cy=y+(k%half)*28;d.setFont('helvetica','bold');d.setFontSize(14);d.setTextColor(90);d.text(cl(x[0]),cx,cy);d.setTextColor(0);d.setFontSize(18);d.text(cl(x[1]),cx+130,cy,{maxWidth:CWL/2-150});});
+ d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(150);d.text('Teledyne Confidential; Commercially Sensitive Business Data',MX,H-20);
+ d.text(cl('From the '+(I.form||'report')+(I.date?' - '+I.date:'')),W-MX,H-20,{align:'right'});
+ d.setFontSize(6.5);d.text(cl(I.credit||''),W/2,H-8,{align:'center'});d.setTextColor(0);
+}finally{CUR=p;}}
+function T_(v){return String(v==null?'':v).trim();}
+/* ---- sections (Ravi, Rev 27): a coloured bar on top of every card and labelled lines between the groups in a card,
+   in each form's own colour, so the pages do not blend together when scrolling ---- */
+(function(){try{var s=document.createElement('style');s.id='secCss';s.textContent='.card{border-top:6px solid var(--blue,var(--navy,#1d3b6a));margin-bottom:20px}'+
+ '.secl{display:flex;align-items:center;gap:10px;margin:18px 0 10px;color:var(--blue,var(--navy,#1d3b6a));font:800 13px system-ui,-apple-system,sans-serif;letter-spacing:.06em;text-transform:uppercase}'+
+ '.secl:after{content:"";flex:1;height:3px;background:currentColor;opacity:.55;border-radius:3px}.card>h2+.secl,.card>h2+p+.secl{margin-top:8px}';(document.head||document.documentElement).appendChild(s);}catch(e){}})();
+window.SEC=function(t){return '<div class="secl">'+esc(t)+'</div>';};
+/* the DHS plate prefix: on for CBP / DHS unless the tech turned it off; off for anyone else unless turned on */
+function pf(v){return v===true||(v!==false&&of().dhs);}
+window.CUST={DEF:DEF,of:of,pf:pf,html:html,dashTag:dashTag,mapS:function(s,r){return mapS(s,of(r));},kl:function(r){return of(r).dhs?'Kilo #':'Fleet #';},
+ cfg:function(o){for(var k in o)CFG[k]=o[k];soon();},refresh:soon,
+ /* draw a report for a record that is not the open one (e.g. a DD1149 from a scanned code) */
+ with:function(r,fn){var p=CUR;CUR=r;try{return fn();}finally{CUR=p;}}};
+})();
 </script><script>/* ===== shared: core details carried through every form (Ravi, 2026-10-29) =====
    Serial numbers, revisions, mileage/hours, VIN / plate / kilo, RMA / SVO / account and the reported issues travel
    in each report's QR code to the next form, so the truck can be tracked from the first look to the final inspection.
@@ -13050,12 +13161,12 @@ function dec(o){
   Object.keys(o.dv||{}).forEach(function(k){var a=o.dv[k];if(a&&!a[1])S_(FK[k],a[0]);});
   Object.keys(o.rv2||{}).forEach(function(k){var a=o.rv2[k];if(a&&!a[1])R_(FR[k],a[0]);});}
  else if(o.a==='CAL'){C.sn=T(o.sn);var u=o.un||{};S_('camera',u.cam);S_('radar',u.rad);S_('pan tilt',u.pt);var sv=o.sv||{};R_('v1',sv.pmu);R_('v3',sv.hmi);}
- else if(o.a==='FIN'){C.sn=T(o.sn);var F=o.f||{};C.vin=T(F.vin);C.pl=T(F.plate);C.kl=T(F.kilo);Object.keys(NK).forEach(function(k){S_(NK[k],F[k]);});}
+ else if(o.a==='FIN'){C.sn=T(o.sn);C.osn=T(o.ol);var F=o.f||{};C.vin=T(F.vin);C.pl=T(F.plate);C.kl=T(F.kilo);Object.keys(NK).forEach(function(k){S_(NK[k],F[k]);});}
  /* changes recorded the old way (Floor Test / Calibration before this update) */
  if(!o.cx)(o.cg||[]).forEach(function(a){var id=OLDCG[a[0]];if(id&&(T(a[1])||T(a[2])))C.x.push([id,T(a[1]),T(a[2]),'',f,C.d,T(a[4])]);});
  var cx=o.cx;
  if(cx&&typeof cx==='object'){
-  ['sn','osn','p','rma','so','ac','vin','pl','kl'].forEach(function(k){if(!C[k]&&T(cx[k])&&!(k==='sn'&&C.up))C[k]=T(cx[k]);});
+  ['sn','osn','p','rma','so','ac','vin','pl','kl'].forEach(function(k){if(!C[k]&&T(cx[k])&&!(k==='sn'&&C.up))C[k]=T(cx[k]);});if(T(cx.cu)){C.cu=T(cx.cu);C.cg=+cx.cg||0;}
   var s=cx.s||{};Object.keys(s).forEach(function(l){var k=devOfL(l);if(k&&!C.s[k])S_(k,s[l]);});
   var r=cx.r||{};Object.keys(r).forEach(function(k){if(!C.r[k])R_(k,r[k]);});
   if(Array.isArray(cx.w)){var nat=C.w;C.w=[];cx.w.forEach(function(a){if(Array.isArray(a)&&T(a[1]))C.w.push([a[0]||'f',T(a[1]),a[2]||'',T(a[3]),a[4]||'',a[5]||'',a[6]||'',T(a[7]),a[8]||'']);});C.w=C.w.concat(nat);}
@@ -13097,6 +13208,7 @@ function pack(r,nat){
  var pd=pending(r);if(pd.length)cx.pd=pd.map(function(p){return [L(p[0]),p[1]];});
  if(K&&K.h&&K.h.length)cx.h=K.h.slice(-8);
  if(r.coreWarn)cx.ws=r.coreWarn;if(r.coreRe)cx.rc=r.coreRe;
+ try{var cu=window.CUST&&CUST.of(r);if(cu&&!cu.dhs){cx.cu=cu.n;if(cu.g)cx.cg=1;}}catch(e){}
  return cx;}
 function carriedW(r){var K=r&&r.core;if(!K||K.wi)return [];var st=r.wst||{};
  return (K.w||[]).map(function(a,i){var m=st[i];return m?a.slice(0,6).concat([m[0],m[1]||'',m[2]||'']):a.slice();});}
@@ -13117,7 +13229,7 @@ function json(o,cx,lim){lim=lim||2800;if(window.SITE_REV)o=Object.assign({sr:+wi
   function(){while(c.w&&c.w.length&&B(J())>lim){c.w.shift();}if(c.w&&!c.w.length)delete c.w;if(c.wn&&(!c.w||c.wn>c.w.length))c.wn=c.w?c.w.length:0;},
   function(){(c.x||[]).forEach(function(a){a[6]='';});while(c.x&&c.x.length>(c.n||0)&&B(J())>lim){c.x.shift();}}];
  for(var i=0;i<steps.length;i++){steps[i]();j=J();if(B(j)<=lim)return j;}
- c={k:c.k,s:c.s,r:c.r,pd:c.pd,vin:c.vin,pl:c.pl,kl:c.kl,sn:c.sn};Object.keys(c).forEach(function(k){if(c[k]==null)delete c[k];});j=J();
+ c={k:c.k,s:c.s,r:c.r,pd:c.pd,vin:c.vin,pl:c.pl,kl:c.kl,sn:c.sn,cu:c.cu,cg:c.cg};Object.keys(c).forEach(function(k){if(c[k]==null)delete c[k];});j=J();
  return B(j)<=lim+150?j:JSON.stringify(o);}
 
 /* a removed device's old serial is not its current serial */
@@ -13508,7 +13620,7 @@ async function scanDone(txt){if(String(txt).startsWith('WIP1~')){wipChunk(txt);r
  S.photos={};S.view='rec';S.open=-1;S.dirty=true;await save();render();}
 /* info page: core data first, then what the customer reports at the site */
 function infoHtml(){const r=S.rec;
- return `<div class="card"><h2>Truck info</h2><p class="muted">Intake short form: core data, issues and a main functions check. The platform serial number names this record and its PDF file.</p>${ptHtml()}${purpHtml()}${visitHtml()}<div class="grid">${inp('hdr.sn','Platform Serial Number (required)')}${inp('hdr.loc','Site / location')}${inp('hdr.tech','TDY FLIR Technician')}${inp('hdr.date','Date of the site visit',{type:'date'})}${inp('hdr.custEmail','Customer e-mail',{type:'email',ph:'customer@example.com'})}${inp('hdr.rma','RMA Number (if there is one)')}${inp('hdr.so','SVO Number (if there is one)')}${acctHtml()}</div></div>
+ return `<div class="card"><h2>Truck info</h2><p class="muted">Intake short form: core data, issues and a main functions check. The platform serial number names this record and its PDF file.</p>${SEC('Truck')}${ptHtml()}${SEC('Visit')}${purpHtml()}${visitHtml()}${SEC('Record details')}<div class="grid">${inp('hdr.sn','Platform Serial Number (required)')}${inp('hdr.loc','Site / location')}${inp('hdr.tech','TDY FLIR Technician')}${inp('hdr.date','Date of the site visit',{type:'date'})}${inp('hdr.custEmail','Customer e-mail',{type:'email',ph:'customer@example.com'})}${inp('hdr.rma','RMA Number (if there is one)')}${inp('hdr.so','SVO Number (if there is one)')}${acctHtml()}</div></div>
  <div class="card" id="infoExt" style="${qcArr(r.hdr)?'':'display:none'}">${extHtml()}</div>
  <div class="card" id="infoSer">${serHtml()}</div>
  <div class="card" id="infoVer">${verHtml()}</div>
@@ -13993,14 +14105,14 @@ function acctHtml(){const v=S.rec.hdr.acct||'',pre=ACCT.includes(v);return `<div
 function gateNote(){const r=S.rec,gi=gateIssues(r),fy=fyiList(r).filter(y=>y.k==='sn'||y.k[0]==='g');return gi.length?`<div class="err" style="margin-bottom:10px"><b>Required before you can go to the Punch List:</b> the “One last check” on swapped devices at the end of the Inspect step.<div style="margin:6px 0 0">Still needed: ${esc(gi.join(' · '))}</div></div>`:fy.length?`<div class="ok" style="margin-bottom:10px;background:#f1faf4"><b>FYI:</b> ${fy.length} serial detail${fy.length>1?'s are':' is'} not recorded yet (${esc(fy.map(y=>y.t).join(', '))}). This won't stop you – fill in what you can.</div>`:`<div class="ok" style="margin-bottom:10px"><b>All serial numbers are validated${r.noPhoto?' (photos waived – camera override)':' with photos'}.</b></div>`}
 function gateDlg(m){modal(`<h3>Finish these first</h3><p class="muted">The “One last check” on swapped devices must be completed, and items marked “can't test yet” need a reason.</p><ul style="margin:6px 0 10px 18px;padding:0">${m.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><button class="pri" data-act="gotofix">➜ Take me there</button><button data-act="mclose">Close</button>`);}
 function tkCardHtml(g,i){const has=(g.ph||[]).length,om=g.omit&&!has;const tag=has?'<span class="tag" style="background:#d6f0de">✓ photo</span>':om?'<span class="tag" style="background:#eee">photo omitted</span>':'<span class="tag" style="background:#fde5c8">photo needed</span>';let inp;
- if(g.tk==='plate'){const on=g.pf!==false,raw=String(g.v||''),shown=on?raw.replace(/^dhs\s*/i,''):raw;inp=`<div class="row" style="flex-wrap:nowrap;margin-top:8px;gap:6px"><button data-act="tkpf" data-id="${g.id}" class="${on?'pri':''}" style="min-height:44px;padding:4px 12px;font-weight:800" title="Tap to turn the DHS prefix on or off">${on?'DHS':'no prefix'}</button><input data-tk="${g.id}" value="${esc(shown)}" placeholder="e.g. 201838" style="flex:1">${camBtn(g.id)}</div>`;}
+ if(g.tk==='plate'){const on=CUST.pf(g.pf),raw=String(g.v||''),shown=on?raw.replace(/^dhs\s*/i,''):raw;inp=`<div class="row" style="flex-wrap:nowrap;margin-top:8px;gap:6px"><button data-act="tkpf" data-id="${g.id}" class="${on?'pri':''}" style="min-height:44px;padding:4px 12px;font-weight:800" title="Tap to turn the DHS prefix on or off">${on?'DHS':'no prefix'}</button><input data-tk="${g.id}" value="${esc(shown)}" placeholder="e.g. 201838" style="flex:1">${camBtn(g.id)}</div>`;}
  else inp=`<div class="row" style="flex-wrap:nowrap;margin-top:8px"><input data-b="gear.${i}.v" value="${esc(g.v||'')}" placeholder="${esc(g.t)}" style="flex:1">${camBtn(g.id)}</div>`;
  return `<div class="card" id="g-${g.id}" style="background:#f8fafd;margin-bottom:8px;border-left:5px solid var(--blue)"><div class="row" style="flex-wrap:nowrap"><div style="flex:1"><b style="font-size:17px">${esc(g.t)}</b></div>${tag}</div>${inp}${thumbs(g.id)}</div>`;}
 function tkMissing(r){return r.noPhoto?[]:(r.gear||[]).filter(g=>g.tk&&!(g.ph||[]).length&&!g.omit);}
 function rmaMissing(r){return !String(r.hdr.rma||'').trim()||!String(r.hdr.so||'').trim()||!String(r.hdr.acct||'').trim();}
 function rmaPrompt(then){const r=S.rec;S.rmaThen=then||null;modal(`<h3>Set up the RMA</h3><p class="muted">Before the inspection starts, make sure an RMA has been set up for this truck. If you have it, enter it here with the service order and account indicator. They go on the folder front page, the bin tag, the report and the file names.</p><label class="f">RMA number</label><input data-b="hdr.rma" value="${esc(r.hdr.rma||'')}" placeholder="RMA number" autocomplete="off"><label class="f">Service order (SVO)</label><input data-b="hdr.so" value="${esc(r.hdr.so||'')}" placeholder="Service order number" autocomplete="off">${acctHtml()}<button class="pri" data-act="rma-go" style="width:100%;margin-top:12px">Save and start the inspection</button><button data-act="rma-skip" style="width:100%;margin-top:8px">No RMA yet - start anyway</button>`);}
 function tkPrompt(then){const r=S.rec,m=tkMissing(r);if(!m.length){closeModal();if(then)then();return;}S.tkThen=then||null;modal(`<h3>Truck photos needed</h3><p class="muted">Take a photo of each one, or omit it (no reason needed).</p>${m.map(g=>`<div class="card" style="margin:6px 0"><b>${esc(g.t)}</b>${g.v?` – ${esc(g.v)}`:''}<div class="row" style="margin-top:6px"><button class="pri" data-act="tktake" data-id="${g.id}" style="flex:1">📷 Take the photo</button><button data-act="tkomit" data-id="${g.id}" style="flex:1">Omit</button></div></div>`).join('')}<button data-act="mclose">Close</button>`);}
-document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset||!t.dataset.tk||!S.rec)return;const g=S.rec.gear.find(x=>x.id===t.dataset.tk);if(!g)return;let v=String(t.value||'').trim();if(g.pf!==false){v=v.replace(/^dhs\s*/i,'');g.v=v?'DHS '+v:'';}else g.v=v;markDirty();});
+document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset||!t.dataset.tk||!S.rec)return;const g=S.rec.gear.find(x=>x.id===t.dataset.tk);if(!g)return;let v=String(t.value||'').trim();if(CUST.pf(g.pf)){v=v.replace(/^dhs\s*/i,'');g.v=v?'DHS '+v:'';}else g.v=v;markDirty();});
 function serHtml(){const r=S.rec;
  return `${gateNote()}<h2>Serial numbers</h2><p class="muted">Every serial number must be validated with a photo of its serial plate. Numbers filled in from a QR code still need a fresh photo. Mark a device <b>N/A</b> (not applicable) if it isn't on this LVSS (e.g. no client PC).</p>
  ${r.gear.map((g,i)=>{if(g.tk)return tkCardHtml(g,i);const ok=(g.s||'').trim()&&(g.ph||[]).length;const swi=r.swap.list.findIndex(e=>e.dev===g.id),sw=swi>=0;
@@ -14032,7 +14144,7 @@ function upNewX(){if(S.newPurp==='upfit'&&S.newVisit==='service')S.newVisit='';c
 function upRestore(r,o){const h=r.hdr;if(!upTo(h.ptype).length)return;h.purpose='upfit';const t=o.np?ptOfCode(o.np):(o.nsn&&snType(o.nsn)?ptOfCode(snType(o.nsn)):'');h.nptype=upDef(h.ptype,t);h.nsn=/\d/.test(String(o.nsn||''))?String(o.nsn).trim():'';if(typeof upPickX==='function')upPickX(r);}
 function purpHtml(){const h=S.rec.hdr,T=upTo(h.ptype);if(h.purpose==='upfit'&&!T.length)h.purpose='repair';const u=h.purpose==='upfit';if(u)h.nptype=upDef(h.ptype,h.nptype);const nt=u&&h.nptype;
  return `<div id="purpBox" style="margin:0 0 10px"><label class="f">Reason the truck is here</label><div class="row" style="flex-wrap:nowrap;gap:6px"><button class="${u?'':'pri'}" data-act="purp" data-v="repair" style="flex:1">Repair</button><button class="${u?'pri':''}" data-act="purp" data-v="upfit" style="flex:1"${T.length?'':' disabled'}>Upfit / Upgrade</button></div>${h.ptype&&!T.length?`<p class="muted" style="margin:6px 0 0">${esc(platLabel(h.ptype))} is the newest platform – Repair only.</p>`:''}${u?`<div class="sp"></div><div><label class="f">${esc(upQ(h.ptype))}</label><div class="row" style="flex-wrap:wrap;gap:6px">${upBtns('nptype',h.ptype,h.nptype)}</div>${nt?'':'<p class="muted" style="margin:6px 0 0">Not known yet? Leave it – the reports leave a blank to write the new platform and serial number in.</p>'}</div>${nt?`<div class="sp"></div><label class="f">New serial number</label><div class="row" style="flex-wrap:nowrap;gap:6px;align-items:center"><span class="upPfx">${esc(upPfx(h.nptype).trim())}</span><input data-b="hdr.nsn" value="${esc(snDig(h.nsn||''))}" inputmode="numeric" placeholder="Number – leave blank if not known yet"></div><p class="muted" id="upHintR" style="margin:6px 0 0">${upHintTxt(h)}</p>`:''}`:''}</div>`}
-function ptHtml(){const t=S.rec.hdr.ptype||'';return `<div id="ptBox" style="margin:8px 0 10px"><label class="f">Platform type</label><div class="row" style="flex-wrap:wrap;gap:6px">${platBtns('ptype',t)}</div>${t&&isEm(t)?'<p class="muted" style="margin:6px 0 0">'+platLabel(t)+' adds the network enclosure devices (Cisco receiver, LTE module, WiFi module, Cisco switch) and the rooftop Starlink antenna to the serial list below.</p>':''}</div>`}
+function ptHtml(){const t=S.rec.hdr.ptype||'';return `<div id="ptBox" style="margin:8px 0 10px"><label class="f">Platform type</label><div class="row" style="flex-wrap:wrap;gap:6px">${platBtns('ptype',t)}</div>${t&&isEm(t)?'<p class="muted" style="margin:6px 0 0">'+platLabel(t)+' adds the network enclosure devices (Cisco receiver, LTE module, WiFi module, Cisco switch) and the rooftop Starlink antenna to the serial list below.</p>':''}</div>${window.CUST?CUST.html(S.rec):''}`}
 function repSecOf(r){return r.tpl.sections.find(s=>s.kind==='rep');}
 function infoRepHtml0(){const r=S.rec,rs=repSecOf(r),L=rs?(r.extra[rs.id]||[]):[];
  return `<h2>Customer-reported issues</h2><p class="muted">Enter the date and the issues exactly as they appear in the RMA folder or the customer's e-mail. The FLIR tech lists their own findings on the Inspect step.</p>
@@ -14045,7 +14157,7 @@ function infoRepHtml0(){const r=S.rec,rs=repSecOf(r),L=rs?(r.extra[rs.id]||[]):[
   <div class="row" style="margin-top:6px"><span class="muted" style="font-size:13px">Reported on</span><input type="date" data-b="items.${x.id}.rdate" value="${esc((r.items[x.id]||{}).rdate||'')}" style="max-width:190px;min-height:38px;padding:4px 8px"><span class="muted" style="font-size:13px">(blank = the date above)</span></div></div>`).join('')}
  <button class="pri" data-act="addrep">＋ Add customer-reported issue</button>`;}
 function infoHtml0(){const r=S.rec;
- return `<div class="card"><h2>Inspection info</h2><p class="muted">The platform serial number names this inspection and its PDF file.</p>${ptHtml()}${purpHtml()}<div class="grid">${inp('hdr.sn','Platform Serial Number (required)')}${inp('hdr.loc','Location')}${inp('hdr.tech','TDY FLIR Technician')}${inp('hdr.date','Date',{type:'date'})}${inp('hdr.rma','RMA Number')}${inp('hdr.so','SVO Number')}${acctHtml()}${inp('hdr.custEmail','Customer e-mail',{type:'email',ph:'customer@example.com'})}</div>${recvHtml()}</div>
+ return `<div class="card"><h2>Inspection info</h2><p class="muted">The platform serial number names this inspection and its PDF file.</p>${SEC('Truck')}${ptHtml()}${SEC('Visit')}${purpHtml()}${SEC('Record details')}<div class="grid">${inp('hdr.sn','Platform Serial Number (required)')}${inp('hdr.loc','Location')}${inp('hdr.tech','TDY FLIR Technician')}${inp('hdr.date','Date',{type:'date'})}${inp('hdr.rma','RMA Number')}${inp('hdr.so','SVO Number')}${acctHtml()}${inp('hdr.custEmail','Customer e-mail',{type:'email',ph:'customer@example.com'})}</div>${SEC('Dates')}${recvHtml()}</div>
  <div class="card" id="infoRep">${infoRepHtml()}</div>
  <div class="card" id="infoSer">${serHtml()}</div>
  <div class="card" id="infoVer">${verHtml()}</div>
@@ -14375,7 +14487,7 @@ function binPage(d,r){const h=r.hdr,up=h.purpose==='upfit';d.addPage('letter','l
  const bh=up?88:120,sn=cl(snD(r)||'________');d.setDrawColor(0);d.setLineWidth(3);d.rect(MX,y,CWL,bh);d.setTextColor(0);fit(sn,CWL-30,up?64:80);d.text(sn,W/2,y+bh/2+(up?22:28),{align:'center'});y+=bh+14;
  if(up){hx(d,'setFillColor','#1d3b6a');d.triangle(W/2-20,y,W/2+20,y,W/2,y+22,'F');y+=36;d.setTextColor(90);d.setFont('helvetica','bold');d.setFontSize(13);d.text('NEW SERIAL NUMBER AFTER UPFIT / UPGRADE',W/2,y,{align:'center'});y+=10;
   const ns=cl(nsnShow(h));d.setDrawColor(0);d.setLineWidth(3);d.rect(MX,y,CWL,88);d.setTextColor(0);fit(ns,CWL-30,64);d.text(ns,W/2,y+88/2+22,{align:'center'});y+=88+16;}
- const rows=[['RMA',h.rma],['SVO',h.so],['Date received',h.date?fmtD(h.date):''],['Truck VIN',tv(r,'vin')],['License plate',tv(r,'plate')],['Kilo #',tv(r,'kilo')],['Intake tech',h.tech]].filter(x=>String(x[1]||'').trim());
+ const rows=[['Customer',CUST.of(r).n],['RMA',h.rma],['SVO',h.so],['Date received',h.date?fmtD(h.date):''],['Truck VIN',tv(r,'vin')],['License plate',tv(r,'plate')],['Kilo #',tv(r,'kilo')],['Intake tech',h.tech]].filter(x=>String(x[1]||'').trim());
  const half=Math.ceil(rows.length/2);d.setFontSize(10.5);rows.forEach((x,k)=>{const cx=MX+10+(k<half?0:CWL/2),cy=y+8+(k%half)*15;d.setFont('helvetica','bold');d.setTextColor(90);d.text(x[0],cx,cy);d.setFont('helvetica','normal');d.setTextColor(0);d.text(cl(String(x[1])),cx+105,cy);});
  if(h.cpTbd){const wy=Math.max(y+8+Math.ceil(rows.length/2)*15+14,T+380);tbdBox(d,MX,wy,CWL,tbdWarn());}
 }
@@ -14475,7 +14587,7 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
  if(nd)y=banner(d,y,'DO NOT OPERATE',`${nd} item(s) flagged - ${st.openDno} still open. See Punch List at front of report.`,st.openDno===0,r.verdict==='pass');
  const cell=(x,yy,w,hh,lab,val)=>{d.setDrawColor(170);d.setLineWidth(.6);d.rect(x,yy,w,hh);d.setFont('helvetica','normal');d.setFontSize(6.8);d.setTextColor(110);d.text(cl(lab),x+4,yy+8);d.setFontSize(9.5);d.setTextColor(0);d.text(wrap(d,val,w-8),x+4,yy+19);};
  const pair=(l1,v1,l2,v2)=>{d.setFontSize(9.5);const a=wrap(d,v1,262).length,b=wrap(d,v2,262).length;const hh=Math.max(26,14+Math.max(a,b)*11);ens(hh);cell(MX,y,CW/2,hh,l1,v1);cell(MX+CW/2,y,CW/2,hh,l2,v2);y+=hh;};
- {const tb=x=>String(x||'').trim()||'TBD',w3=CW/3;ens(30);[['RMA Number',tb(h.rma)],['SVO Number',tb(h.so)],['Account Indicator',tb(h.acct)]].forEach((p,j)=>{hx(d,'setFillColor','#eef3fb');d.rect(MX+j*w3,y,w3,30,'F');cell(MX+j*w3,y,w3,30,p[0],p[1]);});y+=30;}pair('Platform Serial Number',snD(r)||'','Date',fmtD(h.date)+(h.origDate?'  (original '+fmtD(h.origDate)+')':''));pair('TDY FLIR Technician',h.tech,'Location',h.loc);pair('Truck VIN',tv(r,'vin'),'License Plate #',tv(r,'plate'));pair('Kilo #',tv(r,'kilo'),'Visit',visitTxt(h));ens(26);cell(MX,y,CW,26,'Report type','Intake – short form'+(h.purpose==='upfit'?' - '+PURP(h):''));y+=26;if(camSwapped(r)){ens(26);cell(MX,y,CW,26,'TFU & Radar Calibration (camera/TFU swapped)',calDone(r)?'Completed'+(r.cal.date?' '+fmtD(r.cal.date):''):'NOT COMPLETED');y+=26;}const lateD=[...new Set(allD0.filter(x=>x.sec.kind==='rep'&&(r.items[x.id]||{}).rdate&&r.items[x.id].rdate!==h.repDate).map(x=>r.items[x.id].rdate))].sort().map(fmtD);pair('Site visit date',fmtD(h.date),'','');
+ {const tb=x=>String(x||'').trim()||'TBD',w3=CW/3;ens(30);[['RMA Number',tb(h.rma)],['SVO Number',tb(h.so)],['Account Indicator',tb(h.acct)]].forEach((p,j)=>{hx(d,'setFillColor','#eef3fb');d.rect(MX+j*w3,y,w3,30,'F');cell(MX+j*w3,y,w3,30,p[0],p[1]);});y+=30;}pair('Platform Serial Number',snD(r)||'','Date',fmtD(h.date)+(h.origDate?'  (original '+fmtD(h.origDate)+')':''));pair('TDY FLIR Technician',h.tech,'Location',h.loc);pair('Truck VIN',tv(r,'vin'),'License Plate #',tv(r,'plate'));pair('Kilo #',tv(r,'kilo'),'Visit',visitTxt(h));pair('Customer',CUST.of(r).n,'','');ens(26);cell(MX,y,CW,26,'Report type','Intake – short form'+(h.purpose==='upfit'?' - '+PURP(h):''));y+=26;if(camSwapped(r)){ens(26);cell(MX,y,CW,26,'TFU & Radar Calibration (camera/TFU swapped)',calDone(r)?'Completed'+(r.cal.date?' '+fmtD(r.cal.date):''):'NOT COMPLETED');y+=26;}const lateD=[...new Set(allD0.filter(x=>x.sec.kind==='rep'&&(r.items[x.id]||{}).rdate&&r.items[x.id].rdate!==h.repDate).map(x=>r.items[x.id].rdate))].sort().map(fmtD);pair('Site visit date',fmtD(h.date),'','');
  if(isAud(r)){const au=r.audit,AP=[...P,...blockedList(r)];y+=8;ens(90);hx(d,'setFillColor',au.verdict==='pass'?'#1b8a3a':'#c62828');d.rect(MX,y,CW,22,'F');d.setFont('helvetica','bold');d.setFontSize(12);d.setTextColor(255);d.text(au.verdict==='pass'?'AUDIT REVIEW - AUDIT PASSED':'AUDIT REVIEW - AUDIT FAILED',PW/2,y+15,{align:'center'});y+=22;
   pair('Auditor',au.name,'Audit Date',fmtD(au.date));
   const ac=[[0,34,'#'],[34,206,'Reported fault'],[240,74,'Tech status'],[314,86,'Audit result'],[400,140,'Auditor notes']];
@@ -14582,7 +14694,7 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
    for(let i=0;i<n;i++)for(let j=0;j<n;j++)if(q.isDark(i,j))d.rect(x0+(j+qz)*cs,y+(i+qz)*cs,cs+.15,cs+.15,'F');
    d.setDrawColor(150);d.setLineWidth(.6);d.rect(x0,y,sz,sz);y+=sz+14;}catch(e){d.setTextColor(200,0,0);d.text('Could not generate the audit QR code: '+cl(e.message),MX,y+10);y+=24;}}}
  wipNotePage(d,r,TOP);if(binIdx){d.movePage(binIdx,1);buildFolderPdf(r,d);d.movePage(d.getNumberOfPages(),1);const ns=new Set([1,2]);skip.forEach(i=>ns.add(i<binIdx?i+2:i));skip.clear();ns.forEach(i=>skip.add(i));}
- footers(d,r,true,skip);return d;}
+ footers(d,r,true,skip);if(!isAud(r))CUST.dashTag(d,dtInfo(r));return d;}
 function pbox(d,x,yy,w,hh,label,list){}
 
 /* ---------- events ---------- */
@@ -14653,7 +14765,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'serfix':{closeModal();if(r.step!==1)go(1);setTimeout(()=>{const el=$('#infoSer');if(el){el.scrollIntoView({block:'start'});el.classList.add('target');setTimeout(()=>el.classList.remove('target'),5000);}},150);break;}
  case 'sec':enterSec(+b.dataset.si);break;
  case 'insstart':{r.insStart=true;markDirty();renderRec();break;}
- case 'tkpf':{const g=r.gear.find(x=>x.id===id);if(g){const raw=String(g.v||'').replace(/^dhs\s*/i,'');g.pf=g.pf===false;g.v=g.pf!==false?(raw?'DHS '+raw:''):raw;markDirty();const e=$('#g-'+g.id);if(e)e.outerHTML=tkCardHtml(g,r.gear.indexOf(g));}break;}
+ case 'tkpf':{const g=r.gear.find(x=>x.id===id);if(g){const raw=String(g.v||'').replace(/^dhs\s*/i,'');g.pf=!CUST.pf(g.pf);g.v=CUST.pf(g.pf)?(raw?'DHS '+raw:''):raw;markDirty();const e=$('#g-'+g.id);if(e)e.outerHTML=tkCardHtml(g,r.gear.indexOf(g));}break;}
  case 'tkomit':{const g=r.gear.find(x=>x.id===id);if(g){g.omit=true;markDirty();await save();}tkPrompt(S.tkThen);const e=g&&$('#g-'+g.id);if(e)e.outerHTML=tkCardHtml(g,r.gear.indexOf(g));break;}
  case 'tktake':{modal(`<h3>Add photo</h3><button class="pri" data-act="cam-take" data-id="${id}">📷 Take photo</button><button data-act="cam-lib" data-id="${id}">🖼 Choose from library</button><button data-act="mclose">Cancel</button>`);break;}
  case 'cptbd':{r.hdr.cpTbd=!r.hdr.cpTbd;markDirty();const e=$('#infoCust');if(e)e.innerHTML=custPropHtml();break;}
@@ -15506,7 +15618,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'10/31/2026',site:'26'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'10/31/2026',site:'27'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -15570,7 +15682,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='a1f1fd00c9';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='65bf6a1c9c';window.__BUILD=B;var shown=false,last=0;
 function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
@@ -15648,7 +15760,7 @@ function toSwap(){var r=S&&S.rec;if(!r||!r.cxl||!r.swap||!r.swap.list)return;var
 
 /* the QR code carries the core details this form has no field for, the change history, pending serials and issues */
 var q0=qrPayload;
-qrPayload=function(r,nn,tn,mx){var j=q0.apply(this,arguments);if(!r||!(r.core||(r.cxl||[]).length||swList(r).length)){try{return Core.json(JSON.parse(j));}catch(e){return j;}}
+qrPayload=function(r,nn,tn,mx){var j=q0.apply(this,arguments);if(!r||!(r.core||r.custPick||(r.cxl||[]).length||swList(r).length)){try{return Core.json(JSON.parse(j));}catch(e){return j;}}
  try{var o=JSON.parse(j),cx=Core.pack(r,o);if(!Object.keys(cx).length)return Core.json(o);return Core.json(o,cx,mx===0?2500:1e9);}catch(e){return j;}};
 
 /* fill a new record from any form's code (ATP / Floor Test / Calibration codes go through the new-inspection dialog) */
@@ -16004,7 +16116,7 @@ window.DICTATE_FIELDS=[
    serial number (upfit: a strip under the QR code). Mileage / hours move out of the software table so nothing repeats. */
 window.QR_TRUCK_KEYS=['v7','v8','v9'];
 window.qrTruck=function(r){var T=function(v){return String(v==null?'':v).trim();},ver=r.ver||{},F=((r.tpl&&r.tpl.versionInfo)||{}).fields||[];
- var L=[['License plate',tv(r,'plate')],['Kilo #',tv(r,'kilo')],['VIN',tv(r,'vin')]];
+ var L=[['Customer',CUST.of(r).n],['License plate',tv(r,'plate')],['Kilo #',tv(r,'kilo')],['VIN',tv(r,'vin')]];
  QR_TRUCK_KEYS.forEach(function(k){var f=F.find(function(x){return x.key===k;});if(f)L.push([f.label,ver[k]]);});
  return L.map(function(a){return [a[0],T(a[1])||'-'];});};
 function qrTruckRow(d,x,y,w,rh,a,lw){var c=function(s){return cl(s);};d.setDrawColor(0);d.setLineWidth(.5);d.rect(x,y,w,rh);d.line(x+lw,y,x+lw,y+rh);
@@ -16031,4 +16143,7 @@ function qrTruckStrip(d,x,y,w,L){var HH=15,rh=15,gap=10,cw=(w-gap)/2,half=Math.c
  document.addEventListener('input',function(e){var t=e.target;if(t.id==='n-nsn'){hintNew();return;}
   if(t.matches&&t.matches('[data-b="hdr.nsn"]')&&S.rec){var x=document.getElementById('upHintR');if(x)x.innerHTML=upHintTxt(Object.assign({},S.rec.hdr,{nsn:t.value}));}});
 })();
+</script><script>/* customer picker + dash tag for this form (Rev 27) */
+function dtInfo(r){const h=r.hdr||{},up=h.purpose==='upfit',ns=up?nsnShow(h):'';const kl=CUST.kl(r);return {r:r,sn:snD(r)||'',nsn:ns,stage:up?'Upfit / Upgrade':'Repair',form:(r.tpl&&r.tpl.title)||'LVSS report',date:h.date?fmtD(h.date):'',credit:creditText(r.tpl&&r.tpl.revision).replace(/[^\x20-\x7E]/g,'-'),rows:[['RMA',h.rma],['SVO',h.so],['Intake date',h.date?fmtD(h.date):''],['Truck VIN',tv(r,'vin')],['License plate',tv(r,'plate')],[kl,tv(r,'kilo')]]};}
+CUST.cfg({rec:function(){return S.rec;},dirty:function(){markDirty();},anchor:{sel:'#ptBox',pos:'afterend'},after:function(r,c){const g=(r.gear||[]).find(x=>x.tk==='plate');if(g){const raw=String(g.v||'').replace(/^dhs\s*/i,'');g.pf=c.dhs;g.v=c.dhs&&raw?'DHS '+raw:raw;const e=document.getElementById('g-'+g.id);if(e)e.outerHTML=tkCardHtml(g,r.gear.indexOf(g));}markDirty();}});
 </script></body></html>
