@@ -13166,7 +13166,7 @@ var OLDCG={sn:'sn',vin:'vin',plate:'pl',kilo:'kl',cam:'#g',rad:'#e',pt:'#f'};
 window.srChk=function(o){try{if(o&&o.sr&&window.SITE_REV&&(+o.sr)>(+window.SITE_REV))newer(+o.sr);}catch(e){}};var NEWER_SEEN={};function newer(sr){if(NEWER_SEEN[sr])return;NEWER_SEEN[sr]=1;try{var b=document.createElement('div');b.id='newerWarn';b.setAttribute('style','position:fixed;left:10px;right:10px;top:10px;z-index:99999;background:#fff3e0;border:2px solid #e67700;border-radius:12px;padding:12px 14px;font:16px system-ui,sans-serif;color:#222;box-shadow:0 6px 24px rgba(0,0,0,.25)');b.innerHTML='<b>Update this tablet first.</b> That QR code was made on a newer version (Rev '+sr+'); this tablet has Rev '+(window.SITE_REV||'?')+'. Connect to the internet and reload this page, then scan it again, or some details may be missed. <button style="margin-left:8px;min-height:40px;padding:4px 14px;border-radius:8px;border:1px solid #e67700;background:#fff;font-weight:700">OK</button>';b.querySelector('button').onclick=function(){b.remove();};(document.body||document.documentElement).appendChild(b);}catch(e){}}
 function dec(o){
  var f=formOf(o);if(!f)return null;if(o.sr&&window.SITE_REV&&(+o.sr)>(+window.SITE_REV))newer(+o.sr);
- var C={f:f,d:T(o.d),rv:o.rv||'',sn:'',osn:'',p:'',rma:T(o.rma),so:T(o.so),ac:T(o.ac),vin:T(o.vin),pl:T(o.pl),kl:T(o.kl),s:{},r:{},w:[],x:[],pd:[],h:[],n:0,wn:0};
+ var C={f:f,d:T(o.d),rv:o.rv||'',sn:'',osn:'',p:'',rma:T(o.rma),so:T(o.so),po:T(o.po),fs:T(o.fs),ac:T(o.ac),vin:T(o.vin),pl:T(o.pl),kl:T(o.kl),s:{},r:{},w:[],x:[],pd:[],h:[],n:0,wn:0};
  var S_=function(k,v){v=T(v);if(k&&v&&!/^(n\/a|pdx)$/i.test(v))C.s[k]=v;};
  var R_=function(k,v){v=T(v);if(k&&REVK[k]&&v&&!/^n\/a$/i.test(v))C.r[k]=v;};
  if(o.a==='LVSS'){var up=!!o.up;C.sn=T(up?o.nsn:o.sn);if(up){C.osn=T(o.sn);C.up=1;C.np=T(o.np);}C.p=T(o.p);
@@ -13187,7 +13187,7 @@ function dec(o){
  if(!o.cx)(o.cg||[]).forEach(function(a){var id=OLDCG[a[0]];if(id&&(T(a[1])||T(a[2])))C.x.push([id,T(a[1]),T(a[2]),'',f,C.d,T(a[4])]);});
  var cx=o.cx;
  if(cx&&typeof cx==='object'){
-  ['sn','osn','p','rma','so','ac','vin','pl','kl'].forEach(function(k){if(!C[k]&&T(cx[k])&&!(k==='sn'&&C.up))C[k]=T(cx[k]);});if(T(cx.cu)){C.cu=T(cx.cu);C.cg=+cx.cg||0;}
+  ['sn','osn','p','rma','so','po','fs','ac','vin','pl','kl'].forEach(function(k){if(!C[k]&&T(cx[k])&&!(k==='sn'&&C.up))C[k]=T(cx[k]);});if(T(cx.cu)){C.cu=T(cx.cu);C.cg=+cx.cg||0;}
   var s=cx.s||{};Object.keys(s).forEach(function(l){var k=devOfL(l);if(k&&!C.s[k])S_(k,s[l]);});
   var r=cx.r||{};Object.keys(r).forEach(function(k){if(!C.r[k])R_(k,r[k]);});
   if(Array.isArray(cx.w)){var nat=C.w;C.w=[];cx.w.forEach(function(a){if(Array.isArray(a)&&T(a[1]))C.w.push([a[0]||'f',T(a[1]),a[2]||'',T(a[3]),a[4]||'',a[5]||'',a[6]||'',T(a[7]),a[8]||'']);});C.w=C.w.concat(nat);}
@@ -13217,7 +13217,7 @@ function pack(r,nat){
  if(K){cx.k=1;
   /* a value this form left blank is carried on (still the last known), unless it is N/A here or was changed on purpose */
   var keep=function(id){return F[id]!==null&&!T(F[id])&&!(r.cxl||[]).some(function(e){return e[0]===id;});};
-  ['sn','osn','p','rma','so','ac','vin','pl','kl'].forEach(function(k){if(K[k]&&!own[k]&&keep(k))cx[k]=K[k];});
+  ['sn','osn','p','rma','so','po','fs','ac','vin','pl','kl'].forEach(function(k){if(K[k]&&!own[k]&&keep(k))cx[k]=K[k];});
   var s={};Object.keys(K.s).forEach(function(k){if(!own.s[k]&&keep(idOf(k)))s[L(k)]=K.s[k];});if(Object.keys(s).length)cx.s=s;
   var rv={};Object.keys(K.r).forEach(function(k){if(!own.r[k]&&keep(k))rv[k]=K.r[k];});if(Object.keys(rv).length)cx.r=rv;}
  /* issues: the ones carried in (with the Fixed / Still open marks made here) and this form's own */
@@ -13792,7 +13792,7 @@ const bar=(sub,right)=>`<div class="top"><div class="bar"><img src="${LOGO2}" al
 function homeHtml(){const act=S.recs.filter(r=>!r.archived),arc=S.recs.filter(r=>r.archived);
  const row=r=>{const o=overall(r),st=r.done.complete?`Complete – ${o.res==='pass'?'PASS':o.res==='fail'?'FAIL':'no result'}`:`In progress – ${STEPS[r.step||0]}`;
   return `<div class="it2"><div class="gr"><b>${esc(recName(r))}</b>${r.archived?' <span class="tag">archived</span>':''}<div class="muted">${esc(st)} · ${esc(fmtD(r.hdr.date))}${r.hdr.tech?' · '+esc(r.hdr.tech):''}</div></div><button data-act="open" data-id="${r.id}" class="${r.archived?'':'pri'}">${r.archived?'View':'Open'}</button><button class="dng" data-act="delrec" data-id="${r.id}" aria-label="Delete">✕</button></div>`;};
- return bar('Home',`${HOMELINK?'<a class="homelnk" href="../">⌂ All forms</a>':''}`)+`<div class="wrap"><div class="card"><h2>${esc(TPL.title)}</h2><p class="muted">Truck, radar and TFU (camera) calibration for an eMSC-L. Use this after an ATP, or any time a camera/TFU is swapped.</p><div class="row"><button class="pri" data-act="new" style="flex:1;min-height:56px;font-size:18px">＋ New calibration</button><button data-act="scan" style="flex:1;min-height:56px;font-size:18px">📷 Scan QR</button></div></div>
+ return bar('Home',`${HOMELINK?'<a class="homelnk" href="../">⌂ All forms</a>':''}`)+`<div class="wrap"><div class="card"><h2>${esc(TPL.title)}</h2><p class="muted">Truck, radar and TFU (camera) calibration for an eMSC-L. Normally done before the ATP; with the customer's agreement it can be done after PIVCO. Also needed any time a camera/TFU is swapped.</p><div class="row"><button class="pri" data-act="new" style="flex:1;min-height:56px;font-size:18px">＋ New calibration</button><button data-act="scan" style="flex:1;min-height:56px;font-size:18px">📷 Scan QR</button></div></div>
  <div class="card list"><h3>Calibrations on this tablet</h3>${act.length?act.map(row).join(''):'<p class="muted">None yet. Tap New calibration, or scan a QR code from the ATP / post-repair report / a paused calibration.</p>'}</div>
  ${arc.length?`<div class="card list"><h3>Archived (restarted)</h3>${arc.map(row).join('')}</div>`:''}<div class="card"><div class="muted" style="font-size:13px;margin:0 0 6px">More options</div><div class="row"><button data-act="admin">⚙ Admin</button></div></div></div>`;}
 function stepsBar(r){return `<div class="steps">${STEPS.map((s,i)=>`<button class="${i===(S.step)?'on':''}${stepDone(r,i)?' dn':''}" data-act="step" data-i="${i}">${s}</button>`).join('')}</div>`;}
@@ -14057,7 +14057,7 @@ document.addEventListener('click',e=>{const t=e.target;if(t&&t.id==='hdX'){hdSto
 function curTpl(){return TPL}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/01/2026',site:'29'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/01/2026',site:'30'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14177,7 +14177,7 @@ document.addEventListener('focusout',e=>{histCommit(e.target);setTimeout(()=>{if
 document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='a6ae55328c';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='7c2a630a11';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';

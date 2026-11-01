@@ -13152,7 +13152,7 @@ var OLDCG={sn:'sn',vin:'vin',plate:'pl',kilo:'kl',cam:'#g',rad:'#e',pt:'#f'};
 window.srChk=function(o){try{if(o&&o.sr&&window.SITE_REV&&(+o.sr)>(+window.SITE_REV))newer(+o.sr);}catch(e){}};var NEWER_SEEN={};function newer(sr){if(NEWER_SEEN[sr])return;NEWER_SEEN[sr]=1;try{var b=document.createElement('div');b.id='newerWarn';b.setAttribute('style','position:fixed;left:10px;right:10px;top:10px;z-index:99999;background:#fff3e0;border:2px solid #e67700;border-radius:12px;padding:12px 14px;font:16px system-ui,sans-serif;color:#222;box-shadow:0 6px 24px rgba(0,0,0,.25)');b.innerHTML='<b>Update this tablet first.</b> That QR code was made on a newer version (Rev '+sr+'); this tablet has Rev '+(window.SITE_REV||'?')+'. Connect to the internet and reload this page, then scan it again, or some details may be missed. <button style="margin-left:8px;min-height:40px;padding:4px 14px;border-radius:8px;border:1px solid #e67700;background:#fff;font-weight:700">OK</button>';b.querySelector('button').onclick=function(){b.remove();};(document.body||document.documentElement).appendChild(b);}catch(e){}}
 function dec(o){
  var f=formOf(o);if(!f)return null;if(o.sr&&window.SITE_REV&&(+o.sr)>(+window.SITE_REV))newer(+o.sr);
- var C={f:f,d:T(o.d),rv:o.rv||'',sn:'',osn:'',p:'',rma:T(o.rma),so:T(o.so),ac:T(o.ac),vin:T(o.vin),pl:T(o.pl),kl:T(o.kl),s:{},r:{},w:[],x:[],pd:[],h:[],n:0,wn:0};
+ var C={f:f,d:T(o.d),rv:o.rv||'',sn:'',osn:'',p:'',rma:T(o.rma),so:T(o.so),po:T(o.po),fs:T(o.fs),ac:T(o.ac),vin:T(o.vin),pl:T(o.pl),kl:T(o.kl),s:{},r:{},w:[],x:[],pd:[],h:[],n:0,wn:0};
  var S_=function(k,v){v=T(v);if(k&&v&&!/^(n\/a|pdx)$/i.test(v))C.s[k]=v;};
  var R_=function(k,v){v=T(v);if(k&&REVK[k]&&v&&!/^n\/a$/i.test(v))C.r[k]=v;};
  if(o.a==='LVSS'){var up=!!o.up;C.sn=T(up?o.nsn:o.sn);if(up){C.osn=T(o.sn);C.up=1;C.np=T(o.np);}C.p=T(o.p);
@@ -13173,7 +13173,7 @@ function dec(o){
  if(!o.cx)(o.cg||[]).forEach(function(a){var id=OLDCG[a[0]];if(id&&(T(a[1])||T(a[2])))C.x.push([id,T(a[1]),T(a[2]),'',f,C.d,T(a[4])]);});
  var cx=o.cx;
  if(cx&&typeof cx==='object'){
-  ['sn','osn','p','rma','so','ac','vin','pl','kl'].forEach(function(k){if(!C[k]&&T(cx[k])&&!(k==='sn'&&C.up))C[k]=T(cx[k]);});if(T(cx.cu)){C.cu=T(cx.cu);C.cg=+cx.cg||0;}
+  ['sn','osn','p','rma','so','po','fs','ac','vin','pl','kl'].forEach(function(k){if(!C[k]&&T(cx[k])&&!(k==='sn'&&C.up))C[k]=T(cx[k]);});if(T(cx.cu)){C.cu=T(cx.cu);C.cg=+cx.cg||0;}
   var s=cx.s||{};Object.keys(s).forEach(function(l){var k=devOfL(l);if(k&&!C.s[k])S_(k,s[l]);});
   var r=cx.r||{};Object.keys(r).forEach(function(k){if(!C.r[k])R_(k,r[k]);});
   if(Array.isArray(cx.w)){var nat=C.w;C.w=[];cx.w.forEach(function(a){if(Array.isArray(a)&&T(a[1]))C.w.push([a[0]||'f',T(a[1]),a[2]||'',T(a[3]),a[4]||'',a[5]||'',a[6]||'',T(a[7]),a[8]||'']);});C.w=C.w.concat(nat);}
@@ -13203,7 +13203,7 @@ function pack(r,nat){
  if(K){cx.k=1;
   /* a value this form left blank is carried on (still the last known), unless it is N/A here or was changed on purpose */
   var keep=function(id){return F[id]!==null&&!T(F[id])&&!(r.cxl||[]).some(function(e){return e[0]===id;});};
-  ['sn','osn','p','rma','so','ac','vin','pl','kl'].forEach(function(k){if(K[k]&&!own[k]&&keep(k))cx[k]=K[k];});
+  ['sn','osn','p','rma','so','po','fs','ac','vin','pl','kl'].forEach(function(k){if(K[k]&&!own[k]&&keep(k))cx[k]=K[k];});
   var s={};Object.keys(K.s).forEach(function(k){if(!own.s[k]&&keep(idOf(k)))s[L(k)]=K.s[k];});if(Object.keys(s).length)cx.s=s;
   var rv={};Object.keys(K.r).forEach(function(k){if(!own.r[k]&&keep(k))rv[k]=K.r[k];});if(Object.keys(rv).length)cx.r=rv;}
  /* issues: the ones carried in (with the Fixed / Still open marks made here) and this form's own */
@@ -13663,7 +13663,7 @@ const calDone=r=>!!(r.cal&&r.cal.st==='done');
 function calIssues(r){return camSwapped(r)&&!calDone(r)?['TFU & Radar Calibration (a camera/TFU was swapped)']:[];}
 const calUrl=r=>/^https?:$/.test(location.protocol)?'../cal/?sn='+encodeURIComponent(String((r.hdr||{}).sn||'').trim())+'&tech='+encodeURIComponent(String((r.hdr||{}).tech||'').trim()):'';
 function calCard(r){if(!camSwapped(r))return '';const ok=calDone(r);
- return `<div class="card" id="calCard" style="border:2px solid ${ok?'#1b8a3a':'#b58900'};background:${ok?'#f1faf4':'#fffaf0'}"><h3>TFU &amp; Radar Calibration${ok?'':' – required'}</h3>${ok?`<div class="ok" style="margin:0 0 8px"><b>✓ Calibration completed${r.cal.date?' on '+fmtD(r.cal.date):''}.</b> This is stated in the report.</div><button data-act="calundo">Undo</button>`:`<p style="margin:0 0 8px">A camera/TFU was swapped on this eMSC-L, so the TFU &amp; Radar Calibration must be completed before the report goes out.</p><div class="row"><button class="pri" data-act="calopen" style="flex:1">Open calibration form now</button><button data-act="callater" style="flex:1">Do it later – get a QR code</button></div><div class="row" style="margin-top:8px"><button data-act="caldone" style="flex:1">✓ The calibration is completed</button></div>`}</div>`;}
+ return `<div class="card" id="calCard" style="border:2px solid ${ok?'#1b8a3a':'#c25a00'};background:${ok?'#f1faf4':'#fffaf0'}"><h3${ok?'':' style="color:#c25a00"'}>TFU &amp; Radar Calibration${ok?'':' – to be completed'}</h3>${ok?`<div class="ok" style="margin:0 0 8px"><b>✓ Calibration completed${r.cal.date?' on '+fmtD(r.cal.date):''}.</b> This is stated in the report.</div><button data-act="calundo">Undo</button>`:`<p style="margin:0 0 8px"><b style="color:#c25a00">Calibration to be completed.</b> A camera/TFU was swapped on this truck, so the TFU &amp; Radar Calibration is strongly required. You can carry on with the rest of the report.</p><div class="row"><button class="pri" data-act="calopen" style="flex:1">Open calibration form now</button><button data-act="callater" style="flex:1">Do it later – get a QR code</button></div><div class="row" style="margin-top:8px"><button data-act="caldone" style="flex:1">✓ The calibration is completed</button></div>`}</div>`;}
 function calLaterDlg(){const r=S.rec;let svg='';try{const q=window.qrcode(0,'L');q.addData(JSON.stringify({a:'CAL',v:1,k:'S',sn:snD(r),t:String(r.hdr.tech||'').trim()}));q.make();svg=q.createSvgTag({cellSize:5,margin:4,scalable:true});}catch(e){svg='';}
  modal(`<h3 style="margin-top:0">Start the calibration later</h3>${qrBigHtml(snD(r))}<p class="muted">Take a picture of this code, or print it. In the <b>TFU &amp; Radar Calibration</b> form tap <b>Scan QR</b> and a calibration for ${esc(r.hdr.sn||'this truck')} opens with the serial number filled in.</p><div style="background:#fff;border:1px solid var(--line);padding:6px;max-width:260px;margin:0 auto">${svg}</div><button class="pri" onclick="closeModal()">Close</button>`);}
 function phOwner(id){const r=S.rec;
@@ -14115,7 +14115,7 @@ function emailText(r){const all=flat(r);
  const notes=String(r.techNotes||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{const sub=/^(--|–|—)/.test(l)||/^[o◦]\s/.test(l);return {sub,t:l.replace(/^(--+|[-–—•●o◦]+)\s*/,'')};});
  const subj=mailSubj(r);
  const eh=esc,TD='border:1px solid #999;padding:5px 7px;vertical-align:top;';
- let h=`<p>Attached is the repair report for ${eh(sn)}.</p>${recv?`<p>${eh(recv)}</p>`:''}${camSwapped(r)?`<p>TFU &amp; Radar Calibration: <b>${calDone(r)?'completed'+(r.cal.date?' '+eh(fmtD(r.cal.date)):''):'NOT YET COMPLETED'}</b></p>`:''}<p>Repair completion date: <b>${eh(dnL)}</b><br>${eh(pickLbl(r.hdr))}: <b>${eh(pkL)}</b></p>`;
+ let h=`<p>Attached is the repair report for ${eh(sn)}.</p>${recv?`<p>${eh(recv)}</p>`:''}${camSwapped(r)?`<p>TFU &amp; Radar Calibration: <b>${calDone(r)?'completed'+(r.cal.date?' '+eh(fmtD(r.cal.date)):''):'to be completed'}</b></p>`:''}<p>Repair completion date: <b>${eh(dnL)}</b><br>${eh(pickLbl(r.hdr))}: <b>${eh(pkL)}</b></p>`;
  if(notes.length){h+='<p><b>Tech notes:</b></p><ul>';let open=false;notes.forEach(z=>{if(z.sub){if(!open){h+='<ul>';open=true;}h+=`<li>${eh(z.t)}</li>`;}else{if(open){h+='</ul>';open=false;}h+=`<li>${eh(z.t)}</li>`;}});if(open)h+='</ul>';h+='</ul>';}
  h+=`<hr><p><b>REPAIR REPORT SUMMARY:</b></p><p>${eh(intro)}</p>`;
  if(n){h+=`<table style="border-collapse:collapse;width:100%;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#000"><tr>${[['#','4%'],['Issue','36%'],['Coverage','15%'],['Repair action','45%']].map(t=>`<th style="${TD}background:#eeeeee;text-align:left;width:${t[1]}">${t[0]}</th>`).join('')}</tr>`;
@@ -14130,7 +14130,7 @@ function emailText(r){const all=flat(r);
  if(BK.length)h+=`<p><b>Items not tested (blocked by other issues)</b></p><ul>${BK.map(x=>`<li>${eh(x)}</li>`).join('')}</ul>`;
  if(ciL.length)h+=`<p><b>Continuous improvement items</b></p><ol>${ciL.map(x=>`<li>${eh([x[0],x[1]].filter(Boolean).join(' - '))}</li>`).join('')}</ol>`;
  h+=`<p>Thank you,<br>${eh(tech)}</p>`;
- const T=[`Attached is the repair report for ${sn}.`,''];if(recv)T.push(recv,'');if(camSwapped(r))T.push('TFU & Radar Calibration: '+(calDone(r)?'completed'+(r.cal.date?' '+fmtD(r.cal.date):''):'NOT YET COMPLETED'),'');T.push('Repair completion date: '+dnL,pickLbl(r.hdr)+': '+pkL,'');
+ const T=[`Attached is the repair report for ${sn}.`,''];if(recv)T.push(recv,'');if(camSwapped(r))T.push('TFU & Radar Calibration: '+(calDone(r)?'completed'+(r.cal.date?' '+fmtD(r.cal.date):''):'to be completed'),'');T.push('Repair completion date: '+dnL,pickLbl(r.hdr)+': '+pkL,'');
  if(notes.length){T.push('Tech notes:');notes.forEach(z=>T.push(z.sub?'      ◦ '+z.t:'   • '+z.t));T.push('');}
  T.push('______________________________','REPAIR REPORT SUMMARY:','',intro,'');
  if(n){secs.forEach(s=>{T.push(s[0],'');s[1].forEach(g=>{T.push(g[0]+':','');g[1].forEach(x=>{T.push(`${x.n}) ${x.issue}`,`     Coverage: ${x.cov}`,`     Repair action: ${x.act}`);if(x.parts)T.push(`     Parts used: ${x.parts}`);x.rel.forEach(c=>{T.push(`   \u21b3 ${c.issue} (${c.kind.toLowerCase()} - ${c.cu?'confirms':'related to'} item ${x.n})`);if(c.blk)T.push(`        ${c.act}`);});T.push('');});});});}
@@ -14141,7 +14141,7 @@ function emailText(r){const all=flat(r);
  if(ciL.length){T.push('CONTINUOUS IMPROVEMENT ITEMS','');ciL.forEach((x,i)=>T.push(`${i+1}) ${[x[0],x[1]].filter(Boolean).join(' - ')}`));T.push('');}
  T.push('Thank you,',tech);
  return {subj,html:h,text:T.join('\n')};}
-function reportHtml(){S.emEdited=false;const r=S.rec,st=stats(r),iss=[...gateIssues(r),...calIssues(r)],fs=finalSerials(r);let qs='';
+function reportHtml(){S.emEdited=false;const r=S.rec,st=stats(r),iss=[...gateIssues(r)],fs=finalSerials(r);let qs='';
  try{qs=qrMake(r).createSvgTag({cellSize:5,margin:4,scalable:true})}catch(e){qs='<div class="err">Could not make the QR code: '+esc(e.message)+'</div>'}
  return `${st.openDno?`<div class="dno-banner">⛔ DO NOT OPERATE – ${st.openDno} open<small>Still unresolved</small></div>`:''}
  ${calCard(r)}${iss.length?`<div class="err"><b>Not complete – fix these before sending the report:</b><ul style="margin:6px 0 6px 18px;padding:0">${iss.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><button data-act="step" data-s="1">← Info / serial numbers</button> <button data-act="step" data-s="2">← Inspection / swaps</button></div>`:`<div class="ok"><b>${r.noPhoto?'Serial number photos waived (camera override).':'All serial numbers are validated with photos.'}</b> The report is ready.</div>`}
@@ -14589,14 +14589,14 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'emcopy':{const el=$('#emBody');const rg=document.createRange();rg.selectNodeContents(el);const se=getSelection();se.removeAllRanges();se.addRange(rg);let ok=false;try{ok=document.execCommand('copy');}catch(e){}se.removeAllRanges();notice(ok?'Paste it into the body of your email.':'Could not copy automatically – press and hold the table, Select all, then Copy.',{title:ok?'Copied':'Copy failed'});break;}
  case 'emcopyt':{const t=emailText(r).text;const ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;left:0;top:0;opacity:0';document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,t.length);let ok=false;try{ok=document.execCommand('copy');}catch(e){}ta.remove();if(!ok&&navigator.clipboard)navigator.clipboard.writeText(t).then(()=>notice('Paste it into the body of your email.',{title:'Copied'}),()=>notice('Could not copy automatically.',{title:'Copy failed'}));else notice(ok?'Paste it into the body of your email.':'Could not copy automatically.',{title:ok?'Copied':'Copy failed'});break;}
  case 'sendcust':{if(r.sendCust){r.sendCust=false;}else if(!await ask('This report did not pass. Send it to the customer anyway?',{title:'Override',ok:'Yes, send to customer'}))break;else r.sendCust=true;markDirty();const c=$('#sendCard');if(c)c.outerHTML=sendCardHtml(r);const ob=document.querySelector('[data-act=emopen]');if(ob)ob.firstChild.textContent=sendTo(r).mode==='internal'?'✉ Email report to TSC (internal)':'✉ Email report to customer';break;}
- case 'emopen':{if(calIssues(r).length){notice('A camera/TFU was swapped, so the TFU & Radar Calibration must be completed first. Use the calibration box on this page.',{title:'Calibration required'});break;}await sendCopy(r);const edited=!!S.emEdited,subj=$('#emSubj').value,body=edited?$('#emBody').innerText:emailText(r).text;
+ case 'emopen':{await sendCopy(r);const edited=!!S.emEdited,subj=$('#emSubj').value,body=edited?$('#emBody').innerText:emailText(r).text;
   if(S.pdf){try{const files=pdfFiles();if(navigator.canShare&&navigator.canShare({files})){await navigator.share({files,title:subj,text:body});break;}}catch(err){if(err&&err.name==='AbortError')break;}}
   else{notice('The PDF is still being prepared – try again in a moment.',{title:'Please wait'});break;}
   notice('This browser cannot attach the PDF automatically, so the email will open without it. Use "Save PDF" and attach the file from Downloads.',{title:'PDF not attached'});location.href=mailHref(r,subj,body);break;}
  case 'emreset':{S.emEdited=false;const e=emailText(r);$('#emSubj').value=e.subj;$('#emBody').innerHTML=e.html;break;}
  case 'photozip':{const z=photoZip(r);if(!z){notice('There are no photos in this inspection yet.',{title:'No photos'});break;}dlBlob(z.blob,z.name);if(!isIOS())notice(z.n+' photo'+(z.n===1?'':'s')+' saved as “'+z.name+'” in the tablet\'s Downloads. Open it in the Files app and tap Extract to get a folder named “'+fileSafe(repFile(r))+'” with every photo inside.',{title:'Photo folder saved'});break;}
  case 'dl':if(!S.pdf){notice('The PDF is still being prepared – try again in a moment.',{title:'Please wait'});break;}(async()=>{await dlBlob(S.pdf.blob,S.pdf.name);const z=photoZip(r);if(z){await new Promise(t=>setTimeout(t,600));await dlBlob(z.blob,z.name);}})();break;
- case 'share':{if(calIssues(r).length){notice('A camera/TFU was swapped, so the TFU & Radar Calibration must be completed first. Use the calibration box on this page.',{title:'Calibration required'});break;}await sendCopy(r);if(!S.pdf){notice('The PDF is still being prepared – try again in a moment.',{title:'Please wait'});break;}const files=pdfFiles();const data={files,title:mailSubj(r),text:($('#emBody')?$('#emBody').innerText:'LVSS '+(r.hdr.sn||'')+' post-repair report')};
+ case 'share':{await sendCopy(r);if(!S.pdf){notice('The PDF is still being prepared – try again in a moment.',{title:'Please wait'});break;}const files=pdfFiles();const data={files,title:mailSubj(r),text:($('#emBody')?$('#emBody').innerText:'LVSS '+(r.hdr.sn||'')+' post-repair report')};
   try{if(navigator.canShare&&navigator.canShare({files})){await navigator.share(data);}else notice('This browser cannot share files from a web page. Use "Save PDF to tablet" and attach the file from Downloads.',{title:'Cannot share'});}
   catch(err){if(err&&err.name!=='AbortError')notice('Share failed: '+err.message,{title:'Share failed'})}break;}
  case 'backup':doBackup();break;
@@ -15284,7 +15284,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/01/2026',site:'29'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/01/2026',site:'30'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -15348,7 +15348,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='c4891c4da7';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='5a4288716a';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
