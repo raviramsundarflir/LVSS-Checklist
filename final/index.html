@@ -13010,7 +13010,7 @@ window.BackGuard={show:show};
 (function(){
 'use strict';
 var DEF='CBP / DHS', KEY='cust_recent';
-var CFG={rec:function(){return null;},dirty:function(){},after:function(){},anchor:null};
+var CFG={rec:function(){return null;},dirty:function(){},after:function(){},anchor:null,inRec:null,tag:null};
 var CUR=null;
 function T(v){return String(v==null?'':v).trim();}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -13057,7 +13057,7 @@ function mount(){var r;try{r=CFG.rec();}catch(e){r=null;}if(!r)return;css();var 
  var A=anchorEl();if(!A||!A.el)return;A.el.insertAdjacentHTML(A.pos,html(r));box=document.getElementById('cuBox');if(box)box.__r=r;}
 function redraw(r){var box=document.getElementById('cuBox');if(!box)return mount();box.outerHTML=html(r);box=document.getElementById('cuBox');if(box)box.__r=r;}
 function changed(r){try{CFG.dirty(r);}catch(e){}try{CFG.after(r,of(r));}catch(e){}redraw(r);relabel();}
-document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-cu]');if(!b)return;var r=CFG.rec();if(!r)return;e.preventDefault();var a=b.getAttribute('data-cu');
+document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('[data-cu-tag]');if(t){e.preventDefault();try{printTag(CFG.tag&&CFG.tag());}catch(x){}return;}var b=e.target.closest&&e.target.closest('[data-cu]');if(!b)return;var r=CFG.rec();if(!r)return;e.preventDefault();var a=b.getAttribute('data-cu');
  if(a==='dhs'){if(of(r).dhs&&r.custPick&&!r.custPick.o)return;r.custPick={o:0};}
  else if(a==='oth'){if(r.custPick&&r.custPick.o)return;var c=of(r);r.custPick={o:1,n:c.dhs?'':c.n,g:c.dhs?false:c.g};}
  else if(a==='pick'){var o=recent()[+b.getAttribute('data-i')];if(!o)return;r.custPick={o:1,n:o.n,g:!!o.g};}
@@ -13069,18 +13069,20 @@ document.addEventListener('change',function(e){var t=e.target;if(!t||!t.getAttri
  if(t.getAttribute('data-cu-g')){r.custPick.g=!!t.checked;remember(r.custPick);try{CFG.dirty(r);}catch(e2){}try{CFG.after(r,of(r));}catch(e3){}return;}
  if(t.getAttribute('data-cu-in')){r.custPick.n=T(t.value);remember(r.custPick);try{CFG.dirty(r);}catch(e2){}}});
 var Q=0;function soon(){if(Q)return;Q=requestAnimationFrame(function(){Q=0;hookPdf();mount();relabel();});}
-function start(){hookPdf();try{new MutationObserver(function(){if(!BUSY)soon();}).observe(document.body,{childList:true,subtree:true});}catch(e){}soon();}
+function inside(){try{document.documentElement.classList.toggle('cuIn',!!(CFG.inRec&&CFG.inRec()));}catch(e){}}
+function start(){hookPdf();inside();try{new MutationObserver(function(){inside();if(!BUSY)soon();}).observe(document.body,{childList:true,subtree:true});}catch(e){}soon();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
-/* ---- DASH TAG: one landscape page at the end of every truck form's report, to put on the dash facing out ----
+/* ---- WINDOW / DASHBOARD ID (was "dash tag"): one landscape page at the end of every truck form's report and from the
+   "Print window / dashboard ID" button, to put on the dashboard facing out ----
    I = {r: record, sn: serial (or incoming serial for an upfit), nsn: new serial after an upfit ('' = not an upfit),
         stage: 'Repair' / 'Upfit / Upgrade' / 'New build', rows: [[label, value]...], form: form name, date, credit} */
-function dashTag(d,I){var r=I.r,c=of(r);var p=CUR;CUR=r;try{
- d.addPage('letter','landscape');var W=d.internal.pageSize.getWidth(),H=d.internal.pageSize.getHeight(),MX=36,CWL=W-2*MX,T=36;
+function dashTag(d,I,first){var r=I.r,c=of(r);var p=CUR;CUR=r;try{
+ if(!first)d.addPage('letter','landscape');var W=d.internal.pageSize.getWidth(),H=d.internal.pageSize.getHeight(),MX=36,CWL=W-2*MX,T=36;
  var cl=function(t){return String(t==null?'':t).replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[–—]/g,'-').replace(/…/g,'...').replace(/[^\x09\x0A\x20-\x7E\xA0-\xFF]/g,'?');};
  var col=function(k,h){var n=parseInt(h.slice(1),16);d[k](n>>16,(n>>8)&255,n&255);};
  var fit=function(txt,max,fs0){var fs=fs0;d.setFont('helvetica','bold');d.setFontSize(fs);while(d.getTextWidth(txt)>max&&fs>14){fs-=2;d.setFontSize(fs);}return fs;};
- col('setFillColor','#0f5c4d');d.rect(MX,T,CWL,84,'F');d.setTextColor(255);fit('DASH TAG',CWL-24,50);d.text('DASH TAG',W/2,T+50,{align:'center'});
- d.setFont('helvetica','bold');d.setFontSize(12);d.text('Place on the vehicle dash, facing out through the windshield - truck identification',W/2,T+72,{align:'center'});
+ col('setFillColor','#0f5c4d');d.rect(MX,T,CWL,84,'F');d.setTextColor(255);fit('WINDOW / DASHBOARD ID',CWL-24,46);d.text('WINDOW / DASHBOARD ID',W/2,T+50,{align:'center'});
+ d.setFont('helvetica','bold');d.setFontSize(12);d.text('Place on the dashboard, facing out through the windshield - truck identification',W/2,T+72,{align:'center'});
  var y=T+114;d.setTextColor(90);d.setFontSize(12);d.text('CUSTOMER',MX,y);d.setTextColor(0);d.setFontSize(20);d.text(cl(c.n),MX+82,y+1);
  d.setTextColor(90);d.setFontSize(12);d.text(cl(I.stage||''),W-MX,y,{align:'right'});y+=34;
  var up=!!I.nsn,bh=up?140:170,fs=up?92:120;d.setFont('helvetica','bold');d.setTextColor(90);d.setFontSize(12);
@@ -13097,16 +13099,21 @@ function dashTag(d,I){var r=I.r,c=of(r);var p=CUR;CUR=r;try{
  d.setFontSize(6.5);d.text(cl(I.credit||''),W/2,H-8,{align:'center'});d.setTextColor(0);
 }finally{CUR=p;}}
 function T_(v){return String(v==null?'':v).trim();}
+function tagBtn(cls){return '<button type="button" data-cu-tag="1" class="'+(cls||'')+'" style="flex:1 1 200px">\ud83d\udda8 Print window / dashboard ID</button>';}
+async function printTag(I){if(!I||!window.jspdf)return;var d=new window.jspdf.jsPDF({unit:'pt',format:'letter',orientation:'landscape',compress:true});dashTag(d,I,true);
+ var sn=String(I.nsn&&/\d/.test(I.nsn)?I.nsn:(I.sn||'truck')).replace(/[\\\/:*?"<>|_]+/g,' ').replace(/\s+/g,' ').trim()||'truck',name=sn+' - WINDOW-DASHBOARD-ID.pdf',blob=d.output('blob');
+ try{var f=new File([blob],name,{type:'application/pdf'}),data={files:[f],title:'Window / dashboard ID - '+sn};if(navigator.canShare&&navigator.canShare(data)){await navigator.share(data);return;}}catch(e){if(e&&e.name==='AbortError')return;}
+ var a=document.createElement('a'),u=URL.createObjectURL(blob);a.href=u;a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(u);a.remove();},4000);}
 /* ---- sections (Ravi, Rev 27): a coloured bar on top of every card and labelled lines between the groups in a card,
    in each form's own colour, so the pages do not blend together when scrolling ---- */
-(function(){try{var s=document.createElement('style');s.id='secCss';s.textContent='.card{border-top:6px solid var(--blue,var(--navy,#1d3b6a));margin-bottom:20px}'+
+(function(){try{var s=document.createElement('style');s.id='secCss';s.textContent='html.cuIn .card{border-top:6px solid var(--blue,var(--navy,#1d3b6a));margin-bottom:20px}'+
  '.secl{display:flex;align-items:center;gap:10px;margin:18px 0 10px;color:var(--blue,var(--navy,#1d3b6a));font:800 13px system-ui,-apple-system,sans-serif;letter-spacing:.06em;text-transform:uppercase}'+
  '.secl:after{content:"";flex:1;height:3px;background:currentColor;opacity:.55;border-radius:3px}.card>h2+.secl,.card>h2+p+.secl{margin-top:8px}';(document.head||document.documentElement).appendChild(s);}catch(e){}})();
 window.SEC=function(t){return '<div class="secl">'+esc(t)+'</div>';};
 /* the DHS plate prefix: on for CBP / DHS unless the tech turned it off; off for anyone else unless turned on */
 function pf(v){return v===true||(v!==false&&of().dhs);}
-window.CUST={DEF:DEF,of:of,pf:pf,html:html,dashTag:dashTag,mapS:function(s,r){return mapS(s,of(r));},kl:function(r){return of(r).dhs?'Kilo #':'Fleet #';},
- cfg:function(o){for(var k in o)CFG[k]=o[k];soon();},refresh:soon,
+window.CUST={DEF:DEF,of:of,pf:pf,html:html,dashTag:dashTag,tagBtn:tagBtn,printTag:printTag,mapS:function(s,r){return mapS(s,of(r));},kl:function(r){return of(r).dhs?'Kilo #':'Fleet #';},
+ cfg:function(o){for(var k in o)CFG[k]=o[k];inside();soon();},refresh:soon,
  /* draw a report for a record that is not the open one (e.g. a DD1149 from a scanned code) */
  with:function(r,fn){var p=CUR;CUR=r;try{return fn();}finally{CUR=p;}}};
 })();
@@ -13857,7 +13864,7 @@ function doneHtml(r){const d=r.done;
  <label class="f" style="margin-top:10px">Technician signature (sign with your finger)</label><canvas id="sigc" class="sigc" width="900" height="260"></canvas><div class="row" style="margin-top:6px"><button data-act="sigclr">Clear signature</button><span class="muted" id="sigMsg">${d.sig?'Signature saved.':'Not signed yet.'}</span></div></div>
  ${photosHtml(r)}
  ${d.complete?doneActions(r):`<div class="card"><div id="finNeed"></div><button class="pri" data-act="finish" style="width:100%;min-height:56px;font-size:18px">✓ Finish final inspection</button></div>`}`;}
-function doneActions(r){return SendTo.card(r)+`<div class="card" style="border:2px solid var(--pass)"><h3>Final inspection complete</h3><div class="row"><button class="emailbig" data-act="email">✉ Email report (PDF attached)<small>Recommended - opens your email app with the PDF attached, addressed to the Send to list above</small></button><button data-act="pdf" style="flex:1 1 150px">⬇ Save PDF</button>${(r.ph||[]).length&&r.done.incPh==='1'?'<button data-act="phzip" style="flex:1 1 150px">⬇ Save photos (ZIP)</button>':''}<button data-act="copymail" style="flex:1 1 150px">Copy To</button><button data-act="copysubj" style="flex:1 1 150px">Copy subject</button><button data-act="reopen" style="flex:1 1 150px">Re-open to edit</button></div></div>`+atpNextHtml(r);}
+function doneActions(r){return SendTo.card(r)+`<div class="card" style="border:2px solid var(--pass)"><h3>Final inspection complete</h3><div class="row"><button class="emailbig" data-act="email">✉ Email report (PDF attached)<small>Recommended - opens your email app with the PDF attached, addressed to the Send to list above</small></button><button data-act="pdf" style="flex:1 1 150px">⬇ Save PDF</button>${CUST.tagBtn('')}${(r.ph||[]).length&&r.done.incPh==='1'?'<button data-act="phzip" style="flex:1 1 150px">⬇ Save photos (ZIP)</button>':''}<button data-act="copymail" style="flex:1 1 150px">Copy To</button><button data-act="copysubj" style="flex:1 1 150px">Copy subject</button><button data-act="reopen" style="flex:1 1 150px">Re-open to edit</button></div></div>`+atpNextHtml(r);}
 function optHtml(r){return `<div class="card"><h3>Pause</h3><div class="row optb"><button data-act="pause">⏸ Pause – QR code to continue later</button></div></div>`;}
 function recHtml(r){const bdy=[serHtml,ckHtml,doneHtml][S.step](r);
  return bar('Skid '+recName(r),`<button id="saveInd" class="save" data-act="save"></button><button data-act="home">Home</button>`)+stepsBar(r)+`<div class="wrap">${(S.step===0||S.step===2)?Core.bannerHtml(r,{noChain:S.step===2}):''}${bdy}<div class="row" style="margin-bottom:12px"><button data-act="prev" ${S.step===0?'disabled':''} style="flex:1">‹ Back</button><button class="pri" data-act="next" ${S.step===2?'disabled':''} style="flex:1">Next ›</button></div>${r.done.complete?'':optHtml(r)}</div>`;}
@@ -14071,7 +14078,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)save();});
 function curTpl(){return TPL}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'10/31/2026',site:'27'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/01/2026',site:'28'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14191,8 +14198,9 @@ document.addEventListener('focusout',e=>{histCommit(e.target);setTimeout(()=>{if
 document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='7da94df68e';window.__BUILD=B;var shown=false,last=0;
-function bar(){if(shown||!document.body)return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='eb9001c3e0';window.__BUILD=B;var shown=false,last=0;
+function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
+function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
 d.innerHTML='<span style="flex:1">A new version is available. Your saved work is kept.</span><button id="newVerBtn" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:9px 14px;font:700 15px system-ui,sans-serif">Reload</button><button id="newVerX" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font:700 20px system-ui,sans-serif;padding:4px 8px">×</button>';
 document.body.appendChild(d);
@@ -14200,7 +14208,7 @@ document.getElementById('newVerX').onclick=function(){d.remove();shown=false;};
 document.getElementById('newVerBtn').onclick=function(){var b=this;b.disabled=true;b.textContent='Updating...';
 fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});};}
 function chk(){if(navigator.onLine===false)return;if(Date.now()-last<30000)return;last=Date.now();
-fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(j){if(j&&j.build&&j.build!==B)bar();}).catch(function(){});}
+fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(j){if(j&&j.build&&j.build!==B)bar(j.build);}).catch(function(){});}
 window.addEventListener('load',function(){setTimeout(chk,1500);});
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')chk();});
 window.addEventListener('online',chk);
@@ -14477,5 +14485,8 @@ function upSn(o){return ({L:'LVSS-',E:'eMSC-L ',M:'M2S2 '})[o&&o.np]||'';}
 function finDone(r){const o={a:'FIN',v:1,k:'D',rv:r.done.complete?'P':'I',id:r.id,sn:r.hdr.sn,rma:r.hdr.rma||'',d:r.done.date||r.hdr.date,t:r.hdr.tech,f:r.f};if(r.hdr.was)o.ol=r.hdr.was;return coreJ(r,strip(o));}
 function atpNextHtml(r){return `<div class="card" style="border:2px solid #1d3b6a"><h3>Next: the ATP inspection</h3><p class="muted">Jake's Final is done before the ATP. Start the ATP with this skid's serial numbers, VIN, plate and ${esc(CUST.kl(r))} filled in.</p><div class="row"><button class="pri" data-act="toatp" style="flex:1 1 200px">Open the ATP now</button><button data-act="atpqr" style="flex:1 1 200px">Show the QR code for the ATP</button></div></div>`;}
 function dtInfo(r){const h=r.hdr||{},F=r.f||{},was=String(h.was||'').trim(),sv=String(h.sn||'').trim(),sd=/\d/.test(sv)?snShow(sv):(sv?sv+' ________':'');return {r:r,sn:was?was:sd,nsn:was?(sd||'________'):'',stage:was?'Upfit':'New build',form:TPL.title,date:h.date?fmtD(h.date):'',credit:creditText(TPL.revision).replace(/[^\x20-\x7E]/g,'-'),rows:[['RMA',h.rma],['Truck VIN',F.vin],['License plate',F.plate],[CUST.kl(r),F.kilo]]};}
-CUST.cfg({rec:function(){return S.view==='rec'?S.rec:null;},dirty:function(){markDirty();},anchor:function(){const h=[...document.querySelectorAll('h2')].find(x=>x.textContent.trim()==='Truck identification');return h?{el:h,pos:'afterend'}:null;},after:function(r,c){r.f=r.f||{};const raw=String(r.f.plate||'').replace(/^dhs\s*/i,'');r.tkPf=c.dhs;r.f.plate=c.dhs&&raw?'DHS '+raw:raw;markDirty();const y=window.scrollY;render();window.scrollTo(0,y);}});
+CUST.cfg({inRec:function(){return S.view==='rec';},tag:function(){return S.rec?dtInfo(S.rec):null;},rec:function(){return S.view==='rec'?S.rec:null;},dirty:function(){markDirty();},anchor:function(){const h=[...document.querySelectorAll('h2')].find(x=>x.textContent.trim()==='Truck identification');return h?{el:h,pos:'afterend'}:null;},after:function(r,c){r.f=r.f||{};const raw=String(r.f.plate||'').replace(/^dhs\s*/i,'');r.tkPf=c.dhs;r.f.plate=c.dhs&&raw?'DHS '+raw:raw;markDirty();const y=window.scrollY;render();window.scrollTo(0,y);}});
+</script><script>/* Rev 28: home screen auto-update; the report drawn with its own truck's customer */
+window.__atHome=function(){try{return S.view==='home';}catch(e){return false;}};
+if(typeof finalPdf==='function'){const _b=finalPdf;finalPdf=function(r){const a=arguments;return CUST.with(r,()=>_b.apply(this,a));};}
 </script></body></html>
