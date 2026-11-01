@@ -1,0 +1,59 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Quick Start</title>
+<style>
+:root{--bg:#f3f5f8;--surface:#fff;--ink:#14233a;--muted:#51627a;--line:#cfd8e3;--navy:#0b3d6b;--navy-soft:#dbe8f6;--warn:#c25a00;--warn-soft:#fff4e8;--ok:#1b7f5a;--ok-soft:#dff3ea}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c1522;--surface:#142235;--ink:#e6edf6;--muted:#9db0c6;--line:#2b3d55;--navy:#6fb0ee;--navy-soft:#173a5e;--warn:#f0a050;--warn-soft:#3a2810;--ok:#4fd0a0;--ok-soft:#12392c;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;padding:20px max(16px,env(safe-area-inset-left)) 56px}
+.w{max-width:860px;margin:0 auto}a.back{color:var(--navy);font-weight:700;text-decoration:none}
+h1{font-size:clamp(30px,6vw,44px);text-transform:uppercase;letter-spacing:.01em;margin:10px 0 4px;line-height:1.05}.sub{color:var(--muted);margin:0 0 18px}
+h2{font-size:20px;margin:0 0 8px;color:var(--navy)}.c{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.big{border-left:6px solid var(--navy)}ol,ul{margin:6px 0 0 20px;padding:0}li{margin:5px 0}
+.path{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0}.path b{background:var(--navy-soft);color:var(--navy);border-radius:8px;padding:6px 10px;font-size:14px}.path i{color:var(--muted);font-style:normal}
+.o{border-left:6px solid var(--warn);background:var(--warn-soft)}.g{border-left:6px solid var(--ok);background:var(--ok-soft)}.m{color:var(--muted);font-size:14px}
+table{border-collapse:collapse;width:100%;font-size:15px}td{border-top:1px solid var(--line);padding:7px 6px;vertical-align:top}td:first-child{font-weight:700;white-space:nowrap;padding-right:14px}
+footer{text-align:center;font-size:11px;color:var(--muted);opacity:.75;margin-top:26px}
+</style></head><body><div class="w">
+<a class="back" href="../">‹ All forms</a>
+<h1>Quick Start</h1><p class="sub">One idea, then how to find your way. Enter the truck's data once and let the QR code carry it forward.</p>
+
+<div class="c big"><h2>The one idea</h2>
+<p style="margin:0">Every form makes a <b>QR code</b> (it is on the report PDF and on the folder front page). The next form <b>scans it</b>, so the serial number, VIN, plate and other core data are already filled in. Scan, check it against the truck, carry on. Do not retype.</p></div>
+
+<div class="c"><h2>Where a truck goes</h2>
+<p class="m" style="margin:0 0 4px">The <a href="../workflow/" style="color:var(--navy);font-weight:700">workflow page</a> shows each path in full. In short:</p>
+<b>Repair</b><div class="path"><b>Intake</b><i>›</i><b>Post-Repair</b><i>›</i><b>Report emailed</b></div>
+<b>Upfit / upgrade</b><div class="path"><b>Intake</b><i>›</i><b>Floor Test</b><i>›</i><b>Jake's Final</b><i>›</i><b>Calibration (if a camera, TFU or radar changed)</b><i>›</i><b>ATP</b><i>›</i><b>Punch list and audit</b></div>
+<b>New build</b><div class="path"><b>New build intake</b><i>›</i><b>Floor Test</b><i>›</i><b>Jake's Final</b><i>›</i><b>ATP</b></div>
+<p class="m" style="margin:6px 0 0">New build: the Floor Test link to the truck's QR is still being built. Until then, type the serial in the Floor Test.</p></div>
+
+<div class="c"><h2>How to scan</h2><ol>
+<li>On the home screen tap <b>Scan a QR code</b>, or choose <b>📷 Scan a QR code instead</b> when starting a new inspection.</li>
+<li>Point the tablet at the QR on the previous report or the folder front page.</li>
+<li>Check what filled in against the truck. If a value is wrong, fix it. The form uses what you confirm.</li></ol></div>
+
+<div class="c"><h2>The forms</h2><table>
+<tr><td>Intake (short)</td><td>Core data, customer-reported issues and a main-functions check. Also starts a new build.</td></tr>
+<tr><td>Intake (long)</td><td>The longer intake.</td></tr>
+<tr><td>Post-Repair</td><td>Closes out each repair on the work list.</td></tr>
+<tr><td>Floor Test</td><td>Bench test of the skid devices. Device serials are captured here.</td></tr>
+<tr><td>Jake's Final</td><td>Final check before the ATP.</td></tr>
+<tr><td>Calibration</td><td>TFU and radar calibration.</td></tr>
+<tr><td>ATP</td><td>The acceptance test. Failed lines become the punch list.</td></tr>
+<tr><td>SkyWatch</td><td>SkyWatch inspection and completion certificate.</td></tr></table></div>
+
+<div class="c o"><h2>Colors</h2><p style="margin:0"><b style="color:var(--warn)">Orange</b> is a reminder or warning. It never blocks you. <b style="color:#c62828">Red</b> is only for a real fault.</p></div>
+
+<div class="c g"><h2>If something goes wrong</h2><ul>
+<li><b>Forms save as you go.</b> If the page freezes or you lose your place, reload it and reopen the inspection from Home.</li>
+<li><b>No signal?</b> The forms work without a connection once they are saved to the tablet. Get a connection once and keep the page open a few seconds. Tap <b>Get all forms</b> if you will be offline.</li>
+<li><b>Do not clear the browser's data.</b> Unsent inspections live on the tablet until you send the report. Send reports soon.</li>
+<li><b>Dictation not working?</b> Use the keyboard's own microphone key instead. Dictation works best in Chrome on the Samsung tablets and can be less steady on iPhone.</li>
+<li><b>Stuck?</b> Take a photo of the screen and send it to Ravi.</li></ul></div>
+
+<div class="c"><h2>Small things that save time</h2><ul>
+<li>Name fields start blank and offer the names recently used on that tablet.</li>
+<li>Any field you filled in offers your earlier entries again on the same tablet.</li>
+<li>Take photos with the tablet's camera. The form keeps them with the right item.</li>
+<li>Failed repair reports go to TSC@teledyne.com. Passed reports go to the customer.</li></ul></div>
+
+<footer>Designed &amp; developed by Ravi Ramsundar · Rev 39 · 11/01/2026 3:10 PM MST</footer>
+</div></body></html>
