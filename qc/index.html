@@ -13623,7 +13623,7 @@ async function scanDone(txt){if(String(txt).startsWith('WIP1~')){wipChunk(txt);r
  closeModal();const n=c.s.length,bits=[n+' serial number'+(n===1?'':'s')];if(c.vin)bits.push('VIN');if(c.pl)bits.push('plate');if(c.kl)bits.push('kilo');if(Object.keys(c.i).length)bits.push('SW/FW revs and mileage/hours as the last reading');
  const sn0=/^\d+$/.test(snDig(c.sn))?snMake(codeOfPt(c.pt),snDig(c.sn)):c.sn;
  const RC=await coreReAsk(o);if(RC==='x')return;if(!RC&&!await ask(`Start an LVSS short form intake for ${sn0||'this truck'} with the core data from the ${c.from} QR code filled in (${bits.join(', ')})?\n\nTake a fresh photo of each value to confirm it is still right.`,{title:'Start from QR code?',ok:'Start the short form'}))return;
- const reUp=RC==='r'&&o.a==='LVSS'&&!!o.up;S.rec=newRec(reUp?{sn:String(o.sn||'').trim(),tech:'',ptype:ptOfCode(o.p)}:{sn:sn0,tech:'',ptype:c.pt});Object.assign(S.rec.hdr,{rma:c.rma||'',so:c.so||'',acct:c.ac||''});
+ const reUp=RC==='r'&&o.a==='LVSS'&&!!o.up;S.rec=newRec(reUp?{sn:String(o.sn||'').trim(),tech:'',ptype:ptOfCode(o.p)}:{sn:sn0,tech:'',ptype:c.pt});S.moreId=S.rec.id;Object.assign(S.rec.hdr,{rma:c.rma||'',so:c.so||'',acct:c.ac||''});
  setTv(S.rec,'vin',c.vin);setTv(S.rec,'plate',c.pl);setTv(S.rec,'kilo',c.kl);if(Object.keys(c.i).length)S.rec.prev=c.i;S.rec.qcFrom=c.from;
  const used=new Set();c.s.forEach(p=>{const nm=p[0],val=p[1];const g=S.rec.gear.find(x=>!used.has(x.id)&&!x.tk&&gKey(x.t)===gKey(nm));if(g){g.s=val;used.add(g.id);}else{const x={id:'eq'+uid(),t:nm||'Other device',s:val,ph:[],na:false,custom:true};S.rec.gear.push(x);used.add(x.id);}});
  coreScan(S.rec,o,RC==='r');if(RC==='r'){coreImported(S.rec,coreLoadW(S.rec,o,'From the original report'));if(o.pu){S.rec.hdr.visit=o.vd?'dropoff':'pickup';S.rec.hdr.puDate=o.pu;}}if(reUp)upRestore(S.rec,o);
@@ -13634,7 +13634,7 @@ async function scanInto(o,c){closeModal();const r=S.rec,bits=[c.s.length+' seria
  if(!await ask(`Fill in this truck's core data from the ${c.from} QR code (${bits.join(', ')})?`+(diff?`\n\nCareful: the code is for ${sn0} but this record is ${cur}.`:'')+`\n\nValues already entered will be replaced. Then take a fresh photo of each value to confirm it is still right.`,{title:"Fill from last visit's QR",ok:'Fill it in',no:'Cancel'}))return;
  if(c.vin)setTv(r,'vin',c.vin);if(c.pl)setTv(r,'plate',c.pl);if(c.kl)setTv(r,'kilo',c.kl);if(Object.keys(c.i).length)r.prev=c.i;r.qcFrom=c.from;
  const used=new Set();c.s.forEach(p=>{const nm=p[0],val=p[1];const g=r.gear.find(x=>!used.has(x.id)&&!x.tk&&gKey(x.t)===gKey(nm));if(g){g.s=val;used.add(g.id);}else{const x={id:'eq'+uid(),t:nm||'Other device',s:val,ph:[],na:false,custom:true};r.gear.push(x);used.add(x.id);}});
- r.moreOpen=true;markDirty();await save();render();}
+ S.moreId=r.id;markDirty();await save();render();}
 function scanLastHtml(){return '<button type="button" data-act="scanlast" style="width:100%;margin-bottom:12px;border:3px solid #1b8a3a;background:#e8f6ec;color:#14602a;font-weight:700;border-radius:10px;box-shadow:0 0 0 3px rgba(27,138,58,.18)">\ud83d\udcf7 Scan last visit\u2019s QR (returning truck)</button>';}
 /* info page: core data first, then what the customer reports at the site */
 function infoHtml(){const r=S.rec;
@@ -13648,8 +13648,13 @@ function infoHtml(){const r=S.rec;
  ${r.hdr.purpose==='upfit'?'<div class="card" id="infoCust">'+custPropHtml()+'</div>':''}
  </div>
  ${navHtml(1)}`;}
-/* exterior photos and everything below start folded away so the tech can log the customer's complaints and the truck serial first (Ravi, 2026-11-01) */
-function moreOpen(r){return !!r.moreOpen||(r.gear||[]).some(g=>String((g.tk?g.v:g.s)||'').trim())||(r.nbPh||[]).length>0;}
+/* exterior photos and everything below start folded away so the tech can log the customer's complaints and the truck serial first (Ravi, 2026-11-01).
+   The +/- follows only the tech's taps (filled-in data no longer forces it open), it starts folded every time a record is opened,
+   and a QR scan opens it so the carried-over serials can be checked (Ravi, 2026-11-02). Session only, not saved in the record. */
+function moreOpen(r){return !!(r&&S.moreId&&S.moreId===r.id);}
+function moreSet(r,on){S.moreId=on&&r?r.id:null;const m=$('#infoMore'),b=$('#infoMoreBtn');if(m)m.style.display=on?'':'none';if(b)b.outerHTML=moreBtn(r,on);}
+/* a "Take me there" jump to something inside the folded part opens it first */
+(function(){const si=Element.prototype.scrollIntoView;Element.prototype.scrollIntoView=function(){try{const m=document.getElementById('infoMore');if(m&&m.style.display==='none'&&m.contains(this)&&S.rec)moreSet(S.rec,true);}catch(e){}return si.apply(this,arguments);};})();
 function moreBtn(r,f){const o=f==null?moreOpen(r):f;return `<div id="infoMoreBtn" style="text-align:center;margin:12px 0"><button type="button" data-act="moretog" aria-label="${o?'Hide':'Show'} exterior photos, serial numbers and the rest" style="width:84px;height:84px;border-radius:50%;font-size:52px;line-height:1;padding:0;background:#1d3b6a;color:#fff;border:0">${o?'\u2212':'\uff0b'}</button><div class="muted" style="margin-top:4px">${o?'Hide exterior photos, serial numbers and the rest':'Exterior photos, serial numbers and the rest'}</div></div>`;}
 function infoRepHtml(){const r=S.rec,rs=repSecOf(r),L=rs?(r.extra[rs.id]||[]):[];
  return `${scanLastHtml()}<h2>Customer-reported issues</h2><p class="muted">List what the customer tells you at the site, with a photo and a severity if you can. You confirm each one on the Check step, and add your own findings there with ＋ New issue.</p>
@@ -14103,7 +14108,7 @@ async function scanDone0(txt){if(String(txt).startsWith('WIP1~')){wipChunk(txt);
  closeModal();if(o.k==='A'){const n=o.f.length;if(!await ask(`Start an audit of ${o.sn?lv(o.sn):'this platform'} (RMA ${o.rma||'-'}) with ${n} fault${n===1?'':'s'} from the tech's punch list?\n\nThe tech's photos are not in the QR code. Mark each fault Verified or Not acceptable, add your own photos and details, then submit the audit.`,{title:'Start audit from QR code?',ok:'Start audit'}))return;
   S.rec=auFromQr(o);S.photos={};S.view='rec';S.audit=true;S.open=-1;S.detail={};S.dirty=true;await save();render();return;}
  const n=o.s.length;if(!await ask(`Start a new inspection for ${o.sn?(snType(o.sn)?o.sn:lv(o.sn)):'LVSS (no serial)'} with ${n} serial number${n===1?'':'s'} filled in from the QR code?\n\nYou still take a fresh photo of each serial plate. Last-recorded version info is shown for reference.`,{title:'Start from QR code?',ok:'Start inspection'}))return;
- S.rec=newRec({sn:o.sn||'',tech:'',ptype:ptOfCode(o.p)});if(o.it||o.rma){Object.assign(S.rec.hdr,{rma:o.rma||'',so:o.so||'',acct:o.ac||''});}setTv(S.rec,'vin',o.vin);setTv(S.rec,'plate',o.pl);setTv(S.rec,'kilo',o.kl);if(o.i&&typeof o.i==='object')S.rec.prev=o.i;const used=new Set();
+ S.rec=newRec({sn:o.sn||'',tech:'',ptype:ptOfCode(o.p)});S.moreId=S.rec.id;if(o.it||o.rma){Object.assign(S.rec.hdr,{rma:o.rma||'',so:o.so||'',acct:o.ac||''});}setTv(S.rec,'vin',o.vin);setTv(S.rec,'plate',o.pl);setTv(S.rec,'kilo',o.kl);if(o.i&&typeof o.i==='object')S.rec.prev=o.i;const used=new Set();
  o.s.forEach(p=>{const nm=String(p[0]||''),val=String(p[1]||'');const g=S.rec.gear.find(x=>!used.has(x.id)&&gKey(x.t)===gKey(nm));if(g){g.s=val;used.add(g.id);}else{const x={id:'eq'+uid(),t:nm||'Other device',s:val,ph:[],na:false,custom:true};S.rec.gear.push(x);used.add(x.id);}});
  S.photos={};S.view='rec';S.open=-1;S.dirty=true;await save();render();}
 
@@ -14753,8 +14758,8 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
   if(S.pdf){try{const files=pdfFiles();if(navigator.canShare&&navigator.canShare({files})){await navigator.share({files,title:s.subj,text:s.text});break;}}catch(err){if(err&&err.name==='AbortError')break;}}
   else{notice('The PDF is still being prepared – try again in a moment.',{title:'Please wait'});break;}
   notice('This browser cannot attach the PDF automatically, so the email will open without it. Use "Save audit PDF" and attach the file from Downloads.',{title:'PDF not attached'});location.href='mailto:?cc=TSC%40teledyne.com&subject='+encodeURIComponent(s.subj)+'&body='+encodeURIComponent(s.text);break;}
- case 'open':{S.audit=false;const x=migrate(await dbGet('recs',b.dataset.rid));S.rec=x;await loadPhotos(x);S.view='rec';S.open=-1;S.detail={};S.dirty=false;render();break;}
- case 'del':if(await ask('Delete this inspection from the tablet? This cannot be undone. (Use Backup file first if unsure.)',{title:'Delete inspection?',ok:'Delete',danger:1})){const x=await dbGet('recs',b.dataset.rid);if(x){for(const d of Object.values(x.items))for(const p of d.ph||[])await dbDel('photos',p);for(const e of x.gear||[])for(const p of e.ph||[])await dbDel('photos',p);for(const p of x.verPh||[])await dbDel('photos',p);if(x.audit){for(const p of x.audit.ph||[])await dbDel('photos',p);for(const q of Object.values(x.audit.items||{}))for(const p of q.ph||[])await dbDel('photos',p);}for(const l of Object.values(x.vfPh||{}))for(const p of l||[])await dbDel('photos',p);for(const e of (x.swap&&x.swap.list)||[]){for(const p of e.oldPh||[])await dbDel('photos',p);for(const p of e.newPh||[])await dbDel('photos',p);}}if(x&&x.ext&&x.ext.a)for(const a of Object.values(x.ext.a)){for(const p of (a&&a.ph)||[])await dbDel('photos',p);for(const l of (a&&a.l)||[])for(const p of l.ph||[])await dbDel('photos',p);}await dbDel('recs',b.dataset.rid);render();}break;
+ case 'open':{S.audit=false;S.moreId=null;const x=migrate(await dbGet('recs',b.dataset.rid));S.rec=x;await loadPhotos(x);S.view='rec';S.open=-1;S.detail={};S.dirty=false;render();break;}
+ case 'del':if(await ask('Delete this inspection from the tablet? This cannot be undone. (Use Backup file first if unsure.)',{title:'Delete inspection?',ok:'Delete',danger:1})){const x=await dbGet('recs',b.dataset.rid);if(x){for(const d of Object.values(x.items))for(const p of d.ph||[])await dbDel('photos',p);for(const e of x.gear||[])for(const p of e.ph||[])await dbDel('photos',p);for(const p of x.verPh||[])await dbDel('photos',p);if(x.audit){for(const p of x.audit.ph||[])await dbDel('photos',p);for(const q of Object.values(x.audit.items||{}))for(const p of q.ph||[])await dbDel('photos',p);}for(const l of Object.values(x.vfPh||{}))for(const p of l||[])await dbDel('photos',p);for(const e of (x.swap&&x.swap.list)||[]){for(const p of e.oldPh||[])await dbDel('photos',p);for(const p of e.newPh||[])await dbDel('photos',p);}}if(x&&x.ext&&x.ext.a)for(const a of Object.values(x.ext.a)){for(const p of (a&&a.ph)||[])await dbDel('photos',p);for(const l of (a&&a.l)||[])for(const p of l.ph||[])await dbDel('photos',p);}await dbDel('recs',b.dataset.rid);window.tscDrop&&tscDrop(b.dataset.rid);render();}break;
  case 'home':await save();S.view='home';S.rec=null;S.audit=false;render();break;
  case 'save':save();break;
  case 'complete':{if(tkMissing(r).length&&!S.tkSkip){tkPrompt(()=>{S.tkSkip=1;b.click();});break;}S.tkSkip=0;const m=[];const st=stats(r);
@@ -14870,7 +14875,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'iscol':{(S.exp=S.exp||{})[id]=false;rerenderRow(id);const el=$('#r-'+id);el&&el.scrollIntoView({block:'nearest'});break;}
  case 'isall':{const si=+b.dataset.si,v=b.dataset.v==='1';S.exp=S.exp||{};flat(r).filter(y=>isIss(y.sec)).forEach(y=>{S.exp[y.id]=v;});resec(si);break;}
  case 'addx':{const si=+b.dataset.si,sec0=r.tpl.sections[si],sec=sec0.kind==='rep'?(r.tpl.sections.find(s=>s.kind==='new')||sec0):sec0;const x={id:'x'+uid(),t:''};(r.extra[sec.id]=r.extra[sec.id]||[]).push(x);itm(x.id).st='fail';S.detail[x.id]=true;(S.exp=S.exp||{})[x.id]=true;markDirty();resec(si);const el=$(`#r-${x.id} input[data-b]`);el&&el.focus();break;}
- case 'moretog':{const open=moreOpen(r);const go=on=>{r.moreOpen=on;markDirty();const m=$('#infoMore'),b=$('#infoMoreBtn');if(m)m.style.display=on?'':'none';if(b)b.outerHTML=moreBtn(r,on);};if(open){go(false);}else if(!open){if(r.rmaAsked){go(true);}else ask('Notify the front office to have an RMA created for this truck.\n\nYou can keep entering data while you wait for the RMA.',{title:'Notify front office',ok:'Done, show the rest',no:'Not yet, stay here'}).then(y=>{if(y){r.rmaAsked=true;go(true);}});}break;}
+ case 'moretog':{const go=on=>moreSet(r,on);if(moreOpen(r)){go(false);}else{if(r.rmaAsked){go(true);}else ask('Notify the front office to have an RMA created for this truck.\n\nYou can keep entering data while you wait for the RMA.',{title:'Notify front office',ok:'Done, show the rest',no:'Not yet, stay here'}).then(y=>{if(y){r.rmaAsked=true;markDirty();go(true);}});}break;}
  case 'addrep':{const rs=repSecOf(r);if(!rs)break;const x={id:'x'+uid(),t:''};(r.extra[rs.id]=r.extra[rs.id]||[]).push(x);itm(x.id).st='fail';markDirty();const e=$('#infoRep');if(e)e.innerHTML=infoRepHtml();const el=$('#infoRep input[data-b="extraT.'+x.id+'"]');el&&el.focus();break;}
  case 'rmrep':{if(!await ask('Remove this customer-reported issue?',{title:'Remove issue?',ok:'Remove',danger:1}))break;const x=flat(r).find(y=>y.id===id);if(x){r.extra[x.sec.id]=r.extra[x.sec.id].filter(y=>y.id!==id);(r.items[id]||{ph:[]}).ph.forEach(p=>dbDel('photos',p));delete r.items[id];markDirty();}const e=$('#infoRep');if(e)e.innerHTML=infoRepHtml();break;}
 
@@ -15477,7 +15482,7 @@ const WA={app:'QC',c:k=>k==='pri'?'pri':'',
  tpl:ex=>clone(ex?ex.tpl:curTpl()),finish:r=>{const D={st:'',lvl:'',note:'',ph:[],v:{},rep:false,res:'',war:'',courtesy:false,quote:''};Object.keys(r.items||{}).forEach(k=>{r.items[k]=Object.assign({},D,{ph:[],v:{}},r.items[k]);});return migrate(r);},
  mergePhotos(rec,ex){const old=S.rec;S.rec=rec;try{WA.owners(ex).forEach(o=>{phOwner(o.oid).ph=o.ph.slice()})}finally{S.rec=old}},
  get:id=>dbGet('recs',id),put:r=>dbPut('recs',clone(r)),
- open:async r=>{S.audit=false;S.rec=r;await loadPhotos(r);S.view='rec';S.open=-1;S.detail={};S.dirty=false;render();},
+ open:async r=>{S.audit=false;S.rec=r;S.moreId=r.id;await loadPhotos(r);S.view='rec';S.open=-1;S.detail={};S.dirty=false;render();},
  dlg:h=>modal(h),close:()=>closeModal(),notice:(m,t)=>notice(m,{title:t}),save:()=>save(),markDirty:()=>markDirty(),
  dl:(b,n)=>dlBlob(b,n),backup:()=>doBackup(),pick:(oid,cam)=>pickPhoto(oid,cam),isAudit:()=>S.audit,
  scanStop:()=>scanStop(),rebanner:()=>wipBanner($('#body'))};
@@ -15666,7 +15671,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/02/2026',site:'44'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/02/2026',site:'46'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -15730,7 +15735,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='1ee8205cdb';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='0c7a2e1d19';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -16229,4 +16234,51 @@ window.__atHome=function(){try{return S.view==='home';}catch(e){return false;}};
 if(typeof buildPdf==='function'){const _b=buildPdf;buildPdf=function(r){const a=arguments;return CUST.with(r,()=>_b.apply(this,a));};}
 if(typeof buildAuditPdf==='function'){const _b2=buildAuditPdf;buildAuditPdf=function(r){const a=arguments;return CUST.with(r,()=>_b2.apply(this,a));};}
 (function(){const st=document.createElement('style');st.textContent='@media(max-width:420px){#infoExt .xn{min-width:0;overflow-wrap:anywhere}#infoExt .xh{gap:6px}#infoExt .xdb{padding-left:10px;padding-right:10px}}';document.head.appendChild(st);})();
+</script><script>
+/* ===== Return to last opened report (all forms, Ravi 2026-11-02) =====
+   Remembers the last 3 reports opened on this device (any form) for the main page's "Return to last opened report" card,
+   and reopens a report where the tech left off when the main page links here with #resume=<id>.
+   Same-site device storage only (localStorage 'tscRecent'): form key, form name, record id, serial, step, status, last save, position. */
+(function(){
+var KEY='tscRecent',MAX=3;
+var FK=(location.pathname.replace(/index\.html$/,'').split('/').filter(Boolean).pop()||'');
+var FN=document.title;
+function rd(){try{var L=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(L)?L:[];}catch(e){return [];}}
+function wr(L){try{localStorage.setItem(KEY,JSON.stringify(L.slice(0,MAX)));}catch(e){}}
+window.tscDrop=function(id){wr(rd().filter(function(x){return !(x.k===FK&&x.id===id);}));};
+var homeUp=function(){return S.view==='home'&&!!document.querySelector('[data-act="new"]');};
+/* forms built on the Post-Repair/Intake/SkyWatch shell */
+var A={ready:homeUp,
+ cur:function(){if(S.view!=='rec'||!S.rec)return null;var r=S.rec;
+  return {id:r.id,sn:String((typeof snD==='function'?snD(r):'')||(r.hdr&&r.hdr.sn)||'Untitled'),st:S.audit?'Audit':(STEPN[r.step-1]||''),done:!!(r.completed||r.signed),t:+r.updated||0,
+   pos:{a:S.audit?1:0,o:typeof S.open==='number'?S.open:-1,y:Math.round(window.scrollY),m:(typeof moreOpen==='function'&&moreOpen(r))?1:0}};},
+ open:async function(id,p){var x=await dbGet('recs',id);if(!x)return false;x=migrate(x);S.audit=!!p.a;if(typeof moreOpen==='function')S.moreId=p.m?x.id:null;
+  S.rec=x;await loadPhotos(x);S.view='rec';S.open=-1;S.detail={};S.dirty=false;render();
+  if(!S.audit&&x.step===2&&p.o>=0&&typeof enterSec==='function'&&x.tpl&&p.o<=x.tpl.sections.length)enterSec(p.o);return true;}};
+/* forms built on the Calibration/Floor Test/Final shell */
+var C={ready:homeUp,
+ cur:function(){if(S.view!=='rec'||!S.rec)return null;var r=S.rec;
+  return {id:r.id,sn:String((typeof recName==='function'?recName(r):'')||'Untitled'),st:STEPS[S.step]||'',done:!!(r.done&&r.done.complete),t:+r.updated||0,pos:{y:Math.round(window.scrollY)}};},
+ open:async function(id,p){var f=function(){return (S.recs||[]).find(function(y){return y.id===id;});},x=f();if(!x&&typeof loadAll==='function'){await loadAll();x=f();}if(!x)return false;
+  if(typeof openRec==='function')await openRec(x);else{S.rec=x;S.step=x.step||0;S.view='rec';render();}return true;}};
+function ad(){if(window.__tscAd)return window.__tscAd;
+ try{if(typeof renderRec==='function'&&typeof S!=='undefined'&&typeof STEPN!=='undefined')return A;}catch(e){}
+ try{if(typeof STEPS!=='undefined'&&typeof S!=='undefined'&&typeof render==='function')return C;}catch(e){}return null;}
+var last='';
+function track(){var a=ad();if(!a)return;var e;try{e=a.cur();}catch(x){return;}if(!e||!e.id)return;e.k=FK;e.n=FN;
+ var j=JSON.stringify(e);if(j===last)return;last=j;var L=rd().filter(function(x){return !(x.k===FK&&x.id===e.id);});L.unshift(e);wr(L);}
+setInterval(track,2000);
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')track();});
+window.addEventListener('pagehide',track);
+var m=/(?:^#|&)resume=([^&]+)/.exec(location.hash);
+if(m){var id=decodeURIComponent(m[1]),tries=0;
+ var clear=function(){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}};
+ var say=function(t){var a=ad();try{if(a&&a.say)a.say(t);else if(typeof notice==='function')notice(t,{title:'Report not found'});else alert(t);}catch(e){alert(t);}};
+ var go=async function(){var a=ad();if(!a||!a.ready()){if(tries++<60){setTimeout(go,300);}else clear();return;}
+  var e=rd().find(function(x){return x.k===FK&&x.id===id;})||{},p=e.pos||{},ok=false;
+  try{ok=await a.open(id,p);}catch(x){ok=false;}clear();
+  if(!ok){window.tscDrop(id);say('That report is no longer saved on this device.');return;}
+  if(p.y)setTimeout(function(){window.scrollTo(0,p.y);},400);track();};
+ if(document.readyState==='complete')setTimeout(go,300);else window.addEventListener('load',function(){setTimeout(go,300);});}
+})();
 </script></body></html>

@@ -15050,6 +15050,13 @@ CUST.cfg({inRec:function(){ return S.view==='insp'||S.view==='review'||S.view===
   var _ap=atpPdf; atpPdf=function(){ var a=arguments; return CUST.with(S.rec,function(){ return _ap.apply(null,a); }); }; })();
 window.__atHome=function(){ return S.view==='home'; };
 window.__sd=scanDone;
+/* Return to last opened report: ATP hooks for the shared block at the end of the page (Ravi, 2026-11-02) */
+window.__tscAd={ready:function(){return S.view==='home'&&!!document.querySelector('[data-act="new"]');},
+ cur:function(){if(!S.rec||!(S.view==='insp'||S.view==='review'||S.view==='audit'))return null;var r=S.rec,h=r.header||{};
+  return {id:r.id,sn:String(snD(h)||h.newSerial||'(no serial)'),st:{insp:'Inspection',review:'Review',audit:'Audit'}[S.view],done:!!r.completed,t:Date.parse(r.updated)||0,pos:{v:S.view,y:Math.round(window.scrollY)}};},
+ open:async function(id,p){var rec=await DB.get('inspections',id);if(!rec)return false;if(p.v==='audit'){await openAudit(id);}else{await openInspection(id);if(p.v==='review')await renderReview();}return true;},
+ say:function(t){toast(t);}};
+var _tscDel=deleteInspection;deleteInspection=async function(id){await _tscDel(id);try{if(!(await DB.get('inspections',id))&&window.tscDrop)window.tscDrop(id);}catch(e){}};
 /* ---- core details carried through the forms (Rev 17, Ravi 2026-10-29) ---- */
 var CORE_HK={cameraSerial:'camera',radarSerial:'radar',lcuSerial:'laptop control unit',radarPtSerial:'pan tilt',starlinkSerial:'starlink',ciscoEnclSerial:'cisco switch',ciscoModSerial:'cisco wifi module',pimSerial:'cisco pim / lte module',serverSerial:'server',ciscoRtrSerial:'cisco receiver',smuSerial:'hmi/smu',gpsSerial:'trimble gps',gearSerial:'gearbox'};
 function coreT(v){ return String(v==null?'':v).trim(); }
@@ -15632,7 +15639,7 @@ window.offReadiness=readiness;
 })();
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/02/2026',site:'44'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/02/2026',site:'46'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -16619,7 +16626,7 @@ SendTo.init({rec:function(){ return S.rec; },dirty:function(){ markDirty(); save
 })();
 
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='90e0700226';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='cb1f5f0c19';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -16673,5 +16680,52 @@ function boot(){markAll();if(window.MutationObserver)new MutationObserver(sched)
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 window.__isSerialInput=isSer;})();</script><script>/* upfit with the new number not known yet: the new platform's prefix, or '' (Ravi, 2026-10-31) */
 function upSn(o){return ({L:'LVSS-',E:'eMSC-L ',M:'M2S2 '})[o&&o.np]||'';}
+</script><script>
+/* ===== Return to last opened report (all forms, Ravi 2026-11-02) =====
+   Remembers the last 3 reports opened on this device (any form) for the main page's "Return to last opened report" card,
+   and reopens a report where the tech left off when the main page links here with #resume=<id>.
+   Same-site device storage only (localStorage 'tscRecent'): form key, form name, record id, serial, step, status, last save, position. */
+(function(){
+var KEY='tscRecent',MAX=3;
+var FK=(location.pathname.replace(/index\.html$/,'').split('/').filter(Boolean).pop()||'');
+var FN=document.title;
+function rd(){try{var L=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(L)?L:[];}catch(e){return [];}}
+function wr(L){try{localStorage.setItem(KEY,JSON.stringify(L.slice(0,MAX)));}catch(e){}}
+window.tscDrop=function(id){wr(rd().filter(function(x){return !(x.k===FK&&x.id===id);}));};
+var homeUp=function(){return S.view==='home'&&!!document.querySelector('[data-act="new"]');};
+/* forms built on the Post-Repair/Intake/SkyWatch shell */
+var A={ready:homeUp,
+ cur:function(){if(S.view!=='rec'||!S.rec)return null;var r=S.rec;
+  return {id:r.id,sn:String((typeof snD==='function'?snD(r):'')||(r.hdr&&r.hdr.sn)||'Untitled'),st:S.audit?'Audit':(STEPN[r.step-1]||''),done:!!(r.completed||r.signed),t:+r.updated||0,
+   pos:{a:S.audit?1:0,o:typeof S.open==='number'?S.open:-1,y:Math.round(window.scrollY),m:(typeof moreOpen==='function'&&moreOpen(r))?1:0}};},
+ open:async function(id,p){var x=await dbGet('recs',id);if(!x)return false;x=migrate(x);S.audit=!!p.a;if(typeof moreOpen==='function')S.moreId=p.m?x.id:null;
+  S.rec=x;await loadPhotos(x);S.view='rec';S.open=-1;S.detail={};S.dirty=false;render();
+  if(!S.audit&&x.step===2&&p.o>=0&&typeof enterSec==='function'&&x.tpl&&p.o<=x.tpl.sections.length)enterSec(p.o);return true;}};
+/* forms built on the Calibration/Floor Test/Final shell */
+var C={ready:homeUp,
+ cur:function(){if(S.view!=='rec'||!S.rec)return null;var r=S.rec;
+  return {id:r.id,sn:String((typeof recName==='function'?recName(r):'')||'Untitled'),st:STEPS[S.step]||'',done:!!(r.done&&r.done.complete),t:+r.updated||0,pos:{y:Math.round(window.scrollY)}};},
+ open:async function(id,p){var f=function(){return (S.recs||[]).find(function(y){return y.id===id;});},x=f();if(!x&&typeof loadAll==='function'){await loadAll();x=f();}if(!x)return false;
+  if(typeof openRec==='function')await openRec(x);else{S.rec=x;S.step=x.step||0;S.view='rec';render();}return true;}};
+function ad(){if(window.__tscAd)return window.__tscAd;
+ try{if(typeof renderRec==='function'&&typeof S!=='undefined'&&typeof STEPN!=='undefined')return A;}catch(e){}
+ try{if(typeof STEPS!=='undefined'&&typeof S!=='undefined'&&typeof render==='function')return C;}catch(e){}return null;}
+var last='';
+function track(){var a=ad();if(!a)return;var e;try{e=a.cur();}catch(x){return;}if(!e||!e.id)return;e.k=FK;e.n=FN;
+ var j=JSON.stringify(e);if(j===last)return;last=j;var L=rd().filter(function(x){return !(x.k===FK&&x.id===e.id);});L.unshift(e);wr(L);}
+setInterval(track,2000);
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')track();});
+window.addEventListener('pagehide',track);
+var m=/(?:^#|&)resume=([^&]+)/.exec(location.hash);
+if(m){var id=decodeURIComponent(m[1]),tries=0;
+ var clear=function(){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}};
+ var say=function(t){var a=ad();try{if(a&&a.say)a.say(t);else if(typeof notice==='function')notice(t,{title:'Report not found'});else alert(t);}catch(e){alert(t);}};
+ var go=async function(){var a=ad();if(!a||!a.ready()){if(tries++<60){setTimeout(go,300);}else clear();return;}
+  var e=rd().find(function(x){return x.k===FK&&x.id===id;})||{},p=e.pos||{},ok=false;
+  try{ok=await a.open(id,p);}catch(x){ok=false;}clear();
+  if(!ok){window.tscDrop(id);say('That report is no longer saved on this device.');return;}
+  if(p.y)setTimeout(function(){window.scrollTo(0,p.y);},400);track();};
+ if(document.readyState==='complete')setTimeout(go,300);else window.addEventListener('load',function(){setTimeout(go,300);});}
+})();
 </script></body>
 </html>
