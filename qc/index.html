@@ -13618,6 +13618,7 @@ function qcFromCode(o){if(!o||typeof o!=='object'||Array.isArray(o)||!o.a)return
  if(!c.pt)c.pt='LVSS';return c;}
 async function scanDone(txt){if(String(txt).startsWith('WIP1~')){wipChunk(txt);return;}scanStop();let o=null;try{o=JSON.parse(txt)}catch(e){}srChk(o);
  const c=qcFromCode(o);
+ if(S.scanInto&&S.rec&&c){S.scanInto=false;return scanInto(o,c);}
  if(!c){const m=$('#scanMsg');if(m)m.textContent='That is not a QR code from one of the inspection forms. Try again.';if($('#scanV')&&$('#scanV').style.display!=='none')scanDlg();return;}
  closeModal();const n=c.s.length,bits=[n+' serial number'+(n===1?'':'s')];if(c.vin)bits.push('VIN');if(c.pl)bits.push('plate');if(c.kl)bits.push('kilo');if(Object.keys(c.i).length)bits.push('SW/FW revs and mileage/hours as the last reading');
  const sn0=/^\d+$/.test(snDig(c.sn))?snMake(codeOfPt(c.pt),snDig(c.sn)):c.sn;
@@ -13627,6 +13628,14 @@ async function scanDone(txt){if(String(txt).startsWith('WIP1~')){wipChunk(txt);r
  const used=new Set();c.s.forEach(p=>{const nm=p[0],val=p[1];const g=S.rec.gear.find(x=>!used.has(x.id)&&!x.tk&&gKey(x.t)===gKey(nm));if(g){g.s=val;used.add(g.id);}else{const x={id:'eq'+uid(),t:nm||'Other device',s:val,ph:[],na:false,custom:true};S.rec.gear.push(x);used.add(x.id);}});
  coreScan(S.rec,o,RC==='r');if(RC==='r'){coreImported(S.rec,coreLoadW(S.rec,o,'From the original report'));if(o.pu){S.rec.hdr.visit=o.vd?'dropoff':'pickup';S.rec.hdr.puDate=o.pu;}}if(reUp)upRestore(S.rec,o);
  S.photos={};S.view='rec';S.open=-1;S.dirty=true;await save();render();}
+/* returning truck: fill this record's VIN, plate, kilo, serial numbers and software/firmware revs from last visit's QR (Ravi, 2026-11-01) */
+async function scanInto(o,c){closeModal();const r=S.rec,bits=[c.s.length+' serial number'+(c.s.length===1?'':'s')];if(c.vin)bits.push('VIN');if(c.pl)bits.push('plate');if(c.kl)bits.push('kilo');if(Object.keys(c.i).length)bits.push('SW/FW revs as last reading');
+ const sn0=/^\d+$/.test(snDig(c.sn))?snMake(codeOfPt(c.pt),snDig(c.sn)):c.sn,cur=r.hdr.sn||'',diff=sn0&&cur&&snDig(sn0)!==snDig(cur);
+ if(!await ask(`Fill in this truck's core data from the ${c.from} QR code (${bits.join(', ')})?`+(diff?`\n\nCareful: the code is for ${sn0} but this record is ${cur}.`:'')+`\n\nValues already entered will be replaced. Then take a fresh photo of each value to confirm it is still right.`,{title:"Fill from last visit's QR",ok:'Fill it in',no:'Cancel'}))return;
+ if(c.vin)setTv(r,'vin',c.vin);if(c.pl)setTv(r,'plate',c.pl);if(c.kl)setTv(r,'kilo',c.kl);if(Object.keys(c.i).length)r.prev=c.i;r.qcFrom=c.from;
+ const used=new Set();c.s.forEach(p=>{const nm=p[0],val=p[1];const g=r.gear.find(x=>!used.has(x.id)&&!x.tk&&gKey(x.t)===gKey(nm));if(g){g.s=val;used.add(g.id);}else{const x={id:'eq'+uid(),t:nm||'Other device',s:val,ph:[],na:false,custom:true};r.gear.push(x);used.add(x.id);}});
+ r.moreOpen=true;markDirty();await save();render();}
+function scanLastHtml(){return '<button type="button" data-act="scanlast" style="width:100%;margin-bottom:10px">\ud83d\udcf7 Scan last visit\u2019s QR (returning truck)</button>';}
 /* info page: core data first, then what the customer reports at the site */
 function infoHtml(){const r=S.rec;
  return `<div class="card" id="infoRep">${infoRepHtml()}</div>
@@ -13643,7 +13652,7 @@ function infoHtml(){const r=S.rec;
 function moreOpen(r){return !!r.moreOpen||(r.gear||[]).some(g=>String((g.tk?g.v:g.s)||'').trim())||(r.nbPh||[]).length>0;}
 function moreBtn(r,f){const o=f==null?moreOpen(r):f;return `<div id="infoMoreBtn" style="text-align:center;margin:12px 0"><button type="button" data-act="moretog" aria-label="${o?'Hide':'Show'} exterior photos, serial numbers and the rest" style="width:84px;height:84px;border-radius:50%;font-size:52px;line-height:1;padding:0;background:#1d3b6a;color:#fff;border:0">${o?'\u2212':'\uff0b'}</button><div class="muted" style="margin-top:4px">${o?'Hide exterior photos, serial numbers and the rest':'Exterior photos, serial numbers and the rest'}</div></div>`;}
 function infoRepHtml(){const r=S.rec,rs=repSecOf(r),L=rs?(r.extra[rs.id]||[]):[];
- return `<h2>Customer-reported issues</h2><p class="muted">List what the customer tells you at the site, with a photo and a severity if you can. You confirm each one on the Check step, and add your own findings there with ＋ New issue.</p>
+ return `${scanLastHtml()}<h2>Customer-reported issues</h2><p class="muted">List what the customer tells you at the site, with a photo and a severity if you can. You confirm each one on the Check step, and add your own findings there with ＋ New issue.</p>
  <h3 style="margin:10px 0 4px">Issues the customer reported (${L.length})</h3>
  ${L.map((x,i)=>qcRepCard(r,x,i)).join('')}
  <button class="pri" data-act="addrep">＋ Add customer-reported issue</button>`;}
@@ -14068,7 +14077,7 @@ let scanStream=null,scanOn=false;
 function scanStop(){scanOn=false;if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null}}
 function qrParse(t){try{const o=JSON.parse(t);if(o&&o.a==='LVSS'&&((o.k==='A'&&Array.isArray(o.f))||Array.isArray(o.s)))return o}catch(e){}return null}
 function decodeCanvas(c,both){const g=c.getContext('2d');const d=g.getImageData(0,0,c.width,c.height);const q=window.jsQR(d.data,c.width,c.height,{inversionAttempts:both?'attemptBoth':'dontInvert'});return q&&q.data}
-function scanDlg(){closeModal();modal(`<h3>Scan QR code</h3><video id="scanV" playsinline muted style="width:100%;border-radius:8px;background:#000;max-height:46vh"></video><canvas id="scanC" style="display:none"></canvas><p class="muted" id="scanMsg">Starting camera… point it at the QR code on the last page of a previous report.</p><button class="pri" data-act="scan-photo">📷 Take a photo of the QR code</button><button data-act="scan-lib">🖼 Choose photos / screenshots from my library (pick all the codes)</button><button data-act="scan-close">Cancel</button>`);
+function scanDlg(){closeModal();modal(`<h3>Scan QR code</h3><video id="scanV" playsinline muted style="width:100%;border-radius:8px;background:#000;max-height:46vh"></video><canvas id="scanC" style="display:none"></canvas><p class="muted" id="scanMsg">Starting camera… point it at the QR code from a previous report (folder front page or last page).</p><button class="pri" data-act="scan-photo">📷 Take a photo of the QR code</button><button data-act="scan-lib">🖼 Choose photos / screenshots from my library (pick all the codes)</button><button data-act="scan-close">Cancel</button>`);
  const v=$('#scanV'),c=$('#scanC');const msg=t=>{const m=$('#scanMsg');if(m)m.textContent=t};
  if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){msg('Live scanning is blocked by the browser for files opened from Downloads. Tap “Take a photo of the QR code” below – it opens the camera, and the code is read as soon as you accept the picture.');v.style.display='none';return;}
  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false}).then(st=>{if(!$('#scanV')){st.getTracks().forEach(t=>t.stop());return;}scanStream=st;scanOn=true;v.srcObject=st;v.play();msg('Hold the QR code inside the picture…');
@@ -14723,13 +14732,14 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'new':newDlg();break;
  case 'mclose':closeModal();break;
  case 'start':{const sn=$('#n-sn').value.trim(),te=$('#n-te').value.trim(),nv0=($('#n-nsn')||{value:''}).value.trim();if(!S.newType){const e=$('#ptNeed');if(e)e.style.display='block';break;}if(S.newPurp==='upfit'&&!upTo(S.newType).length)S.newPurp='repair';const NBK=S.newPurp==='newbuild';if(NBK){const kv=($('#n-nbk')||{value:''}).value.trim(),pv=($('#n-nbp')||{value:''}).value.trim(),vv=($('#n-nbv')||{value:''}).value.trim();S.nbDraft={kv,pv,vv};if(!sn&&!pv&&!vv&&!/\d/.test(kv)){notice('Enter the planned serial, or the kilo / fleet number, plate or VIN, so the truck can be named.',{title:'Truck needs a name',fix:()=>{S.techDraft=te;newDlg();},fixLabel:'Take me there'});break;}}if(!sn&&!NBK){notice('Enter the platform serial number to start.',{title:'Serial number needed',fix:()=>{S.techDraft=te;newDlg();const e=$('#n-sn');e&&e.focus()},fixLabel:'Take me there'});break;}closeModal();S.rec=newRec({sn:!sn?'':/^\d+$/.test(sn)?snMake(codeOfPt(S.newType),sn):isEm(S.newType)?plSn(S.newType,sn):sn,tech:te,ptype:S.newType});if(NBK){const D=S.nbDraft||{};Object.assign(S.rec.hdr,{purpose:'newbuild',kilolbl:S.nbLab||'Kilo',kilo:D.kv||'',plate:D.pv||'',vin:D.vv||''});setTv(S.rec,'kilo',D.kv);setTv(S.rec,'plate',D.pv);setTv(S.rec,'vin',D.vv);S.rec.step=1;S.nbLab=null;}if(S.newPurp==='upfit'){const nv=nv0;S.rec.hdr.purpose='upfit';S.rec.hdr.nptype=upDef(S.newType,S.newNType);S.rec.hdr.nsn=/\d/.test(nv)?snMake(codeOfPt(S.rec.hdr.nptype),nv):'';if(typeof upPickX==='function')upPickX(S.rec);}techRemember(te);S.techDraft='';S.photos={};S.view='rec';S.open=-1;S.dirty=true;await save();render();break;}
- case 'scan':scanDlg();break;
+ case 'scan':S.scanInto=false;scanDlg();break;
+ case 'scanlast':S.scanInto=true;scanDlg();break;
  case 'copyfrom':{const L=S.recs||[];modal(`<h3>Copy from a previous report</h3>${L.length?'<p class="muted">Pick the report to copy into a new inspection.</p>'+L.map(x=>`<button data-act="copypick" data-rid="${x.id}" style="text-align:left">${esc(title(x))} – ${esc(fmtD(x.hdr.date))}${x.hdr.rma?' · RMA '+esc(x.hdr.rma):''}</button>`).join(''):'<p class="muted">No saved reports on this tablet yet. Use <b>Restore from backup file</b> to bring in reports from another tablet.</p>'}<button data-act="mclose">Cancel</button>`);break;}
  case 'copypick':{const x=(S.recs||[]).find(y=>y.id===b.dataset.rid);if(!x)break;const ck=(i,t,on)=>`<label style="display:flex;gap:10px;align-items:center;margin:8px 0;font-size:16px"><input type="checkbox" id="${i}" ${on?'checked':''} style="width:22px;height:22px"> ${t}</label>`;modal(`<h3>Copy ${esc(title(x))}</h3><p class="muted">Choose what to bring into the new inspection. Today's date is used for the new report. You can edit everything afterward.</p>${ck('cp-info','Header info, serial numbers and swaps',1)}${ck('cp-ver','Version info (not mileage, engine hours or idle hours – enter those fresh)',1)}${ck('cp-items','Issues, checklist results, notes and consumed parts',1)}${ck('cp-photos','Photos (serial plates, issues, HMI)',1)}<button class="pri" data-act="copygo" data-rid="${x.id}">Create new inspection</button><button data-act="mclose">Cancel</button>`);break;}
  case 'copygo':{const o={info:$('#cp-info').checked,ver:$('#cp-ver').checked,items:$('#cp-items').checked,photos:$('#cp-photos').checked};closeModal();try{const res=await copyRecord(b.dataset.rid,o);S.rec=res.nr;S.photos=res.map;S.view='rec';S.open=-1;S.detail={};S.dirty=true;await save();render();}catch(e){notice('Could not copy that report: '+e,{title:'Copy failed'});}break;}
  case 'scan-photo':scanPhoto(true);break;
  case 'scan-lib':scanPhoto(false);break;
- case 'scan-close':scanStop();closeModal();break;
+ case 'scan-close':S.scanInto=false;scanStop();closeModal();break;
  case 'auditrec':{const x=migrate(await dbGet('recs',b.dataset.rid));S.rec=x;await loadPhotos(x);S.view='rec';S.audit=true;S.open=-1;S.detail={};S.dirty=false;render();break;}
  case 'audit':{S.audit=true;await save();renderRec();break;}
  case 'auback':{await save();S.audit=false;renderRec();break;}
