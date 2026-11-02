@@ -13631,11 +13631,17 @@ async function scanDone(txt){if(String(txt).startsWith('WIP1~')){wipChunk(txt);r
 function infoHtml(){const r=S.rec;
  return `<div class="card" id="infoRep">${infoRepHtml()}</div>
  <div class="card"><h2>Truck info</h2><p class="muted">Intake short form: core data, issues and a main functions check. The platform serial number names this record and its PDF file.</p>${SEC('Truck')}${ptHtml()}${SEC('Visit')}${purpHtml()}${visitHtml()}${SEC('Record details')}<div class="grid">${inp('hdr.sn','Platform Serial Number (required)')}${inp('hdr.loc','Site / location')}${inp('hdr.tech','TDY FLIR Technician')}${inp('hdr.date','Date of the site visit',{type:'date'})}${inp('hdr.custEmail','Customer e-mail',{type:'email',ph:'customer@example.com'})}${inp('hdr.rma','RMA Number (if there is one)')}${inp('hdr.so','SVO Number (if there is one)')}${acctHtml()}${inp('hdr.po','Customer PO (optional)')}${inp('hdr.fso','FLIR sales order (optional)')}${inp('hdr.wbs','WBS / project code (if used)')}</div></div>
+ ${moreBtn(r)}
+ <div id="infoMore" style="${moreOpen(r)?'':'display:none'}">
  <div class="card" id="infoExt" style="${qcArr(r.hdr)?'':'display:none'}">${extHtml()}</div>
  <div class="card" id="infoSer">${serHtml()}</div>
  <div class="card" id="infoVer">${verHtml()}</div>
  ${r.hdr.purpose==='upfit'?'<div class="card" id="infoCust">'+custPropHtml()+'</div>':''}
+ </div>
  ${navHtml(1)}`;}
+/* exterior photos and everything below start folded away so the tech can log the customer's complaints and the truck serial first (Ravi, 2026-11-01) */
+function moreOpen(r){return !!r.moreOpen||(r.gear||[]).some(g=>String((g.tk?g.v:g.s)||'').trim())||(r.nbPh||[]).length>0;}
+function moreBtn(r,f){const o=f==null?moreOpen(r):f;return `<div id="infoMoreBtn" style="text-align:center;margin:12px 0"><button type="button" data-act="moretog" aria-label="${o?'Hide':'Show'} exterior photos, serial numbers and the rest" style="width:84px;height:84px;border-radius:50%;font-size:52px;line-height:1;padding:0;background:#1d3b6a;color:#fff;border:0">${o?'\u2212':'\uff0b'}</button><div class="muted" style="margin-top:4px">${o?'Hide exterior photos, serial numbers and the rest':'Exterior photos, serial numbers and the rest'}</div></div>`;}
 function infoRepHtml(){const r=S.rec,rs=repSecOf(r),L=rs?(r.extra[rs.id]||[]):[];
  return `<h2>Customer-reported issues</h2><p class="muted">List what the customer tells you at the site, with a photo and a severity if you can. You confirm each one on the Check step, and add your own findings there with ＋ New issue.</p>
  <h3 style="margin:10px 0 4px">Issues the customer reported (${L.length})</h3>
@@ -14854,6 +14860,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'iscol':{(S.exp=S.exp||{})[id]=false;rerenderRow(id);const el=$('#r-'+id);el&&el.scrollIntoView({block:'nearest'});break;}
  case 'isall':{const si=+b.dataset.si,v=b.dataset.v==='1';S.exp=S.exp||{};flat(r).filter(y=>isIss(y.sec)).forEach(y=>{S.exp[y.id]=v;});resec(si);break;}
  case 'addx':{const si=+b.dataset.si,sec0=r.tpl.sections[si],sec=sec0.kind==='rep'?(r.tpl.sections.find(s=>s.kind==='new')||sec0):sec0;const x={id:'x'+uid(),t:''};(r.extra[sec.id]=r.extra[sec.id]||[]).push(x);itm(x.id).st='fail';S.detail[x.id]=true;(S.exp=S.exp||{})[x.id]=true;markDirty();resec(si);const el=$(`#r-${x.id} input[data-b]`);el&&el.focus();break;}
+ case 'moretog':{const open=moreOpen(r);const go=on=>{r.moreOpen=on;markDirty();const m=$('#infoMore'),b=$('#infoMoreBtn');if(m)m.style.display=on?'':'none';if(b)b.outerHTML=moreBtn(r,on);};if(open){go(false);}else if(!open){if(r.rmaAsked){go(true);}else ask('Notify the front office to have an RMA created for this truck.\n\nYou can keep entering data while you wait for the RMA.',{title:'Notify front office',ok:'Done, show the rest',no:'Not yet, stay here'}).then(y=>{if(y){r.rmaAsked=true;go(true);}});}break;}
  case 'addrep':{const rs=repSecOf(r);if(!rs)break;const x={id:'x'+uid(),t:''};(r.extra[rs.id]=r.extra[rs.id]||[]).push(x);itm(x.id).st='fail';markDirty();const e=$('#infoRep');if(e)e.innerHTML=infoRepHtml();const el=$('#infoRep input[data-b="extraT.'+x.id+'"]');el&&el.focus();break;}
  case 'rmrep':{if(!await ask('Remove this customer-reported issue?',{title:'Remove issue?',ok:'Remove',danger:1}))break;const x=flat(r).find(y=>y.id===id);if(x){r.extra[x.sec.id]=r.extra[x.sec.id].filter(y=>y.id!==id);(r.items[id]||{ph:[]}).ph.forEach(p=>dbDel('photos',p));delete r.items[id];markDirty();}const e=$('#infoRep');if(e)e.innerHTML=infoRepHtml();break;}
 
