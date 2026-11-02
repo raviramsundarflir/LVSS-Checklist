@@ -10423,4 +10423,50 @@ window.__qrChk=chk;})();</script><script>/* Rev 28: the main page updates itself
 (function(){var last=0;function mk(t){var m=/Latest update: ([^<]+)</.exec(t||'');return m?m[1]:'';}
 function chk(){if(navigator.onLine===false||Date.now()-last<30000)return;last=Date.now();var cur=mk(document.documentElement.innerHTML);
  fetch(location.pathname+'?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():'';}).then(function(t){var nv=mk(t);if(!nv||!cur||nv===cur)return;var ov=document.getElementById('qrov');if(ov&&ov.style.display&&ov.style.display!=='none')return;var k='autoUpd:/';try{if(sessionStorage.getItem(k)===nv)return;sessionStorage.setItem(k,nv);}catch(e){return;}location.reload();}).catch(function(){});}
-window.addEventListener('load',function(){setTimeout(chk,1200);});document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')chk();});})();</script></body></html>
+window.addEventListener('load',function(){setTimeout(chk,1200);});document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')chk();});})();</script><style>
+/* Return to last opened report card + Last 3 list (Ravi, 2026-11-02) */
+.rs-wrap{grid-column:1/-1;width:100%;margin:4px 0 16px}
+.rs-row{display:flex;gap:10px;align-items:stretch}
+.cat.rs-card{flex:1;min-width:0;margin:0;--pri:#1d3b6a;--acc:#5b8dd6;border:3px solid #1d3b6a;background:#eef3fb;box-shadow:0 0 0 3px rgba(29,59,106,.15),var(--sh)}
+.rs-card .ic{display:flex;align-items:center;justify-content:center;flex:none}
+.rs-card .d b{display:inline;font-size:inherit;line-height:inherit;color:var(--tx)}
+.rs-tag{position:static!important;display:inline-block;vertical-align:middle;margin-left:8px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:1px 8px;border-radius:20px;background:#1d3b6a;color:#fff}
+.rs-tag.rs-done{background:#d6f0de;color:#14602a}
+.rs-btn{flex:0 0 96px;border:2px solid #1d3b6a;border-radius:14px;background:var(--card);color:#1d3b6a;font:700 14px/1.2 inherit;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;box-shadow:var(--sh);-webkit-tap-highlight-color:transparent}
+.rs-btn.on{background:#1d3b6a;color:#fff}
+.rs-car{font-size:12px}
+.rs-list{margin-top:8px;padding:10px 12px 12px;border:1px solid var(--bd);border-radius:14px;background:#f7f9fd}
+.rs-h{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu)}
+.rs-item{display:block;position:relative;padding:12px 40px 12px 14px;border:1px solid var(--bd);border-radius:12px;background:var(--card);text-decoration:none;color:inherit;margin-top:8px;-webkit-tap-highlight-color:transparent}
+.rs-item::after{content:"\203A";position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:24px;color:var(--mu)}
+.rs-item b{font-size:16px}.rs-m{color:var(--mu);font-size:13.5px}
+@media(max-width:520px){.rs-btn{flex-basis:76px;font-size:13px}}
+@media(prefers-color-scheme:dark){.cat.rs-card{background:#1b2740;border-color:#8fb2f0}.rs-btn{border-color:#8fb2f0;color:#8fb2f0}.rs-btn.on{background:#8fb2f0;color:#0e131b}.rs-list{background:#141b26}.rs-tag{background:#8fb2f0;color:#0e131b}}
+</style>
+<script>
+/* Main page: "Return to last opened report" with a Last 3 drop-down. The forms record the last 3 reports opened on this
+   device in localStorage 'tscRecent'; each link opens the form with #resume=<id> and the form reopens it where the tech left off. */
+(function(){
+var ICON='<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>';
+var HIST='<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>';
+function rd(){try{var L=JSON.parse(localStorage.getItem('tscRecent')||'[]');return Array.isArray(L)?L.filter(function(x){return x&&x.k&&x.id;}).slice(0,3):[];}catch(e){return [];}}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function when(t){if(!t)return '';var d=new Date(t);if(isNaN(d))return '';var n=new Date(),tm=d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+ var day=function(x){return new Date(x.getFullYear(),x.getMonth(),x.getDate()).getTime();},dd=Math.round((day(n)-day(d))/864e5);
+ return dd===0?tm+' today':dd===1?'yesterday '+tm:d.toLocaleDateString([],{month:'short',day:'numeric'})+', '+tm;}
+function href(e){return encodeURIComponent(e.k)+'/#resume='+encodeURIComponent(e.id);}
+function tag(e){return e.done?'<span class="rs-tag rs-done">Report ready</span>':'<span class="rs-tag">Not finished</span>';}
+function meta(e){return esc(e.n)+(e.st?' · '+esc(e.st)+' step':'');}
+var open=false;
+function paint(){var home=document.getElementById('v-home');if(!home)return;var w=document.getElementById('rsWrap'),L=rd();
+ if(!L.length){if(w)w.remove();return;}
+ if(!w){w=document.createElement('div');w.id='rsWrap';w.className='rs-wrap';var wf=home.querySelector('.wflink');if(wf)wf.parentNode.insertBefore(w,wf);else home.appendChild(w);}
+ if(L.length<2)open=false;var e=L[0];
+ w.innerHTML='<div class="rs-row"><a class="cat rs-card" href="'+href(e)+'"><span class="ic">'+ICON+'</span><span><b>Return to last opened report'+tag(e)+'</b><span class="d"><b>'+esc(e.sn)+'</b> · '+meta(e)+'<br>Last saved '+esc(when(e.t))+' · reopens where you left off</span></span></a>'
+  +(L.length>1?'<button type="button" class="rs-btn'+(open?' on':'')+'" id="rsMore" aria-expanded="'+open+'">'+HIST+'<span>Last '+L.length+'</span><span class="rs-car">'+(open?'▴':'▾')+'</span></button>':'')+'</div>'
+  +(open?'<div class="rs-list"><div class="rs-h">Last '+L.length+' reports opened on this device</div>'+L.map(function(x){return '<a class="rs-item" href="'+href(x)+'"><b>'+esc(x.sn)+'</b>'+tag(x)+'<br><span class="rs-m">'+meta(x)+' · '+esc(when(x.t))+'</span></a>';}).join('')+'</div>':'');}
+document.addEventListener('click',function(ev){var b=ev.target&&ev.target.closest&&ev.target.closest('#rsMore');if(!b)return;open=!open;paint();});
+paint();window.addEventListener('pageshow',paint);window.addEventListener('storage',paint);
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')paint();});
+})();
+</script></body></html>

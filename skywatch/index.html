@@ -13885,7 +13885,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'mclose':closeModal();break;
  case 'start':{const ts=$('#n-ts').value.trim(),cu=$('#n-cu').value.trim(),te=$('#n-te').value.trim();closeModal();S.rec=newRec({towerSerial:ts,customer:cu,tech:te,techEmail:S.settings.lastTechEmail||''});techRemember(te);S.techDraft='';S.photos={};S.view='rec';S.open=-1;S.dirty=true;await save();render();break;}
  case 'open':{const x=migrate(await dbGet('recs',b.dataset.rid));S.rec=x;await loadPhotos(x);S.view='rec';S.open=-1;S.detail={};S.dirty=false;render();break;}
- case 'del':if(confirm('Delete this inspection from the tablet? This cannot be undone. (Use Backup file first if unsure.)')){const x=await dbGet('recs',b.dataset.rid);if(x){for(const d of Object.values(x.items))for(const p of d.ph||[])await dbDel('photos',p);for(const e of x.gear||[])for(const p of e.ph||[])await dbDel('photos',p);for(const l of Object.values(x.serPh||{}))for(const p of l)await dbDel('photos',p);}await dbDel('recs',b.dataset.rid);render();}break;
+ case 'del':if(confirm('Delete this inspection from the tablet? This cannot be undone. (Use Backup file first if unsure.)')){const x=await dbGet('recs',b.dataset.rid);if(x){for(const d of Object.values(x.items))for(const p of d.ph||[])await dbDel('photos',p);for(const e of x.gear||[])for(const p of e.ph||[])await dbDel('photos',p);for(const l of Object.values(x.serPh||{}))for(const p of l)await dbDel('photos',p);}await dbDel('recs',b.dataset.rid);window.tscDrop&&tscDrop(b.dataset.rid);render();}break;
  case 'home':await save();S.view='home';S.rec=null;S.audit=false;render();break;
  case 'save':save();break;
  case 'step':{const n=+b.dataset.s;if(n>=4&&r.step<4&&!(n===5&&!r.signed)){{const m=swGate(r);if(m.length){swGateDlg(m);break;}}if(!S.serBypass&&n<=4&&!(await proceedCheck()))break;if(!S.serBypass){S.serAct={act:'step',s:n};serConfirmDlg();break;}S.serBypass=false;}if(n===5&&!r.signed){alert('Complete the sign-off on step 4 first.');break;}
@@ -14656,4 +14656,51 @@ function row(d,y,cells,o){var CWc=o.CWc,GAP=o.GAP,IH=o.IH,tw=CWc-10;
 window.PhotoBox={row:row};
 })();
 </script><script>/* Rev 28 */window.__atHome=function(){try{return S.view==='home';}catch(e){return false;}};
-(function(){function t(){try{document.documentElement.classList.toggle('cuIn',S.view!=='home'&&S.view!=='admin');}catch(e){}}t();try{new MutationObserver(t).observe(document.body,{childList:true,subtree:true});}catch(e){}})();</script></body></html>
+(function(){function t(){try{document.documentElement.classList.toggle('cuIn',S.view!=='home'&&S.view!=='admin');}catch(e){}}t();try{new MutationObserver(t).observe(document.body,{childList:true,subtree:true});}catch(e){}})();</script><script>
+/* ===== Return to last opened report (all forms, Ravi 2026-11-02) =====
+   Remembers the last 3 reports opened on this device (any form) for the main page's "Return to last opened report" card,
+   and reopens a report where the tech left off when the main page links here with #resume=<id>.
+   Same-site device storage only (localStorage 'tscRecent'): form key, form name, record id, serial, step, status, last save, position. */
+(function(){
+var KEY='tscRecent',MAX=3;
+var FK=(location.pathname.replace(/index\.html$/,'').split('/').filter(Boolean).pop()||'');
+var FN=document.title;
+function rd(){try{var L=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(L)?L:[];}catch(e){return [];}}
+function wr(L){try{localStorage.setItem(KEY,JSON.stringify(L.slice(0,MAX)));}catch(e){}}
+window.tscDrop=function(id){wr(rd().filter(function(x){return !(x.k===FK&&x.id===id);}));};
+var homeUp=function(){return S.view==='home'&&!!document.querySelector('[data-act="new"]');};
+/* forms built on the Post-Repair/Intake/SkyWatch shell */
+var A={ready:homeUp,
+ cur:function(){if(S.view!=='rec'||!S.rec)return null;var r=S.rec;
+  return {id:r.id,sn:String((typeof snD==='function'?snD(r):'')||(r.hdr&&r.hdr.sn)||'Untitled'),st:S.audit?'Audit':(STEPN[r.step-1]||''),done:!!(r.completed||r.signed),t:+r.updated||0,
+   pos:{a:S.audit?1:0,o:typeof S.open==='number'?S.open:-1,y:Math.round(window.scrollY),m:(typeof moreOpen==='function'&&moreOpen(r))?1:0}};},
+ open:async function(id,p){var x=await dbGet('recs',id);if(!x)return false;x=migrate(x);S.audit=!!p.a;if(typeof moreOpen==='function')S.moreId=p.m?x.id:null;
+  S.rec=x;await loadPhotos(x);S.view='rec';S.open=-1;S.detail={};S.dirty=false;render();
+  if(!S.audit&&x.step===2&&p.o>=0&&typeof enterSec==='function'&&x.tpl&&p.o<=x.tpl.sections.length)enterSec(p.o);return true;}};
+/* forms built on the Calibration/Floor Test/Final shell */
+var C={ready:homeUp,
+ cur:function(){if(S.view!=='rec'||!S.rec)return null;var r=S.rec;
+  return {id:r.id,sn:String((typeof recName==='function'?recName(r):'')||'Untitled'),st:STEPS[S.step]||'',done:!!(r.done&&r.done.complete),t:+r.updated||0,pos:{y:Math.round(window.scrollY)}};},
+ open:async function(id,p){var f=function(){return (S.recs||[]).find(function(y){return y.id===id;});},x=f();if(!x&&typeof loadAll==='function'){await loadAll();x=f();}if(!x)return false;
+  if(typeof openRec==='function')await openRec(x);else{S.rec=x;S.step=x.step||0;S.view='rec';render();}return true;}};
+function ad(){if(window.__tscAd)return window.__tscAd;
+ try{if(typeof renderRec==='function'&&typeof S!=='undefined'&&typeof STEPN!=='undefined')return A;}catch(e){}
+ try{if(typeof STEPS!=='undefined'&&typeof S!=='undefined'&&typeof render==='function')return C;}catch(e){}return null;}
+var last='';
+function track(){var a=ad();if(!a)return;var e;try{e=a.cur();}catch(x){return;}if(!e||!e.id)return;e.k=FK;e.n=FN;
+ var j=JSON.stringify(e);if(j===last)return;last=j;var L=rd().filter(function(x){return !(x.k===FK&&x.id===e.id);});L.unshift(e);wr(L);}
+setInterval(track,2000);
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')track();});
+window.addEventListener('pagehide',track);
+var m=/(?:^#|&)resume=([^&]+)/.exec(location.hash);
+if(m){var id=decodeURIComponent(m[1]),tries=0;
+ var clear=function(){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}};
+ var say=function(t){var a=ad();try{if(a&&a.say)a.say(t);else if(typeof notice==='function')notice(t,{title:'Report not found'});else alert(t);}catch(e){alert(t);}};
+ var go=async function(){var a=ad();if(!a||!a.ready()){if(tries++<60){setTimeout(go,300);}else clear();return;}
+  var e=rd().find(function(x){return x.k===FK&&x.id===id;})||{},p=e.pos||{},ok=false;
+  try{ok=await a.open(id,p);}catch(x){ok=false;}clear();
+  if(!ok){window.tscDrop(id);say('That report is no longer saved on this device.');return;}
+  if(p.y)setTimeout(function(){window.scrollTo(0,p.y);},400);track();};
+ if(document.readyState==='complete')setTimeout(go,300);else window.addEventListener('load',function(){setTimeout(go,300);});}
+})();
+</script></body></html>

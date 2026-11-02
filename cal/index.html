@@ -13970,7 +13970,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'save':await save();break;
  case 'new':{S.rec=newRec('','');S.step=0;S.view='rec';S.dirty=true;await save();render();break;}
  case 'open':{const x=S.recs.find(y=>y.id===id);if(!x)break;S.rec=x;S.step=x.step||0;S.view='rec';render();break;}
- case 'delrec':{const x=S.recs.find(y=>y.id===id);if(x&&await ask('Delete calibration '+recName(x)+' from this tablet? This cannot be undone.',{title:'Delete?',ok:'Delete',danger:1})){await DB.del('recs',id);await loadAll();render();}break;}
+ case 'delrec':{const x=S.recs.find(y=>y.id===id);if(x&&await ask('Delete calibration '+recName(x)+' from this tablet? This cannot be undone.',{title:'Delete?',ok:'Delete',danger:1})){await DB.del('recs',id);window.tscDrop&&tscDrop(id);await loadAll();render();}break;}
  case 'scan':scanDlg();break;
  case 'admin':S.adm=clone(TPL);S.adminErr='';S.view='admin';render();break;
  case 'adminback':S.view='home';render();break;
@@ -14253,4 +14253,51 @@ CUST.cfg({inRec:function(){return S.view==='rec';},tag:function(){return S.rec?d
 </script><script>/* Rev 28: home screen auto-update; the report drawn with its own truck's customer */
 window.__atHome=function(){try{return S.view==='home';}catch(e){return false;}};
 if(typeof calPdf==='function'){const _b=calPdf;calPdf=function(r){const a=arguments;return CUST.with(r,()=>_b.apply(this,a));};}
+</script><script>
+/* ===== Return to last opened report (all forms, Ravi 2026-11-02) =====
+   Remembers the last 3 reports opened on this device (any form) for the main page's "Return to last opened report" card,
+   and reopens a report where the tech left off when the main page links here with #resume=<id>.
+   Same-site device storage only (localStorage 'tscRecent'): form key, form name, record id, serial, step, status, last save, position. */
+(function(){
+var KEY='tscRecent',MAX=3;
+var FK=(location.pathname.replace(/index\.html$/,'').split('/').filter(Boolean).pop()||'');
+var FN=document.title;
+function rd(){try{var L=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(L)?L:[];}catch(e){return [];}}
+function wr(L){try{localStorage.setItem(KEY,JSON.stringify(L.slice(0,MAX)));}catch(e){}}
+window.tscDrop=function(id){wr(rd().filter(function(x){return !(x.k===FK&&x.id===id);}));};
+var homeUp=function(){return S.view==='home'&&!!document.querySelector('[data-act="new"]');};
+/* forms built on the Post-Repair/Intake/SkyWatch shell */
+var A={ready:homeUp,
+ cur:function(){if(S.view!=='rec'||!S.rec)return null;var r=S.rec;
+  return {id:r.id,sn:String((typeof snD==='function'?snD(r):'')||(r.hdr&&r.hdr.sn)||'Untitled'),st:S.audit?'Audit':(STEPN[r.step-1]||''),done:!!(r.completed||r.signed),t:+r.updated||0,
+   pos:{a:S.audit?1:0,o:typeof S.open==='number'?S.open:-1,y:Math.round(window.scrollY),m:(typeof moreOpen==='function'&&moreOpen(r))?1:0}};},
+ open:async function(id,p){var x=await dbGet('recs',id);if(!x)return false;x=migrate(x);S.audit=!!p.a;if(typeof moreOpen==='function')S.moreId=p.m?x.id:null;
+  S.rec=x;await loadPhotos(x);S.view='rec';S.open=-1;S.detail={};S.dirty=false;render();
+  if(!S.audit&&x.step===2&&p.o>=0&&typeof enterSec==='function'&&x.tpl&&p.o<=x.tpl.sections.length)enterSec(p.o);return true;}};
+/* forms built on the Calibration/Floor Test/Final shell */
+var C={ready:homeUp,
+ cur:function(){if(S.view!=='rec'||!S.rec)return null;var r=S.rec;
+  return {id:r.id,sn:String((typeof recName==='function'?recName(r):'')||'Untitled'),st:STEPS[S.step]||'',done:!!(r.done&&r.done.complete),t:+r.updated||0,pos:{y:Math.round(window.scrollY)}};},
+ open:async function(id,p){var f=function(){return (S.recs||[]).find(function(y){return y.id===id;});},x=f();if(!x&&typeof loadAll==='function'){await loadAll();x=f();}if(!x)return false;
+  if(typeof openRec==='function')await openRec(x);else{S.rec=x;S.step=x.step||0;S.view='rec';render();}return true;}};
+function ad(){if(window.__tscAd)return window.__tscAd;
+ try{if(typeof renderRec==='function'&&typeof S!=='undefined'&&typeof STEPN!=='undefined')return A;}catch(e){}
+ try{if(typeof STEPS!=='undefined'&&typeof S!=='undefined'&&typeof render==='function')return C;}catch(e){}return null;}
+var last='';
+function track(){var a=ad();if(!a)return;var e;try{e=a.cur();}catch(x){return;}if(!e||!e.id)return;e.k=FK;e.n=FN;
+ var j=JSON.stringify(e);if(j===last)return;last=j;var L=rd().filter(function(x){return !(x.k===FK&&x.id===e.id);});L.unshift(e);wr(L);}
+setInterval(track,2000);
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')track();});
+window.addEventListener('pagehide',track);
+var m=/(?:^#|&)resume=([^&]+)/.exec(location.hash);
+if(m){var id=decodeURIComponent(m[1]),tries=0;
+ var clear=function(){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}};
+ var say=function(t){var a=ad();try{if(a&&a.say)a.say(t);else if(typeof notice==='function')notice(t,{title:'Report not found'});else alert(t);}catch(e){alert(t);}};
+ var go=async function(){var a=ad();if(!a||!a.ready()){if(tries++<60){setTimeout(go,300);}else clear();return;}
+  var e=rd().find(function(x){return x.k===FK&&x.id===id;})||{},p=e.pos||{},ok=false;
+  try{ok=await a.open(id,p);}catch(x){ok=false;}clear();
+  if(!ok){window.tscDrop(id);say('That report is no longer saved on this device.');return;}
+  if(p.y)setTimeout(function(){window.scrollTo(0,p.y);},400);track();};
+ if(document.readyState==='complete')setTimeout(go,300);else window.addEventListener('load',function(){setTimeout(go,300);});}
+})();
 </script></body></html>
