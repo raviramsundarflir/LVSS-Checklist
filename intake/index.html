@@ -13847,7 +13847,7 @@ async function scanDone(txt){if(String(txt).startsWith('WIP1~')){wipChunk(txt);r
  closeModal();if(o.k==='A'){const n=o.f.length;if(!await ask(`Start an audit of ${o.sn?lv(o.sn):'this platform'} (RMA ${o.rma||'-'}) with ${n} fault${n===1?'':'s'} from the tech's punch list?\n\nThe tech's photos are not in the QR code. Mark each fault Verified or Not acceptable, add your own photos and details, then submit the audit.`,{title:'Start audit from QR code?',ok:'Start audit'}))return;
   S.rec=auFromQr(o);S.photos={};S.view='rec';S.audit=true;S.open=-1;S.detail={};S.dirty=true;await save();render();return;}
  const n=o.s.length;const RC=await coreReAsk(o);if(RC==='x')return;if(!RC&&!await ask(`Start a new inspection for ${o.sn?(snType(o.sn)?o.sn:lv(o.sn)):'LVSS (no serial)'} with ${n} serial number${n===1?'':'s'} filled in from the QR code?\n\nYou still take a fresh photo of each serial plate. Last-recorded version info is shown for reference.`,{title:'Start from QR code?',ok:'Start inspection'}))return;
- S.rec=newRec({sn:o.sn||'',tech:'',ptype:ptOfCode(o.p)});if(o.up)upRestore(S.rec,o);if(o.it||o.rma){Object.assign(S.rec.hdr,{rma:o.rma||'',so:o.so||'',acct:o.ac||''});}if(o.qc&&/^\d{4}-\d\d-\d\d$/.test(String(o.pu||''))){S.rec.hdr.recvDate=o.pu;S.rec.hdr.recvType='depot';}setTv(S.rec,'vin',o.vin);setTv(S.rec,'plate',o.pl);setTv(S.rec,'kilo',o.kl);if(o.i&&typeof o.i==='object')S.rec.prev=o.i;const used=new Set();
+ S.rec=newRec({sn:o.sn||'',tech:'',ptype:ptOfCode(o.p)});S.moreId=S.rec.id;if(o.up)upRestore(S.rec,o);if(o.it||o.rma){Object.assign(S.rec.hdr,{rma:o.rma||'',so:o.so||'',acct:o.ac||''});}if(o.qc&&/^\d{4}-\d\d-\d\d$/.test(String(o.pu||''))){S.rec.hdr.recvDate=o.pu;S.rec.hdr.recvType='depot';}setTv(S.rec,'vin',o.vin);setTv(S.rec,'plate',o.pl);setTv(S.rec,'kilo',o.kl);if(o.i&&typeof o.i==='object')S.rec.prev=o.i;const used=new Set();
  o.s.forEach(p=>{const nm=String(p[0]||''),val=String(p[1]||'');const g=S.rec.gear.find(x=>!used.has(x.id)&&gKey(x.t)===gKey(nm));if(g){g.s=val;used.add(g.id);}else{const x={id:'eq'+uid(),t:nm||'Other device',s:val,ph:[],na:false,custom:true};S.rec.gear.push(x);used.add(x.id);}});
  coreScan(S.rec,o,RC==='r');if(RC==='r'){coreImported(S.rec,coreLoadW(S.rec,o,'From the original report'));}
  else if(o.qc&&Array.isArray(o.w)&&o.w.length){const xn=+o.wx||0,qd=o.d?' ('+fmtD(o.d)+')':'';
@@ -13931,10 +13931,21 @@ function infoRepHtml(){const r=S.rec,rs=repSecOf(r),L=rs?(r.extra[rs.id]||[]):[]
 function infoHtml(){const r=S.rec;
  return `<div class="card"><h2>Inspection info</h2><p class="muted">The platform serial number names this inspection and its PDF file.</p>${SEC('Truck')}${ptHtml()}${SEC('Visit')}${purpHtml()}${SEC('Record details')}<div class="grid">${inp('hdr.sn','Platform Serial Number (required)')}${inp('hdr.loc','Location')}${inp('hdr.tech','TDY FLIR Technician')}${inp('hdr.date','Date',{type:'date'})}${inp('hdr.rma','RMA Number')}${inp('hdr.so','SVO Number')}${acctHtml()}${inp('hdr.po','Customer PO (optional)')}${inp('hdr.fso','FLIR sales order (optional)')}${inp('hdr.wbs','WBS / project code (if used)')}${inp('hdr.custEmail','Customer e-mail',{type:'email',ph:'customer@example.com'})}</div>${SEC('Dates')}${recvHtml()}</div>
  <div class="card" id="infoRep">${infoRepHtml()}</div>
+ ${moreBtn(r)}
+ <div id="infoMore" style="${moreOpen(r)?'':'display:none'}">
  <div class="card" id="infoSer">${serHtml()}</div>
  <div class="card" id="infoVer">${verHtml()}</div>
  <div class="card" id="infoCust">${custPropHtml()}</div>
+ </div>
  ${navHtml(1)}`;}
+/* serial numbers, SW/FW revs and customer property start folded away under a big + (same as the short form, Ravi, 2026-11-02).
+   The +/- follows only the tech's taps, it starts folded every time a record is opened, and a QR scan opens it so the
+   carried-over serials can be checked. Session only, not saved in the record. */
+function moreOpen(r){return !!(r&&S.moreId&&S.moreId===r.id);}
+function moreSet(r,on){S.moreId=on&&r?r.id:null;const m=$('#infoMore'),b=$('#infoMoreBtn');if(m)m.style.display=on?'':'none';if(b)b.outerHTML=moreBtn(r,on);}
+function moreBtn(r,f){const o=f==null?moreOpen(r):f;return `<div id="infoMoreBtn" style="text-align:center;margin:12px 0"><button type="button" data-act="moretog" aria-label="${o?'Hide':'Show'} serial numbers, SW/FW revs and customer property" style="width:84px;height:84px;border-radius:50%;font-size:52px;line-height:1;padding:0;background:#1d3b6a;color:#fff;border:0">${o?'\u2212':'\uff0b'}</button><div class="muted" style="margin-top:4px">${o?'Hide serial numbers, SW/FW revs and customer property':'Serial numbers, SW/FW revs and customer property'}</div></div>`;}
+/* a "Take me there" jump to something inside the folded part opens it first */
+(function(){const si=Element.prototype.scrollIntoView;Element.prototype.scrollIntoView=function(){try{const m=document.getElementById('infoMore');if(m&&m.style.display==='none'&&m.contains(this)&&S.rec)moreSet(S.rec,true);}catch(e){}return si.apply(this,arguments);};})();
 const tbdWarn=()=>'MOVE CUSTOMER PROPERTY INTO THE BIN';
 function custPropHtml(){const r=S.rec,L=flat(r).filter(x=>x.sec.id==='sC'&&!x.extra);return `<h2>Customer property and included items</h2><p class="muted">Answer these after the serial numbers and SW/FW revs.</p>${L.map(x=>rowHtml(x)).join('')}<button data-act="cptbd" class="${r.hdr.cpTbd?'pri':''}" style="width:100%;margin-top:8px">${r.hdr.cpTbd?'✓ ':''}TBD – secure customer property into the bin later</button>${r.hdr.cpTbd?'<p class="muted" style="margin:6px 0 0;color:#c25a00"><b>An orange “Move customer property into the bin” reminder with a check box and initials line will print on the bin label and the QR page.</b></p>':''}`;}
 
@@ -14484,7 +14495,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
   if(S.pdf){try{const files=pdfFiles();if(navigator.canShare&&navigator.canShare({files})){await navigator.share({files,title:s.subj,text:s.text});break;}}catch(err){if(err&&err.name==='AbortError')break;}}
   else{notice('The PDF is still being prepared – try again in a moment.',{title:'Please wait'});break;}
   notice('This browser cannot attach the PDF automatically, so the email will open without it. Use "Save audit PDF" and attach the file from Downloads.',{title:'PDF not attached'});location.href='mailto:?cc=TSC%40teledyne.com&subject='+encodeURIComponent(s.subj)+'&body='+encodeURIComponent(s.text);break;}
- case 'open':{S.audit=false;const x=migrate(await dbGet('recs',b.dataset.rid));S.rec=x;await loadPhotos(x);S.view='rec';S.open=-1;S.detail={};S.dirty=false;render();break;}
+ case 'open':{S.audit=false;S.moreId=null;const x=migrate(await dbGet('recs',b.dataset.rid));S.rec=x;await loadPhotos(x);S.view='rec';S.open=-1;S.detail={};S.dirty=false;render();break;}
  case 'del':if(await ask('Delete this inspection from the tablet? This cannot be undone. (Use Backup file first if unsure.)',{title:'Delete inspection?',ok:'Delete',danger:1})){const x=await dbGet('recs',b.dataset.rid);if(x){for(const d of Object.values(x.items))for(const p of d.ph||[])await dbDel('photos',p);for(const e of x.gear||[])for(const p of e.ph||[])await dbDel('photos',p);for(const p of x.verPh||[])await dbDel('photos',p);if(x.audit){for(const p of x.audit.ph||[])await dbDel('photos',p);for(const q of Object.values(x.audit.items||{}))for(const p of q.ph||[])await dbDel('photos',p);}for(const l of Object.values(x.vfPh||{}))for(const p of l||[])await dbDel('photos',p);for(const e of (x.swap&&x.swap.list)||[]){for(const p of e.oldPh||[])await dbDel('photos',p);for(const p of e.newPh||[])await dbDel('photos',p);}}await dbDel('recs',b.dataset.rid);render();}break;
  case 'home':await save();S.view='home';S.rec=null;S.audit=false;render();break;
  case 'save':save();break;
@@ -14595,6 +14606,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'rmaomit':{r.mailNoRma=!r.mailNoRma;markDirty();b.className=r.mailNoRma?'pri':'';b.textContent=r.mailNoRma?'✓ Omitted':'Omit RMA';const sj=$('#emSubj');if(sj)sj.value=mailSubj(r);break;}
  case 'emcopys':{const t=($('#emSubj')||{}).value||'';const ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;left:0;top:0;opacity:0';document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,t.length);let ok=false;try{ok=document.execCommand('copy');}catch(e){}ta.remove();if(!ok&&navigator.clipboard)navigator.clipboard.writeText(t).then(()=>notice('Paste it into the Subject line of your email.',{title:'Subject copied'}),()=>notice('Could not copy automatically.',{title:'Copy failed'}));else notice(ok?'Paste it into the Subject line of your email.':'Could not copy automatically.',{title:ok?'Subject copied':'Copy failed'});break;}
  case 'recvt':{r.hdr.recvType=b.checked?'field':'depot';markDirty();$('#recvBox').outerHTML=recvHtml();break;}
+ case 'moretog':{moreSet(r,!moreOpen(r));break;}
  case 'isexp':{(S.exp=S.exp||{})[id]=true;rerenderRow(id);break;}
  case 'iscol':{(S.exp=S.exp||{})[id]=false;rerenderRow(id);const el=$('#r-'+id);el&&el.scrollIntoView({block:'nearest'});break;}
  case 'isall':{const si=+b.dataset.si,v=b.dataset.v==='1';S.exp=S.exp||{};flat(r).filter(y=>isIss(y.sec)).forEach(y=>{S.exp[y.id]=v;});resec(si);break;}
@@ -15189,7 +15201,7 @@ const WA={app:'LVSS',c:k=>k==='pri'?'pri':'',
  tpl:ex=>clone(ex?ex.tpl:curTpl()),finish:r=>{const D={st:'',lvl:'',note:'',ph:[],v:{},rep:false,res:'',war:'',courtesy:false,quote:''};Object.keys(r.items||{}).forEach(k=>{r.items[k]=Object.assign({},D,{ph:[],v:{}},r.items[k]);});return migrate(r);},
  mergePhotos(rec,ex){const old=S.rec;S.rec=rec;try{WA.owners(ex).forEach(o=>{phOwner(o.oid).ph=o.ph.slice()})}finally{S.rec=old}},
  get:id=>dbGet('recs',id),put:r=>dbPut('recs',clone(r)),
- open:async r=>{S.audit=false;S.rec=r;await loadPhotos(r);S.view='rec';S.open=-1;S.detail={};S.dirty=false;render();},
+ open:async r=>{S.audit=false;S.rec=r;S.moreId=r.id;await loadPhotos(r);S.view='rec';S.open=-1;S.detail={};S.dirty=false;render();},
  dlg:h=>modal(h),close:()=>closeModal(),notice:(m,t)=>notice(m,{title:t}),save:()=>save(),markDirty:()=>markDirty(),
  dl:(b,n)=>dlBlob(b,n),backup:()=>doBackup(),pick:(oid,cam)=>pickPhoto(oid,cam),isAudit:()=>S.audit,
  scanStop:()=>scanStop(),rebanner:()=>wipBanner($('#body'))};
@@ -15378,7 +15390,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/01/2026',site:'43'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/02/2026',site:'44'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -15442,7 +15454,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='574345f1a7';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='97439965e8';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
