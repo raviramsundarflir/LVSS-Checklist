@@ -13629,12 +13629,12 @@ async function scanDone(txt){if(String(txt).startsWith('WIP1~')){wipChunk(txt);r
  S.photos={};S.view='rec';S.open=-1;S.dirty=true;await save();render();}
 /* info page: core data first, then what the customer reports at the site */
 function infoHtml(){const r=S.rec;
- return `<div class="card"><h2>Truck info</h2><p class="muted">Intake short form: core data, issues and a main functions check. The platform serial number names this record and its PDF file.</p>${SEC('Truck')}${ptHtml()}${SEC('Visit')}${purpHtml()}${visitHtml()}${SEC('Record details')}<div class="grid">${inp('hdr.sn','Platform Serial Number (required)')}${inp('hdr.loc','Site / location')}${inp('hdr.tech','TDY FLIR Technician')}${inp('hdr.date','Date of the site visit',{type:'date'})}${inp('hdr.custEmail','Customer e-mail',{type:'email',ph:'customer@example.com'})}${inp('hdr.rma','RMA Number (if there is one)')}${inp('hdr.so','SVO Number (if there is one)')}${acctHtml()}${inp('hdr.po','Customer PO (optional)')}${inp('hdr.fso','FLIR sales order (optional)')}${inp('hdr.wbs','WBS / project code (if used)')}</div></div>
+ return `<div class="card" id="infoRep">${infoRepHtml()}</div>
+ <div class="card"><h2>Truck info</h2><p class="muted">Intake short form: core data, issues and a main functions check. The platform serial number names this record and its PDF file.</p>${SEC('Truck')}${ptHtml()}${SEC('Visit')}${purpHtml()}${visitHtml()}${SEC('Record details')}<div class="grid">${inp('hdr.sn','Platform Serial Number (required)')}${inp('hdr.loc','Site / location')}${inp('hdr.tech','TDY FLIR Technician')}${inp('hdr.date','Date of the site visit',{type:'date'})}${inp('hdr.custEmail','Customer e-mail',{type:'email',ph:'customer@example.com'})}${inp('hdr.rma','RMA Number (if there is one)')}${inp('hdr.so','SVO Number (if there is one)')}${acctHtml()}${inp('hdr.po','Customer PO (optional)')}${inp('hdr.fso','FLIR sales order (optional)')}${inp('hdr.wbs','WBS / project code (if used)')}</div></div>
  <div class="card" id="infoExt" style="${qcArr(r.hdr)?'':'display:none'}">${extHtml()}</div>
  <div class="card" id="infoSer">${serHtml()}</div>
  <div class="card" id="infoVer">${verHtml()}</div>
  ${r.hdr.purpose==='upfit'?'<div class="card" id="infoCust">'+custPropHtml()+'</div>':''}
- <div class="card" id="infoRep">${infoRepHtml()}</div>
  ${navHtml(1)}`;}
 function infoRepHtml(){const r=S.rec,rs=repSecOf(r),L=rs?(r.extra[rs.id]||[]):[];
  return `<h2>Customer-reported issues</h2><p class="muted">List what the customer tells you at the site, with a photo and a severity if you can. You confirm each one on the Check step, and add your own findings there with ＋ New issue.</p>
@@ -13713,7 +13713,7 @@ const xCam=(id,n)=>`<button class="ic" data-act="cam" data-id="${id}" title="Tak
 function pinHtml(r){const on=extOf(r).pin;return `<button type="button" id="xPin" class="xps${on?' on':''}" data-act="xt-pin" aria-pressed="${on}"><span class="bx">${on?'✓':''}</span><span><b>“Desert pinstriping”</b><small>Light scratches from brush rubbing along the truck – cosmetic only, not damage</small></span></button>`;}
 function extNeedHtml(){const r=S.rec,m=extNoPhoto(r);return m.length?`<div style="background:#fff8d6;border-radius:8px;padding:8px 10px;margin:0 0 10px"><b>${m.length} of ${XAREAS.length} areas still need a photo:</b> ${esc(m.map(a=>a[1]).join(', '))}</div>`:`<div class="ok" style="margin:0 0 10px"><b>All ${XAREAS.length} exterior areas have a photo.</b></div>`;}
 function areaHtml(r,k,n){const a=extOf(r).a[k],id='xa:'+k,c=a.ph.length;
- return `<div class="xa${a.dmg?' xd':''}${c?'':' xm'}" id="xa-${k}"><div class="xh"><div class="xn">${esc(n)}</div>${c?'<span class="tag" style="background:#d6f0de;font-weight:600">✓ photo</span>':'<span class="tag" style="background:#fde5c8;font-weight:600">photo needed</span>'}${xCam(id,c)}<button type="button" class="xdb${a.dmg?' on':''}" data-act="xt-dmg" data-k="${k}">${a.dmg?'✓ Damaged':'Damaged'}</button></div>${thumbs(id)}`+
+ return `<div class="xa${a.dmg?' xd':''}${c?'':' xm'}" id="xa-${k}"><div class="xh"><div class="xn">${esc(n)}</div>${c?'<span class="tag" style="background:#d6f0de;font-weight:600">✓ photo</span>':'<span class="tag" style="background:#fde5c8;font-weight:600">photo needed</span>'}<button type="button" class="xdb${a.dmg?' on':''}" data-act="xt-dmg" data-k="${k}">${a.dmg?'✓ Damaged':'Damaged'}</button>${xCam(id,c)}</div>${thumbs(id)}`+
  (a.dmg?a.l.map((l,i)=>`<div class="xl"><div class="xlh"><b>Damage ${i+1}</b><button type="button" class="xx" data-act="xt-rm" data-k="${k}" data-l="${l.id}">✕ Remove</button></div><div class="row" style="flex-wrap:nowrap;gap:8px;align-items:flex-start"><textarea rows="2" data-xn="${l.id}" data-nohist placeholder="Describe the damage: where, what, how big" style="flex:1">${esc(l.note)}</textarea>${xCam('xl:'+l.id,l.ph.length)}</div>${thumbs('xl:'+l.id)}</div>`).join('')+`<button type="button" class="xadd" data-act="xt-add" data-k="${k}">＋ Add another damage</button>`:'')+`</div>`;}
 function extHtml(){const r=S.rec;if(!r||!qcArr(r.hdr))return '';xCss();
  return `<h2>Truck exterior photos</h2><p class="muted">${r.hdr.visit==='dropoff'?'The truck was dropped off at TSC.':'The truck is being picked up.'} Take a photo of each area for the record. Tap <b>Damaged</b> only if there is damage, then describe each spot and photograph it.</p>${pinHtml(r)}<div id="extNeed">${extNeedHtml()}</div>${XAREAS.map(([k,n])=>areaHtml(r,k,n)).join('')}`;}
@@ -13722,7 +13722,7 @@ function paintArea(k){const r=S.rec;if(!r)return;const el=$('#xa-'+k),n=(XAREAS.
 let xCssDone=false;function xCss(){if(xCssDone)return;xCssDone=true;const st=document.createElement('style');st.textContent=
  '#infoExt .xa{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0 0 8px;background:#f8fafd}#infoExt .xa.xm{background:#fff8d6;border-color:#e8d48a}'+
  '#infoExt .xa.xd{background:#fff1f1;border-color:#e3a3a3;border-left:5px solid #c62828}#infoExt .xh{display:flex;align-items:center;gap:8px}#infoExt .xn{flex:1;font-weight:700;font-size:17px}'+
- '#infoExt .xdb{min-height:44px;border:2px solid #c62828;color:#c62828;font-weight:700;background:#fff}#infoExt .xdb.on{background:#c62828;color:#fff}'+
+ '#infoExt .xdb{min-height:44px;border:2px solid #c62828;color:#c62828;font-weight:700;background:#fff}#infoExt .xdb.on{background:#c62828;color:#fff}#infoExt .xdb{margin-right:16px}#infoExt .xh .ic{min-width:58px;min-height:48px}'+
  '#infoExt .xl{background:#fff;border:1px solid #e3b3b3;border-radius:8px;padding:8px 10px;margin-top:8px}#infoExt .xlh{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;color:#8b1c1c}'+
  '#infoExt .xx{min-height:34px;padding:2px 10px;font-size:13px;color:#c62828;border-color:#e3b3b3}#infoExt .xadd{margin-top:8px;min-height:42px;border:1.5px dashed #c62828;color:#c62828;background:#fff;font-weight:600}'+
  '#infoExt .xps{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 12px;margin:2px 0 10px;border:2px solid #b08a3e;background:#fff;border-radius:10px;min-height:52px}#infoExt .xps.on{background:#fbf4e6}'+
@@ -14401,7 +14401,7 @@ function reportHtml(){S.emEdited=false;const r=S.rec,st=stats(r),iss=[...gateIss
  return `${st.openDno?`<div class="dno-banner">⛔ DO NOT OPERATE – ${st.openDno} open<small>Still unresolved</small></div>`:''}
  ${calCard(r)}${iss.length?`<div class="err"><b>Not complete – fix these before sending the report:</b><ul style="margin:6px 0 6px 18px;padding:0">${iss.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><button data-act="step" data-s="1">← Info / serial numbers</button> <button data-act="step" data-s="2">← Inspection / swaps</button></div>`:`<div class="ok"><b>${r.noPhoto?'Serial number photos waived (camera override).':'All serial numbers are validated with photos.'}</b> The report is ready.</div>`}
  <div class="card"><div class="row"><h2 style="flex:1;margin:0 0 6px">Report – ${esc(lv(r.hdr.sn||''))}</h2>${vdStamp(r)}</div><div id="pdfst" class="muted">Preparing PDF…</div></div>
- <div class="card"><h3>${PLN(r)} Intake Short Form QR Code</h3>${qrBigHtml(snD(r))}<p class="muted">Printed on the last page of the PDF. Scan it in the LVSS Intake long form when the truck comes in: the core data and the issues found here carry over (also works in Post-Repair and the other forms).</p>
+ <div class="card"><h3>${PLN(r)} Intake Short Form QR Code</h3>${qrBigHtml(snD(r))}<p class="muted">Printed on the folder front page of an upfit PDF, and on the last page of a repair PDF. Scan it in the LVSS Intake long form when the truck comes in: the core data and the issues found here carry over (also works in Post-Repair and the other forms).</p>
  <div class="row" style="align-items:flex-start"><div style="width:220px;max-width:100%;background:#fff;border:1px solid var(--line);padding:6px">${qs}</div><div style="flex:1;min-width:220px"><b>${fs.length} serial number${fs.length===1?'':'s'} and ${qrVerFields(r).filter(f=>((r.ver||{})[f.key]||'').trim()).length} version item${qrVerFields(r).filter(f=>((r.ver||{})[f.key]||'').trim()).length===1?'':'s'} in the code</b><table class="t" style="margin-top:6px">${fs.map(x=>`<tr><td>${esc(x.n)}</td><td>${esc(x.s)}${x.swapped?' <span class="tag" style="background:#e6d9f5">new</span>':''}</td></tr>`).join('')||'<tr><td class="muted">No serial numbers entered</td></tr>'}</table></div></div></div>
  ${fyiHtml()}
  ${auQrCard(r)}
@@ -14694,9 +14694,10 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
    row.push(c);if(row.length===3)flush();});
   flush();}
  // ---- last page: QR code for this report type
+ const noQrPg=!isAud(r)&&h.purpose==='upfit';if(!noQrPg){
  d.addPage();y=TOP;{const up=h.purpose==='upfit',ordw=(h.cpTbd&&typeof tbdWarn==='function')?tbdWarn():'';
   y=qrPageTop(d,{MX,CW,y,truck:(typeof qrTruck==='function'?qrTruck(r):null),color:'#1d3b6a',title:PLN(r)+' '+'Intake Short Form QR Code',line:`${fmtD(h.date)} - TDY FLIR Technician: ${h.tech||''}. Each serial still needs a fresh photo on the next visit.`,sn:snD(r),nsn:up?nsnShow(h):'',warn:ordw,drawQr:(x0,yy,sz)=>{const q=qrMake(r),n=q.getModuleCount(),qz=4,cs=sz/(n+2*qz);d.setFillColor(255,255,255);d.rect(x0,yy,sz,sz,'F');d.setFillColor(0,0,0);for(let a=0;a<n;a++)for(let b=0;b<n;b++)if(q.isDark(a,b))d.rect(x0+(b+qz)*cs,yy+(a+qz)*cs,cs+.15,cs+.15,'F');d.setDrawColor(150);d.setLineWidth(.6);d.rect(x0,yy,sz,sz);}});}
- y=qrTables(d,r,y+4,{MX,CW,BOT});
+ y=qrTables(d,r,y+4,{MX,CW,BOT});}
  let binIdx=0;if(!isAud(r)&&r.hdr.purpose==='upfit'){binPage(d,r);binIdx=d.getNumberOfPages();}
  // ---- audit QR page: punch list for the auditor
  {const ap=auQrPayload(r);if(ap&&ap.ok){d.addPage();y=TOP;d.setFont('helvetica','bold');d.setFontSize(15);d.setTextColor(0);d.text('Punch list items repair completion audit - Auditor QR Code',MX,y+12);y+=22;
@@ -14705,7 +14706,7 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
    for(let i=0;i<n;i++)for(let j=0;j<n;j++)if(q.isDark(i,j))d.rect(x0+(j+qz)*cs,y+(i+qz)*cs,cs+.15,cs+.15,'F');
    d.setDrawColor(150);d.setLineWidth(.6);d.rect(x0,y,sz,sz);y+=sz+14;}catch(e){d.setTextColor(200,0,0);d.text('Could not generate the audit QR code: '+cl(e.message),MX,y+10);y+=24;}}}
  wipNotePage(d,r,TOP);if(binIdx){d.movePage(binIdx,1);buildFolderPdf(r,d);d.movePage(d.getNumberOfPages(),1);const ns=new Set([1,2]);skip.forEach(i=>ns.add(i<binIdx?i+2:i));skip.clear();ns.forEach(i=>skip.add(i));}
- footers(d,r,true,skip);if(!isAud(r))CUST.dashTag(d,dtInfo(r));return d;}
+ footers(d,r,true,skip);if(!isAud(r)){const n0=d.getNumberOfPages();CUST.dashTag(d,dtInfo(r));if(binIdx&&d.getNumberOfPages()>n0)d.movePage(d.getNumberOfPages(),3);}return d;}
 function pbox(d,x,yy,w,hh,label,list){}
 
 /* ---------- events ---------- */
@@ -16138,7 +16139,7 @@ document.addEventListener('change',function(e){var el=e.target,k=kindOf(el);if(!
  st.el=el;st.last={el:el,before:raw};el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));show('ok','✓ '+esc(labelOf(el))+': <code style="font:800 16px ui-monospace,Menlo,Consolas,monospace">'+esc(v)+'</code>','Cleaned up from “'+esc(raw)+'”.','<button data-dk-x="undo">Undo</button><button class="p" data-dk-x="close">Done</button>');},true);
 })();
 
-window.DICTATE_FIELDS=[
+window.DICTATE_PILL=true;window.DICTATE_FIELDS=[
  {sel:'input[data-b^="gear."][data-b$=".s"]',kind:'serial'},
  {sel:'input[data-b^="swap.list."][data-b$=".nw"],input[data-b^="swap.list."][data-b$=".old"]',kind:'serial'},
  {sel:'input[data-tk],input[data-b^="gear."][data-b$=".v"]',kind:'serial'},
