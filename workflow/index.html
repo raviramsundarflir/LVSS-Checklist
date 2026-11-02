@@ -103,11 +103,11 @@ repair:{label:'Repair',blurb:'Customer unit comes in, issues are identified and 
   [A,'Post-Repair: identify issues','Scan the Intake QR. Core data and the customer-reported issues load. The tech adds anything else found.'],
   [O,'Correct the issues','The tech repairs each identified issue.'],
   [A,'Mark issues corrected','Back in Post-Repair, each corrected issue is marked repaired, with notes, parts and photos.'],
-  [D,'TFU or radar changed?','If the TFU or radar was replaced during the repair, it must be calibrated.',['Yes','Run TFU & Radar Calibration'],['No','Go to the report']]]},
+  [D,'TFU changed?','If the TFU was replaced during the repair, it must be calibrated. Calibration is for the TFU only, not the radar or PTU.',['Yes','Run TFU & Radar Calibration'],['No','Go to the report']]]},
  {n:'Report and release',s:[
   [A,'Summary report','Everything checked, everything identified as faulty, anything repaired, and the technician\u2019s notes.'],
   [O,'Release to customer','The vehicle goes back to the customer. No ATP is run on a repair.']]}]},
-upfit:{label:'Upgrade / upfit',time:1,blurb:'Same trip through the shop, but parts are swapped for newer ones, so old and new serial numbers are tracked. Enter your estimated hours on each step to see the total.',
+upfit:{label:'Upgrade / upfit',blurb:'Same trip through the shop, but parts are swapped for newer ones, so old and new serial numbers are tracked.',
  lanes:[
  {n:'Intake',s:[
   [A,'Intake','Mark the unit as an upgrade. Capture core data and the swap list (old serial to new serial).'],
@@ -119,7 +119,7 @@ upfit:{label:'Upgrade / upfit',time:1,blurb:'Same trip through the shop, but par
   [A,'Skid prep','Reconfigure the enclosures, fit the skid adapters, bolt the network enclosure to the skid. Scan the Intake QR. New serials are entered as parts go in. Cameleon Advanced tab checked.'],
   [A,'Floor Test','Carries RMA and the new serials forward. Photo zip downloads with the PDF. Whether upfit keeps this step is still to be confirmed.'],
   [A,'Jake\u2019s Final (ad hoc test)','Final check against the upgraded configuration, before the ATP. Also still to be confirmed for upfit.'],
-  [D,'TFU or radar?','If the upgraded unit has them, run the calibration form.',['Yes','Calibration, then ATP'],['No','Straight to ATP']]]},
+  [D,'TFU changed?','If the TFU was replaced or upgraded, run the calibration form. It is for the TFU only, not the radar or PTU.',['Yes','Calibration, then ATP'],['No','Straight to ATP']]]},
  {n:'Accept',s:[
   [A,'ATP','New serials and the Windows activation key are used. The ATP shows \u201cReplaces old serial\u201d.'],
   [D,'Any punch items?','Same rule as repair.',['Yes','Corrections, then audit'],['No','Go to the final report']],
@@ -129,7 +129,7 @@ upfit:{label:'Upgrade / upfit',time:1,blurb:'Same trip through the shop, but par
  {n:'Close out',s:[
   [N,'DD1149','Uses the new serial and shows the old one.'],
   [O,'Ship','Folder shows old and new serials. Paperwork goes with the unit.']]}]},
-build:{label:'New build',proposed:1,time:1,blurb:'Proposed, not built yet. The government supplies the F-250. Devices, sensors and enclosures arrive later. Enter your estimated hours on each step to see the total.',
+build:{label:'New build',proposed:1,blurb:'Proposed, not built yet. The government supplies the F-250. Devices, sensors and enclosures arrive later.',
  lanes:[
  {n:'Truck build',s:[
   [N,'Intake (new build)','Short form, no device list. VIN, Kilo # or Fleet #, plate, mileage, condition and photos. Planned eMSC-L or M2S2 serial if known; if not, the truck is known by VIN, kilo and plate.'],
