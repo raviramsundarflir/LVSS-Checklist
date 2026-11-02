@@ -1,0 +1,47 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>About this app</title>
+<style>
+:root{--bg:#f3f5f8;--surface:#fff;--ink:#14233a;--muted:#51627a;--line:#cfd8e3;--navy:#0b3d6b;--navy-soft:#dbe8f6;--warn:#c25a00;--warn-soft:#fff4e8;--ok:#1b7f5a;--ok-soft:#dff3ea}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c1522;--surface:#142235;--ink:#e6edf6;--muted:#9db0c6;--line:#2b3d55;--navy:#6fb0ee;--navy-soft:#173a5e;--warn:#f0a050;--warn-soft:#3a2810;--ok:#4fd0a0;--ok-soft:#12392c;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;padding:20px max(16px,env(safe-area-inset-left)) 56px}
+.w{max-width:860px;margin:0 auto}a.back{color:var(--navy);font-weight:700;text-decoration:none}
+h1{font-size:clamp(30px,6vw,44px);text-transform:uppercase;letter-spacing:.01em;margin:10px 0 4px;line-height:1.05}.sub{color:var(--muted);margin:0 0 18px}
+h2{font-size:20px;margin:0 0 8px;color:var(--navy)}.c{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.big{border-left:6px solid var(--navy)}ol,ul{margin:6px 0 0 20px;padding:0}li{margin:5px 0}
+.path{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0}.path b{background:var(--navy-soft);color:var(--navy);border-radius:8px;padding:6px 10px;font-size:14px}.path i{color:var(--muted);font-style:normal}
+.o{border-left:6px solid var(--warn);background:var(--warn-soft)}.g{border-left:6px solid var(--ok);background:var(--ok-soft)}.m{color:var(--muted);font-size:14px}
+table{border-collapse:collapse;width:100%;font-size:15px}td{border-top:1px solid var(--line);padding:7px 6px;vertical-align:top}td:first-child{font-weight:700;white-space:nowrap;padding-right:14px}
+footer{text-align:center;font-size:11px;color:var(--muted);opacity:.75;margin-top:26px}
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:30px;list-style:none;margin:10px 0 0;padding:0}
+.st{position:relative;background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:12px 12px 14px;min-width:0}
+.st:not(:last-child)::after{content:"";position:absolute;right:-22px;top:50%;width:14px;height:14px;border-top:3px solid var(--navy);border-right:3px solid var(--navy);transform:translateY(-50%) rotate(45deg)}
+.st .t{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--muted)}.st h3{margin:3px 0 5px;font-size:19px;line-height:1.15}.st p{margin:0;font-size:14px;color:var(--muted)}
+.st.b{border-color:var(--warn)}.st.c{border-color:var(--ok)}.st.a{border-color:var(--navy)}
+.who{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.who div{border-top:3px solid var(--line);padding-top:8px;min-width:0}.who b{display:block;font-size:17px}.who span{color:var(--muted);font-size:14px}
+@media (max-width:760px){.flow{grid-template-columns:1fr;gap:26px}.st:not(:last-child)::after{right:auto;left:50%;top:auto;bottom:-20px;transform:translateX(-50%) rotate(135deg)}.who{grid-template-columns:1fr}}
+</style></head><body><div class="w">
+<a class="back" href="../">‹ All forms</a>
+<h1>About this app</h1><p class="sub">How the inspection forms are built and how they reach a tablet or phone.</p>
+
+<div class="c big"><h2>In plain terms</h2>
+<p style="margin:0">The inspection forms are ordinary web pages that Claude, an AI assistant, writes at the Site Admin's direction. The Site Admin tests every change and approves it before it goes live. The finished pages are stored on GitHub, a free service that keeps every version and publishes the latest one at a web address. Each technician opens that address once on a tablet or phone and the forms are saved on the device, so they keep working with no signal in the yard. Inspections and photos stay on that device and leave only as the PDF report or email the technician sends. When the Site Admin approves a new version, devices pick it up the next time they open the app online. Every form shows its revision number and date at the bottom, so anyone can see which version they have.</p></div>
+
+<div class="c"><h2>The path of one change</h2>
+<ol class="flow">
+<li class="st a"><span class="t">1 · Site Admin and Claude</span><h3>Ask and build</h3><p>The Site Admin describes what the floor needs. Claude writes or edits the form and tests it before showing it.</p></li>
+<li class="st b"><span class="t">2 · Site Admin</span><h3>Test and approve</h3><p>The change is tried on a real tablet. Nothing goes live until the Site Admin approves it.</p></li>
+<li class="st a"><span class="t">3 · GitHub</span><h3>Store and publish</h3><p>GitHub keeps every version, so a bad change can be rolled back. It also hosts the live web address.</p></li>
+<li class="st c"><span class="t">4 · Tablets and phones</span><h3>Use in the shop</h3><p>Technicians open the address, and the forms run on the device, online or off. Reports leave as PDF or email.</p></li>
+</ol></div>
+
+<div class="c"><h2>Who does what</h2>
+<div class="who">
+<div><b>Site Admin</b><span>Decides what the app does, tests it, and approves every release.</span></div>
+<div><b>Claude</b><span>Writes and tests the code. It does not publish anything without the Site Admin's approval.</span></div>
+<div><b>GitHub</b><span>Stores the files and their history and serves them to the devices.</span></div>
+</div></div>
+
+<div class="c g"><h2>What it is not</h2>
+<p style="margin:0">There is no company server or database behind the app. Inspection records are not uploaded anywhere by the app. They sit on the technician's device until a report is sent.</p></div>
+
+<footer>Designed &amp; developed by Ravi Ramsundar · Rev 46 · 11/02/2026 2:08 PM MST</footer>
+</div></body></html>
