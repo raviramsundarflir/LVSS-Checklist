@@ -13635,7 +13635,7 @@ async function scanInto(o,c){closeModal();const r=S.rec,bits=[c.s.length+' seria
  if(c.vin)setTv(r,'vin',c.vin);if(c.pl)setTv(r,'plate',c.pl);if(c.kl)setTv(r,'kilo',c.kl);if(Object.keys(c.i).length)r.prev=c.i;r.qcFrom=c.from;
  const used=new Set();c.s.forEach(p=>{const nm=p[0],val=p[1];const g=r.gear.find(x=>!used.has(x.id)&&!x.tk&&gKey(x.t)===gKey(nm));if(g){g.s=val;used.add(g.id);}else{const x={id:'eq'+uid(),t:nm||'Other device',s:val,ph:[],na:false,custom:true};r.gear.push(x);used.add(x.id);}});
  r.moreOpen=true;markDirty();await save();render();}
-function scanLastHtml(){return '<button type="button" data-act="scanlast" style="width:100%;margin-bottom:10px">\ud83d\udcf7 Scan last visit\u2019s QR (returning truck)</button>';}
+function scanLastHtml(){return '<button type="button" data-act="scanlast" style="width:100%;margin-bottom:12px;border:3px solid #1b8a3a;background:#e8f6ec;color:#14602a;font-weight:700;border-radius:10px;box-shadow:0 0 0 3px rgba(27,138,58,.18)">\ud83d\udcf7 Scan last visit\u2019s QR (returning truck)</button>';}
 /* info page: core data first, then what the customer reports at the site */
 function infoHtml(){const r=S.rec;
  return `<div class="card" id="infoRep">${infoRepHtml()}</div>
