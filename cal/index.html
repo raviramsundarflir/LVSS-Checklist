@@ -13135,7 +13135,7 @@ var ALIAS={'starlink antenna':'starlink','cisco switch (driver side)':'cisco swi
 var REV=[['v0s','Server Image (created date)'],['v0c','Client Image (created date)'],['v1','PMU Version'],['v2','PCM Version'],['v3','HMI Version'],['v4','PSR Version'],['v5','Rim 1 Version'],['v6','Rim 2 Version'],['v7','Vehicle Mileage'],['v8','Engine Hours'],['v9','Idle Hours']];
 var REVK={};REV.forEach(function(f){REVK[f[0]]=f[1];});
 var TRACK_REV=['v0s','v0c','v1','v2','v3','v4','v5','v6']; /* mileage and hours change every visit: carried, never questioned */
-var FORM={QC:'LVSS Intake (short form)',IN:'LVSS Intake (long form)',PR:'Post-Repair',ATP:'ATP',FLR:'Floor Test',CAL:'Calibration',FIN:'Final Inspection'};
+var FORM={QC:'LVSS Intake (short form)',IN:'LVSS Intake (long form)',PR:'Post-Repair',ATP:'ATP',FLR:'Floor Test',CAL:'Calibration',FIN:'Final Inspection',QTE:'Z2 Quote'};
 var KIND={c:'Correction',r:'Device replaced',s:'Swapped between platforms',p:'Removed - new serial to follow',u:'Updated',x:'Actually changed',o:'Other','':'Reason not given yet'};
 var WK={c:'Customer reported',f:'Failed',b:'Not tested'};
 function T(v){return String(v==null?'':v).trim();}
@@ -13152,7 +13152,7 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){retur
 function sq(v){return T(v).toUpperCase().replace(/[\s\-_]+/g,'');}
 function same(a,b){a=sq(a);b=sq(b);if(a===b)return true;var m=/^([A-Z]+)(\d+)$/,x=m.exec(a),y=m.exec(b);
  if(x&&/^\d+$/.test(b))return +x[2]===+b;if(y&&/^\d+$/.test(a))return +y[2]===+a;return false;}
-function formOf(o){if(!o||typeof o!=='object')return '';if(o.a==='LVSS')return o.qc?'QC':o.it?'IN':'PR';return {ATP:'ATP',FLR:'FLR',CAL:'CAL',FIN:'FIN'}[o.a]||'';}
+function formOf(o){if(!o||typeof o!=='object')return '';if(o.a==='LVSS')return o.qc?'QC':o.it?'IN':'PR';return {ATP:'ATP',FLR:'FLR',CAL:'CAL',FIN:'FIN',QTE:'QTE'}[o.a]||'';}
 var HK={cameraSerial:'camera',radarSerial:'radar',lcuSerial:'laptop control unit',radarPtSerial:'pan tilt',starlinkSerial:'starlink',ciscoEnclSerial:'cisco switch',ciscoModSerial:'cisco wifi module',pimSerial:'cisco pim / lte module',serverSerial:'server',ciscoRtrSerial:'cisco receiver',smuSerial:'hmi/smu',gpsSerial:'trimble gps',gearSerial:'gearbox'};
 var SWK=[null,'camera','radar','laptop control unit','pan tilt','starlink','cisco switch','cisco wifi module','cisco pim / lte module','server','cisco receiver','hmi/smu','trimble gps','gearbox'];
 var RK=['v0s','v0c','v1','v2','v3','v4','v5','v6','v7','v8','v9'];
@@ -13183,6 +13183,7 @@ function dec(o){
   Object.keys(o.rv2||{}).forEach(function(k){var a=o.rv2[k];if(a&&!a[1])R_(FR[k],a[0]);});}
  else if(o.a==='CAL'){C.sn=T(o.sn);var u=o.un||{};S_('camera',u.cam);S_('radar',u.rad);S_('pan tilt',u.pt);var sv=o.sv||{};R_('v1',sv.pmu);R_('v3',sv.hmi);}
  else if(o.a==='FIN'){C.sn=T(o.sn);C.osn=T(o.ol);var F=o.f||{};C.vin=T(F.vin);C.pl=T(F.plate);C.kl=T(F.kilo);Object.keys(NK).forEach(function(k){S_(NK[k],F[k]);});}
+ else if(o.a==='QTE'){C.sn=T(o.sn);}
  /* changes recorded the old way (Floor Test / Calibration before this update) */
  if(!o.cx)(o.cg||[]).forEach(function(a){var id=OLDCG[a[0]];if(id&&(T(a[1])||T(a[2])))C.x.push([id,T(a[1]),T(a[2]),'',f,C.d,T(a[4])]);});
  var cx=o.cx;
@@ -13627,7 +13628,7 @@ async function setting(k,v){if(arguments.length>1){S.settings[k]=v;await DB.put(
 /* ---- template (admin edits are stored as an override) ---- */
 function mergeTpl(base,ov){if(!ov||typeof ov!=='object')return clone(base);const out=clone(base);Object.keys(ov).forEach(k=>{if(ov[k]&&typeof ov[k]==='object'&&!Array.isArray(ov[k])&&out[k]&&typeof out[k]==='object'&&!Array.isArray(out[k]))out[k]=mergeTpl(out[k],ov[k]);else out[k]=clone(ov[k]);});return out;}
 /* ---- records ---- */
-const recName=r=>{const v=snShow(r.hdr.sn)||'';const b=/\d/.test(v)?v:r.hdr.was?((v.trim()?v.trim()+' ____':'New S/N ____')+' (was '+r.hdr.was+')'):(v||'(no serial)');return b+((r.n||1)>1?'-'+r.n:'');};
+const recName=r=>{const v=snShow(r.hdr.sn)||'';const b=/\d/.test(v)?v:r.hdr.was?((v.trim()?v.trim()+' ____':'New S/N ____')+' (previous S/N '+r.hdr.was+')'):(v||'(no serial)');return b+((r.n||1)>1?'-'+r.n:'');};
 function newRec(sn,tech,carry){const r={id:'c-'+uid(),n:1,created:Date.now(),updated:Date.now(),archived:false,step:0,
  hdr:{sn:snShow(sn),date:today(),tech:tech||''},setup:{v:{},cf:{}},un:{},chg:[],carry:{},roll:{},pitch:{},cam:{live:'',val:''},rad:{val:''},done:{notes:'',name:'',date:'',sig:'',ov:'',complete:false}};
  if(carry)Object.assign(r,carry);return r;}
@@ -13666,7 +13667,7 @@ function techRemember(n){n=(n||'').trim();if(!n)return;const L=[n,...techNames()
 function techPick(i){const n=techNames()[i],el=$('#n-te');if(n&&el){el.value=n;S.techDraft=n;}}
 /* shared: ask at the start of each inspection whether the tech has a good connection; offline readiness check */
 (function(){
-var FORMS=[['intake','LVSS Intake (long form)'],['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch'],['qc','LVSS Intake (short form)']];
+var FORMS=[['intake','LVSS Intake (long form)'],['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch'],['qc','LVSS Intake (short form)'],['quote','Z2 Quote']];
 var ME=(location.pathname.split('/').filter(Boolean).slice(-1)[0]||'').replace(/\.html?$/,'');
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
 if(!ls('off:since'))ls('off:since',String(Date.now()));
@@ -13868,7 +13869,7 @@ function calPdf(r){const d=pdfNew();let y;const ens=n=>{if(y+n>BOT){d.addPage();
  const cell=(x,yy,w,hh,lab,val)=>{d.setDrawColor(170);d.setLineWidth(.6);d.rect(x,yy,w,hh);d.setFont('helvetica','normal');d.setFontSize(6.8);d.setTextColor(110);d.text(cl(lab),x+4,yy+8);d.setFontSize(9.5);d.setTextColor(0);d.text(wrap(d,val,w-8),x+4,yy+19);};
  const bar=t=>{y+=8;ens(40);hx(d,'setFillColor','#5b8dd6');d.rect(MX,y,CW,16,'F');d.setFont('helvetica','bold');d.setFontSize(10.5);d.setTextColor(255);d.text(cl(t),MX+6,y+11.5);y+=16;};
  const row2=(a,b,bold)=>{d.setFont('helvetica',bold?'bold':'normal');d.setFontSize(9.5);const l1=wrap(d,a,330),l2=wrap(d,b,190),hh=Math.max(18,6+Math.max(l1.length,l2.length)*11);ens(hh);d.setDrawColor(170);d.setLineWidth(.6);d.rect(MX,y,CW,hh);d.line(MX+340,y,MX+340,y+hh);d.setTextColor(0);d.text(l1,MX+6,y+12);d.text(l2,MX+346,y+12);y+=hh;};
- const w3=CW/3;[['Truck Serial Number',snShow(r.hdr.sn)+(isOldSn(r)?' (old S/N)':'')],['Date',fmtD(r.hdr.date)],['Technician',r.hdr.tech]].forEach((p,j)=>cell(MX+j*w3,y,w3,28,p[0],p[1]||''));y+=28;y=tkIdPdf(d,r,MX,CW,y);y=unitsPdf(d,r,y);
+ const w3=CW/3;[['Truck Serial Number',snShow(r.hdr.sn)+(isOldSn(r)?' (old S/N)':'')+(r.hdr.was&&/\d/.test(r.hdr.sn||'')?'  (previous S/N '+r.hdr.was+')':'')],['Date',fmtD(r.hdr.date)],['Technician',r.hdr.tech]].forEach((p,j)=>cell(MX+j*w3,y,w3,28,p[0],p[1]||''));y+=28;y=tkIdPdf(d,r,MX,CW,y);y=unitsPdf(d,r,y);
  bar('1  Setup - software versions');row2('Component  (minimum required)','Installed version',true);
  TPL.versions.forEach(v=>{const s=verState(r,v),inst=String(r.setup.v[v.k]||'').trim();row2(v.label+'  (min. '+v.min+')',(inst||'Not entered')+(s==='confirmed'?'  (below minimum - confirmed)':s==='low'?'  (BELOW MINIMUM)':''));});
  const sec=(num,key)=>{const Tk=TPL[key],dd=r[key]||{};bar(num+'  '+Tk.title);row2('Reading','Value (deg)',true);
@@ -14057,7 +14058,7 @@ document.addEventListener('click',e=>{const t=e.target;if(t&&t.id==='hdX'){hdSto
 function curTpl(){return TPL}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/02/2026',site:'48'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/03/2026',site:'49'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14180,7 +14181,7 @@ document.addEventListener('focusout',e=>{histCommit(e.target);setTimeout(()=>{if
 document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='3883e6ba45';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='233eebc51f';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';

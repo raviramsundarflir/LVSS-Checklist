@@ -86,7 +86,7 @@ code{font:13px var(--mono);background:var(--navy-soft);color:var(--navy);padding
 </header>
 <nav role="tablist" id="tabs"></nav>
 <div id="view"></div>
-<footer style="text-align:center;font-size:11px;color:var(--muted);opacity:.75;padding:18px 10px calc(16px + env(safe-area-inset-bottom))">Designed &amp; developed by Ravi Ramsundar · Rev 48 · 11/02/2026 2:31 PM MST</footer>
+<footer style="text-align:center;font-size:11px;color:var(--muted);opacity:.75;padding:18px 10px calc(16px + env(safe-area-inset-bottom))">Designed &amp; developed by Ravi Ramsundar · Rev 49 · 11/03/2026 12:19 PM MST</footer>
 </div>
 
 <script>
@@ -100,7 +100,10 @@ repair:{label:'Repair',blurb:'Customer unit comes in, issues are identified and 
   [A,'Intake PDF','Folder front page and bin tag page lead the PDF. Photo zip downloads with it.'],
   [O,'Print and file','Front page in the folder sleeve. Bin tag on the customer property bin.']]},
  {n:'Repair',s:[
-  [A,'Post-Repair: identify issues','Scan the Intake QR. Core data and the customer-reported issues load. The tech adds anything else found.'],
+  [D,'Non-warranty items?','Any item marked non-warranty is quoted first. On a Z2 account every item counts unless it is marked warranty.',['Yes','Z2 Quote first'],['No','Straight to Post-Repair']],
+  [A,'Z2 Quote','Scan the Intake QR. Each non-warranty item becomes an issue with its parts, quantities and estimated labor hours. No prices – pricing is added in SAP. The quote PDF goes to TSC@teledyne.com.'],
+  [O,'Customer approves or declines','The quote is priced in SAP and sent to the customer.'],
+  [A,'Post-Repair: identify issues','Scan the Intake QR, or the Z2 Quote QR if there was a quote: each quoted issue is marked Approved or Declined, and a declined issue is reported as not repaired. Core data and the customer-reported issues load. The tech adds anything else found.'],
   [O,'Correct the issues','The tech repairs each identified issue.'],
   [A,'Mark issues corrected','Back in Post-Repair, each corrected issue is marked repaired, with notes, parts and photos.'],
   [D,'TFU changed?','If the TFU was replaced during the repair, it must be calibrated. Calibration is for the TFU only, not the radar or PTU.',['Yes','Run TFU & Radar Calibration'],['No','Go to the report']]]},
@@ -117,7 +120,7 @@ upfit:{label:'Upgrade / upfit',blurb:'Same trip through the shop, but parts are 
  {n:'Disassembly and build-up',s:[
   [O,'Vehicle prep','Engine bay setup, undercarriage, cable runs, skid runners in the bed, cab preparation. Runs while the skid is prepped. First line on the folder front page.'],
   [A,'Skid prep','Reconfigure the enclosures, fit the skid adapters, bolt the network enclosure to the skid. Scan the Intake QR. New serials are entered as parts go in. Cameleon Advanced tab checked.'],
-  [A,'Floor Test','Carries RMA and the new serials forward. Photo zip downloads with the PDF. Whether upfit keeps this step is still to be confirmed.'],
+  [A,'Floor Test','From here on the truck goes by its new eMSC-L / M2S2 serial; the LVSS serial is shown as the previous serial. Carries RMA and the new serials forward. Photo zip downloads with the PDF. Whether upfit keeps this step is still to be confirmed.'],
   [A,'Jake\u2019s Final (ad hoc test)','Final check against the upgraded configuration, before the ATP. Also still to be confirmed for upfit.'],
   [D,'TFU changed?','If the TFU was replaced or upgraded, run the calibration form. It is for the TFU only, not the radar or PTU.',['Yes','Calibration, then ATP'],['No','Straight to ATP']]]},
  {n:'Accept',s:[

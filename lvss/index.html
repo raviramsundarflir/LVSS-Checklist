@@ -13121,7 +13121,7 @@ var ALIAS={'starlink antenna':'starlink','cisco switch (driver side)':'cisco swi
 var REV=[['v0s','Server Image (created date)'],['v0c','Client Image (created date)'],['v1','PMU Version'],['v2','PCM Version'],['v3','HMI Version'],['v4','PSR Version'],['v5','Rim 1 Version'],['v6','Rim 2 Version'],['v7','Vehicle Mileage'],['v8','Engine Hours'],['v9','Idle Hours']];
 var REVK={};REV.forEach(function(f){REVK[f[0]]=f[1];});
 var TRACK_REV=['v0s','v0c','v1','v2','v3','v4','v5','v6']; /* mileage and hours change every visit: carried, never questioned */
-var FORM={QC:'LVSS Intake (short form)',IN:'LVSS Intake (long form)',PR:'Post-Repair',ATP:'ATP',FLR:'Floor Test',CAL:'Calibration',FIN:'Final Inspection'};
+var FORM={QC:'LVSS Intake (short form)',IN:'LVSS Intake (long form)',PR:'Post-Repair',ATP:'ATP',FLR:'Floor Test',CAL:'Calibration',FIN:'Final Inspection',QTE:'Z2 Quote'};
 var KIND={c:'Correction',r:'Device replaced',s:'Swapped between platforms',p:'Removed - new serial to follow',u:'Updated',x:'Actually changed',o:'Other','':'Reason not given yet'};
 var WK={c:'Customer reported',f:'Failed',b:'Not tested'};
 function T(v){return String(v==null?'':v).trim();}
@@ -13138,7 +13138,7 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){retur
 function sq(v){return T(v).toUpperCase().replace(/[\s\-_]+/g,'');}
 function same(a,b){a=sq(a);b=sq(b);if(a===b)return true;var m=/^([A-Z]+)(\d+)$/,x=m.exec(a),y=m.exec(b);
  if(x&&/^\d+$/.test(b))return +x[2]===+b;if(y&&/^\d+$/.test(a))return +y[2]===+a;return false;}
-function formOf(o){if(!o||typeof o!=='object')return '';if(o.a==='LVSS')return o.qc?'QC':o.it?'IN':'PR';return {ATP:'ATP',FLR:'FLR',CAL:'CAL',FIN:'FIN'}[o.a]||'';}
+function formOf(o){if(!o||typeof o!=='object')return '';if(o.a==='LVSS')return o.qc?'QC':o.it?'IN':'PR';return {ATP:'ATP',FLR:'FLR',CAL:'CAL',FIN:'FIN',QTE:'QTE'}[o.a]||'';}
 var HK={cameraSerial:'camera',radarSerial:'radar',lcuSerial:'laptop control unit',radarPtSerial:'pan tilt',starlinkSerial:'starlink',ciscoEnclSerial:'cisco switch',ciscoModSerial:'cisco wifi module',pimSerial:'cisco pim / lte module',serverSerial:'server',ciscoRtrSerial:'cisco receiver',smuSerial:'hmi/smu',gpsSerial:'trimble gps',gearSerial:'gearbox'};
 var SWK=[null,'camera','radar','laptop control unit','pan tilt','starlink','cisco switch','cisco wifi module','cisco pim / lte module','server','cisco receiver','hmi/smu','trimble gps','gearbox'];
 var RK=['v0s','v0c','v1','v2','v3','v4','v5','v6','v7','v8','v9'];
@@ -13169,6 +13169,7 @@ function dec(o){
   Object.keys(o.rv2||{}).forEach(function(k){var a=o.rv2[k];if(a&&!a[1])R_(FR[k],a[0]);});}
  else if(o.a==='CAL'){C.sn=T(o.sn);var u=o.un||{};S_('camera',u.cam);S_('radar',u.rad);S_('pan tilt',u.pt);var sv=o.sv||{};R_('v1',sv.pmu);R_('v3',sv.hmi);}
  else if(o.a==='FIN'){C.sn=T(o.sn);C.osn=T(o.ol);var F=o.f||{};C.vin=T(F.vin);C.pl=T(F.plate);C.kl=T(F.kilo);Object.keys(NK).forEach(function(k){S_(NK[k],F[k]);});}
+ else if(o.a==='QTE'){C.sn=T(o.sn);}
  /* changes recorded the old way (Floor Test / Calibration before this update) */
  if(!o.cx)(o.cg||[]).forEach(function(a){var id=OLDCG[a[0]];if(id&&(T(a[1])||T(a[2])))C.x.push([id,T(a[1]),T(a[2]),'',f,C.d,T(a[4])]);});
  var cx=o.cx;
@@ -14009,7 +14010,7 @@ function blkCard(x,inl){const r=S.rec,d=r.items[x.id],by=(d.by||[]).map(id=>({id
  <div class="row" style="margin-top:8px"><button data-act="pblk" data-id="${x.id}" style="flex:1;border-color:#b58900;color:#7a5c00;font-weight:700">✎ Change blocker</button></div><div class="row" style="margin-top:8px"><button data-act="blkpass" data-id="${x.id}" style="flex:1;border-color:#1b8a3a;color:#1b8a3a;font-weight:700">✓ Retested – it passes</button><button data-act="blkfail" data-id="${x.id}" style="flex:1;border-color:#c62828;color:#c62828;font-weight:700">✗ Retested – it fails</button></div><p class="muted" style="margin:6px 0 0;font-size:13px">Retest it on the unit once the blocker is fixed, then choose the result. A failed retest moves it to the punch list for a concern level and coverage.</p></div>`;}
 function finalCardHtml(){const r=S.rec,st=stats(r),P0=punch(r),kr=x=>x.sec.kind==='rep'?0:x.sec.kind==='new'?1:2,P=[...P0].sort((a,b)=>kr(a)-kr(b));
  const noted=flat(r).filter(x=>{const q=r.items[x.id]||{};return q.st!=='fail'&&q.st!=='blk'&&(q.note||'').trim()});
- const stt=x=>{const q=r.items[x.id];return (q.na?'N/A':q.courtesy?'Courtesy repair performed':q.rep?'Repaired':q.war==='nw'?'Open – to be quoted':'Open')+(q.adv?' · Advised':'')+(q.tbd?' · TBD':'')};
+ const stt=x=>{const q=r.items[x.id];return (q.qz&&q.qz.d==='d'&&!q.rep?'Declined by customer':q.na?'N/A':q.courtesy?'Courtesy repair performed':q.rep?'Repaired':q.war==='nw'?'Open – to be quoted':'Open')+(q.adv?' · Advised':'')+(q.tbd?' · TBD':'')};
  const l=P.map(x=>{const q=r.items[x.id];const miss=!dispo(q);return `<div class="row" style="padding:6px 0;border-bottom:1px solid var(--line);${miss?'background:#fff3cd;border-left:4px solid #e0a800;padding-left:6px':''}"><b>#${x.label}</b>${lvlChip(q.lvl,q.rep)}<span style="flex:1;min-width:180px">${esc(x.t)}${q.note?`<br><span class="muted">${esc(q.note)}</span>`:''}</span><span class="tag">${miss?'Select Repaired, Advised or TBD':stt(x)}</span><button class="${q.adv?'pri':''}" data-act="adv" data-id="${x.id}" data-fin="1" style="min-height:38px;padding:4px 12px">${q.adv?'✓ ':''}Advised</button><button class="${q.rep?'pri':''}" data-act="rep" data-id="${x.id}" data-fin="1" style="min-height:38px;padding:4px 12px">${q.rep?'✓ ':''}Repaired</button><button class="${q.tbd?'pri':''}" data-act="tbd" data-id="${x.id}" data-fin="1" style="min-height:38px;padding:4px 12px">${q.tbd?'✓ ':''}TBD</button>${q.fromIntake?`<button class="${q.na?'pri':''}" data-act="na" data-id="${x.id}" data-fin="1" style="min-height:38px;padding:4px 12px">${q.na?'✓ ':''}N/A</button>`:''}</div>`}).join('')
   +noted.map(x=>`<div class="row" style="padding:6px 0;border-bottom:1px solid var(--line)"><b>#${x.label}</b><span class="tag">Note</span><span style="flex:1;min-width:180px">${esc(x.t)}<br><span class="muted">${esc(r.items[x.id].note)}</span></span></div>`).join('');
  return `<div class="card ${S.need==='final'?'target':''}" id="finalQ" style="border:2px solid var(--blue);margin-top:14px">${S.need==='final'?`<div class="garrow">${GARW}<span>${st.undis?'Mark each highlighted item Repaired, Advised or TBD':st.bl?'Answer the blank items above':'Answer this to continue'}</span></div>`:''}<h2>Final question: did the ${PLN(r)} pass the post-repair check?</h2><p class="muted">Review the failed and noted items below with the customer and mark each one <b>Advised</b> or <b>Repaired</b> as appropriate, then decide. Your answer is the tech's call – it isn't set automatically.</p>
@@ -14047,7 +14048,7 @@ function punchHtml(){const r=S.rec,P=punch(r),st=stats(r),IC=issueCounts(r);if(S
 const qrVerFields=r=>((r.tpl.versionInfo||{}).fields||[]).filter(f=>!f.noqr);
 function wlList(r,nn,tn,mx){tn=tn||140;const T=(x,n)=>n?cl(x||'').trim().slice(0,n):'';const out=[];
  /* each issue carries what this post-repair did about it: repaired = fixed; advised / TBD = still open */
- const ST=d=>d.rep?['fx','Repaired']:d.adv?['op','Advised']:d.tbd?['op','TBD']:['',''];
+ const ST=d=>d.rep?['fx','Repaired']:(d.qz&&d.qz.d==='d')?['op','Declined by customer (Z2 quote)']:d.adv?['op','Advised']:d.tbd?['op','TBD']:['',''];
  flat(r).forEach(x=>{const d=r.items[x.id]||{};const isRep=x.sec.kind==='rep',isNew=x.sec.kind==='new',s=ST(d),z=[s[0],s[1],s[0]?'PR':''];
   if(isRep){if(!((d.st&&d.st!=='na')||((x.t||'').trim()&&!d.st&&x.extra)))return;out.push(['c',T(x.t,tn),'',T([d.note,...kidsOf(r,x).map(y=>((!isIss(y.sec)&&(r.items[y.id]||{}).st==='fail')?'Confirmed during inspection: ':'Related: ')+kidTxt(r,y))].filter(q=>String(q||'').trim()).join(' | '),nn),(grpLvl(r,x)||d.lvl||''),'PR',...z]);return;}
   if(isNew){if(repOf(r,x))return;if(!((d.st&&d.st!=='na')||((x.t||'').trim()&&!d.st&&x.extra)))return;out.push(['f',T(x.t,tn),d.war==='w'?'w':d.war==='nw'?'n':'',T([d.note,...kidsOf(r,x).map(y=>'Related: '+kidTxt(r,y))].filter(z=>String(z||'').trim()).join(' | '),nn),(grpLvl(r,x)||d.lvl||''),'PR',...z]);return;}
@@ -14096,10 +14097,12 @@ function emailText(r){const all=flat(r);
   else if(q.st!=='fail')act='Repaired - verified resolved during the post-repair inspection.';
   else{cov=q.war==='w'?'Warranty':q.war==='nw'?(q.courtesy?'Non-warranty (courtesy)':'Non-warranty'):'Not set';
    if(q.na&&!q.rep)act='N/A - not applicable to this unit.';else if(q.rep)act=(q.courtesy?'Courtesy repair performed':'Repaired')+(one(q.res)?': '+e(one(q.res)):'.');
+   else if(q.qz&&q.qz.d==='d')act='Declined by customer (Z2 quote) - not repaired.'+(one(q.quote)?' '+e(one(q.quote)):'');
+   else if(q.qz&&q.qz.d==='a')act='Approved by customer (Z2 quote) - repair pending'+(one(q.quote)?': '+e(one(q.quote)):'.');
    else if(q.war==='nw')act='Repair to be quoted'+(one(q.quote)?': '+e(one(q.quote)):'.');
    else act='Repair pending'+(one(q.res)?': '+e(one(q.res)):'.');
    parts=(q.parts||[]).filter(p=>p.pn||p.desc).map(p=>(p.pn||'')+(p.desc?' ('+p.desc+')':'')+(p.qty?' x'+p.qty:'')).join('; ');
-   if(q.adv)act+=' Advised.';if(q.tbd&&!q.rep)act+=' Repair status TBD.';}
+   if(q.adv&&!(q.qz&&q.qz.d==='d'))act+=' Advised.';if(q.tbd&&!q.rep)act+=' Repair status TBD.';}
   return {issue,cov,act,parts};};
  const isRes=x=>{const q=r.items[x.id]||{};return q.st==='fail'?!!q.rep:q.st!=='blk';};
  const eff=x=>(r.items[x.id]||{}).rdate||r.hdr.repDate||'';const dates=[...new Set(R.map(eff))].sort();
@@ -14299,7 +14302,7 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
   if(!g[1].length){d.setFont('helvetica','italic');d.setFontSize(9);d.setTextColor(60);d.text(g[4],MX+4,y+14);y+=22;}
   g[1].forEach(x=>{const q=r.items[x.id]||{};const isI=gi<2,fl=q.st==='fail';d.setFontSize(8.6);d.setFont('helvetica','bold');const dl=wrap(d,x.t||'(no description)',192);d.setFont('helvetica','normal');
    const sub=cl(x.kidOf?(grpRel(r,x,x.kidOf)+'  -  '+(isIss(x.sec)?'Found by the tech':secLabel(r,x.si))):isI?[(x.sec.kind==='rep'&&(q.rdate||r.hdr.repDate))?'Reported '+fmtD(q.rdate||r.hdr.repDate):'',fl?(q.war==='w'?'Warranty':q.war==='nw'?(q.courtesy?'Non-warranty (courtesy repair)':'Non-warranty - to be quoted'):'WARRANTY STATUS NOT SET'):'',(q.ph&&q.ph.length)?`${q.ph.length} photo(s) - see appendix`:''].filter(Boolean).join('  -  '):`${secLabel(r,x.si)}${q.war?'':'  -  WARRANTY STATUS NOT SET'}`);const nk0=x.kidOf?0:kidsOf(r,x).length,sub2=sub+(nk0?(sub?'  -  ':'')+nk0+' related finding'+(nk0===1?'':'s')+' below':'');const sl=sub2?wrap(d,sub2,192):[];const nl=[...(q.note?wrap(d,(fl?'Issue: ':'Note: ')+q.note,192):[])];
-   const useQ=gi===3||(isI&&q.war==='nw'&&!q.courtesy);const rt=q.st==='blk'?blkTxt(r,q):((q.courtesy?'Courtesy repair performed. ':'')+((useQ?q.quote:q.res)||''))||'';const rl=wrap(d,(x.kidOf&&q.st!=='blk'&&!String(rt).trim())?'Recorded with #'+x.kidOf.label:rt,134);
+   const useQ=gi===3||(isI&&q.war==='nw'&&!q.courtesy);const rt=q.st==='blk'?blkTxt(r,q):((q.qz&&!q.rep?(q.qz.d==='d'?'Declined by customer (Z2 quote) - not repaired. ':q.qz.d==='a'?'Approved by customer (Z2 quote). ':'Z2 quote - customer decision not recorded. '):'')+(q.courtesy?'Courtesy repair performed. ':'')+(((useQ||(q.qz&&!q.rep))?q.quote:q.res)||''))||'';const rl=wrap(d,(x.kidOf&&q.st!=='blk'&&!String(rt).trim())?'Recorded with #'+x.kidOf.label:rt,134);
    const hh=Math.max(q.tbd?48:36,8+dl.length*10.5+sl.length*9+nl.length*10+4,8+rl.length*10.5);if(y+hh>BOT){d.addPage();y=TOP;ph();}
    if(fl&&q.lvl==='dno'){hx(d,'setFillColor','#ffeaea');d.rect(MX,y,CW,hh,'F');}
    if(q.st==='blk'){hx(d,'setFillColor','#fff8e0');d.rect(MX,y,CW,hh,'F');}
@@ -15107,7 +15110,7 @@ function techRemember(n){n=(n||'').trim();if(!n)return;const L=[n,...techNames()
 function techPick(i){const n=techNames()[i],el=$('#n-te');if(n&&el){el.value=n;S.techDraft=n;}}
 /* shared: ask at the start of each inspection whether the tech has a good connection; offline readiness check */
 (function(){
-var FORMS=[['intake','LVSS Intake (long form)'],['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch'],['qc','LVSS Intake (short form)']];
+var FORMS=[['intake','LVSS Intake (long form)'],['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch'],['qc','LVSS Intake (short form)'],['quote','Z2 Quote']];
 var ME=(location.pathname.split('/').filter(Boolean).slice(-1)[0]||'').replace(/\.html?$/,'');
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
 if(!ls('off:since'))ls('off:since',String(Date.now()));
@@ -15284,7 +15287,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/02/2026',site:'48'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/03/2026',site:'49'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -15351,7 +15354,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='5a239bbaa0';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='54ed297d27';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -15855,4 +15858,39 @@ if(m){var id=decodeURIComponent(m[1]),tries=0;
   if(p.y)setTimeout(function(){window.scrollTo(0,p.y);},400);track();};
  if(document.readyState==='complete')setTimeout(go,300);else window.addEventListener('load',function(){setTimeout(go,300);});}
 })();
-</script></body></html>
+</script><script>/* ===== Z2 quote in Post-Repair (Ravi, 2026-11-03) =====
+   Scanning a Z2 Quote QR code starts a Post-Repair with the core data filled in and each quoted issue added as a
+   non-warranty issue (its quoted parts and labor in the quote notes). At the top of the inspection the tech marks
+   each quoted issue Approved or Declined by the customer. A declined issue counts as Advised on the punch list and
+   shows on the report as "Declined by customer (Z2 quote) - not repaired". */
+(function(){
+function T(v){return String(v==null?'':v).trim();}
+function qTxt(a,dt){var ps=(a[3]||[]).map(function(p){return [T(p[0]),T(p[1])].filter(Boolean).join(' ')+(T(p[2])?' x'+T(p[2]):'');}).filter(Boolean);
+ return 'Z2 quote'+(dt?' '+Core.fd(dt):'')+': '+(ps.length?ps.join('; '):'no parts')+(T(a[2])?'; labor '+T(a[2])+' h':'')+'.';}
+function quoted(a){return !(a.length>6&&!a[6]);}
+async function start(o){scanStop();closeModal();var sn=snShow(o.sn||'',null),A=Array.isArray(o.q)?o.q:[],L=A.filter(quoted),X=A.length-L.length;
+ if(o.k==='P'&&!await ask('This is a PAUSED Z2 quote code - the quote may not be finished. Start a Post-Repair from it anyway?',{title:'Paused quote',ok:'Start anyway',no:'Cancel'}))return;
+ if(!await ask('Start a Post-Repair inspection for '+(sn||'this platform')+' from the Z2 quote'+(o.d?' dated '+Core.fd(o.d):'')+'?\n\nThe core data is filled in and the '+L.length+' quoted issue'+(L.length===1?' is':'s are')+' added as issues'+(X?', plus the '+X+' Intake item'+(X===1?'':'s')+' that '+(X===1?'was':'were')+' not on the quote (e.g. warranty)':'')+'. Mark each quoted issue Approved or Declined by the customer at the top of the inspection.',{title:'Start from Z2 quote?',ok:'Start inspection'}))return;
+ var t=snType(sn);S.rec=newRec({sn:sn,tech:'',ptype:ptOfCode(t||'L')});Object.assign(S.rec.hdr,{rma:o.rma||'',so:o.so||'',acct:o.ac||'',wbs:o.wb||(o.cx&&o.cx.wb)||''});
+ setTv(S.rec,'vin',o.vin);setTv(S.rec,'plate',o.pl);setTv(S.rec,'kilo',o.kl);
+ coreScan(S.rec,o,false);
+ var rs=repSecOf(S.rec),ns=S.rec.tpl.sections.find(function(z){return z.kind==='new';})||rs;
+ A.forEach(function(a,i){var sec=a[4]==='c'?rs:ns;if(!sec)return;var q=quoted(a),x={id:'x'+uid(),t:T(a[0])||(q?'(quoted issue)':'(no description)')};(S.rec.extra[sec.id]=S.rec.extra[sec.id]||[]).push(x);
+  var d=itm(x.id);d.st='fail';d.lvl=a[5]||'';d.note=(a[4]==='b'?'Not tested at intake. ':'')+T(a[1]);
+  if(q){d.war='nw';d.quote=qTxt(a,o.d);d.qz={d:'',i:i};}else{d.war=a[7]==='w'?'w':a[7]==='n'?'nw':'';d.fromIntake=true;}});
+ S.rec.qz={id:o.id||'',d:o.d||'',t:o.t||'',n:L.length,h:o.th||''};
+ try{if(typeof coreImported==='function')coreImported(S.rec,A.length);}catch(e){}
+ S.photos={};S.view='rec';S.open=-1;S.dirty=true;await save();render();}
+var _sd=window.scanDone;
+window.scanDone=async function(txt){var o=null;try{o=JSON.parse(txt);}catch(e){}if(o&&o.a==='QTE'){try{srChk(o);}catch(e){}return start(o);}return _sd.apply(this,arguments);};
+function card(r){var L=flat(r).filter(function(x){return (r.items[x.id]||{}).qz;});if(!L.length)return '';var n=L.filter(function(x){return !r.items[x.id].qz.d;}).length,Q=r.qz||{};
+ return '<div class="card" id="qzCard" style="border-left:6px solid #b35c00"><h3 style="margin-top:0">Z2 quote – customer decision</h3><p class="muted" style="margin-top:0">From the Z2 quote'+(Q.d?' dated '+esc(Core.fd(Q.d)):'')+(Q.t?' by '+esc(Q.t):'')+'. Mark each quoted issue Approved or Declined. A declined issue shows on the report as declined by the customer, not repaired.'+(n?' <b>'+n+' not answered yet.</b>':'')+'</p>'+
+  L.map(function(x){var q=r.items[x.id],v=q.qz.d;return '<div class="row" style="padding:8px 0;border-top:1px solid var(--line);align-items:center"><span style="flex:1 1 220px;min-width:0"><b>#'+esc(x.label)+'</b> '+esc(x.t)+'<br><span class="muted">'+esc(q.quote||'')+'</span></span><button type="button" data-qz="'+x.id+'" data-v="a" class="'+(v==='a'?'pri':'')+'" style="min-height:44px">'+(v==='a'?'✓ ':'')+'Approved</button><button type="button" data-qz="'+x.id+'" data-v="d" class="'+(v==='d'?'dng':'')+'" style="min-height:44px">'+(v==='d'?'✓ ':'')+'Declined</button></div>';}).join('')+'</div>';}
+function mount(){try{var old=document.getElementById('qzCard');if(old)old.remove();var r=S.rec;if(S.view!=='rec'||S.audit||!r)return;var h=card(r);if(!h)return;var w=document.querySelector('#app .wrap');if(w)w.insertAdjacentHTML('afterbegin',h);}catch(e){}}
+var _r=window.render;window.render=function(){var x=_r.apply(this,arguments);if(x&&x.then)x.then(mount);else mount();return x;};
+try{new MutationObserver(function(){if(!document.getElementById('qzCard'))mount();}).observe(document.getElementById('app'),{childList:true});}catch(e){}
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-qz]');if(!b)return;e.preventDefault();e.stopPropagation();var r=S.rec;if(!r)return;var q=r.items[b.getAttribute('data-qz')];if(!q||!q.qz)return;var v=b.getAttribute('data-v');
+ if(q.qz.d===v){q.qz.d='';if(q.qzAdv){q.adv=false;q.qzAdv=false;}}
+ else{q.qz.d=v;if(v==='d'){if(!q.adv){q.adv=true;q.qzAdv=true;}q.rep=false;}else if(q.qzAdv){q.adv=false;q.qzAdv=false;}}
+ markDirty();var y=window.scrollY;render();window.scrollTo(0,y);},true);
+})();</script></body></html>

@@ -13121,7 +13121,7 @@ var ALIAS={'starlink antenna':'starlink','cisco switch (driver side)':'cisco swi
 var REV=[['v0s','Server Image (created date)'],['v0c','Client Image (created date)'],['v1','PMU Version'],['v2','PCM Version'],['v3','HMI Version'],['v4','PSR Version'],['v5','Rim 1 Version'],['v6','Rim 2 Version'],['v7','Vehicle Mileage'],['v8','Engine Hours'],['v9','Idle Hours']];
 var REVK={};REV.forEach(function(f){REVK[f[0]]=f[1];});
 var TRACK_REV=['v0s','v0c','v1','v2','v3','v4','v5','v6']; /* mileage and hours change every visit: carried, never questioned */
-var FORM={QC:'LVSS Intake (short form)',IN:'LVSS Intake (long form)',PR:'Post-Repair',ATP:'ATP',FLR:'Floor Test',CAL:'Calibration',FIN:'Final Inspection'};
+var FORM={QC:'LVSS Intake (short form)',IN:'LVSS Intake (long form)',PR:'Post-Repair',ATP:'ATP',FLR:'Floor Test',CAL:'Calibration',FIN:'Final Inspection',QTE:'Z2 Quote'};
 var KIND={c:'Correction',r:'Device replaced',s:'Swapped between platforms',p:'Removed - new serial to follow',u:'Updated',x:'Actually changed',o:'Other','':'Reason not given yet'};
 var WK={c:'Customer reported',f:'Failed',b:'Not tested'};
 function T(v){return String(v==null?'':v).trim();}
@@ -13138,7 +13138,7 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){retur
 function sq(v){return T(v).toUpperCase().replace(/[\s\-_]+/g,'');}
 function same(a,b){a=sq(a);b=sq(b);if(a===b)return true;var m=/^([A-Z]+)(\d+)$/,x=m.exec(a),y=m.exec(b);
  if(x&&/^\d+$/.test(b))return +x[2]===+b;if(y&&/^\d+$/.test(a))return +y[2]===+a;return false;}
-function formOf(o){if(!o||typeof o!=='object')return '';if(o.a==='LVSS')return o.qc?'QC':o.it?'IN':'PR';return {ATP:'ATP',FLR:'FLR',CAL:'CAL',FIN:'FIN'}[o.a]||'';}
+function formOf(o){if(!o||typeof o!=='object')return '';if(o.a==='LVSS')return o.qc?'QC':o.it?'IN':'PR';return {ATP:'ATP',FLR:'FLR',CAL:'CAL',FIN:'FIN',QTE:'QTE'}[o.a]||'';}
 var HK={cameraSerial:'camera',radarSerial:'radar',lcuSerial:'laptop control unit',radarPtSerial:'pan tilt',starlinkSerial:'starlink',ciscoEnclSerial:'cisco switch',ciscoModSerial:'cisco wifi module',pimSerial:'cisco pim / lte module',serverSerial:'server',ciscoRtrSerial:'cisco receiver',smuSerial:'hmi/smu',gpsSerial:'trimble gps',gearSerial:'gearbox'};
 var SWK=[null,'camera','radar','laptop control unit','pan tilt','starlink','cisco switch','cisco wifi module','cisco pim / lte module','server','cisco receiver','hmi/smu','trimble gps','gearbox'];
 var RK=['v0s','v0c','v1','v2','v3','v4','v5','v6','v7','v8','v9'];
@@ -13169,6 +13169,7 @@ function dec(o){
   Object.keys(o.rv2||{}).forEach(function(k){var a=o.rv2[k];if(a&&!a[1])R_(FR[k],a[0]);});}
  else if(o.a==='CAL'){C.sn=T(o.sn);var u=o.un||{};S_('camera',u.cam);S_('radar',u.rad);S_('pan tilt',u.pt);var sv=o.sv||{};R_('v1',sv.pmu);R_('v3',sv.hmi);}
  else if(o.a==='FIN'){C.sn=T(o.sn);C.osn=T(o.ol);var F=o.f||{};C.vin=T(F.vin);C.pl=T(F.plate);C.kl=T(F.kilo);Object.keys(NK).forEach(function(k){S_(NK[k],F[k]);});}
+ else if(o.a==='QTE'){C.sn=T(o.sn);}
  /* changes recorded the old way (Floor Test / Calibration before this update) */
  if(!o.cx)(o.cg||[]).forEach(function(a){var id=OLDCG[a[0]];if(id&&(T(a[1])||T(a[2])))C.x.push([id,T(a[1]),T(a[2]),'',f,C.d,T(a[4])]);});
  var cx=o.cx;
@@ -15213,7 +15214,7 @@ function techRemember(n){n=(n||'').trim();if(!n)return;const L=[n,...techNames()
 function techPick(i){const n=techNames()[i],el=$('#n-te');if(n&&el){el.value=n;S.techDraft=n;}}
 /* shared: ask at the start of each inspection whether the tech has a good connection; offline readiness check */
 (function(){
-var FORMS=[['intake','LVSS Intake (long form)'],['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch'],['qc','LVSS Intake (short form)']];
+var FORMS=[['intake','LVSS Intake (long form)'],['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch'],['qc','LVSS Intake (short form)'],['quote','Z2 Quote']];
 var ME=(location.pathname.split('/').filter(Boolean).slice(-1)[0]||'').replace(/\.html?$/,'');
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
 if(!ls('off:since'))ls('off:since',String(Date.now()));
@@ -15390,7 +15391,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/02/2026',site:'48'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/03/2026',site:'49'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -15454,7 +15455,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='9ade484b5c';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='4169b28ce7';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';

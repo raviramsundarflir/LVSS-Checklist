@@ -13150,7 +13150,7 @@ var ALIAS={'starlink antenna':'starlink','cisco switch (driver side)':'cisco swi
 var REV=[['v0s','Server Image (created date)'],['v0c','Client Image (created date)'],['v1','PMU Version'],['v2','PCM Version'],['v3','HMI Version'],['v4','PSR Version'],['v5','Rim 1 Version'],['v6','Rim 2 Version'],['v7','Vehicle Mileage'],['v8','Engine Hours'],['v9','Idle Hours']];
 var REVK={};REV.forEach(function(f){REVK[f[0]]=f[1];});
 var TRACK_REV=['v0s','v0c','v1','v2','v3','v4','v5','v6']; /* mileage and hours change every visit: carried, never questioned */
-var FORM={QC:'LVSS Intake (short form)',IN:'LVSS Intake (long form)',PR:'Post-Repair',ATP:'ATP',FLR:'Floor Test',CAL:'Calibration',FIN:'Final Inspection'};
+var FORM={QC:'LVSS Intake (short form)',IN:'LVSS Intake (long form)',PR:'Post-Repair',ATP:'ATP',FLR:'Floor Test',CAL:'Calibration',FIN:'Final Inspection',QTE:'Z2 Quote'};
 var KIND={c:'Correction',r:'Device replaced',s:'Swapped between platforms',p:'Removed - new serial to follow',u:'Updated',x:'Actually changed',o:'Other','':'Reason not given yet'};
 var WK={c:'Customer reported',f:'Failed',b:'Not tested'};
 function T(v){return String(v==null?'':v).trim();}
@@ -13167,7 +13167,7 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){retur
 function sq(v){return T(v).toUpperCase().replace(/[\s\-_]+/g,'');}
 function same(a,b){a=sq(a);b=sq(b);if(a===b)return true;var m=/^([A-Z]+)(\d+)$/,x=m.exec(a),y=m.exec(b);
  if(x&&/^\d+$/.test(b))return +x[2]===+b;if(y&&/^\d+$/.test(a))return +y[2]===+a;return false;}
-function formOf(o){if(!o||typeof o!=='object')return '';if(o.a==='LVSS')return o.qc?'QC':o.it?'IN':'PR';return {ATP:'ATP',FLR:'FLR',CAL:'CAL',FIN:'FIN'}[o.a]||'';}
+function formOf(o){if(!o||typeof o!=='object')return '';if(o.a==='LVSS')return o.qc?'QC':o.it?'IN':'PR';return {ATP:'ATP',FLR:'FLR',CAL:'CAL',FIN:'FIN',QTE:'QTE'}[o.a]||'';}
 var HK={cameraSerial:'camera',radarSerial:'radar',lcuSerial:'laptop control unit',radarPtSerial:'pan tilt',starlinkSerial:'starlink',ciscoEnclSerial:'cisco switch',ciscoModSerial:'cisco wifi module',pimSerial:'cisco pim / lte module',serverSerial:'server',ciscoRtrSerial:'cisco receiver',smuSerial:'hmi/smu',gpsSerial:'trimble gps',gearSerial:'gearbox'};
 var SWK=[null,'camera','radar','laptop control unit','pan tilt','starlink','cisco switch','cisco wifi module','cisco pim / lte module','server','cisco receiver','hmi/smu','trimble gps','gearbox'];
 var RK=['v0s','v0c','v1','v2','v3','v4','v5','v6','v7','v8','v9'];
@@ -13198,6 +13198,7 @@ function dec(o){
   Object.keys(o.rv2||{}).forEach(function(k){var a=o.rv2[k];if(a&&!a[1])R_(FR[k],a[0]);});}
  else if(o.a==='CAL'){C.sn=T(o.sn);var u=o.un||{};S_('camera',u.cam);S_('radar',u.rad);S_('pan tilt',u.pt);var sv=o.sv||{};R_('v1',sv.pmu);R_('v3',sv.hmi);}
  else if(o.a==='FIN'){C.sn=T(o.sn);C.osn=T(o.ol);var F=o.f||{};C.vin=T(F.vin);C.pl=T(F.plate);C.kl=T(F.kilo);Object.keys(NK).forEach(function(k){S_(NK[k],F[k]);});}
+ else if(o.a==='QTE'){C.sn=T(o.sn);}
  /* changes recorded the old way (Floor Test / Calibration before this update) */
  if(!o.cx)(o.cg||[]).forEach(function(a){var id=OLDCG[a[0]];if(id&&(T(a[1])||T(a[2])))C.x.push([id,T(a[1]),T(a[2]),'',f,C.d,T(a[4])]);});
  var cx=o.cx;
@@ -13642,7 +13643,7 @@ async function setting(k,v){if(arguments.length>1){S.settings[k]=v;await DB.put(
 /* serial helpers: always "eMSC-L " + space + number */
 const snNum=s=>snDig(s);
 const snFull=s=>{s=String(s||'').trim();return s?snShow(s):PFX;};
-const recName=r=>{const n=snNum(r.hdr.sn);if(n)return snShow(r.hdr.sn);const p=String(r.hdr.sn||'').trim();return r.hdr.kind==='up'&&String(r.hdr.old||'').trim()?(p?p+' ____':'New S/N ____')+' (was '+snShow(r.hdr.old)+')':'(no S/N)';};
+const recName=r=>{const n=snNum(r.hdr.sn);if(n)return snShow(r.hdr.sn);const p=String(r.hdr.sn||'').trim();return r.hdr.kind==='up'&&String(r.hdr.old||'').trim()?(p?p+' ____':'New S/N ____')+' (previous S/N '+snShow(r.hdr.old)+')':'(no S/N)';};
 const initialsOf=n=>String(n||'').trim().split(/\s+/).filter(Boolean).map(w=>w[0].toUpperCase()).slice(0,3).join('');
 function newRec(sn,tech,kind){return {id:'f-'+uid(),created:Date.now(),updated:Date.now(),archived:false,step:0,
  hdr:{sn:snFull(sn),old:'',kind:kind||'new',date:today(),tech:tech||''},f:{},ck:{},done:{notes:'',complete:false,incPh:''},ph:[],dv:{},rv:{},chg:[],carry:{}};}
@@ -13671,7 +13672,7 @@ function techRemember(n){n=(n||'').trim();if(!n)return;const L=[n,...techNames()
 function techPick(i){const n=techNames()[i],el=$('#n-te');if(n&&el){el.value=n;S.techDraft=n;}}
 /* shared: ask at the start of each inspection whether the tech has a good connection; offline readiness check */
 (function(){
-var FORMS=[['intake','LVSS Intake (long form)'],['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch'],['qc','LVSS Intake (short form)']];
+var FORMS=[['intake','LVSS Intake (long form)'],['lvss','Post-Repair'],['atp','ATP'],['cal','Calibration'],['floor','Floor Test'],['final',"Jake's Final"],['skywatch','SkyWatch'],['qc','LVSS Intake (short form)'],['quote','Z2 Quote']];
 var ME=(location.pathname.split('/').filter(Boolean).slice(-1)[0]||'').replace(/\.html?$/,'');
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
 if(!ls('off:since'))ls('off:since',String(Date.now()));
@@ -13821,7 +13822,7 @@ function serHtml(r){const up=r.hdr.kind==='up';
  return `<div class="card"><h2>Truck details</h2>
  ${SEC('Unit')}<label class="f">What is this?</label><div class="seg2"><button data-act="kind" data-v="new" class="${up?'':'on'}">New build</button><button data-act="kind" data-v="up" class="${up?'on':''}">Upfit</button></div>
  <label class="f">Platform serial number (required)</label><input id="n-sn" data-snin="1" data-b="hdr.sn" data-nohist value="${esc(r.hdr.sn)}" autocomplete="off" autocapitalize="off" inputmode="text">${snTg('n-sn',r.hdr.sn)}
- ${up?`<label class="f">Old serial number (required for an upfit)</label><input id="n-old" data-snin="1" data-b="hdr.old" value="${esc(r.hdr.old)}" placeholder="Serial number of the old unit" autocomplete="off">${snTg('n-old',r.hdr.old)}`:''}
+ ${up?`<label class="f">Previous serial number (the LVSS serial before this upfit – required)</label><input id="n-old" data-snin="1" data-b="hdr.old" value="${esc(r.hdr.old)}" placeholder="LVSS serial before the upfit" autocomplete="off">${snTg('n-old',r.hdr.old)}`:''}
  ${tkIdHtml(r)}${SEC('Record details')}<div class="grid"><div><label class="f">Completed by</label><input id="n-te" data-b="hdr.tech" value="${esc(r.hdr.tech)}" placeholder="Technician name" autocomplete="off"></div><div><label class="f">Date</label><input type="date" data-b="hdr.date" value="${esc(r.hdr.date)}"></div></div>${techChips()}</div><div id="coreBox" style="margin-bottom:10px">${coreHtml(r)}</div>${devCard(r)}${revCard(r)}`;}
 const phCount=(r,k)=>(r.ph||[]).filter(p=>p.k===k).length;
 function ckRow(r,i){const c=ckOf(r,i.k),s=c.s||'',n=phCount(r,i.k);
@@ -13836,7 +13837,7 @@ function ckHtml(r){return `<div class="card"><h2>Verify wiring and comms for all
  <div class="card" style="padding:4px 10px">${TPL.items.map(i=>ckRow(r,i)).join('')}</div>`;}
 function updCk(k){if(/^(dv|rv):/.test(k)){refreshDv(k);return;}const r=S.rec,i=TPL.items.find(x=>x.k===k),el=document.getElementById('ck-'+k);if(el&&i)el.outerHTML=ckRow(r,i);const p=$('#prog');if(p)p.innerHTML=progHtml(r);}
 function sumHtml(r){const c=ckCount(r),o=overall(r);
- return `<table class="t"><tr><th>Item</th><th>Status</th></tr><tr><td>S/N</td><td>${esc(recName(r))} (${r.hdr.kind==='up'?'upfit, old S/N '+esc(r.hdr.old||'-'):'new build'})</td></tr><tr><td>Checklist</td><td>${c.done} of ${c.total} answered - ${c.pass} pass, ${c.fail} fail, ${c.na} N/A${c.left?` <b style="color:var(--fail)">- ${c.left} left</b>`:''}</td></tr><tr><td>Core data</td><td>${coreMissing(r).length?`<span style="background:#ffec99;padding:1px 6px;border-radius:4px">${coreMissing(r).length} missing</span>`:'complete'}</td></tr><tr><td>Result</td><td><span class="res ${o==='PASS'?'p':'f'}">${o}</span>${c.fail&&o==='PASS'?' <span class="muted">(all failures repaired and retested)</span>':''}</td></tr></table>`;}
+ return `<table class="t"><tr><th>Item</th><th>Status</th></tr><tr><td>S/N</td><td>${esc(recName(r))} (${r.hdr.kind==='up'?'upfit, previous S/N '+esc(r.hdr.old||'-'):'new build'})</td></tr><tr><td>Checklist</td><td>${c.done} of ${c.total} answered - ${c.pass} pass, ${c.fail} fail, ${c.na} N/A${c.left?` <b style="color:var(--fail)">- ${c.left} left</b>`:''}</td></tr><tr><td>Core data</td><td>${coreMissing(r).length?`<span style="background:#ffec99;padding:1px 6px;border-radius:4px">${coreMissing(r).length} missing</span>`:'complete'}</td></tr><tr><td>Result</td><td><span class="res ${o==='PASS'?'p':'f'}">${o}</span>${c.fail&&o==='PASS'?' <span class="muted">(all failures repaired and retested)</span>':''}</td></tr></table>`;}
 const subj=r=>'Floor Test - '+recName(r)+' - '+(r.done.partial&&overall(r)!=='FAIL'?'PARTIAL ('+ckCount(r).done+' of '+ckCount(r).total+')':overall(r));
 function doneHtml(r){const d=r.done;
  return `<div class="card"><h2>Completion</h2><div id="sumBox">${sumHtml(r)}</div><label class="f" style="margin-top:12px">Notes</label><textarea data-b="done.notes" rows="5" placeholder="Numbered notes, as on the sheet">${esc(d.notes)}</textarea>
@@ -13944,7 +13945,7 @@ function floorPdf(r){const d=pdfNew();let y;const ens=n=>{if(y+n>BOT){d.addPage(
  const up=r.hdr.kind==='up';
  d.setFont('helvetica','bold');d.setFontSize(10.5);d.setTextColor(0);
  const box=(a,b,x,w)=>{d.setDrawColor(150);d.setLineWidth(.6);d.rect(x,y,w,26);d.setFont('helvetica','normal');d.setFontSize(6.8);d.setTextColor(110);d.text(a,x+4,y+8);d.setFontSize(10.5);d.setTextColor(0);d.text(cl(b),x+4,y+20);};
- box('S/N',(!snNum(r.hdr.sn)&&String(r.hdr.sn||'').trim()?String(r.hdr.sn).trim()+' ________':recName(r))+(isOldSn(r)?' (old S/N)':''),MX,up?170:270);if(up)box('Old S/N (upfit)',r.hdr.old||'-',MX+170,150);else box('Type','New build',MX+270,120);
+ box('S/N',(!snNum(r.hdr.sn)&&String(r.hdr.sn||'').trim()?String(r.hdr.sn).trim()+' ________':recName(r))+(isOldSn(r)?' (old S/N)':''),MX,up?170:270);if(up)box('Previous S/N (before upfit)',r.hdr.old||'-',MX+170,150);else box('Type','New build',MX+270,120);
  box('Date',fmtD(r.hdr.date),MX+(up?320:390),90);box('Completed by',r.hdr.tech||'-',MX+(up?410:480),up?130:60);y+=26;y=tkIdPdf(d,r,MX,CW,y+4)+4;y=fxPdf(d,r,y);
  if(!up){d.setFontSize(7);}
  y+=10;const c0=44,cw=CW-c0-110,rw=110;
@@ -13982,7 +13983,7 @@ function qrDlg(notes){const r=S.rec;let t=floorPayload(r,notes),svg='';try{const
  $('#qX').onclick=closeModal;$('#qSheet').onclick=()=>{const d=sheetPdf(r,notes);dlBlob(d.output('blob'),stdName('',recName(r),'FLOOR-TEST-CARRYOVER',r.hdr.date)+'.pdf');};}
 /* ---- e-mail ---- */
 async function emailReport(){const r=S.rec,f=floorPdfFile(r),c=ckCount(r),sj=subj(r);
- const body=`Floor Test for eMSC-L & M2S2 - ${recName(r)} (${r.hdr.kind==='up'?'upfit, old S/N '+(r.hdr.old||'-'):'new build'}).\n\n${r.done.partial?'PARTIAL REPORT - testing not finished. '+c.left+' of '+c.total+' lines not tested yet.\n':''}Result: ${overall(r)}\nChecklist: ${c.pass} pass, ${c.fail} fail, ${c.na} N/A, ${c.left} not tested (of ${c.total})\nCompleted by: ${r.hdr.tech||'-'}  ${fmtD(r.hdr.date)}\n${(r.done.notes||'').trim()?'\nNotes: '+r.done.notes.trim()+'\n':''}\nThe PDF report is attached.${(r.done.incPh==='1'&&(r.ph||[]).length)?'\nPictures ('+r.ph.length+') are in a separate ZIP.':''}`;
+ const body=`Floor Test for eMSC-L & M2S2 - ${recName(r)} (${r.hdr.kind==='up'?'upfit, previous S/N '+(r.hdr.old||'-'):'new build'}).\n\n${r.done.partial?'PARTIAL REPORT - testing not finished. '+c.left+' of '+c.total+' lines not tested yet.\n':''}Result: ${overall(r)}\nChecklist: ${c.pass} pass, ${c.fail} fail, ${c.na} N/A, ${c.left} not tested (of ${c.total})\nCompleted by: ${r.hdr.tech||'-'}  ${fmtD(r.hdr.date)}\n${(r.done.notes||'').trim()?'\nNotes: '+r.done.notes.trim()+'\n':''}\nThe PDF report is attached.${(r.done.incPh==='1'&&(r.ph||[]).length)?'\nPictures ('+r.ph.length+') are in a separate ZIP.':''}`;
  const fl=new File([f.blob],f.name,{type:'application/pdf'}),z=(r.done.incPh==='1')?photoZipFile(r):null,fls=[fl].concat(z?[new File([z.blob],z.name,{type:'application/zip'})]:[]);await SendTo.copyTo(r);try{if(navigator.canShare&&navigator.canShare({files:fls})){await navigator.share({files:fls,title:sj,text:body});return;}}catch(e){if(e&&e.name==='AbortError')return;}
  await notice('This browser cannot attach the PDF automatically, so the email will open without it. Use "Save PDF" and attach the file from Downloads.',{title:'PDF not attached'});location.href=SendTo.mailto(r,sj,body);}
 async function scanDone(txt){scanStop();let o=null;try{o=JSON.parse(txt);}catch(e){}srChk(o);
@@ -14005,7 +14006,7 @@ document.addEventListener('input',e=>{const t=e.target;if(t.dataset&&t.dataset.p
  if(t.dataset&&t.dataset.b&&S.rec&&S.view==='rec'){let v=t.value;
   setp(S.rec,t.dataset.b,v);markDirty();if(/^(dv|rv)\./.test(t.dataset.b))refreshCore();if(/^hdr\./.test(t.dataset.b)){refreshSum();refreshCore();if(t.dataset.b==='hdr.sn'){const x=document.querySelector('.brand small');if(x)x.textContent=recName(S.rec);}}}});
 /* neutral change notation: a value that came in from an earlier form and was then edited is listed on the report (old, new, which form); the reason is optional */
-const CHG_L={sn:'Platform serial',old:'Old serial',vin:'Truck VIN',plate:'License plate #',kilo:'Kilo #'};
+const CHG_L={sn:'Platform serial',old:'Previous serial',vin:'Truck VIN',plate:'License plate #',kilo:'Kilo #'};
 function trackChg(r,key,val){fx(r);if(r.core)return false;const cv=r.carry[key];if(cv==null||cv==='')return false;val=String(val||'').trim();const i=r.chg.findIndex(x=>x.k===key);
  if(val===String(cv).trim()){if(i>=0)r.chg.splice(i,1);return false;}
  if(i>=0){r.chg[i].n=val;return false;}r.chg.push({k:key,o:String(cv).trim(),n:val,f:r.carryFrom||'',why:''});return true;}
@@ -14043,7 +14044,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'phdel':{if(await ask('Remove this picture?',{title:'Remove picture?',ok:'Remove',danger:1})){r.ph=(r.ph||[]).filter(p=>p.id!==id);markDirty();phRefresh();}break;}
  case 'phinc':{r.done.incPh=b.dataset.v;markDirty();const bx=$('#phBox');if(bx)bx.innerHTML=photosInner(r);if(r.done.complete)render();break;}
  case 'phzip':{const z=photoZipFile(r);if(z)dlBlob(z.blob,z.name);break;}
- case 'finish':case 'finishpart':{const part=a==='finishpart';const m=[];if(!snNum(r.hdr.sn)&&!(r.hdr.kind==='up'&&snNum(r.hdr.old)))m.push('Platform serial number (Truck details)');if(r.hdr.kind==='up'&&!snNum(r.hdr.old))m.push('Old serial number (upfit)');if(!String(r.hdr.tech||'').trim())m.push('Completed by (Truck details)');if(!String(r.done.name||r.hdr.tech||'').trim())m.push('Print name');if(!r.done.sig)m.push('Technician signature');const c=ckCount(r);if(c.left&&!part)m.push(c.left+' checklist line'+(c.left===1?'':'s')+' not answered (Checklist page)');
+ case 'finish':case 'finishpart':{const part=a==='finishpart';const m=[];if(!snNum(r.hdr.sn)&&!(r.hdr.kind==='up'&&snNum(r.hdr.old)))m.push('Platform serial number (Truck details)');if(r.hdr.kind==='up'&&!snNum(r.hdr.old))m.push('Previous serial number (upfit)');if(!String(r.hdr.tech||'').trim())m.push('Completed by (Truck details)');if(!String(r.done.name||r.hdr.tech||'').trim())m.push('Print name');if(!r.done.sig)m.push('Technician signature');const c=ckCount(r);if(c.left&&!part)m.push(c.left+' checklist line'+(c.left===1?'':'s')+' not answered (Checklist page)');
   const nd=TPL.items.filter(i=>ckOf(r,i.k).s==='f'&&!String(ckOf(r,i.k).rep||'').trim());if(nd.length)m.push('Failure / repair details for '+nd.map(i=>i.n).join(', '));
   const n=$('#finNeed');if(m.length){n.innerHTML=`<div class="err"><b>Still needed:</b><ul style="margin:6px 0 0 18px;padding:0">${m.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;break;}   if(!snNum(r.hdr.sn)&&!await ask('The new serial number is still blank. The report will show '+(String(r.hdr.sn||'').trim()||'the new serial')+' ____ so it can be written in.\n\nFinish anyway?',{title:'New serial number not entered',ok:'Finish anyway',no:'Go back'}))break;
   if((r.ph||[]).length&&r.done.incPh===''){const inc=await ask('Include the '+r.ph.length+' picture'+(r.ph.length===1?'':'s')+' with this report? They are never put in the PDF - they are sent as a separate ZIP.',{title:'Include pictures?',ok:'Include (ZIP)',no:'Do not include'});r.done.incPh=inc?'1':'0';}
@@ -14062,7 +14063,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)save();});
 function curTpl(){return TPL}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/02/2026',site:'48'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/03/2026',site:'49'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14185,7 +14186,7 @@ document.addEventListener('focusout',e=>{histCommit(e.target);setTimeout(()=>{if
 document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='ec128a0766';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='da4d25ef60';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
