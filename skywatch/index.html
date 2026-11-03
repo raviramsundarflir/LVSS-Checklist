@@ -14703,4 +14703,19 @@ if(m){var id=decodeURIComponent(m[1]),tries=0;
   if(p.y)setTimeout(function(){window.scrollTo(0,p.y);},400);track();};
  if(document.readyState==='complete')setTimeout(go,300);else window.addEventListener('load',function(){setTimeout(go,300);});}
 })();
+</script><script>/* ===== tidy-up when a field is left (Ravi, 2026-11-03) =====
+   RMA, SVO and FLIR sales order: digits only. Customer PO: capitals and numbers only. Spaces and dashes never stay in these four.
+   Mileage, engine hours and idle hours: shown with commas (48,210) once the field is left; the saved value stays a plain number. */
+(function(){
+var DIG='input[data-b="hdr.rma"],input[data-b="hdr.so"],input[data-b="hdr.fso"],input#emRma,input[data-h="rma"],input[data-h="so"],input[data-h="fso"],input#nf-rma,input#nf-so,input#nf-fso,input#dd49so';
+var PO='input[data-b="hdr.po"],input[data-h="po"],input#nf-po,input#dd49po';
+var NUM='input[data-b="ver.v7"],input[data-b="ver.v8"],input[data-b="ver.v9"],input[data-dd="rev.v7"],input[data-dd="rev.v8"],input[data-dd="rev.v9"]';
+function sep(v){var s0=String(v==null?'':v).trim(),s=s0.replace(/[,\s]/g,'');if(!/^\d+(\.\d+)?$/.test(s))return s0;var q=s.split('.');return q[0].replace(/\B(?=(\d{3})+(?!\d))/g,',')+(q[1]!=null?'.'+q[1]:'');}
+function m(el,sel){try{return el.matches(sel);}catch(e){return false;}}
+document.addEventListener('change',function(e){var el=e.target;if(!el||el.tagName!=='INPUT')return;
+ var v=m(el,DIG)?el.value.replace(/[^0-9]/g,''):m(el,PO)?el.value.toUpperCase().replace(/[^A-Z0-9]/g,''):null;
+ if(v!=null&&v!==el.value){el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));}},true);
+document.addEventListener('change',function(e){var el=e.target;if(!el||el.tagName!=='INPUT'||!m(el,NUM))return;
+ setTimeout(function(){if(document.activeElement===el)return;var f=sep(el.value);if(f!==el.value)el.value=f;},0);});
+})();
 </script></body></html>

@@ -13661,12 +13661,12 @@ const rmaOk=v=>{v=String(v||'').trim();return (v&&v.toUpperCase()!=='TBD')?v:'';
 const swOn=r=>!!(r.swap&&r.swap.list&&r.swap.list.length);
 const camSwapped=r=>!!(r.hdr&&isEm(r.hdr.ptype)&&swOn(r)&&r.swap.list.some(e=>/camera|tfu/i.test(e.t||((r.gear||[]).find(g=>g.id===e.dev)||{}).t||'')));
 const calDone=r=>!!(r.cal&&r.cal.st==='done');
-function calIssues(r){return camSwapped(r)&&!calDone(r)?['TFU & Radar Calibration (a camera/TFU was swapped)']:[];}
+function calIssues(r){return camSwapped(r)&&!calDone(r)?['TFU to Radar Cal (a camera/TFU was swapped)']:[];}
 const calUrl=r=>/^https?:$/.test(location.protocol)?'../cal/?sn='+encodeURIComponent(String((r.hdr||{}).sn||'').trim())+'&tech='+encodeURIComponent(String((r.hdr||{}).tech||'').trim()):'';
 function calCard(r){if(!camSwapped(r))return '';const ok=calDone(r);
- return `<div class="card" id="calCard" style="border:2px solid ${ok?'#1b8a3a':'#c25a00'};background:${ok?'#f1faf4':'#fffaf0'}"><h3${ok?'':' style="color:#c25a00"'}>TFU &amp; Radar Calibration${ok?'':' – to be completed'}</h3>${ok?`<div class="ok" style="margin:0 0 8px"><b>✓ Calibration completed${r.cal.date?' on '+fmtD(r.cal.date):''}.</b> This is stated in the report.</div><button data-act="calundo">Undo</button>`:`<p style="margin:0 0 8px"><b style="color:#c25a00">Calibration to be completed.</b> A camera/TFU was swapped on this truck, so the TFU &amp; Radar Calibration is strongly required. You can carry on with the rest of the report.</p><div class="row"><button class="pri" data-act="calopen" style="flex:1">Open calibration form now</button><button data-act="callater" style="flex:1">Do it later – get a QR code</button></div><div class="row" style="margin-top:8px"><button data-act="caldone" style="flex:1">✓ The calibration is completed</button></div>`}</div>`;}
+ return `<div class="card" id="calCard" style="border:2px solid ${ok?'#1b8a3a':'#c25a00'};background:${ok?'#f1faf4':'#fffaf0'}"><h3${ok?'':' style="color:#c25a00"'}>TFU to Radar Cal${ok?'':' – to be completed'}</h3>${ok?`<div class="ok" style="margin:0 0 8px"><b>✓ Calibration completed${r.cal.date?' on '+fmtD(r.cal.date):''}.</b> This is stated in the report.</div><button data-act="calundo">Undo</button>`:`<p style="margin:0 0 8px"><b style="color:#c25a00">Calibration to be completed.</b> A camera/TFU was swapped on this truck, so the TFU to Radar Cal is strongly required. You can carry on with the rest of the report.</p><div class="row"><button class="pri" data-act="calopen" style="flex:1">Open calibration form now</button><button data-act="callater" style="flex:1">Do it later – get a QR code</button></div><div class="row" style="margin-top:8px"><button data-act="caldone" style="flex:1">✓ The calibration is completed</button></div>`}</div>`;}
 function calLaterDlg(){const r=S.rec;let svg='';try{const q=window.qrcode(0,'L');q.addData(JSON.stringify({a:'CAL',v:1,k:'S',sn:snD(r),t:String(r.hdr.tech||'').trim()}));q.make();svg=q.createSvgTag({cellSize:5,margin:4,scalable:true});}catch(e){svg='';}
- modal(`<h3 style="margin-top:0">Start the calibration later</h3>${qrBigHtml(snD(r))}<p class="muted">Take a picture of this code, or print it. In the <b>TFU &amp; Radar Calibration</b> form tap <b>Scan QR</b> and a calibration for ${esc(r.hdr.sn||'this truck')} opens with the serial number filled in.</p><div style="background:#fff;border:1px solid var(--line);padding:6px;max-width:260px;margin:0 auto">${svg}</div><button class="pri" onclick="closeModal()">Close</button>`);}
+ modal(`<h3 style="margin-top:0">Start the calibration later</h3>${qrBigHtml(snD(r))}<p class="muted">Take a picture of this code, or print it. In the <b>TFU to Radar Cal</b> form tap <b>Scan QR</b> and a calibration for ${esc(r.hdr.sn||'this truck')} opens with the serial number filled in.</p><div style="background:#fff;border:1px solid var(--line);padding:6px;max-width:260px;margin:0 auto">${svg}</div><button class="pri" onclick="closeModal()">Close</button>`);}
 function phOwner(id){const r=S.rec;
  if(id==='rmaf')return {get ph(){return r.rmaPh||(r.rmaPh=[])},set ph(v){r.rmaPh=v}};
  if(id.startsWith('vf:')){const k0=id.slice(3),k=['v7','v8','v9'].includes(k0)?'v7':k0;return {get ph(){r.vfPh=r.vfPh||{};return r.vfPh[k]||(r.vfPh[k]=[])},set ph(v){r.vfPh=r.vfPh||{};r.vfPh[k]=v}};}
@@ -13781,12 +13781,25 @@ function zipStore(files){const enc=new TextEncoder(),parts=[],cd=[];let off=0;co
   parts.push(new Uint8Array(h),nm,f.data);const c=[];w32(c,0x02014b50);w16(c,20);w16(c,20);w16(c,0x0800);w16(c,0);w16(c,dt);w16(c,dd);w32(c,crc);w32(c,f.data.length);w32(c,f.data.length);w16(c,nm.length);w16(c,0);w16(c,0);w16(c,0);w16(c,0);w32(c,0);w32(c,off);cd.push(new Uint8Array(c),nm);off+=h.length+nm.length+f.data.length;});
  let cs=0;cd.forEach(x=>cs+=x.length);const e=[];w32(e,0x06054b50);w16(e,0);w16(e,0);w16(e,files.length);w16(e,files.length);w32(e,cs);w32(e,off);w16(e,0);
  return new Blob([...parts,...cd,new Uint8Array(e)],{type:'application/zip'});}
-function photoEntries(r){const out=[],add=(tag,list)=>(list||[]).forEach(p=>{if(S.photos[p])out.push([tag,p])});
- (r.gear||[]).forEach(g=>add('Serial - '+(g.t||'device'),g.ph));
- ((r.swap&&r.swap.list)||[]).forEach(e=>{add('Swap old - '+e.t,e.oldPh);add('Swap new - '+e.t,e.newPh);(e.mid||[]).forEach(m=>add('Failed unit (RMA) - '+e.t+' '+m.s,m.ph));});
- add('RMA folder',r.rmaPh);add('Version info',r.verPh);((r.tpl.versionInfo||{fields:[]}).fields||[]).forEach(f=>add(f.key==='v7'?'Dashboard - mileage, engine hours, idle hours':f.label,(r.vfPh||{})[f.key]));['v7','v8','v9'].forEach(k=>{const ff=((r.tpl.versionInfo||{fields:[]}).fields||[]).find(z=>z.key===k);add((ff?ff.label:k)+' (own photo)',(r.vfPh||{})['o'+k.slice(1)]);});
- flat(r).forEach(x=>{const q=r.items[x.id]||{};if((q.ph||[]).length)add('Issue '+x.label+' - '+String(x.t||'').replace(/\s+/g,' ').slice(0,40),q.ph);});
- if(r.audit){const au=r.audit;flat(r).forEach(x=>{const q=(au.items||{})[x.id];if(q&&(q.ph||[]).length)add('Audit fault '+x.label,q.ph);});add('Audit findings',au.ph);}
+/* comma separators for mileage and hours (Ravi, 2026-11-03): 48210 -> 48,210. Stored values stay plain numbers. */
+function numSep(v){const s0=String(v==null?'':v).trim(),s=s0.replace(/,/g,'');if(!/^\d+(\.\d+)?$/.test(s))return s0;const p=s.split('.');return p[0].replace(/\B(?=(\d{3})+(?!\d))/g,',')+(p[1]!=null?'.'+p[1]:'');}
+/* photo ZIP names (Ravi, 2026-11-03): truck serial - device - device serial, e.g. "LVSS 106 - Camera - 12345678 1.jpg".
+   Both truck serials once the upfit serial is known: "LVSS 106 (eMSC-L 0021) - ...". Photos of a recorded value carry that value;
+   a blank serial shows NO SN, a blank value NO VALUE. fileSafe() turns characters Windows does not allow into dashes. */
+function pzTruck(r){const a=platNum(r);let b='';try{b=typeof nsnFull==='function'?nsnFull(r.hdr):((r.hdr.purpose==='upfit'&&/\d/.test(r.hdr.nsn||''))?snShow(r.hdr.nsn):'');}catch(e){b='';}return b&&b!==a?a+' ('+b+')':a;}
+const PZ_NUM=['v7','v8','v9'];
+function vDisp(k,v){v=v==null?'':v;return PZ_NUM.includes(k)?numSep(v):v;}
+function pzVer(r,k){const v=String((r.ver||{})[k]==null?'':(r.ver||{})[k]).trim();return PZ_NUM.includes(k)?numSep(v):v;}
+function photoEntries(r){const out=[],add=(tag,list)=>(list||[]).forEach(p=>{if(S.photos[p])out.push([tag,p])}),T=pzTruck(r),
+ N=(lbl,val,miss)=>T+' - '+lbl+' - '+(String(val==null?'':val).replace(/\s+/g,' ').trim()||miss),G=lbl=>T+' - '+lbl,
+ F=((r.tpl.versionInfo||{fields:[]}).fields||[]),FL=k=>{const ff=F.find(z=>z.key===k);return ff?ff.label:k;};
+ (r.gear||[]).forEach(g=>add(N(g.t||'device',g.na?'N/A':(g.tk?g.v:g.s),'NO SN'),g.ph));
+ ((r.swap&&r.swap.list)||[]).forEach(e=>{add(N(e.t+' (old)',e.old,'NO SN'),e.oldPh);add(N(e.t+' (new)',e.nw,'NO SN'),e.newPh);(e.mid||[]).forEach(m=>add(N('Failed unit (RMA) '+e.t,m.s,'NO SN'),m.ph));});
+ add(G('RMA folder'),r.rmaPh);add(G('Version info'),r.verPh);
+ F.forEach(f=>{if(f.key==='v7'){const d=PZ_NUM.map((k,i)=>{const v=pzVer(r,k);return v?v+[' mi',' eng hr',' idle hr'][i]:'';}).filter(Boolean).join(', ');add(N('Dashboard',d,'NO VALUE'),(r.vfPh||{})[f.key]);}else add(N(f.label,pzVer(r,f.key),'NO VALUE'),(r.vfPh||{})[f.key]);});
+ PZ_NUM.forEach(k=>add(N(FL(k),pzVer(r,k),'NO VALUE'),(r.vfPh||{})['o'+k.slice(1)]));
+ flat(r).forEach(x=>{const q=r.items[x.id]||{};if((q.ph||[]).length){const t=String(x.t||'').replace(/\s+/g,' ').slice(0,40).trim();add(G('Issue '+x.label+(t?' - '+t:'')),q.ph);}});
+ if(r.audit){const au=r.audit;flat(r).forEach(x=>{const q=(au.items||{})[x.id];if(q&&(q.ph||[]).length)add(G('Audit fault '+x.label),q.ph);});add(G('Audit findings'),au.ph);}
  return out;}
 async function prepZoom(r){S.zimg={};const zv=r.zv||{};for(const pid of Object.keys(zv)){const p=S.photos[pid],z=zv[pid];if(!p||!z)continue;try{const im=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=p.d;});const a=(z.rot||0)*Math.PI/180,w=im.width,h=im.height,cs=Math.abs(Math.cos(a)),sn=Math.abs(Math.sin(a)),W=Math.round(w*cs+h*sn),H=Math.round(w*sn+h*cs);const cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,W,H);g.translate(W/2,H/2);g.rotate(a);g.drawImage(im,-w/2,-h/2);const sx=Math.round(z.x*W),sy=Math.round(z.y*H),sw=Math.max(8,Math.round(z.w*W)),sh=Math.max(8,Math.round(z.h*H));const c2=document.createElement('canvas');let k=Math.min(1,1400/Math.max(sw,sh));c2.width=Math.round(sw*k);c2.height=Math.round(sh*k);c2.getContext('2d').drawImage(cv,sx,sy,sw,sh,0,0,c2.width,c2.height);S.zimg[pid]={d:c2.toDataURL('image/jpeg',0.9),w:c2.width,h:c2.height};}catch(e){}}}
 function photoZip(r){const E=photoEntries(r);if(!E.length)return null;const folder=fileSafe(repFile(r)),cnt={},files=E.map(([tag,p])=>{const b=atob(S.photos[p].d.split(',')[1]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);const k=fileSafe(tag);cnt[k]=(cnt[k]||0)+1;return {name:folder+'/'+k+' '+cnt[k]+'.jpg',data:u};});
@@ -13860,6 +13873,9 @@ async function scanDone(txt){if(String(txt).startsWith('WIP1~')){wipChunk(txt);r
 /* ----- record shell ----- */
 const STEPN=['Info','Inspect','Punch List','Report'];
 const navHtml=(n,noNext)=>`<div class="row" style="margin-top:14px;flex-wrap:nowrap;gap:8px">${n>1?`<button data-act="step" data-s="${n-1}" style="flex:1">← Previous: ${STEPN[n-2]}</button>`:''}${(n<4&&!noNext)?`<button class="pri" data-act="step" data-s="${n+1}" style="flex:${n>1?2:1}">${n===1?'Start inspection':n===2?'Finish inspection':'Next'}: ${STEPN[n]} →</button>`:''}</div>${n<4?`<button data-act="step" data-s="4" style="width:100%;margin-top:8px;border-color:#1b8a3a;color:#1b8a3a;font-weight:700">⏭ Go to the final page – submit report</button>`:''}`;
+/* keep the tapped button where it was on screen when the page redraws (Ravi, 2026-11-03: no jumping on touch) */
+function keepPlace(b,fn){const y=window.scrollY;let sel=null,t0=0;try{if(b&&b.dataset&&b.dataset.act){sel='[data-act="'+b.dataset.act+'"]'+(b.dataset.v!=null?'[data-v="'+CSS.escape(b.dataset.v)+'"]':'');t0=b.getBoundingClientRect().top;}}catch(e){sel=null;}
+ fn();let top=y;try{const n=sel&&document.querySelector(sel);if(n)top=n.getBoundingClientRect().top+window.scrollY-t0;}catch(e){}window.scrollTo({top:Math.max(0,top),left:0,behavior:'instant'});}
 function renderRec(){if(S.audit&&S.rec)return renderAudit();const r=S.rec;const st=stats(r);
  app.innerHTML=`<div class="top"><div class="bar"><img src="${LOGO2}" alt="Teledyne FLIR"><div class="brand">${esc(lv(title(r)))}<small>${esc(LL(APP))}</small></div><button id="saveInd" data-act="save" class="save"></button>${r.signed?'':'<button data-act="wip-pause" title="Pause and move this inspection to another tablet">⏸ Pause</button>'}<button class="cmpl" data-act="complete">✔ Complete report</button><button data-act="home">Home</button></div>
  <div class="steps">${STEPN.map((n,i)=>`<button data-act="step" data-s="${i+1}" class="${r.step===i+1?'on':''} ${(i+1<r.step)?'dn':''}">${i+1}. ${n}</button>`).join('')}</div></div>
@@ -13967,7 +13983,7 @@ function verPhHtml(){const n=phOwner('ver').ph.length;return `<label class="f">H
 const PHF=['v7','v8','v9'];
 function odoPhHtml(){const n=phOwner('vf:v7').ph.length;return `<label class="f">Photo(s) of the dashboard – vehicle mileage, engine hours and idle hours</label><p class="muted" style="margin:2px 0 6px">This set is attached to all three readings. Each reading also has its own camera button to add a photo for that reading only.</p><div class="row" style="flex-wrap:nowrap"><button class="ic" data-act="cam" data-id="vf:v7" title="Photo of the dashboard readings">📷${n?`<b>${n}</b>`:''}</button><span class="muted">${n?n+' photo'+(n>1?'s':'')+' attached':'No photo yet (optional)'}</span></div>${thumbs('vf:v7')}`}
 function verHtml(){const r=S.rec,vi=r.tpl.versionInfo||{fields:[]};
- const fld=f=>{const pv=r.prev&&r.prev[f.key],na=(r.ver||{})[f.key]==='N/A',sh=PHF.includes(f.key);return `<div><label class="f">${esc(f.label)}</label><div class="row" style="flex-wrap:nowrap">${sh?`<button class="ic" data-act="cam" data-id="vf:o${f.key.slice(1)}" title="Photo of ${esc(f.label)} only">📷${phOwner('vf:o'+f.key.slice(1)).ph.length?`<b>${phOwner('vf:o'+f.key.slice(1)).ph.length}</b>`:''}</button>`:''}<input data-b="ver.${f.key}" value="${esc(getp(r,'ver.'+f.key))}" style="flex:1"><button data-act="vna" data-k="${f.key}" class="${na?'pri':''}" style="min-height:44px;padding:4px 10px" title="Does not apply">${na?'✓ ':''}N/A</button>${sh?'':`<button class="ic" data-act="cam" data-id="vf:${f.key}" title="Photo of ${esc(f.label)}">📷${phOwner('vf:'+f.key).ph.length?`<b>${phOwner('vf:'+f.key).ph.length}</b>`:''}</button>`}</div>${sh?thumbs('vf:o'+f.key.slice(1)):thumbs('vf:'+f.key)}${pv?`<div class="muted" style="font-size:13px">Last recorded: ${esc(pv)}</div>`:''}</div>`};
+ const fld=f=>{const pv=r.prev&&r.prev[f.key],na=(r.ver||{})[f.key]==='N/A',sh=PHF.includes(f.key);return `<div><label class="f">${esc(f.label)}</label><div class="row" style="flex-wrap:nowrap">${sh?`<button class="ic" data-act="cam" data-id="vf:o${f.key.slice(1)}" title="Photo of ${esc(f.label)} only">📷${phOwner('vf:o'+f.key.slice(1)).ph.length?`<b>${phOwner('vf:o'+f.key.slice(1)).ph.length}</b>`:''}</button>`:''}<input data-b="ver.${f.key}" value="${esc(vDisp(f.key,getp(r,'ver.'+f.key)))}"${PZ_NUM.includes(f.key)?' inputmode="decimal"':''} style="flex:1"><button data-act="vna" data-k="${f.key}" class="${na?'pri':''}" style="min-height:44px;padding:4px 10px" title="Does not apply">${na?'✓ ':''}N/A</button>${sh?'':`<button class="ic" data-act="cam" data-id="vf:${f.key}" title="Photo of ${esc(f.label)}">📷${phOwner('vf:'+f.key).ph.length?`<b>${phOwner('vf:'+f.key).ph.length}</b>`:''}</button>`}</div>${sh?thumbs('vf:o'+f.key.slice(1)):thumbs('vf:'+f.key)}${pv?`<div class="muted" style="font-size:13px">Last recorded: ${esc(vDisp(f.key,pv))}</div>`:''}</div>`};
  return `<h2>Version info</h2><p class="muted">${esc(vi.note||'')}</p><div id="verPh">${verPhHtml()}</div><div class="sp"></div><div class="grid">${vi.fields.map(fld).join('')}</div><div class="sp"></div>${odoPhHtml()}`;}
 function datesHtml(){const h=S.rec.hdr,t=h.pickType||'',tbd=!!h.pickTbd&&!h.pickDate;return `<div id="datesBox" style="margin-top:10px"><label class="f">Truck repair completion date</label><input type="date" data-b="hdr.doneDate" value="${esc(h.doneDate||'')}" style="max-width:260px"><label class="f" style="margin-top:10px">Truck picked up / dropped off</label><div class="row" style="flex-wrap:nowrap;gap:6px;margin-bottom:6px"><button class="${t==='pick'?'pri':''}" data-act="pickt" data-v="pick" style="flex:1">Picked up</button><button class="${t==='drop'?'pri':''}" data-act="pickt" data-v="drop" style="flex:1">Dropped off</button></div><div class="row" style="flex-wrap:nowrap;gap:6px"><input type="date" data-b="hdr.pickDate" value="${esc(h.pickDate||'')}" style="max-width:260px"><button class="${tbd?'pri':''}" data-act="pickbd">${tbd?'✓ ':''}TBD</button></div></div>`}
 const pickLbl=h=>h.pickType==='pick'?'Date Picked Up':h.pickType==='drop'?'Date Dropped Off':'Pickup / Drop-off Date';
@@ -14118,7 +14134,7 @@ function emailText(r){const all=flat(r);
  const notes=String(r.techNotes||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{const sub=/^(--|–|—)/.test(l)||/^[o◦]\s/.test(l);return {sub,t:l.replace(/^(--+|[-–—•●o◦]+)\s*/,'')};});
  const subj=mailSubj(r);
  const eh=esc,TD='border:1px solid #999;padding:5px 7px;vertical-align:top;';
- let h=`<p>Attached is the repair report for ${eh(sn)}.</p>${recv?`<p>${eh(recv)}</p>`:''}${camSwapped(r)?`<p>TFU &amp; Radar Calibration: <b>${calDone(r)?'completed'+(r.cal.date?' '+eh(fmtD(r.cal.date)):''):'to be completed'}</b></p>`:''}<p>Repair completion date: <b>${eh(dnL)}</b><br>${eh(pickLbl(r.hdr))}: <b>${eh(pkL)}</b></p>`;
+ let h=`<p>Attached is the repair report for ${eh(sn)}.</p>${recv?`<p>${eh(recv)}</p>`:''}${camSwapped(r)?`<p>TFU to Radar Cal: <b>${calDone(r)?'completed'+(r.cal.date?' '+eh(fmtD(r.cal.date)):''):'to be completed'}</b></p>`:''}<p>Repair completion date: <b>${eh(dnL)}</b><br>${eh(pickLbl(r.hdr))}: <b>${eh(pkL)}</b></p>`;
  if(notes.length){h+='<p><b>Tech notes:</b></p><ul>';let open=false;notes.forEach(z=>{if(z.sub){if(!open){h+='<ul>';open=true;}h+=`<li>${eh(z.t)}</li>`;}else{if(open){h+='</ul>';open=false;}h+=`<li>${eh(z.t)}</li>`;}});if(open)h+='</ul>';h+='</ul>';}
  h+=`<hr><p><b>REPAIR REPORT SUMMARY:</b></p><p>${eh(intro)}</p>`;
  if(n){h+=`<table style="border-collapse:collapse;width:100%;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#000"><tr>${[['#','4%'],['Issue','36%'],['Coverage','15%'],['Repair action','45%']].map(t=>`<th style="${TD}background:#eeeeee;text-align:left;width:${t[1]}">${t[0]}</th>`).join('')}</tr>`;
@@ -14133,7 +14149,7 @@ function emailText(r){const all=flat(r);
  if(BK.length)h+=`<p><b>Items not tested (blocked by other issues)</b></p><ul>${BK.map(x=>`<li>${eh(x)}</li>`).join('')}</ul>`;
  if(ciL.length)h+=`<p><b>Continuous improvement items</b></p><ol>${ciL.map(x=>`<li>${eh([x[0],x[1]].filter(Boolean).join(' - '))}</li>`).join('')}</ol>`;
  h+=`<p>Thank you,<br>${eh(tech)}</p>`;
- const T=[`Attached is the repair report for ${sn}.`,''];if(recv)T.push(recv,'');if(camSwapped(r))T.push('TFU & Radar Calibration: '+(calDone(r)?'completed'+(r.cal.date?' '+fmtD(r.cal.date):''):'to be completed'),'');T.push('Repair completion date: '+dnL,pickLbl(r.hdr)+': '+pkL,'');
+ const T=[`Attached is the repair report for ${sn}.`,''];if(recv)T.push(recv,'');if(camSwapped(r))T.push('TFU to Radar Cal: '+(calDone(r)?'completed'+(r.cal.date?' '+fmtD(r.cal.date):''):'to be completed'),'');T.push('Repair completion date: '+dnL,pickLbl(r.hdr)+': '+pkL,'');
  if(notes.length){T.push('Tech notes:');notes.forEach(z=>T.push(z.sub?'      ◦ '+z.t:'   • '+z.t));T.push('');}
  T.push('______________________________','REPAIR REPORT SUMMARY:','',intro,'');
  if(n){secs.forEach(s=>{T.push(s[0],'');s[1].forEach(g=>{T.push(g[0]+':','');g[1].forEach(x=>{T.push(`${x.n}) ${x.issue}`,`     Coverage: ${x.cov}`,`     Repair action: ${x.act}`);if(x.parts)T.push(`     Parts used: ${x.parts}`);x.rel.forEach(c=>{T.push(`   \u21b3 ${c.issue} (${c.kind.toLowerCase()} - ${c.cu?'confirms':'related to'} item ${x.n})`);if(c.blk)T.push(`        ${c.act}`);});T.push('');});});});}
@@ -14334,7 +14350,7 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
  if(nd)y=banner(d,y,'DO NOT OPERATE',`${nd} item(s) flagged - ${st.openDno} still open. See Punch List at front of report.`,st.openDno===0,r.verdict==='pass');
  const cell=(x,yy,w,hh,lab,val)=>{d.setDrawColor(170);d.setLineWidth(.6);d.rect(x,yy,w,hh);d.setFont('helvetica','normal');d.setFontSize(6.8);d.setTextColor(110);d.text(cl(lab),x+4,yy+8);d.setFontSize(9.5);d.setTextColor(0);d.text(wrap(d,val,w-8),x+4,yy+19);};
  const pair=(l1,v1,l2,v2)=>{d.setFontSize(9.5);const a=wrap(d,v1,262).length,b=wrap(d,v2,262).length;const hh=Math.max(26,14+Math.max(a,b)*11);ens(hh);cell(MX,y,CW/2,hh,l1,v1);cell(MX+CW/2,y,CW/2,hh,l2,v2);y+=hh;};
- {const tb=x=>String(x||'').trim()||'TBD',w3=CW/idB(r,h,tb).length;ens(30);idB(r,h,tb).forEach((p,j)=>{hx(d,'setFillColor','#eef3fb');d.rect(MX+j*w3,y,w3,30,'F');cell(MX+j*w3,y,w3,30,p[0],p[1]);});y+=30;}pair('Platform Serial Number',snD(r)||'','Date',fmtD(h.date)+(h.origDate?'  (original '+fmtD(h.origDate)+')':''));pair('TDY FLIR Technician',h.tech,'Location',h.loc);pair('Repair Completion Date',h.doneDate?fmtD(h.doneDate):'',pickLbl(h),pickVal(h));ens(26);cell(MX,y,CW,26,'Result',r.verdict==='pass'?'PASSED':r.verdict==='fail'?'FAILED':'');y+=26;if(camSwapped(r)){ens(26);cell(MX,y,CW,26,'TFU & Radar Calibration (camera/TFU swapped)',calDone(r)?'Completed'+(r.cal.date?' '+fmtD(r.cal.date):''):'NOT COMPLETED');y+=26;}const lateD=[...new Set(allD0.filter(x=>x.sec.kind==='rep'&&(r.items[x.id]||{}).rdate&&r.items[x.id].rdate!==h.repDate).map(x=>r.items[x.id].rdate))].sort().map(fmtD);pair('Concerns Reported to FLIR',fmtD(h.repDate)+(lateD.length?'  (additions: '+lateD.join(', ')+')':''),h.recvType==='field'?'Field Service Visit Date':h.recvType==='depot'?'Date Truck Received at FLIR':'Date Received / Field Visit',fmtD(h.recvDate));
+ {const tb=x=>String(x||'').trim()||'TBD',w3=CW/idB(r,h,tb).length;ens(30);idB(r,h,tb).forEach((p,j)=>{hx(d,'setFillColor','#eef3fb');d.rect(MX+j*w3,y,w3,30,'F');cell(MX+j*w3,y,w3,30,p[0],p[1]);});y+=30;}pair('Platform Serial Number',snD(r)||'','Date',fmtD(h.date)+(h.origDate?'  (original '+fmtD(h.origDate)+')':''));pair('TDY FLIR Technician',h.tech,'Location',h.loc);pair('Repair Completion Date',h.doneDate?fmtD(h.doneDate):'',pickLbl(h),pickVal(h));ens(26);cell(MX,y,CW,26,'Result',r.verdict==='pass'?'PASSED':r.verdict==='fail'?'FAILED':'');y+=26;if(camSwapped(r)){ens(26);cell(MX,y,CW,26,'TFU to Radar Cal (camera/TFU swapped)',calDone(r)?'Completed'+(r.cal.date?' '+fmtD(r.cal.date):''):'NOT COMPLETED');y+=26;}const lateD=[...new Set(allD0.filter(x=>x.sec.kind==='rep'&&(r.items[x.id]||{}).rdate&&r.items[x.id].rdate!==h.repDate).map(x=>r.items[x.id].rdate))].sort().map(fmtD);pair('Concerns Reported to FLIR',fmtD(h.repDate)+(lateD.length?'  (additions: '+lateD.join(', ')+')':''),h.recvType==='field'?'Field Service Visit Date':h.recvType==='depot'?'Date Truck Received at FLIR':'Date Received / Field Visit',fmtD(h.recvDate));
  if(isAud(r)){const au=r.audit,AP=[...P,...blockedList(r)];y+=8;ens(90);hx(d,'setFillColor',au.verdict==='pass'?'#1b8a3a':'#c62828');d.rect(MX,y,CW,22,'F');d.setFont('helvetica','bold');d.setFontSize(12);d.setTextColor(255);d.text(au.verdict==='pass'?'AUDIT REVIEW - AUDIT PASSED':'AUDIT REVIEW - AUDIT FAILED',PW/2,y+15,{align:'center'});y+=22;
   pair('Auditor',au.name,'Audit Date',fmtD(au.date));
   const ac=[[0,34,'#'],[34,206,'Reported fault'],[240,74,'Tech status'],[314,86,'Audit result'],[400,140,'Auditor notes']];
@@ -14372,7 +14388,7 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
  const vi=r.tpl.versionInfo;
  if(vi&&vi.fields.length){ens(90);hx(d,'setFillColor','#5b8dd6');d.rect(MX,y,CW,22,'F');d.setFont('helvetica','bold');d.setFontSize(12);d.setTextColor(255);d.text('VERSION INFO',PW/2,y+15,{align:'center'});y+=22;
   d.setFont('helvetica','italic');d.setFontSize(8);d.setTextColor(90);d.text(wrap(d,vi.note||'',CW-8),MX+4,y+10);y+=16;if((r.verPh||[]).length){d.text('HMI version photo(s): see Photo Appendix.',MX+4,y+4);y+=12;}
-  for(let i=0;i<vi.fields.length;i+=2){ens(26);[0,1].forEach(j=>{const f=vi.fields[i+j];if(f)cell(MX+j*CW/2,y,CW/2,26,f.label,(r.rmUp&&f.key==='v0c')?'Removed (upfit)'+(r.rmUp.img?' - was '+r.rmUp.img:''):((r.ver||{})[f.key]||'Not entered'));});y+=26;}y+=10;}
+  for(let i=0;i<vi.fields.length;i+=2){ens(26);[0,1].forEach(j=>{const f=vi.fields[i+j];if(f)cell(MX+j*CW/2,y,CW/2,26,f.label,(r.rmUp&&f.key==='v0c')?'Removed (upfit)'+(r.rmUp.img?' - was '+r.rmUp.img:''):(vDisp(f.key,(r.ver||{})[f.key])||'Not entered'));});y+=26;}y+=10;}
  y+=10;const all=flat(r);
  r.tpl.sections.forEach((sec,si)=>{ens(70);hx(d,'setFillColor','#5b8dd6');d.rect(MX,y,CW,24,'F');d.setFont('helvetica','bold');d.setFontSize(12.5);d.setTextColor(255);d.text(cl(secLabel(r,si)),PW/2,y+16.5,{align:'center'});y+=24;
   d.setFontSize(8);hx(d,'setTextColor','#444444');d.text('RESULT',MX+387,y+10,{align:'center'});d.text('CONCERN LEVEL',MX+477,y+10,{align:'center'});y+=13;
@@ -14405,7 +14421,7 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
  const cells=[];const addC=(grp,title,sub,list)=>{(list||[]).map(p=>(S.zimg&&S.zimg[p])||S.photos[p]).filter(Boolean).forEach((p,i,a)=>cells.push({grp,t:title+(a.length>1?` (${i+1}/${a.length})`:''),sub,p}));};
  r.gear.forEach(g=>{if(g.na)return;if(g.tk){if((g.ph||[]).length)addC('Serial Number Photos',g.t,String(g.v||''),g.ph);else if(g.omit)cells.push({grp:'Serial Number Photos',t:g.t,sub:String(g.v||''),p:null,omit:true});return;}const sw=swOn(r)?r.swap.list.find(e=>e.dev===g.id):null;addC('Serial Number Photos',g.t,`S/N ${g.s||''}${sw?'  (OLD / removed unit)':''}`,g.ph);});
  if(swOn(r))r.swap.list.forEach(e=>{if(!e.dev)addC('Serial Number Photos',e.t||'Other device','OLD S/N '+(e.old||''),e.oldPh);addC('Serial Number Photos',e.t||'Other device','NEW S/N '+(e.nw||''),e.newPh);(e.mid||[]).forEach(m=>addC('Serial Number Photos',e.t||'Other device','FAILED unit S/N '+(m.s||'')+' (RMA required)',m.ph));});
- addC('Version Info Photos','Version info (HMI)','',r.verPh);((r.tpl.versionInfo||{fields:[]}).fields||[]).forEach(f=>{if(f.key==='v8'||f.key==='v9')return;if(f.key==='v7'){const tx=['v7','v8','v9'].map(k=>{const ff=r.tpl.versionInfo.fields.find(z=>z.key===k);return ff&&(r.ver||{})[k]?ff.label+': '+r.ver[k]:''}).filter(Boolean).join('; ');addC('Version Info Photos','Dashboard (mileage / engine hours / idle hours)',tx?'Recorded: '+tx:'',(r.vfPh||{}).v7);return;}addC('Version Info Photos',f.label,(r.ver||{})[f.key]?'Recorded: '+r.ver[f.key]:'',(r.vfPh||{})[f.key]);});['v7','v8','v9'].forEach(k=>{const ff=((r.tpl.versionInfo||{fields:[]}).fields||[]).find(z=>z.key===k);if(ff)addC('Version Info Photos',ff.label+' (own photo)',(r.ver||{})[k]?'Recorded: '+r.ver[k]:'',(r.vfPh||{})['o'+k.slice(1)]);});
+ addC('Version Info Photos','Version info (HMI)','',r.verPh);((r.tpl.versionInfo||{fields:[]}).fields||[]).forEach(f=>{if(f.key==='v8'||f.key==='v9')return;if(f.key==='v7'){const tx=['v7','v8','v9'].map(k=>{const ff=r.tpl.versionInfo.fields.find(z=>z.key===k);return ff&&(r.ver||{})[k]?ff.label+': '+vDisp(k,r.ver[k]):''}).filter(Boolean).join('; ');addC('Version Info Photos','Dashboard (mileage / engine hours / idle hours)',tx?'Recorded: '+tx:'',(r.vfPh||{}).v7);return;}addC('Version Info Photos',f.label,(r.ver||{})[f.key]?'Recorded: '+vDisp(f.key,r.ver[f.key]):'',(r.vfPh||{})[f.key]);});['v7','v8','v9'].forEach(k=>{const ff=((r.tpl.versionInfo||{fields:[]}).fields||[]).find(z=>z.key===k);if(ff)addC('Version Info Photos',ff.label+' (own photo)',(r.ver||{})[k]?'Recorded: '+vDisp(k,r.ver[k]):'',(r.vfPh||{})['o'+k.slice(1)]);});
  if(isAud(r)){const au=r.audit;all.forEach(x=>{const a=(au.items||{})[x.id];if(a&&(a.ph||[]).length)addC('Audit Photos','Audit - Fault #'+x.label,(a.n||'').replace(/\s+/g,' ').slice(0,80),a.ph);});addC('Audit Photos','Audit - additional findings',(au.find||'').replace(/\s+/g,' ').slice(0,80),au.ph);}
  all.forEach(x=>{const q=r.items[x.id]||{};addC('Issue and Item Photos','Item #'+x.label+(q.lvl?'  ['+LVK[q.lvl].n+']':''),x.t||'',q.ph);});
  if(cells.length){if(y+26+21+175>BOT){d.addPage();y=TOP;}else y+=16;d.setFont('helvetica','bold');d.setFontSize(15);d.setTextColor(0);d.text('Photo Appendix',MX,y+12);y+=26;
@@ -14486,7 +14502,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'ciadd':{const c=ciEnsure(r);c.items.push({id:uid(),area:'',t:''});markDirty();modal(ciEditHtml());const ins=document.querySelectorAll('#modal input[data-b]');ins.length&&ins[ins.length-1].focus();break;}
  case 'cirm':{const c=ciEnsure(r);c.items.splice(+b.dataset.i,1);markDirty();modal(ciEditHtml());break;}
  case 'cinc':{const c=ciEnsure(r);c.inc=!c.inc;markDirty();if($('#modal')){modal(ciEditHtml());}else{const e=$('#ciIncBtn');if(e){e.classList.toggle('pri',c.inc);e.textContent=(c.inc?'☑':'☐')+' Include in email summary';}if(!S.emEdited){const m=emailText(r);$('#emSubj').value=m.subj;$('#emBody').innerHTML=m.html;}else notice('Tap Reset in the email card to rebuild the message with this change.',{title:'Email already edited'});}break;}
- case 'cidone':{const c=ciEnsure(r);c.items=c.items.filter(x=>String(x.area||'').trim()||String(x.t||'').trim());if(!c.items.length)c.inc=false;markDirty();closeModal();if(r.step<4)go(4);else renderRec();break;}
+ case 'cidone':{const c=ciEnsure(r);c.items=c.items.filter(x=>String(x.area||'').trim()||String(x.t||'').trim());if(!c.items.length)c.inc=false;markDirty();closeModal();if(r.step<4)go(4);else keepPlace(null,renderRec);break;}
  case 'serfix':{closeModal();if(r.step!==1)go(1);setTimeout(()=>{const el=$('#infoSer');if(el){el.scrollIntoView({block:'start'});el.classList.add('target');setTimeout(()=>el.classList.remove('target'),5000);}},150);break;}
  case 'sec':enterSec(+b.dataset.si);break;
  case 'insstart':{r.insStart=true;markDirty();renderRec();break;}
@@ -14551,7 +14567,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'cam-take':closeModal();pickPhoto(id,true);break;
  case 'cam-lib':closeModal();pickPhoto(id,false);break;
  case 'rmph':{const q=phOwner(id);q.ph=q.ph.filter(p=>p!==b.dataset.p);dbDel('photos',b.dataset.p);delete S.photos[b.dataset.p];markDirty();rerenderPh(id);break;}
- case 'calopen':{const u=calUrl(r);if(u){window.open(u,'_blank');}else await notice('Open the “eMSC-L TFU & Radar Calibration” form from the forms page or your tablet, tap Scan QR, and scan the code from “Do it later”.',{title:'Open the calibration form'});break;}
+ case 'calopen':{const u=calUrl(r);if(u){window.open(u,'_blank');}else await notice('Open the “eMSC-L TFU to Radar Cal” form from the forms page or your tablet, tap Scan QR, and scan the code from “Do it later”.',{title:'Open the calibration form'});break;}
  case 'callater':calLaterDlg();break;
  case 'caldone':{r.cal={st:'done',date:today()};markDirty();renderRec();break;}
  case 'calundo':{r.cal={st:'',date:''};markDirty();renderRec();break;}
@@ -14622,7 +14638,7 @@ document.addEventListener('input',e=>{const t=e.target;
  const p=t.dataset.b;if(!p||!S.rec)return;
  if(p.startsWith('extraT.')){const id=p.slice(7);Object.values(S.rec.extra).forEach(l=>l.forEach(x=>{if(x.id===id)x.t=t.value}));markDirty();return;}
  if(p.startsWith('items.'))itm(p.split('.')[1]);
- setp(S.rec,p,t.value);if(p==='techNotes'&&!S.emEdited&&$('#emBody'))$('#emBody').innerHTML=emailText(S.rec).html;if(S.audit&&p.startsWith('audit.')&&$('#auNeed'))$('#auNeed').outerHTML=auNeedHtml();if(p==='hdr.acct'){document.querySelectorAll('#acctBox button').forEach(x=>x.classList.toggle('pri',x.dataset.v===t.value))}markDirty();});
+ setp(S.rec,p,/^ver\.v[789]$/.test(p)?t.value.replace(/[,\s]/g,''):t.value);if(p==='techNotes'&&!S.emEdited&&$('#emBody'))$('#emBody').innerHTML=emailText(S.rec).html;if(S.audit&&p.startsWith('audit.')&&$('#auNeed'))$('#auNeed').outerHTML=auNeedHtml();if(p==='hdr.acct'){document.querySelectorAll('#acctBox button').forEach(x=>x.classList.toggle('pri',x.dataset.v===t.value))}markDirty();});
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.b==='hdr.custEmail'&&$('#sendCard')){$('#sendCard').outerHTML=sendCardHtml(S.rec);}if(t.dataset.act==='rcp'){const x=t.dataset.e;if(t.checked)delete S.rec.recipients.off[x];else S.rec.recipients.off[x]=true;markDirty();}});
 // checkbox 'click' also reaches the delegated handler; make sure it doesn't double toggle
 async function doBackup(){await save();const recs=await dbAll('recs'),photos=await dbAll('photos');const o={app:'lvss-postrepair',v:1,when:Date.now(),recs,photos,settings:{tplOverride:S.settings.tplOverride,tscEmail:S.settings.tscEmail}};
@@ -14707,12 +14723,12 @@ function zvInit(pid){const z=S.rec&&S.rec.zv&&S.rec.zv[pid];return z&&(z.rot||0)
 function photoViewer(pid,ownerId,keep){const p=S.photos[pid];if(!p)return;const t=ownerId?ocrTarget(ownerId):null;S.ocrView={pid,ownerId};S.ocrT=null;if(!keep)S.viewRot=((S.rec&&S.rec.zv&&S.rec.zv[pid])||{}).rot||0;
  const show=r=>{const rot=S.viewRot||0;const go=src=>{
  const B=(i,d,l)=>`<button type="button" id="${i}" style="margin:0;flex:1;padding:4px 2px;min-height:42px;font-size:14px" title="Rotate ${Math.abs(d)}°">${l}</button>`;
- modal(`<div style="display:flex;flex-direction:column;height:100%;min-height:0"><h3 style="margin:0 0 4px;font-size:17px">${t?esc(t.what.charAt(0).toUpperCase()+t.what.slice(1)):'Photo'}</h3><p class="muted" style="margin:0 0 6px;font-size:13px;line-height:1.3">💡 <b>Tip:</b> rotate the picture first so the text reads level, then zoom in to check every character. ${t&&/^(ser|ver|hmi)$/.test(t.kind)?'<b>The report shows this photo cropped to the area you leave zoomed in on</b> (zoom all the way out for the full photo). ':''}Correct ${t&&t.multi?'any version number':t&&t.kind==='ver'?'the value':'the serial number'} below as you go – it saves as you type.</p>${t&&t.path?`<input id="zsSer" class="zsEd" data-p="${t.path}" value="${esc(String(getp(S.rec,t.path)||''))}" placeholder="${esc(t.lbl||'Serial number')}" aria-label="${esc(t.lbl||'Serial number')}" autocapitalize="characters" autocomplete="off" spellcheck="false" style="width:100%;margin:0 0 6px;padding:6px 10px;min-height:44px;font:700 18px ui-monospace,Menlo,Consolas,monospace">`:''}${t&&t.multi?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;margin:0 0 6px;max-height:26vh;overflow:auto">${((S.rec.tpl.versionInfo||{fields:[]}).fields||[]).filter(f=>!PHF.includes(f.key)).map(f=>`<label style="font-size:12px;color:#5b6678;line-height:1.2">${esc(f.label)}<input class="zsEd" data-p="ver.${f.key}" value="${esc(String(getp(S.rec,'ver.'+f.key)||''))}" autocomplete="off" spellcheck="false" style="width:100%;min-height:38px;padding:4px 8px;font:700 15px ui-monospace,Menlo,Consolas,monospace"></label>`).join('')}</div>`:''}${zsHtml(src,'flex')}</div><div style="display:flex;gap:4px;align-items:center;margin-top:6px">${B('rv1',-90,'⟲90')}${B('rv2',-45,'↺45')}${B('rv3',-5,'↺5')}<button type="button" id="rv0" style="margin:0;flex:.9;padding:4px 2px;min-height:42px;font-size:13px" title="Tap to reset rotation">${rot}°</button>${B('rv4',5,'↻5')}${B('rv5',45,'↻45')}${B('rv6',90,'⟳90')}</div><button data-act="ocrskip" style="margin-top:6px;min-height:44px">Done</button></div>`);
+ modal(`<div style="display:flex;flex-direction:column;height:100%;min-height:0"><h3 style="margin:0 0 4px;font-size:17px">${t?esc(t.what.charAt(0).toUpperCase()+t.what.slice(1)):'Photo'}</h3><p class="muted" style="margin:0 0 6px;font-size:13px;line-height:1.3">💡 <b>Tip:</b> rotate the picture first so the text reads level, then zoom in to check every character. ${t&&/^(ser|ver|hmi)$/.test(t.kind)?'<b>The report shows this photo cropped to the area you leave zoomed in on</b> (zoom all the way out for the full photo). ':''}Correct ${t&&t.multi?'any version number':t&&t.kind==='ver'?'the value':'the serial number'} below as you go – it saves as you type.</p>${t&&t.path?`<input id="zsSer" class="zsEd" data-p="${t.path}" value="${esc(String(getp(S.rec,t.path)||''))}" placeholder="${esc(t.lbl||'Serial number')}" aria-label="${esc(t.lbl||'Serial number')}" autocapitalize="characters" autocomplete="off" spellcheck="false" style="width:100%;margin:0 0 6px;padding:6px 10px;min-height:44px;font:700 18px ui-monospace,Menlo,Consolas,monospace">`:''}${t&&t.multi?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;margin:0 0 6px;max-height:26vh;overflow:auto">${((S.rec.tpl.versionInfo||{fields:[]}).fields||[]).filter(f=>!PHF.includes(f.key)).map(f=>`<label style="font-size:12px;color:#5b6678;line-height:1.2">${esc(f.label)}<input class="zsEd" data-p="ver.${f.key}" value="${esc(vDisp(f.key,String(getp(S.rec,'ver.'+f.key)||'')))}" autocomplete="off" spellcheck="false" style="width:100%;min-height:38px;padding:4px 8px;font:700 15px ui-monospace,Menlo,Consolas,monospace"></label>`).join('')}</div>`:''}${zsHtml(src,'flex')}</div><div style="display:flex;gap:4px;align-items:center;margin-top:6px">${B('rv1',-90,'⟲90')}${B('rv2',-45,'↺45')}${B('rv3',-5,'↺5')}<button type="button" id="rv0" style="margin:0;flex:.9;padding:4px 2px;min-height:42px;font-size:13px" title="Tap to reset rotation">${rot}°</button>${B('rv4',5,'↻5')}${B('rv5',45,'↻45')}${B('rv6',90,'⟳90')}</div><button data-act="ocrskip" style="margin-top:6px;min-height:44px">Done</button></div>`);
  {const m=document.querySelector('.modal>div');if(m){m.style.cssText+=';max-width:min(96vw,1000px);height:96vh;height:96dvh;max-height:96dvh;padding:10px;display:flex;flex-direction:column;overflow:hidden';const c=m.firstElementChild;if(c){c.style.flex='1 1 auto';}}}
  pvReorder();
  [['rv1',-90],['rv2',-45],['rv3',-5],['rv4',5],['rv5',45],['rv6',90]].forEach(([i,d])=>{document.getElementById(i).onclick=()=>viewRotate(d);});
  document.getElementById('rv0').onclick=()=>{S.viewRot=0;photoViewer(pid,ownerId,true);};
- zsInit({init:zvInit(pid),onView:v=>{if(!(t&&/^(ser|ver|hmi)$/.test(t.kind)))return;const R=S.rec;R.zv=R.zv||{};if(v.k>1.15&&v.w>0.02&&v.h>0.02){R.zv[pid]={rot:S.viewRot||0,x:v.x,y:v.y,w:v.w,h:v.h};}else delete R.zv[pid];clearTimeout(S.zvT);S.zvT=setTimeout(()=>markDirty(),400);}});document.querySelectorAll('.zsEd').forEach(si=>si.addEventListener('input',()=>{const pp=si.dataset.p;setp(S.rec,pp,si.value);markDirty();ocrRefresh(pp);}));};
+ zsInit({init:zvInit(pid),onView:v=>{if(!(t&&/^(ser|ver|hmi)$/.test(t.kind)))return;const R=S.rec;R.zv=R.zv||{};if(v.k>1.15&&v.w>0.02&&v.h>0.02){R.zv[pid]={rot:S.viewRot||0,x:v.x,y:v.y,w:v.w,h:v.h};}else delete R.zv[pid];clearTimeout(S.zvT);S.zvT=setTimeout(()=>markDirty(),400);}});document.querySelectorAll('.zsEd').forEach(si=>si.addEventListener('input',()=>{const pp=si.dataset.p;setp(S.rec,pp,/^ver\.v[789]$/.test(pp)?si.value.replace(/[,\s]/g,''):si.value);markDirty();ocrRefresh(pp);}));};
  if(!rot){go(p.d);return;}const im=new Image();im.onload=()=>{const a=rot*Math.PI/180,w=im.width,h=im.height,cs=Math.abs(Math.cos(a)),sn=Math.abs(Math.sin(a)),W=Math.round(w*cs+h*sn),H=Math.round(w*sn+h*cs),cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');g.fillStyle='#000';g.fillRect(0,0,W,H);g.translate(W/2,H/2);g.rotate(a);g.drawImage(im,-w/2,-h/2);go(cv.toDataURL('image/jpeg',0.9));};im.src=p.d;};
  show();}
 /* ===== swap chain / correction-vs-swap prompt / last check / failed-unit RMA / could-not-test dialog ===== */
@@ -14756,13 +14772,13 @@ function swapHtml(){const r=S.rec,w=r.swap,L=w.list,fs=finalSerials(r);
  <label class="f" style="margin-top:10px">${L.length?'Were any other devices swapped?':'Were any devices swapped?'}</label><p class="muted" style="margin:2px 0 6px">Tap a device to record its swap (old serial is kept, then enter the new serial # and photo), or add one that isn't listed. To swap a device again, change its new serial # in the card above.</p>
  <div class="row">${devs.filter(g=>!L.some(e=>e.dev===g.id)).map(g=>`<button data-act="lcsel" data-id="${g.id}">${esc(g.t)}</button>`).join('')}</div>
  <div class="row" style="margin-top:8px"><input id="swNew" placeholder="Device not in the list – type its name" style="flex:1;min-width:220px"><button data-act="swadd">＋ Add unlisted device</button></div>
- <div class="row" style="margin-top:10px"><button data-act="lcno" style="flex:1;background:#6b3fa0;color:#fff;border:2px solid #4d2a78;font-weight:800">${w.chk?'✓ ':''}${L.length?'No, nothing else swapped':'No, nothing was swapped'}</button></div></div></div>`;}
+ <div class="row" style="margin-top:10px"><button data-act="lcno" style="flex:1;${w.chk?'background:#6b3fa0;color:#fff;':'background:#fff;color:#6b3fa0;'}border:2px solid #4d2a78;font-weight:800">${w.chk?'<span style="color:#7CFC9A;font-size:1.2em">✔</span> ':''}${L.length?'No, nothing else swapped':'No, nothing was swapped'}</button></div></div></div>`;}
 function failedUnits(r){const o=[];r.swap.list.forEach((e,i)=>(e.mid||[]).forEach((m,j)=>o.push({e,i,m,j})));return o;}
 function rmaCard(u){const {e,i,m,j}=u,tbd=m.rma==='TBD';
  return `<div class="card pl" style="border-left:6px solid #c62828"><div class="row"><b style="font-size:17px">${esc(e.t)} ${esc(m.s)}</b><span class="tag" style="background:#fbd0d0">Removed – failed – RMA required</span></div>
  <div class="muted" style="margin:4px 0 6px">${esc(e.t)} ${esc(m.s)} – removed, failed – RMA required</div>
  <label class="f">RMA reference for this unit</label><input data-b="swap.list.${i}.mid.${j}.rma" value="${esc(m.rma||'')}" placeholder="RMA number (if you have it)"><button class="${tbd?'pri':''}" data-act="rmatbd2" data-i="${i}" data-j="${j}" style="margin-top:6px;min-height:40px">${tbd?'✓ ':''}RMA TBD</button><div class="muted" style="font-size:13px;margin-top:4px">RMA TBD is a reminder for you only. The RMA only appears on the report and e-mail once a number is entered.</div></div>`;}
-const verChanges=r=>{const o=[];qrVerFields(r).forEach(f=>{const a=String((r.prev||{})[f.key]||'').trim(),b=String((r.ver||{})[f.key]||'').trim();if(a&&b&&a!==b)o.push({label:f.label,old:a,nw:b});});return o;};
+const verChanges=r=>{const o=[];qrVerFields(r).forEach(f=>{const a=String((r.prev||{})[f.key]||'').trim(),b=String((r.ver||{})[f.key]||'').trim();if(a&&b&&a!==b)o.push({label:f.label,old:vDisp(f.key,a),nw:vDisp(f.key,b)});});return o;};
 /* could-not-test dialog: pick still-open issues and/or describe */
 function blkDlgHtml(id,err){const r=S.rec,d=itm(id),x=flat(r).find(y=>y.id===id);d.by=d.by||[];
  const cands=punch(r).filter(y=>y.id!==id&&(!(r.items[y.id]||{}).rep||d.by.includes(y.id)));
@@ -15527,7 +15543,7 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 window.qrTables=function(d,r,y,o){var MX=o.MX,CW=o.CW,BOT=o.BOT||742,c=function(s){return cl(s);};
  var fs=finalSerials(r),sw=(typeof swOn==='function'&&swOn(r))?r.swap.list:[];
  var Ls=fs.map(function(x){var p=sw.find(function(e){return e.dev===x.dev&&!T(e.nw);});return [x.n,T(x.s)+(x.swapped?'  (new)':'')+(p?'  (new S/N to follow)':''),x.swapped];});
- var Lv=qrVerFields(r).filter(function(f){return T((r.ver||{})[f.key])&&!(window.QR_TRUCK_KEYS&&QR_TRUCK_KEYS.indexOf(f.key)>=0);}).map(function(f){return [f.label,T(r.ver[f.key])];});
+ var Lv=qrVerFields(r).filter(function(f){return T((r.ver||{})[f.key])&&!(window.QR_TRUCK_KEYS&&QR_TRUCK_KEYS.indexOf(f.key)>=0);}).map(function(f){return [f.label,T(vDisp(f.key,r.ver[f.key]))];});
  var n=Math.max(Ls.length,Lv.length,1),HH=17,avail=BOT-y-8,rh=Math.max(10.5,Math.min(17,(avail-HH)/n)),fz=rh>=16?9:rh>=14?8.4:rh>=12?7.8:7.2,gap=10,w=(CW-gap)/2;
  var tbl=function(x0,head,col2,L,empty){d.setFillColor(0,0,0);d.rect(x0,y,w,HH,'F');d.setFont('helvetica','bold');d.setFontSize(9);d.setTextColor(255);d.text(head,x0+6,y+12);d.text(col2,x0+w*0.48+4,y+12);
   var yy=y+HH;if(!L.length){d.setFont('helvetica','italic');d.setFontSize(8.5);d.setTextColor(90);d.text(empty,x0+6,yy+12);return;}
@@ -15579,18 +15595,21 @@ function numWords(toks){/* "sixty six thousand eight hundred nineteen" -> 66819 
   if(NV[w]!=null){cur+=NV[w];any=true;}else if(w==='hundred'){cur=(cur||1)*100;any=true;}else if(w==='thousand'){tot+=(cur||1)*1000;cur=0;any=true;}});
  if(any)out+=String(tot+cur);return out;}
 function clean(raw,kind){kind=kind||'serial';
+ if(kind==='text')return String(raw||'').replace(/\s+/g,' ').trim();
  var t=String(raw||'').toLowerCase().replace(/x[\s-]ray/g,'xray').replace(/double[\s-]you/g,'w').replace(/(\d),(?=\d)/g,'$1').replace(/,/g,' ');
  var toks=t.split(/\s+/).map(function(w){return w.replace(/[^a-z0-9.\-\/]/g,'');}).filter(Boolean);
- if(kind==='number'){if(toks.some(function(w){return w==='hundred'||w==='thousand';}))return numWords(toks.filter(function(w){return w!=='and';}));}
+ if(kind==='number'||kind==='digits'){if(toks.some(function(w){return w==='hundred'||w==='thousand';}))return numWords(toks.filter(function(w){return w!=='and';})).replace(kind==='digits'?/[^0-9]/g:/[^0-9.]/g,'');}
  var out=[],rep=1,tens=null;
  var push=function(v){for(var i=0;i<rep;i++)out.push(v);rep=1;};
  toks.forEach(function(w){
   if(tens!==null){if(UNIT[w]&&UNIT[w]!=='0'){push(tens+UNIT[w]);tens=null;return;}push(tens+'0');tens=null;}
   if(w==='double'){rep=2;return;}if(w==='triple'){rep=3;return;}
   if(TENS[w]){tens=TENS[w];return;}
-  var v=NATO[w]!=null?NATO[w]:UNIT[w]!=null?UNIT[w]:TEEN[w]!=null?TEEN[w]:SYM[w]!=null?SYM[w]:(kind!=='number'&&LET[w]!=null)?LET[w]:w;push(v);});
+  var v=NATO[w]!=null?NATO[w]:UNIT[w]!=null?UNIT[w]:TEEN[w]!=null?TEEN[w]:SYM[w]!=null?SYM[w]:(kind!=='number'&&kind!=='digits'&&LET[w]!=null)?LET[w]:w;push(v);});
  if(tens!==null)push(tens+'0');
  var s=out.join('');
+ if(kind==='digits')return s.replace(/[^0-9]/g,'');
+ if(kind==='id')return s.toUpperCase().replace(/[^A-Z0-9]/g,'');
  if(kind==='number')return s.replace(/[^0-9.]/g,'');
  if(kind==='version')return s.replace(/[^a-z0-9.\-\/]/gi,'');
  return s.toUpperCase().replace(/[^A-Z0-9\-\/.]/g,'');}
@@ -15659,7 +15678,8 @@ window.Dictate={supported:!!SR,clean:clean,spoken:spoken,listen:listen,listenLon
    short pauses where the browser allows it; when it stops it asks "Is that everything?" (Yes, done / Keep going / Start over). "Type instead"
    opens the keyboard for that field.
    Text from the keyboard's own microphone key ("x-ray two six…") is cleaned up when the field is left, Dictate on or off.
-   Each form sets window.DICTATE_FIELDS = [{sel, kind}] (kind: serial | version | number). */
+   Each form sets window.DICTATE_FIELDS = [{sel, kind}] (kind: serial | version | number | digits | id | text).
+   digits = numbers only (RMA, SVO, sales order); id = capitals and numbers, no spaces or dashes (PO); text = words as spoken (site, technician, issues). */
 (function(){
 if(!window.Dictate)return;
 var KEY=window.DICTATE_KEY||'dictate_on',kbd=typeof WeakSet==='function'?new WeakSet():{has:function(){return false;},add:function(){},delete:function(){}};
@@ -15667,14 +15687,14 @@ var st={el:null,busy:false,ask:false,rep:false,h:null,raw:'',before:'',last:null
 function on(){try{return localStorage.getItem(KEY)==='1';}catch(e){return false;}}
 function setOn(v){try{localStorage.setItem(KEY,v?'1':'0');}catch(e){}if(!v){if(st.busy||st.ask)finish(true);stop();hide();}paint();}
 function cfg(){return window.DICTATE_FIELDS||[];}
-function kindOf(el){if(!el||el.tagName!=='INPUT'||el.type==='date'||el.disabled||el.readOnly)return null;var F=cfg();for(var i=0;i<F.length;i++){try{if(el.matches(F[i].sel))return F[i].kind||'serial';}catch(e){}}return null;}
+function kindOf(el){if(!el||(el.tagName!=='INPUT'&&el.tagName!=='TEXTAREA')||el.type==='date'||el.type==='email'||el.disabled||el.readOnly)return null;var F=cfg();for(var i=0;i<F.length;i++){try{if(el.matches(F[i].sel))return F[i].kind||'serial';}catch(e){}}return null;}
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function labelOf(el){var a=el.parentElement;for(var n=0;a&&n<5;n++,a=a.parentElement){var L=a.querySelectorAll('label.f,.lb,b');for(var i=L.length-1;i>=0;i--){if(L[i].compareDocumentPosition(el)&Node.DOCUMENT_POSITION_FOLLOWING){var t=L[i].textContent.replace(/\s+/g,' ').trim();if(t)return t.length>60?t.slice(0,57)+'…':t;}}}return el.placeholder||'this field';}
 /* ---------- look ---------- */
 var css=document.createElement('style');css.textContent=
- 'input.dk-mic{background-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%231d5fc4%27 stroke-width=%272%27 stroke-linecap=%27round%27%3E%3Crect x=%279%27 y=%273%27 width=%276%27 height=%2711%27 rx=%273%27/%3E%3Cpath d=%27M5 11a7 7 0 0 0 14 0M12 18v3%27/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-position:right 10px center!important;background-size:20px 20px!important;padding-right:38px!important}'+
- 'input.dk-kbd{background-image:none!important}'+
- 'input.dk-live{border-color:#c2410c!important;background-color:#fff1e6!important;box-shadow:0 0 0 3px rgba(194,65,12,.18)!important}'+
+ 'input.dk-mic,textarea.dk-mic{background-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%231d5fc4%27 stroke-width=%272%27 stroke-linecap=%27round%27%3E%3Crect x=%279%27 y=%273%27 width=%276%27 height=%2711%27 rx=%273%27/%3E%3Cpath d=%27M5 11a7 7 0 0 0 14 0M12 18v3%27/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-position:right 10px center!important;background-size:20px 20px!important;padding-right:38px!important}'+
+ 'input.dk-kbd,textarea.dk-kbd{background-image:none!important}'+
+ 'input.dk-live,textarea.dk-live{border-color:#c2410c!important;background-color:#fff1e6!important;box-shadow:0 0 0 3px rgba(194,65,12,.18)!important}'+
  '#dkPanel{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom));width:min(680px,calc(100% - 20px));background:#fff;color:#14213d;border:1px solid #d5dce6;border-left:6px solid #1d5fc4;border-radius:14px;box-shadow:0 10px 30px rgba(20,33,61,.25);padding:10px 12px;z-index:900;font-size:15px;display:none}'+
  '#dkPanel.live{border-left-color:#c2410c}#dkPanel.ask{border-left-color:#e0a000}#dkPanel.err{border-left-color:#c62828}#dkPanel.ok{border-left-color:#1b8a3a}'+
  '#dkPanel .t{display:flex;align-items:center;gap:8px;min-height:24px}#dkPanel .t b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
@@ -15696,7 +15716,7 @@ function place(){var el=st.el,top=false;try{if(el){var r=el.getBoundingClientRec
 function show(cls,title,msg,btns,ed){mount();if(P.style.display!=='block')place();P.className=cls||'';P.innerHTML='<div class="t">'+(cls==='live'?'<span class="dot"></span>':'')+'<b>'+title+'</b><button data-dk-x="close" aria-label="Close">✕</button></div><div class="m">'+(msg||'')+'</div><div class="b">'+(btns||'')+'</div>'+(ed?'<div class="e">'+ed+'</div>':'');P.style.display='block';}
 function hide(){P.style.display='none';}
 /* ---------- marks on the fields ---------- */
-function paint(){var o=on();document.querySelectorAll('input').forEach(function(el){var k=kindOf(el);if(!k){el.classList.remove('dk-mic');return;}
+function paint(){var o=on();document.querySelectorAll('input,textarea').forEach(function(el){var k=kindOf(el);if(!k){el.classList.remove('dk-mic');return;}
   el.classList.toggle('dk-mic',o);el.classList.toggle('dk-kbd',o&&kbd.has(el));if(o&&!kbd.has(el))el.setAttribute('inputmode','none');else if(el.getAttribute('inputmode')==='none')el.removeAttribute('inputmode');});
  document.querySelectorAll('.dk-pill').forEach(function(b){b.classList.toggle('on',o);b.textContent=o?'🎤 On':'🎤 Off';b.setAttribute('aria-label','Dictation '+(o?'on':'off')+' - tap to switch');});
  document.querySelectorAll('.dk-seg button').forEach(function(b){b.classList.toggle('on',(b.getAttribute('data-dk')==='1')===o);});}
@@ -15706,7 +15726,7 @@ var mo=new MutationObserver(function(){clearTimeout(mo.t);mo.t=setTimeout(pill,3
 function start(){mo.observe(document.body,{childList:true,subtree:true});pill();}
 if(document.body)start();else document.addEventListener('DOMContentLoaded',start);
 /* the On/Off choice shown when an inspection starts */
-window.DictUI={rowHtml:function(){return '<div class="dk-row"><span>🎤 Dictate serial numbers and versions<small>Tap a field and say it instead of typing. You can switch it here any time.</small></span><div class="dk-seg"><button type="button" data-dk="0">Off</button><button type="button" data-dk="1">On</button></div></div>';},paint:paint,on:on,setOn:setOn};
+window.DictUI={rowHtml:function(){return '<div class="dk-row"><span>🎤 Dictate into the fields<small>Tap a field and say it instead of typing. You can switch it here any time.</small></span><div class="dk-seg"><button type="button" data-dk="0">Off</button><button type="button" data-dk="1">On</button></div></div>';},paint:paint,on:on,setOn:setOn};
 /* ---------- putting a value in, the same way typing does ---------- */
 function put(el,v){el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));try{el.blur();}catch(e){}el.dispatchEvent(new Event('change',{bubbles:true}));}
 /* ---------- listening. Speech goes in at the cursor (Ravi, 2026-10-30): tap where it should go, or move the cursor
@@ -15725,8 +15745,8 @@ function listen(el,more){var k=kindOf(el);if(!k)return;stop();st.el=el;place();s
  var c0=Math.max(0,Math.min(st.caret,el.value.length)),pre=st.rep?'':el.value.slice(0,c0),post=st.rep?'':el.value.slice(c0),ins='',heard='';
  var B='<button class="stp" data-dk-x="fin">■ Stop</button><button data-dk-x="kbd">⌨ Type instead</button>';
  var paint=function(msg){show('live','Listening – '+lb,shown(el)+'<br><span style="color:#6b7686">'+msg+'</span>',B,EDIT);};
- st.caret=c0;paint(st.rep?'The microphone stays on until you tap ■ Stop. It <b>replaces</b> what is there. To change just part of it, tap ◀ ▶ first.':el.value?'The microphone stays on until you tap ■ Stop. It goes in at the cursor.':IOS?'Speak after the beep. On iPhone it may stop after a pause; if so, use the keyboard’s microphone key.':'The microphone stays on until you tap ■ Stop. Speak one character at a time.');
- st.ins=function(t){heard=t;ins=Dictate.clean(t,k);setLive(el,pre+ins+post);caretTo(el,pre.length+ins.length);};
+ st.caret=c0;paint(st.rep?'The microphone stays on until you tap ■ Stop. It <b>replaces</b> what is there. To change just part of it, tap ◀ ▶ first.':el.value?'The microphone stays on until you tap ■ Stop. It goes in at the cursor.':IOS?'Speak after the beep. On iPhone it may stop after a pause; if so, use the keyboard’s microphone key.':(k==='text'?'The microphone stays on until you tap ■ Stop. Speak normally.':'The microphone stays on until you tap ■ Stop. Speak one character at a time.'));
+ st.ins=function(t){heard=t;ins=Dictate.clean(t,k);if(k==='text'&&ins){if(pre&&!/\s$/.test(pre))ins=' '+ins;if(post&&!/^\s/.test(post))ins+=' ';}setLive(el,pre+ins+post);caretTo(el,pre.length+ins.length);};
  st.h=Dictate.listenLong({pause:PAUSE,firstWait:IOS?12000:36e5,restart:!IOS,
   onText:function(t){st.ins(t);paint('Heard “'+esc(t)+'”');},
   onSilence:function(t){st.h=null;st.busy=false;st.rep=false;el.classList.remove('dk-live');st.ins(t);st.heard=heard;askDone(el);},
@@ -15776,7 +15796,7 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 document.addEventListener('focusin',function(e){var el=e.target;if(!on()||!kindOf(el)||!kbd.has(el))return;st.el=el;place();show('','⌨ Typing – '+esc(labelOf(el)),'The keyboard is open for this field.','<button class="p" data-dk-x="voice">🎤 Speak instead</button><button data-dk-x="close">Done</button>');});
 document.addEventListener('focusout',function(e){var el=e.target;if(kindOf(el)&&kbd.has(el)&&!st.busy)setTimeout(function(){if(document.activeElement!==el&&P.className==='')hide();},150);});
 /* keyboard microphone key: clean "x-ray two six bravo…" when the field is left (only text that looks spoken is changed) */
-document.addEventListener('change',function(e){var el=e.target,k=kindOf(el);if(!k||!e.isTrusted)return;var raw=el.value;if(!Dictate.spoken(raw))return;var v=Dictate.clean(raw,k);if(!v||v===raw)return;
+document.addEventListener('change',function(e){var el=e.target,k=kindOf(el);if(!k||k==='text'||!e.isTrusted)return;var raw=el.value;if(!Dictate.spoken(raw))return;var v=Dictate.clean(raw,k);if(!v||v===raw)return;
  st.el=el;st.last={el:el,before:raw};el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));show('ok','✓ '+esc(labelOf(el))+': <code style="font:800 16px ui-monospace,Menlo,Consolas,monospace">'+esc(v)+'</code>','Cleaned up from “'+esc(raw)+'”.','<button data-dk-x="undo">Undo</button><button class="p" data-dk-x="close">Done</button>');},true);
 })();
 
@@ -15785,6 +15805,10 @@ window.DICTATE_FIELDS=[
  {sel:'input[data-b^="swap.list."][data-b$=".nw"],input[data-b^="swap.list."][data-b$=".old"]',kind:'serial'},
  {sel:'input[data-tk],input[data-b^="gear."][data-b$=".v"]',kind:'serial'},
  {sel:'input[data-b="ver.v7"],input[data-b="ver.v8"],input[data-b="ver.v9"]',kind:'number'},
+ {sel:'input[data-b="hdr.rma"],input[data-b="hdr.so"],input[data-b="hdr.fso"],input#emRma',kind:'digits'},
+ {sel:'input[data-b="hdr.po"],input[data-b="hdr.acct"]',kind:'id'},
+ {sel:'input[data-b="hdr.sn"],input[data-b="hdr.wbs"]',kind:'serial'},
+ {sel:'input[data-b="hdr.loc"],input[data-b="hdr.tech"],input[placeholder="Customer-reported issue"],.qrep textarea[data-b$=".note"]',kind:'text'},
  {sel:'input[data-b^="ver.v"]:not([data-b="ver.v0s"]):not([data-b="ver.v0c"])',kind:'version'}];
 (function(){var _h=serHtml;serHtml=function(){return _h.apply(this,arguments).replace('<h2>Serial numbers</h2>','<h2>Serial numbers</h2>'+DictUI.rowHtml());};})();
 (function(){var _n=newDlg;newDlg=function(){var o=_n.apply(this,arguments);var s=document.querySelector('#modal [data-act=start]');if(s&&!document.querySelector('#modal .dk-row'))s.insertAdjacentHTML('beforebegin',DictUI.rowHtml());DictUI.paint();return o;};})();</script><script>/* ===== QR page: truck details (Ravi, 2026-10-31) =====
@@ -15793,7 +15817,7 @@ window.DICTATE_FIELDS=[
 window.QR_TRUCK_KEYS=['v7','v8','v9'];
 window.qrTruck=function(r){var T=function(v){return String(v==null?'':v).trim();},ver=r.ver||{},F=((r.tpl&&r.tpl.versionInfo)||{}).fields||[];
  var L=[['Customer',CUST.of(r).n],['License plate',tv(r,'plate')],['Kilo #',tv(r,'kilo')],['VIN',tv(r,'vin')]];
- QR_TRUCK_KEYS.forEach(function(k){var f=F.find(function(x){return x.key===k;});if(f)L.push([f.label,ver[k]]);});
+ QR_TRUCK_KEYS.forEach(function(k){var f=F.find(function(x){return x.key===k;});if(f)L.push([f.label,vDisp(k,ver[k])]);});
  return L.map(function(a){return [a[0],T(a[1])||'-'];});};
 function qrTruckRow(d,x,y,w,rh,a,lw){var c=function(s){return cl(s);};d.setDrawColor(0);d.setLineWidth(.5);d.rect(x,y,w,rh);d.line(x+lw,y,x+lw,y+rh);
  var fz=Math.min(9,Math.max(7.2,rh*0.5));d.setTextColor(0);d.setFont('helvetica','bold');d.setFontSize(fz);d.text(d.splitTextToSize(c(a[0]),lw-8)[0]||'',x+5,y+rh/2+fz*0.35);
@@ -15893,4 +15917,19 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
  if(q.qz.d===v){q.qz.d='';if(q.qzAdv){q.adv=false;q.qzAdv=false;}}
  else{q.qz.d=v;if(v==='d'){if(!q.adv){q.adv=true;q.qzAdv=true;}q.rep=false;}else if(q.qzAdv){q.adv=false;q.qzAdv=false;}}
  markDirty();var y=window.scrollY;render();window.scrollTo(0,y);},true);
-})();</script></body></html>
+})();</script><script>/* ===== tidy-up when a field is left (Ravi, 2026-11-03) =====
+   RMA, SVO and FLIR sales order: digits only. Customer PO: capitals and numbers only. Spaces and dashes never stay in these four.
+   Mileage, engine hours and idle hours: shown with commas (48,210) once the field is left; the saved value stays a plain number. */
+(function(){
+var DIG='input[data-b="hdr.rma"],input[data-b="hdr.so"],input[data-b="hdr.fso"],input#emRma,input[data-h="rma"],input[data-h="so"],input[data-h="fso"],input#nf-rma,input#nf-so,input#nf-fso,input#dd49so';
+var PO='input[data-b="hdr.po"],input[data-h="po"],input#nf-po,input#dd49po';
+var NUM='input[data-b="ver.v7"],input[data-b="ver.v8"],input[data-b="ver.v9"],input[data-dd="rev.v7"],input[data-dd="rev.v8"],input[data-dd="rev.v9"]';
+function sep(v){var s0=String(v==null?'':v).trim(),s=s0.replace(/[,\s]/g,'');if(!/^\d+(\.\d+)?$/.test(s))return s0;var q=s.split('.');return q[0].replace(/\B(?=(\d{3})+(?!\d))/g,',')+(q[1]!=null?'.'+q[1]:'');}
+function m(el,sel){try{return el.matches(sel);}catch(e){return false;}}
+document.addEventListener('change',function(e){var el=e.target;if(!el||el.tagName!=='INPUT')return;
+ var v=m(el,DIG)?el.value.replace(/[^0-9]/g,''):m(el,PO)?el.value.toUpperCase().replace(/[^A-Z0-9]/g,''):null;
+ if(v!=null&&v!==el.value){el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));}},true);
+document.addEventListener('change',function(e){var el=e.target;if(!el||el.tagName!=='INPUT'||!m(el,NUM))return;
+ setTimeout(function(){if(document.activeElement===el)return;var f=sep(el.value);if(f!==el.value)el.value=f;},0);});
+})();
+</script></body></html>

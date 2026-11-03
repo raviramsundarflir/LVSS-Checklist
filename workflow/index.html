@@ -106,7 +106,7 @@ repair:{label:'Repair',blurb:'Customer unit comes in, issues are identified and 
   [A,'Post-Repair: identify issues','Scan the Intake QR, or the Z2 Quote QR if there was a quote: each quoted issue is marked Approved or Declined, and a declined issue is reported as not repaired. Core data and the customer-reported issues load. The tech adds anything else found.'],
   [O,'Correct the issues','The tech repairs each identified issue.'],
   [A,'Mark issues corrected','Back in Post-Repair, each corrected issue is marked repaired, with notes, parts and photos.'],
-  [D,'TFU changed?','If the TFU was replaced during the repair, it must be calibrated. Calibration is for the TFU only, not the radar or PTU.',['Yes','Run TFU & Radar Calibration'],['No','Go to the report']]]},
+  [D,'TFU changed?','If the TFU was replaced during the repair, it must be calibrated. Calibration is for the TFU only, not the radar or PTU.',['Yes','Run TFU to Radar Cal'],['No','Go to the report']]]},
  {n:'Report and release',s:[
   [A,'Summary report','Everything checked, everything identified as faulty, anything repaired, and the technician\u2019s notes.'],
   [O,'Release to customer','The vehicle goes back to the customer. No ATP is run on a repair.']]}]},
@@ -146,7 +146,7 @@ build:{label:'New build',proposed:1,blurb:'Proposed, not built yet. The governme
   [N,'Skid installed on truck (major step)','Network enclosure married to the skid, forklifted into the bed, set down with four bolts (top left, top right, bottom left, bottom right). Power on and verify everything works. Deploy the skid outside, then install the four remaining bolts: eight bed bolts in all. Scan the truck QR to link truck and skid. If the skid serial changed from the plan, the app flags it.'],
   [O,'Dressing','Cable and hardware dressing.'],
   [A,'Jake\u2019s Final (ad hoc test)','Ad hoc testing before the ATP. Final items addressed here.'],
-  [A,'TFU & Radar Calibration','Normally after integration. May happen later.']]},
+  [A,'TFU to Radar Cal','Normally after integration. May happen later.']]},
  {n:'ATP and punch list',s:[
   [A,'ATP','Acceptance test. Ideally the tech runs it earlier; to be raised with the site manager.'],
   [A,'Punch list corrections','Technicians correct each item on the punch list.'],

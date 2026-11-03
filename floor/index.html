@@ -13910,8 +13910,11 @@ function photosInner(r){const L=r.ph||[];
  ${L.length?`<div class="phg">${L.map(p=>`<figure><img src="${p.d}" alt="" data-act="phview" data-id="${p.id}" style="cursor:pointer"><figcaption><b>${esc(phLabel(r,p))}</b><input data-ph="${p.id}" data-nohist value="${esc(p.cap||'')}" placeholder="Caption (optional)"><button class="dng" data-act="phdel" data-id="${p.id}" style="margin-top:4px;min-height:34px;padding:4px 10px">Remove</button></figcaption></figure>`).join('')}</div>
  <div style="margin-top:12px"><b>Include these pictures with the report?</b><div class="muted">They are never put in the PDF. If you include them, they are sent as a separate ZIP of pictures.</div><div class="row" style="margin-top:6px"><button data-act="phinc" data-v="1" class="${r.done.incPh==='1'?'pri':''}" style="flex:1 1 180px">Include (separate ZIP)</button><button data-act="phinc" data-v="0" class="${r.done.incPh==='0'?'pri':''}" style="flex:1 1 180px">Do not include</button></div></div>`:'<p class="muted" style="margin-bottom:0">No pictures yet. You can also add a picture to any checklist line with its 📷 button.</p>'}`;}
 function photosHtml(r){return `<div class="card"><h3>Pictures (optional)</h3><p class="muted">Pictures stay on this tablet and are not in the PDF.</p><div id="phBox">${photosInner(r)}</div></div>`;}
+/* photo ZIP names (Ravi, 2026-11-03): truck serial - device - serial; both truck serials after an upfit; NO SN / NO VALUE when blank */
+function pzTruck(r){const h=r.hdr||{},nw=snNum(h.sn)?snShow(h.sn):'',od=h.kind==='up'&&String(h.old||'').trim()?snShow(h.old).replace(/^LVSS[-\s_]*(?=\d)/i,'LVSS '):'';return od&&nw&&od!==nw?od+' ('+nw+')':(od||nw||'NO SN');}
+function pzTag(r,p){const m=/^(dv|rv):(.+)$/.exec(p.k||'');if(!m)return null;const L=(m[1]==='dv'?FDEV:FREV).find(x=>x[0]===m[2]);if(!L)return null;const c=((m[1]==='dv'?r.dv:r.rv)||{})[m[2]]||{},v=c.na?'N/A':String(c.v||'').replace(/\s+/g,' ').trim();return pzTruck(r)+' - '+L[1]+' - '+(v||(m[1]==='dv'?'NO SN':'NO VALUE'));}
 function photoZipFile(r){const L=r.ph||[];if(!L.length)return null;const folder=fileSafe(stdName('',recName(r),'FLOOR-TEST',r.hdr.date)),cnt={},files=L.map(p=>{const b=atob(p.d.split(',')[1]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);
-  const x=TPL.items.findIndex(i=>i.k===p.k),tag=dvTag(p.k)||(x<0?'General':TPL.items[x].n+' '+TPL.items[x].t.slice(0,40));const k=fileSafe(tag);cnt[k]=(cnt[k]||0)+1;return {name:folder+'/'+k+' '+cnt[k]+(p.cap?' - '+fileSafe(p.cap):'')+'.jpg',data:u};});
+  const x=TPL.items.findIndex(i=>i.k===p.k),tag=pzTag(r,p)||(pzTruck(r)+' - '+(x<0?'General':TPL.items[x].n+' '+TPL.items[x].t.slice(0,40)));const k=fileSafe(tag);cnt[k]=(cnt[k]||0)+1;return {name:folder+'/'+k+' '+cnt[k]+(p.cap?' - '+fileSafe(p.cap):'')+'.jpg',data:u};});
  return {blob:zipStore(files),name:folder+'.zip',n:files.length};}
 
 /* ---- picture viewer with rotate (same steps as the other forms) ---- */
@@ -14308,5 +14311,20 @@ if(m){var id=decodeURIComponent(m[1]),tries=0;
   if(!ok){window.tscDrop(id);say('That report is no longer saved on this device.');return;}
   if(p.y)setTimeout(function(){window.scrollTo(0,p.y);},400);track();};
  if(document.readyState==='complete')setTimeout(go,300);else window.addEventListener('load',function(){setTimeout(go,300);});}
+})();
+</script><script>/* ===== tidy-up when a field is left (Ravi, 2026-11-03) =====
+   RMA, SVO and FLIR sales order: digits only. Customer PO: capitals and numbers only. Spaces and dashes never stay in these four.
+   Mileage, engine hours and idle hours: shown with commas (48,210) once the field is left; the saved value stays a plain number. */
+(function(){
+var DIG='input[data-b="hdr.rma"],input[data-b="hdr.so"],input[data-b="hdr.fso"],input#emRma,input[data-h="rma"],input[data-h="so"],input[data-h="fso"],input#nf-rma,input#nf-so,input#nf-fso,input#dd49so';
+var PO='input[data-b="hdr.po"],input[data-h="po"],input#nf-po,input#dd49po';
+var NUM='input[data-b="ver.v7"],input[data-b="ver.v8"],input[data-b="ver.v9"],input[data-dd="rev.v7"],input[data-dd="rev.v8"],input[data-dd="rev.v9"]';
+function sep(v){var s0=String(v==null?'':v).trim(),s=s0.replace(/[,\s]/g,'');if(!/^\d+(\.\d+)?$/.test(s))return s0;var q=s.split('.');return q[0].replace(/\B(?=(\d{3})+(?!\d))/g,',')+(q[1]!=null?'.'+q[1]:'');}
+function m(el,sel){try{return el.matches(sel);}catch(e){return false;}}
+document.addEventListener('change',function(e){var el=e.target;if(!el||el.tagName!=='INPUT')return;
+ var v=m(el,DIG)?el.value.replace(/[^0-9]/g,''):m(el,PO)?el.value.toUpperCase().replace(/[^A-Z0-9]/g,''):null;
+ if(v!=null&&v!==el.value){el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));}},true);
+document.addEventListener('change',function(e){var el=e.target;if(!el||el.tagName!=='INPUT'||!m(el,NUM))return;
+ setTimeout(function(){if(document.activeElement===el)return;var f=sep(el.value);if(f!==el.value)el.value=f;},0);});
 })();
 </script></body></html>

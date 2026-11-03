@@ -13927,8 +13927,10 @@ function photosInner(r){const L=r.ph||[];
  return `<div class="row"><button data-act="phcam" style="flex:1 1 180px">📷 Take picture</button><button data-act="phlib" style="flex:1 1 180px">🖼 Choose from library</button></div>
  ${L.length?`<div class="phg">${L.map(p=>`<figure><img src="${p.d}" alt="" data-act="phview" data-id="${p.id}" style="cursor:pointer"><figcaption><b>${esc(phLabel(r,p))}</b><input data-ph="${p.id}" data-nohist value="${esc(p.cap||'')}" placeholder="Caption (optional)"><button class="dng" data-act="phdel" data-id="${p.id}" style="margin-top:4px;min-height:34px;padding:4px 10px">Remove</button></figcaption></figure>`).join('')}</div><p class="muted" style="margin-bottom:0">Pictures are never put in the PDF. Save PDF also saves them as a ZIP with the same name, so you can attach it if it helps.</p>`:'<p class="muted" style="margin-bottom:0">No pictures yet. You can also add a picture to an issue with its 📷 button.</p>'}`;}
 function photosHtml(r){return `<div class="card"><h3>Pictures (optional)</h3><p class="muted">Pictures stay on this tablet and are not in the PDF.</p><div id="phBox">${photosInner(r)}</div></div>`;}
+/* photo ZIP names (Ravi, 2026-11-03): truck serial - device - serial; both truck serials after an upfit; NO SN / NO VALUE when blank */
+function pzTruck(r){const v=snDig(String((r.hdr||{}).sn||'').trim())?snShow(r.hdr.sn,null):'';return v||'NO SN';}
 function photoZipFile(r){const L=r.ph||[];if(!L.length)return null;const folder=fileSafe(stdName(r.hdr.rma,recName(r),'Z2-QUOTE',r.hdr.date)),cnt={},files=L.map(p=>{const b=atob(p.d.split(',')[1]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);
-  const k=fileSafe(phLabel(r,p));cnt[k]=(cnt[k]||0)+1;return {name:folder+'/'+k+' '+cnt[k]+(p.cap?' - '+fileSafe(p.cap):'')+'.jpg',data:u};});
+  const k=fileSafe(pzTruck(r)+' - '+phLabel(r,p));cnt[k]=(cnt[k]||0)+1;return {name:folder+'/'+k+' '+cnt[k]+(p.cap?' - '+fileSafe(p.cap):'')+'.jpg',data:u};});
  return {blob:zipStore(files),name:folder+'.zip',n:files.length};}
 function updCk(k){const r=S.rec;if(!r)return;const m=/^iss:(.+)$/.exec(k||'');if(!m)return;const i=r.iss.find(x=>x.id===m[1]);const el=i&&document.getElementById('qi-'+i.id);if(el)el.outerHTML=issCard(r,i);}
 function phRefresh(){const r=S.rec;if(!r)return;const bx=$('#phBox');if(bx)bx.innerHTML=photosInner(r);(r.iss||[]).forEach(i=>updCk('iss:'+i.id));}
@@ -14342,5 +14344,20 @@ if(m){var id=decodeURIComponent(m[1]),tries=0;
   if(!ok){window.tscDrop(id);say('That report is no longer saved on this device.');return;}
   if(p.y)setTimeout(function(){window.scrollTo(0,p.y);},400);track();};
  if(document.readyState==='complete')setTimeout(go,300);else window.addEventListener('load',function(){setTimeout(go,300);});}
+})();
+</script><script>/* ===== tidy-up when a field is left (Ravi, 2026-11-03) =====
+   RMA, SVO and FLIR sales order: digits only. Customer PO: capitals and numbers only. Spaces and dashes never stay in these four.
+   Mileage, engine hours and idle hours: shown with commas (48,210) once the field is left; the saved value stays a plain number. */
+(function(){
+var DIG='input[data-b="hdr.rma"],input[data-b="hdr.so"],input[data-b="hdr.fso"],input#emRma,input[data-h="rma"],input[data-h="so"],input[data-h="fso"],input#nf-rma,input#nf-so,input#nf-fso,input#dd49so';
+var PO='input[data-b="hdr.po"],input[data-h="po"],input#nf-po,input#dd49po';
+var NUM='input[data-b="ver.v7"],input[data-b="ver.v8"],input[data-b="ver.v9"],input[data-dd="rev.v7"],input[data-dd="rev.v8"],input[data-dd="rev.v9"]';
+function sep(v){var s0=String(v==null?'':v).trim(),s=s0.replace(/[,\s]/g,'');if(!/^\d+(\.\d+)?$/.test(s))return s0;var q=s.split('.');return q[0].replace(/\B(?=(\d{3})+(?!\d))/g,',')+(q[1]!=null?'.'+q[1]:'');}
+function m(el,sel){try{return el.matches(sel);}catch(e){return false;}}
+document.addEventListener('change',function(e){var el=e.target;if(!el||el.tagName!=='INPUT')return;
+ var v=m(el,DIG)?el.value.replace(/[^0-9]/g,''):m(el,PO)?el.value.toUpperCase().replace(/[^A-Z0-9]/g,''):null;
+ if(v!=null&&v!==el.value){el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));}},true);
+document.addEventListener('change',function(e){var el=e.target;if(!el||el.tagName!=='INPUT'||!m(el,NUM))return;
+ setTimeout(function(){if(document.activeElement===el)return;var f=sep(el.value);if(f!==el.value)el.value=f;},0);});
 })();
 </script></body></html>
