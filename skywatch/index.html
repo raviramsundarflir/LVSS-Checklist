@@ -14521,7 +14521,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'60'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'61'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14584,7 +14584,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='ad0700cafc';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='ce25673d33';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -14696,6 +14696,9 @@ function track(){var a=ad();if(!a)return;var e;try{e=a.cur();}catch(x){return;}i
 setInterval(track,2000);
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')track();});
 window.addEventListener('pagehide',track);
+/* Rev 61: skywatch/#generator (link from the launcher's SkyWatch page) opens the generator manual & fault codes panel */
+if(/(?:^#|&)generator(?:&|$)/.test(location.hash)){var gt=0,gop=function(){if(typeof window.__openGenPanel==='function'){try{history.replaceState(null,'',location.pathname+location.search);}catch(x){}try{window.__openGenPanel();}catch(x){}return;}if(gt++<40)setTimeout(gop,250);};
+ if(document.readyState==='complete')setTimeout(gop,400);else window.addEventListener('load',function(){setTimeout(gop,400);});}
 var m=/(?:^#|&)resume=([^&]+)/.exec(location.hash);
 if(m){var id=decodeURIComponent(m[1]),tries=0;
  var clear=function(){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}};
@@ -14908,6 +14911,7 @@ function genPanel(){if(GPN.open)return;GPN.open=true;GPN.m=gpnStart();var p=docu
  document.body.appendChild(p);document.documentElement.classList.add('gpn-lock');gpnPaint();
  try{history.pushState({camx:1,gpn:1},'',location.href);}catch(err){}
  window.addEventListener('popstate',gpnPop);document.addEventListener('keydown',gpnKey,true);}
+window.__openGenPanel=function(){genPanel();};
 function gpnClose(back){if(!GPN.open)return;GPN.open=false;var p=document.getElementById('genPanel');if(p)p.remove();document.documentElement.classList.remove('gpn-lock');
  window.removeEventListener('popstate',gpnPop);document.removeEventListener('keydown',gpnKey,true);
  if(back!==false){try{if(history.state&&history.state.gpn)history.back();}catch(err){}}}
