@@ -14549,7 +14549,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'70'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'71'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -15171,8 +15171,10 @@ window.carryPdfTag=function(r,k){var c=r.carry||{};if(!c[k])return '';var ph=k.i
 window.hoursPdf=function(r){var lh=num((r.last||{}).h),nh=num(r.hdr.genHours);if(lh==null)return '';return nh!=null&&nh>=lh?'  (+'+fmtN(nh-lh)+' since last visit)':'  (last visit '+fmtN(lh)+')';};
 
 /* ---------- PDFs ---------- */
-function pdfBase(){var J=window.jspdf&&window.jspdf.jsPDF;if(!J)throw new Error('The PDF maker did not load. Reload the page and try again.');return new J({unit:'pt',format:'letter',compress:true});}
-function endPdf(d,label,name){var W=d.internal.pageSize.getWidth(),H=d.internal.pageSize.getHeight(),n=d.getNumberOfPages();for(var i=1;i<=n;i++){d.setPage(i);creditLine(d,'');d.setFont('helvetica','normal');d.setFontSize(7.5);d.setTextColor(120);d.text(cl(label),40,H-20);d.text('Page '+i+' of '+n,W-40,H-20,{align:'right'});}dlBlob(d.output('blob'),name);}
+var PK=null;/* Rev 71: blank-forms packet - while PK is set, the forms are drawn into one shared PDF */
+function pdfBase(){var J=window.jspdf&&window.jspdf.jsPDF;if(!J)throw new Error('The PDF maker did not load. Reload the page and try again.');if(PK&&PK.d){PK.d.addPage();PK.start=PK.d.getNumberOfPages();return PK.d;}var d=new J({unit:'pt',format:'letter',compress:true});if(PK){PK.d=d;PK.start=1;}return d;}
+function footPages(d,label,from,to){var W=d.internal.pageSize.getWidth(),H=d.internal.pageSize.getHeight(),n=to-from+1;for(var i=from;i<=to;i++){d.setPage(i);creditLine(d,'');d.setFont('helvetica','normal');d.setFontSize(7.5);d.setTextColor(120);d.text(cl(label),40,H-20);d.text('Page '+(i-from+1)+' of '+n,W-40,H-20,{align:'right'});}}
+function endPdf(d,label,name){if(PK&&PK.d===d){PK.parts.push({label:label,from:PK.start,to:d.getNumberOfPages()});return;}footPages(d,label,1,d.getNumberOfPages());dlBlob(d.output('blob'),name);}
 function kit(d){var W=d.internal.pageSize.getWidth(),H=d.internal.pageSize.getHeight(),MX=40,CW=W-80,K={W:W,H:H,MX:MX,CW:CW,y:0};
  K.ens=function(h){if(K.y+h>H-44){d.addPage();K.y=44;}};
  K.box=function(x,yy,on){d.setLineWidth(1);if(on){hx(d,'setFillColor','#1b8a3a');hx(d,'setDrawColor','#1b8a3a');d.rect(x,yy,11,11,'FD');d.setDrawColor(255);d.setLineWidth(1.7);d.line(x+2.3,yy+5.8,x+4.6,yy+8.4);d.line(x+4.6,yy+8.4,x+8.9,yy+2.6);}else{d.setDrawColor(120);d.rect(x,yy,11,11);}};
@@ -15216,6 +15218,22 @@ function blankInspPdf(){var d=pdfBase(),K=kit(d),tpl=curTpl(),MX=K.MX,CW=K.CW,W=
  K.head('General comments / additional or altered equipment found');for(var j=0;j<5;j++){K.ens(22);d.setDrawColor(170);d.line(MX,K.y+10,W-MX,K.y+10);K.y+=22;}
  K.head('Sign-off');K.fields([['tn','Teledyne FLIR Technician (print name and title)'],['ts','Signature / date'],['cn','Customer (print name and title)'],['cs','Signature / date']],null);
  endPdf(d,'SkyWatch Inspection Form | blank',stdName(null,'BLANK','SKYWATCH-FORM',today())+'.pdf');}
+/* Rev 71: print a blank form straight from the launcher's SkyWatch > Forms screen (skywatch/#print=both|trip|insp) */
+function printBlank(w){
+ if(w==='trip'){tripPdf(null);return;}
+ if(w==='insp'){blankInspPdf();return;}
+ PK={d:null,parts:[],start:1};
+ try{tripPdf(null);blankInspPdf();var d=PK.d,parts=PK.parts;PK=null;
+  parts.forEach(function(q){footPages(d,q.label,q.from,q.to);});
+  dlBlob(d.output('blob'),stdName(null,'BLANK','SKYWATCH-BLANK-FORMS',today())+'.pdf');}
+ finally{PK=null;}}
+window.__printBlank=function(w){try{printBlank(w);}catch(err){alert(String(err&&err.message||err));}};
+(function(){var m=/(?:^#|&)print=(both|trip|insp)(?:&|$)/.exec(location.hash);if(!m)return;var w=m[1],tries=0;
+ var clear=function(){try{history.replaceState(null,'',location.pathname+location.search);}catch(x){}};
+ var go=function(){var ready=false;try{ready=S.view==='home'&&!!document.querySelector('[data-act="new"]');}catch(x){}
+  if(!ready){if(tries++<40){setTimeout(go,250);}else clear();return;}
+  clear();window.__printBlank(w);};
+ if(document.readyState==='complete')setTimeout(go,300);else window.addEventListener('load',function(){setTimeout(go,300);});})();
 function blankDlg(){modal('<h3>Print a blank form</h3><p class="muted" style="margin-top:-4px">For writing in by hand.</p><button class="pri" data-pt="blankpt">Blank pre-trip checklist</button><button class="pri" data-pt="blankinsp">Blank SkyWatch inspection form</button><button data-act="mclose">Cancel</button>');}
 
 /* ---------- events ---------- */
