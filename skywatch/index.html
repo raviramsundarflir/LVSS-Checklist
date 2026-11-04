@@ -14521,7 +14521,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'57'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'58'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14584,7 +14584,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='eb6ab47d76';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='96a22b0e90';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -14774,7 +14774,7 @@ if(document.body)start();else document.addEventListener('DOMContentLoaded',start
 .cnote button{min-height:32px;padding:2px 10px;font-size:13px;font-weight:600;color:#c25a00;border-color:#e8b98e}
 #hrsSince{font-size:13px;margin-top:5px;color:var(--mut)}#hrsSince b{color:var(--ink)}#hrsSince .rem{color:#c25a00;font-weight:600}
 .ptgt{display:flex;gap:8px;flex-wrap:wrap}.ptgt button{flex:1;min-width:120px}
-</style><script>/* ===== SkyWatch PM visit (Ravi, 2026-11-03, Rev 54; Rev 56 2026-11-04: hydraulic fluid removed from the pre-trip checklist; Rev 57: certificate-signer line removed, door key moved to Bring) =====
+</style><script>/* ===== SkyWatch PM visit (Ravi, 2026-11-03, Rev 54; Rev 56 2026-11-04: hydraulic fluid removed from the pre-trip checklist; Rev 57: certificate-signer line removed, door key moved to Bring; Rev 58: service-interval notes removed from the generator hours check) =====
    - "New PM visit" starts a record at a Trip prep stage (step 0). Job info and tower / generator details are real fields that ARE the
      inspection header; the ticks and added items stay behind the scenes (never on the inspection report). "Skip to inspection" at any time.
    - Every report gets a "Next visit" QR code. Scanning it on the home screen pre-fills a new visit: customer, site, tower, generator,
@@ -14787,7 +14787,7 @@ var TOWF=[['towerVin','Tower VIN #'],['towerSerial','Tower Serial #'],['genSeria
 var SECS=[
  {id:'s1',t:'1. Job info',n:'These are the inspection’s own header fields, so they carry straight into the Info step and the certificate.',f:JOBF,svc:1,g:[]},
  {id:'s2',t:'2. Tower & generator (from the last report, if available)',tow:1,g:[{i:[
-  ['r3','Check the generator hours to see what is due',['Every 500 h (or yearly): oil change, spark arrestor cleaning','Every 1000 h (or yearly): spark plug (gas only)','Every 4000 h (or yearly): coolant flush and pressure cap']],
+  ['r3','Check the generator hours to see what is due'],
   ['r4','Oil grade and quarts the generator takes (last report, or the generator label / manual)'],
   ['r6','Equipment on the tower, and whether the broadband router or Cradlepoint subscription is active','eq'],
   ['r7','Open punch-list items from last visit','op'],
