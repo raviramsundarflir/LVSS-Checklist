@@ -13059,13 +13059,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
    "Print window / dashboard ID" button, to put on the dashboard facing out ----
    I = {r: record, sn: serial (or incoming serial for an upfit), nsn: new serial after an upfit ('' = not an upfit),
         stage: 'Repair' / 'Upfit / Upgrade' / 'New build', rows: [[label, value]...], form: form name, date, credit} */
-function dashTag(d,I,first){if(!first&&I&&I.r&&I.r.core&&I.r.core.h&&I.r.core.h.length)return;var r=I.r,c=of(r);var p=CUR;CUR=r;try{
+function dashTag(d,I,first){if(!first&&I&&!I.tt&&I.r&&I.r.core&&I.r.core.h&&I.r.core.h.length)return;var r=I.r,c=of(r);var p=CUR;CUR=r;try{
  if(!first)d.addPage('letter','landscape');var W=d.internal.pageSize.getWidth(),H=d.internal.pageSize.getHeight(),MX=36,CWL=W-2*MX,T=36;
  var cl=function(t){return String(t==null?'':t).replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[–—]/g,'-').replace(/…/g,'...').replace(/[^\x09\x0A\x20-\x7E\xA0-\xFF]/g,'?');};
  var col=function(k,h){var n=parseInt(h.slice(1),16);d[k](n>>16,(n>>8)&255,n&255);};
  var fit=function(txt,max,fs0){var fs=fs0;d.setFont('helvetica','bold');d.setFontSize(fs);while(d.getTextWidth(txt)>max&&fs>14){fs-=2;d.setFontSize(fs);}return fs;};
- col('setFillColor','#0f5c4d');d.rect(MX,T,CWL,84,'F');d.setTextColor(255);fit('WINDOW / DASHBOARD ID',CWL-24,46);d.text('WINDOW / DASHBOARD ID',W/2,T+50,{align:'center'});
- d.setFont('helvetica','bold');d.setFontSize(12);d.text('Place on the dashboard, facing out through the windshield - truck identification',W/2,T+72,{align:'center'});
+ col('setFillColor',I.tc||'#0f5c4d');d.rect(MX,T,CWL,84,'F');d.setTextColor(255);var TT=I.tt||'WINDOW / DASHBOARD ID';fit(TT,CWL-24,46);d.text(TT,W/2,T+50,{align:'center'});
+ d.setFont('helvetica','bold');d.setFontSize(12);d.text(I.ts||'Place on the dashboard, facing out through the windshield - truck identification',W/2,T+72,{align:'center'});
  if(!I.qr){
  var y=T+114;d.setTextColor(90);d.setFontSize(12);d.text('CUSTOMER',MX,y);d.setTextColor(0);d.setFontSize(20);d.text(cl(c.n),MX+82,y+1);
  d.setTextColor(90);d.setFontSize(12);d.text(cl(I.stage||''),W-MX,y,{align:'right'});y+=34;
@@ -13087,7 +13087,7 @@ function dashTag(d,I,first){if(!first&&I&&I.r&&I.r.core&&I.r.core.h&&I.r.core.h.
   var up=!!I.nsn,bh=up?96:150,fs=up?80:104;d.setFont('helvetica','bold');d.setTextColor(90);d.setFontSize(12);
   d.text(up?'INCOMING SERIAL NUMBER':'PLATFORM SERIAL NUMBER',MX+LW/2,y,{align:'center'});y+=8;
   d.setDrawColor(0);d.setLineWidth(3);d.rect(MX,y,LW,bh);var a=cl(I.sn||'________');d.setTextColor(0);fit(a,LW-24,fs);d.text(a,MX+LW/2,y+bh/2+fs*0.35,{align:'center'});y+=bh;
-  if(up){col('setFillColor','#0f5c4d');d.triangle(MX+LW/2-14,y+8,MX+LW/2+14,y+8,MX+LW/2,y+26,'F');y+=46;d.setFont('helvetica','bold');d.setTextColor(90);d.setFontSize(12);d.text('NEW SERIAL NUMBER AFTER UPFIT / UPGRADE',MX+LW/2,y,{align:'center'});y+=8;
+  if(up){col('setFillColor',I.tc||'#0f5c4d');d.triangle(MX+LW/2-14,y+8,MX+LW/2+14,y+8,MX+LW/2,y+26,'F');y+=46;d.setFont('helvetica','bold');d.setTextColor(90);d.setFontSize(12);d.text('NEW SERIAL NUMBER AFTER UPFIT / UPGRADE',MX+LW/2,y,{align:'center'});y+=8;
    d.setDrawColor(0);d.setLineWidth(3);d.rect(MX,y,LW,bh);var b=cl(I.nsn);d.setTextColor(0);fit(b,LW-24,fs);d.text(b,MX+LW/2,y+bh/2+fs*0.35,{align:'center'});y+=bh;}
   }
   y+=24;d.setLineWidth(.6);
@@ -13115,7 +13115,7 @@ async function printTag(I){if(!I||!window.jspdf)return;var d=new window.jspdf.js
 window.SEC=function(t){return '<div class="secl">'+esc(t)+'</div>';};
 /* the DHS plate prefix: on for CBP / DHS unless the tech turned it off; off for anyone else unless turned on */
 function pf(v){return v===true||(v!==false&&of().dhs);}
-window.CUST={DEF:DEF,of:of,pf:pf,html:html,dashTag:dashTag,tagBtn:tagBtn,printTag:printTag,mapS:function(s,r){return mapS(s,of(r));},kl:function(r){return of(r).dhs?'Kilo #':'Fleet #';},
+window.CUST={skid:function(I){return Object.assign({},I,{tt:'SKID ID',ts:'Attach to the skid removed from the truck - keeps the skid linked to this truck',tc:'#b4561a'});},DEF:DEF,of:of,pf:pf,html:html,dashTag:dashTag,tagBtn:tagBtn,printTag:printTag,mapS:function(s,r){return mapS(s,of(r));},kl:function(r){return of(r).dhs?'Kilo #':'Fleet #';},
  cfg:function(o){for(var k in o)CFG[k]=o[k];inside();soon();},refresh:soon,
  /* draw a report for a record that is not the open one (e.g. a DD1149 from a scanned code) */
  with:function(r,fn){var p=CUR;CUR=r;try{return fn();}finally{CUR=p;}}};
@@ -14306,7 +14306,7 @@ function binPage(d,r){const h=r.hdr,up=h.purpose==='upfit';d.addPage('letter','l
  const fit=(txt,max,fs0)=>{let fs=fs0;d.setFont('helvetica','bold');d.setFontSize(fs);while(d.getTextWidth(txt)>max&&fs>14){fs-=2;d.setFontSize(fs);}return fs;};
  hx(d,'setFillColor','#1d3b6a');d.rect(MX,T,CWL,84,'F');d.setFont('helvetica','bold');d.setTextColor(255);fit('CUSTOMER PROPERTY',CWL-24,50);d.text('CUSTOMER PROPERTY',W/2,T+52,{align:'center'});
  d.setFontSize(12);d.text('Bin label - keep this sheet in the sleeve on the bin',W/2,T+72,{align:'center'});
- let y=T+110;d.setTextColor(90);d.setFont('helvetica','bold');d.setFontSize(13);d.text(up?'INCOMING SERIAL NUMBER':'SERIAL NUMBER',XM,y,{align:'center'});y+=10;
+ let y=T+110;d.setTextColor(90);d.setFont('helvetica','bold');d.setFontSize(13);d.text(up?'INCOMING SERIAL NUMBER':'SERIAL NUMBER',XM,y,{align:'center'});d.setFontSize(12);d.text(h.purpose==='newbuild'?'New build':up?'Upfit / Upgrade':'Repair',MX+LW,y,{align:'right'});d.setFontSize(13);y+=10;
  const bh=up?88:120,sn=cl(snD(r)||'________');d.setDrawColor(0);d.setLineWidth(3);d.rect(MX,y,LW,bh);d.setTextColor(0);fit(sn,LW-30,up?64:80);d.text(sn,XM,y+bh/2+(up?22:28),{align:'center'});y+=bh+14;
  if(up){hx(d,'setFillColor','#1d3b6a');d.triangle(XM-20,y,XM+20,y,XM,y+22,'F');y+=36;d.setTextColor(90);d.setFont('helvetica','bold');d.setFontSize(13);d.text('NEW SERIAL NUMBER AFTER UPFIT / UPGRADE',XM,y,{align:'center'});y+=10;
   const ns=cl(nsnShow(h));d.setDrawColor(0);d.setLineWidth(3);d.rect(MX,y,LW,88);d.setTextColor(0);fit(ns,LW-30,64);d.text(ns,XM,y+88/2+22,{align:'center'});y+=88+16;}
@@ -14507,7 +14507,7 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
    for(let i=0;i<n;i++)for(let j=0;j<n;j++)if(q.isDark(i,j))d.rect(x0+(j+qz)*cs,y+(i+qz)*cs,cs+.15,cs+.15,'F');
    d.setDrawColor(150);d.setLineWidth(.6);d.rect(x0,y,sz,sz);y+=sz+14;}catch(e){d.setTextColor(200,0,0);d.text('Could not generate the audit QR code: '+cl(e.message),MX,y+10);y+=24;}}}
  wipNotePage(d,r,TOP);if(binIdx){d.movePage(binIdx,1);buildFolderPdf(r,d);d.movePage(d.getNumberOfPages(),1);const ns=new Set([1,2]);skip.forEach(i=>ns.add(i<binIdx?i+2:i));skip.clear();ns.forEach(i=>skip.add(i));}
- footers(d,r,true,skip);if(!isAud(r)){const n0=d.getNumberOfPages();CUST.dashTag(d,dtInfo(r));if(binIdx&&d.getNumberOfPages()>n0)d.movePage(d.getNumberOfPages(),3);}return d;}
+ footers(d,r,true,skip);if(!isAud(r)){const n0=d.getNumberOfPages();CUST.dashTag(d,dtInfo(r));if(binIdx&&d.getNumberOfPages()>n0)d.movePage(d.getNumberOfPages(),3);const n1=d.getNumberOfPages();CUST.dashTag(d,CUST.skid(dtInfo(r)));if(d.getNumberOfPages()>n1)d.movePage(d.getNumberOfPages(),binIdx?4:d.getNumberOfPages());}return d;}
 function pbox(d,x,yy,w,hh,label,list){}
 
 /* ---------- events ---------- */
@@ -15497,7 +15497,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='917858ed4c';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='2166685322';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
