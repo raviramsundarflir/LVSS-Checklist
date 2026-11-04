@@ -14521,7 +14521,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'62'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'63'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14819,12 +14819,40 @@ var GENFAM={
   parts:[{id:'gpoil',t:'Oil filter',pn:'122-0946',was:'122-0833'},
    {id:'gpair',t:'Air cleaner element',pn:'140-2897'},
    {id:'gpfuel',t:'Fuel filter',pn:'147-0860 or 149-2513',note:'The manual shows a round and an older square filter; check which one the tower has',q:['147-0860','149-2513']}],
-  brush:null,plugs:null}
+  brush:null,plugs:null},
+ onanhgjad:{brand:'Onan',type:'gas',src:'operator manual A035D007 (Issue 17, 2022) and parts manual 0983-0202 (Issue 46)',chk:'',
+  oil:'About 2 qt (1.8 L) with filter \u00b7 API SM, SN or better \u00b7 10W-30 (OnaMax A063E183) above 0 \u00b0F; the manual has a table for colder and hotter weather \u00b7 older Spec A-E manual: API SJ, SH or SG',
+  buy:'2 qt 10W-30 engine oil, API SM or SN (OnaMax)',
+  cool:'',
+  parts:[{id:'gpoil',t:'Oil filter',pn:'122-0836'},
+   {id:'gpair',t:'Air cleaner element',pn:'140-3116'},
+   {id:'gpfuel',t:'Fuel filter (fuel-injected)',pn:'147-0860'}],
+  brush:{pn:'212-1303'},plugs:{pn:'167-1638',qty:2}},
+ onanhgjae:{brand:'Onan',type:'gas',src:'operator manual A035D007 (Issue 17, 2022) and parts manual 0983-0202 (Issue 46)',chk:'',
+  oil:'About 2 qt (1.8 L) with filter \u00b7 API SM, SN or better \u00b7 10W-30 (OnaMax A063E183) above 0 \u00b0F; the manual has a table for colder and hotter weather \u00b7 older Spec A-E manual: API SJ, SH or SG',
+  buy:'2 qt 10W-30 engine oil, API SM or SN (OnaMax)',
+  cool:'',
+  parts:[{id:'gpoil',t:'Oil filter',pn:'122-0836'},
+   {id:'gpair',t:'Air cleaner element',pn:'140-3116'},
+   {id:'gpfuel',t:'Fuel filter (gasoline carburetor)',pn:'149-2341',note:'Gasoline models only. LPG models have no fuel filter, so skip this one. The parts manual lists it as 149-2341-01 on the early (Spec A-E) carburetor units',q:['149-2341','149-2341-01']}],
+  brush:{pn:'212-1303'},plugs:{pn:'167-1638',qty:2}},
+ onanz484:{brand:'Onan',type:'diesel',src:'operator manual 0981-0183 (Issue 13, 2018), parts manual 0981-0273 (Issue 26) and spares list A043T640',chk:'',
+  oil:'About 2 qt (1.9 L) with filter \u00b7 SAE 15W-40 (OnaMax) year round \u00b7 API CF, CF-4, CG-4, CH-4 or CI-4',
+  buy:'2 qt SAE 15W-40 diesel engine oil',
+  cool:'Cooling system 3 qt (2.8 L): 50/50 ethylene glycol antifreeze and distilled water',
+  parts:[{id:'gpoil',t:'Oil filter',pn:'FL3325 or FL777',note:'The manual lists FL3325 for an on-engine filter and FL777 for a skid-mounted (remote) filter; check which one the unit has',q:['FL3325','FL777']},
+   {id:'gpair',t:'Air cleaner element',pn:'140-3351'},
+   {id:'gpfuel',t:'Fuel filter',pn:'149-2513'}],
+  brush:{pn:'212-1303'},plugs:null}
 };
 var GENLIB=[
  {k:'HDKAV',n:'Onan QD 6000 (HDKAV)',alt:['QD 6000','QD6000'],fam:'onanqd'},
  {k:'HDKAT',n:'Onan QD 7500 (HDKAT)',alt:['QD 7500','QD7500'],fam:'onanqd'},
- {k:'HDKAU',n:'Onan QD 8000 (HDKAU)',alt:['QD 8000','QD8000'],fam:'onanqd'}
+ {k:'HDKAU',n:'Onan QD 8000 (HDKAU)',alt:['QD 8000','QD8000'],fam:'onanqd'},
+ {k:'HDKBC',n:'Onan HDKBC 5 kW diesel, 60 Hz',alt:[],fam:'onanz484'},
+ {k:'HDKBB',n:'Onan HDKBB 4.8 kW diesel, 50 Hz',alt:[],fam:'onanz484'},
+ {k:'HGJAD',n:'Onan HGJAD 5.5 / 7 kW gasoline, fuel-injected',alt:[],fam:'onanhgjad'},
+ {k:'HGJAE',n:'Onan HGJAE 5.5 / 6.5 / 7 kW gasoline or LPG, carburetor',alt:[],fam:'onanhgjae'}
 ];
 var GENBY={};GENLIB.forEach(function(q){GENBY[q.k]=q;});
 function genOf(r){if(!r)return null;var k=r.genLib;if(k==='other')return null;var E=k&&GENBY[k];
@@ -14841,7 +14869,7 @@ function genItems(r){var G=genOf(r);
  else if(r.genType==='gas')S2.push(['gpplug','Spark plugs']);
  return S2;}
 function genNote(r){if(!r)return 'Write in the part numbers from the generator\u2019s service manual.';var G=genOf(r);
- return G?G.e.n+': part numbers from '+G.f.src+', checked online '+G.f.chk+'.':'Pick the generator model in section 2 to fill in its part numbers (and brush block or spark plugs where it has them). Standard list until then.';}
+ return G?G.e.n+': part numbers from '+G.f.src+', '+(G.f.chk?'checked online '+G.f.chk:'not checked online yet (superseded numbers unverified)')+'.':'Pick the generator model in section 2 to fill in its part numbers (and brush block or spark plugs where it has them). Standard list until then.';}
 /* ---- Generator manual & fault codes panel (Rev 60, Ravi 2026-11-04) ----
    Opens over the app (home screen, trip planner section 2, Inspect step) so the tech never loses their place;
    Close, Escape or the tablet's Back button return to the same spot. Steps are summarized from the model's manual
@@ -14885,6 +14913,60 @@ var GENTS={
    ['Starter engages, then lets go','Cranking voltage drops below 6 V.',['Clean and tighten the + and – battery cables, at the battery and at the generator.','Recharge or replace the battery.','Use heavier battery cables, or run a second set in parallel.','(The manual’s first step, running the vehicle engine while starting, is for vehicle installs.)'],53],
    ['No power: running, status light on','A line circuit breaker is off, or tripped by a short or overload.',['Turn on or reset the line circuit breaker on the generator.','Turn on or reset the breaker on the main distribution panel.'],53]]}
 };
+/* Rev 63 (Ravi 2026-11-04): Onan HDKBB/HDKBC (Z484 diesel) and HGJAD/HGJAE (gas/LPG) fault codes */
+GENTS.onanz484=(function(){var b=GENTS.onanqd,pg={'1':48,'2':48,'3':48,'4':49,'12':49,'13':49,'14':49,'15':50,'19':50,'22':50,'27':50,'29':50,'32':51,'35':51,'36':51,'38':51,'41':52,'42':52,'43':52,'45':52,'48':52,'57':52},sp=[52,53,53,53];
+ var codes=b.codes.map(function(c){return [c[0],c[1],c[2],c[3],pg[c[0]]||c[4]];});
+ var at=0;codes.forEach(function(c,i){if(c[0]==='27')at=i;});
+ codes.splice(at,0,['24','Faulty temperature sender','The control sensed an open sender.',['Contact a Cummins dealer or distributor.'],50]);
+ return {man:'Onan Commercial Mobile operator manual 0981-0183 (Issue 13, 2018)',read:b.read,codes:codes,sym:b.sym.map(function(c,i){return [c[0],c[1],c[2],sp[i]];})};})();
+(function(){var D='Contact a Cummins dealer or distributor.',R='Reduce the load: fewer appliances running, especially air conditioners and battery chargers.',
+ BAT='Clean and tighten the + and – battery cables, at the battery and at the generator.',CH='Recharge or replace the battery.',VIS='Change the oil to the right viscosity for the temperature (thick oil slows cranking).',PR='Prime: hold the control switch at STOP/PRIME for 30 seconds.';
+ GENTS.onanhgjad={man:'Onan Commercial Mobile operator manual A035D007 (Issue 17, 2022)',
+  read:['After a fault shutdown, the status light in the control switch flashes the fault code.',
+   '2 flashes = low oil pressure (Code 2). 4 flashes = cranked over 30 seconds without starting (Code 4).',
+   '3 flashes = service fault (Code 3): press STOP/PRIME once and the 2-digit code flashes. The first set of flashes is the tens digit, a short pause, then the units digit, a long pause, then it repeats. Example, Code 36: 3 flashes, pause, 6 flashes. Press STOP/PRIME again to stop it.',
+   'Codes 33 and 34 are not used, so don’t read Code 3 or Code 4 as a 2-digit code.',
+   'The code stops flashing after 5 minutes (the older Spec A-E manual says 15 minutes on the HGJAD). Press STOP/PRIME 3 times within 5 seconds to see it again.',
+   'The last fault keeps flashing even after its cause is fixed.'],
+  codes:[
+   ['2','Low oil pressure','The low oil pressure cutoff switch did not open.',['Check the oil on the dipstick. Add oil if it is low; drain the excess if it is above the full mark.'],50],
+   ['3','Service check','A second-level (2-digit) fault.',['Press STOP/PRIME once to read the 2-digit code, then look it up in this list.'],50],
+   ['4','Over crank','Cranked for over 30 seconds without starting.',['Check the fuel level and fill if low, then prime: hold the control switch at STOP/PRIME for 30 seconds.','LPG units: check and fill the LPG container. On cold days keep it at least half full so it can vaporize fast enough.','Check the spark plug leads are secure on the plugs, then replace the spark plugs.','Replace the air filter if it is dirty.',VIS,'Tighten any fuel fitting that leaks fuel or air, then prime again for 30 seconds.','Replace the fuel filter.'],50],
+   ['12','Over voltage','The control cannot hold rated voltage.',[D],51],
+   ['13','Under voltage','The control cannot hold rated voltage.',[R],51],
+   ['14','Over frequency','The governor cannot hold rated frequency.',[D],51],
+   ['15','Under frequency','The governor cannot hold rated frequency.',[R],51],
+   ['19','Governor actuator','The control sensed an open or shorted circuit.',[D],51],
+   ['22','Governor actuator overload','Running near full duty cycle, beyond the design limit.',[R,'Replace the air filter if it is dirty.','Clear any blockage in the exhaust.'],52],
+   ['23','Low oil pressure cutoff switch','The control sensed the switch still open during a start (not a running fault).',[D],52],
+   ['27','Voltage sense','The control cannot sense the output voltage.',[D],52],
+   ['29','High battery voltage','Over 19 V across the battery system.',['Check the batteries feeding the generator are connected in parallel (12 V), not in series (24 V).','Use a lower battery boost charge rate.'],52],
+   ['31','Over speed','Engine speed went above 3400 RPM.',[D],52],
+   ['32','Low cranking speed','Cranking below 180 RPM for over 2 seconds.',[BAT,CH,VIS],52],
+   ['35','Control card failure','A memory (EEPROM) error in the control’s self test.',[D],53],
+   ['36','Engine stopped','The engine stopped without a command from the control.',['Check the fuel level and fill if low, then prime: hold the control switch at STOP/PRIME for 30 seconds.','LPG units: check and fill the LPG container. On cold days keep it at least half full.','Check the spark plug leads are secure on the plugs, then replace the spark plugs.','Replace the air filter if it is dirty.','Check for mechanical damage.'],53],
+   ['37','Invalid generator set configuration','The frequency to RPM ratio is wrong.',[D],54],
+   ['38','Over current (field overload)','Low power factor loads.',[R,'Have the connected equipment (A/C units and the like) checked.'],54],
+   ['41','Generator rotor','The control cannot sense field or output voltage.',[D],54],
+   ['42','Processor','A memory (ROM) error in the control’s self test.',[D],54],
+   ['43','Processor','A memory (RAM) error in the control’s self test.',[D],54],
+   ['45','Speed sense','The control cannot sense the quadrature frequency.',[D],54],
+   ['47','Ignition','The control cannot sense the ignition.',[D],54],
+   ['48','Generator field sense','The control cannot sense the field voltage.',[D],54],
+   ['51','Processor','A microprocessor malfunction occurred.',[D],55],
+   ['52','Fuel injector','Open or short circuit in the fuel injector.',[D],55],
+   ['54','MAT sender','Open or short circuit in the manifold air temperature sender.',[D],55],
+   ['56','MAP sender','Open or short circuit in the manifold air pressure sender.',[D],55],
+   ['57','Over prime','Priming went on for over 3 minutes.',['Check that nothing is holding either control switch (remote or on the generator) at STOP/PRIME.'],55],
+   ['58','Exhaust gas temperature shutdown','Exhaust gas reached 650 °C (1202 °F) for 2 seconds while running.',[D],55],
+   ['81','Exhaust gas temperature sensor open','While running, the exhaust gas temperature fell below 60 °C (140 °F) for 2 minutes, or did not rise above 60 °C within 2 minutes of starting.',[D],55],
+   ['82','Exhaust gas temperature sensor shorted','The control read 1000 °C (1832 °F) for 1 second while running or at startup.',[D],55]],
+  sym:[
+   ['Status light not working','Loose connections or no battery voltage.',['Older units with a lockout switch in the cab or boom bucket: unlock it.','Try the other control switch (the generator’s or the remote).',BAT,CH],56],
+   ['Starting battery runs down','Battery, connections, charging system or a parasitic load.',[BAT,CH,'Check the battery charging system.'],56],
+   ['Starter engages, then lets go','Cranking voltage drops below 6 V.',[BAT,CH,'Use heavier battery cables, or run a second set in parallel.','(The manual’s first step, running the vehicle engine while starting, is for vehicle installs.)'],56],
+   ['No power: running, status light on','A line circuit breaker is off, or tripped by a short or overload.',['Turn on or reset the line circuit breaker on the generator.','Turn on or reset the breaker on the main distribution panel.'],57]]};
+ GENTS.onanhgjae=GENTS.onanhgjad;})();
 var GMLINKS=[['Cummins Commercial Mobile generator manuals','https://www.cummins.com/cm-generator-manuals','Cummins’ public manuals page'],
  ['QuickServe Online (QSOL)','https://quickserve.cummins.com/','Sign in with your own QSOL account']];
 var GPN={open:false,m:null};
@@ -14954,7 +15036,7 @@ var SECS=[
 ];
 var NOTES=['Inspect only, no parts needed: engine V-belt, crankcase breather, coolant hoses, water pump and thermostat. The form says an Onan-authorized mechanic replaces these.','The coolant anti-freeze protection check (form item 89) is not done on PM visits, so no tester is on the list.','This trip checklist stays behind the scenes: it is not part of the inspection report.'];
 function e(s){return esc(s==null?'':String(s));}
-function gi(g,r){return g.gen?genItems(r).concat(g.i):g.i;}
+function gi(g,r){var a=g.gen?genItems(r).concat(g.i):g.i,G=r?genOf(r):null;if(G&&!G.f.cool)a=a.filter(function(x){return x[0]!=='b2';});return a;}
 function its(sec,r){var a=[];sec.g.forEach(function(g){gi(g,r).forEach(function(x){a.push(x)})});return a;}
 function num(v){var n=parseFloat(String(v||'').replace(/,/g,''));return isFinite(n)?n:null;}
 function fmtN(n){return Math.round(n).toLocaleString('en-US');}
