@@ -1,102 +1,94 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#1d3b6a"><title>Inspection Forms – Tucson Service Center</title>
 <style>
-:root{--bg:#eef1f6;--card:#fff;--tx:#14213d;--mu:#5a6478;--bd:#d9dfeb;--pri:#1d3b6a;--acc:#5b8dd6;--sh:0 1px 2px rgba(20,33,61,.06),0 6px 18px rgba(20,33,61,.07);--shh:0 2px 4px rgba(20,33,61,.08),0 14px 30px rgba(20,33,61,.16);--ic:#e6eefb}
-@media(prefers-color-scheme:dark){:root{--bg:#0e131b;--card:#18202d;--tx:#e8edf7;--mu:#98a3b8;--bd:#2a3447;--pri:#8fb2f0;--acc:#5b8dd6;--sh:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);--shh:0 2px 4px rgba(0,0,0,.5),0 14px 30px rgba(0,0,0,.55);--ic:#22304a}}
+:root{--bg:#eef1f6;--card:#fff;--tx:#14213d;--mu:#5a6478;--bd:#d9dfeb;--pri:#1d3b6a;--acc:#5b8dd6;--ic:#e6eefb;--sh:0 1px 2px rgba(20,33,61,.06),0 6px 18px rgba(20,33,61,.07);--shh:0 2px 4px rgba(20,33,61,.08),0 14px 30px rgba(20,33,61,.16);--soft:#f4f6fa}
+@media(prefers-color-scheme:dark){:root{--bg:#0e131b;--card:#18202d;--tx:#e8edf7;--mu:#98a3b8;--bd:#2a3447;--pri:#8fb2f0;--acc:#5b8dd6;--ic:#22304a;--sh:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);--shh:0 2px 4px rgba(0,0,0,.5),0 14px 30px rgba(0,0,0,.55);--soft:#141b26}}
 *{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,Arial,sans-serif;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
-.hero{background:#fff;border-bottom:6px solid var(--acc);box-shadow:0 4px 20px rgba(20,33,61,.12);padding:calc(22px + env(safe-area-inset-top)) 20px 20px;animation:drop .7s cubic-bezier(.2,.7,.2,1) both}
+a{color:inherit}
+.hero{background:#fff;border-bottom:4px solid var(--acc);box-shadow:0 4px 20px rgba(20,33,61,.12);padding:calc(12px + env(safe-area-inset-top)) 16px 12px}
 .hero-in{max-width:980px;margin:0 auto;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
-.hero img{height:56px;width:auto;display:block}
-.hero .div{width:1px;align-self:stretch;background:#d5dbe8;min-height:46px}
-.hero .t{color:#14213d}.hero .t small{display:block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#5a6478;font-weight:700}
-.hero .t b{display:block;font-size:26px;letter-spacing:-.01em;line-height:1.15;font-weight:800}
-main{flex:1;width:100%;max-width:980px;margin:0 auto;padding:30px 20px 18px}
-h1{font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:var(--mu);margin:0 0 4px;font-weight:700;}
-p.s{color:var(--mu);margin:0 0 20px;font-size:17px;}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px}
-a.f{position:relative;display:flex;gap:16px;align-items:center;background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:18px 44px 18px 18px;color:inherit;text-decoration:none;min-height:96px;box-shadow:var(--sh);overflow:hidden;transition:transform .25s cubic-bezier(.2,.7,.2,1),box-shadow .25s,border-color .25s;opacity:1;-webkit-tap-highlight-color:transparent}
-a.f[data-k=intake]{--pri:#1d3b6a;--acc:#5b8dd6;--ic:#1d3b6a}a.f[data-k=intakeform]{--pri:#1d3b6a;--acc:#5b8dd6;--ic:#1d3b6a}a.f[data-k=lvss]{--pri:#1d5fc4;--acc:#4f8be0;--ic:#1d5fc4}a.f[data-k=atp]{--pri:#1f4e8c;--acc:#4f8be0;--ic:#2b6cb0}a.f[data-k=cal]{--pri:#8a3fb0;--acc:#b36fd6;--ic:#8a3fb0}a.f[data-k=floor]{--pri:#8a5a1e;--acc:#b9853f;--ic:#8a5a1e}a.f[data-k=final]{--pri:#b02a4f;--acc:#d6577a;--ic:#b02a4f}a.f[data-k=sw]{--pri:#d1500d;--acc:#ef8040;--ic:#d1500d}a.f[data-k=cerberus]{--pri:#0f6b6b;--acc:#2a9d9d;--ic:#0f6b6b}a.f[data-k=argus]{--pri:#4a3a9c;--acc:#7c6fd1;--ic:#4a3a9c}a.f.wip{opacity:.6;pointer-events:none;cursor:default;box-shadow:none}a.f.wip::after{content:none}a.f.wip .tag{background:#6b7686}a.f[data-k=qc]{--pri:#3b4a5c;--acc:#7d8ea3;--ic:#3b4a5c}
-a.f .ic{color:#fff!important}a.f::before{width:9px!important}
-a.f:nth-child(1){animation-delay:.25s}a.f:nth-child(2){animation-delay:.33s}a.f:nth-child(3){animation-delay:.41s}a.f:nth-child(4){animation-delay:.49s}a.f:nth-child(5){animation-delay:.57s}a.f:nth-child(6){animation-delay:.65s}
-a.f::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(var(--acc),var(--pri));transition:width .25s}
-a.f::after{content:"\203A";position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:30px;color:var(--mu);transition:transform .25s,color .25s}
-@media(hover:hover){a.f:hover{transform:translateY(-4px);box-shadow:var(--shh);border-color:var(--acc)}a.f:hover::before{width:8px}a.f:hover::after{transform:translate(5px,-50%);color:var(--acc)}}
-a.f:active{transform:scale(.985);box-shadow:var(--sh)}a.f:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
-.ic{flex:none;width:52px;height:52px;border-radius:14px;background:var(--ic);display:grid;place-items:center;color:var(--pri)}.ic svg{width:28px;height:28px}
-a.f b{display:block;font-size:18px;line-height:1.25;letter-spacing:-.005em}a.f span.d{display:block;color:var(--mu);font-size:14px;margin-top:3px}
-a.f.last{border-color:var(--acc)}.tag{position:absolute;top:10px;right:14px;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:#fff;background:var(--acc);font-weight:700;border-radius:20px;padding:2px 9px}
-.box{background:var(--card);border:1px solid var(--bd);border-left:5px solid var(--acc);border-radius:12px;padding:14px 16px;margin-top:22px;font-size:14px;color:var(--mu);box-shadow:var(--sh);animation:up .6s .6s both}
-.box b{color:var(--tx)}
-footer{text-align:center;font-size:11px;color:var(--mu);opacity:.7;padding:12px 10px calc(14px + env(safe-area-inset-bottom))}
-@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-@keyframes drop{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
-@media(max-width:560px){.hero img{height:44px}.hero .div{display:none}.hero .t b{font-size:21px}.hero-in{gap:10px}}
-@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-delay:0s!important;transition:none!important}}
-.wflink{display:flex;align-items:center;gap:12px;margin:10px 0 0;padding:12px 16px;background:var(--card);border:1.5px dashed var(--pri);border-radius:14px;color:inherit;text-decoration:none}.wflink .wfi{flex:none;width:38px;height:38px;border-radius:10px;background:var(--ic);color:var(--pri);display:grid;place-items:center}.wflink .wfi svg{width:22px;height:22px}.wflink .wft{flex:1}.wflink .wft b{display:block;font-size:15.5px;color:var(--pri)}.wflink .wft span{display:block;font-size:12.5px;color:var(--mu)}.wflink .wfa{font-size:24px;color:var(--pri);line-height:1}
-.cat{position:relative;display:flex;gap:18px;align-items:center;background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:22px 48px 22px 22px;margin-bottom:16px;box-shadow:var(--sh);text-decoration:none;color:inherit;min-height:112px;overflow:hidden;transition:transform .25s,box-shadow .25s,border-color .25s}
-.cat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:9px;background:linear-gradient(var(--acc),var(--pri))}
-.cat::after{content:"\203A";position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:34px;color:var(--mu)}
-@media(hover:hover){.cat:hover{transform:translateY(-3px);box-shadow:var(--shh);border-color:var(--acc)}}.cat:active{transform:scale(.985)}.cat:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
-.cat .ic{width:64px;height:64px;border-radius:16px;background:var(--pri);color:#fff}.cat .ic svg{width:34px;height:34px}
-.cat b{display:block;font-size:22px}.cat .d{display:block;color:var(--mu);font-size:14.5px;margin-top:3px}.cat .n{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;background:var(--ic);color:var(--pri);border-radius:20px;padding:2px 10px}.cat .n+.n{margin-left:6px;background:var(--acc);color:#fff}
-.back{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bd);background:var(--card);border-radius:10px;padding:10px 16px;font-weight:700;color:var(--pri);margin-bottom:14px;text-decoration:none;min-height:44px}
-.view[hidden]{display:none}.vid{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:14px;overflow:hidden;box-shadow:var(--sh)}.vid .vcv{position:absolute;left:0;top:0;height:13%;width:100%;background:#000;z-index:2}.vid .vcb{position:absolute;left:0;bottom:0;height:13%;width:100%;background:#000;z-index:2}.vid iframe{position:absolute;inset:0;width:100%;height:100%;border:0}.empty{border:2px dashed var(--bd);border-radius:14px;padding:26px;color:var(--mu);text-align:center;font-size:14px}
-.th1{--pri:#8a5a1e;--acc:#b9853f;--ic:#f3e6d3}.th2{--pri:#1d5fc4;--acc:#4f8be0;--ic:#dce8fb}.th4{--pri:#4b4fc4;--acc:#7b7fe0;--ic:#e1e2fa}.th3{--pri:#5b6575;--acc:#8a94a3;--ic:#e3e7ee}
-@media(prefers-color-scheme:dark){.th1{--ic:#3a2c18}.th2{--ic:#1c2c4a}.th3{--ic:#2a3140}}
-@keyframes cas{0%{opacity:0;transform:translateY(34px) scale(.95)}60%{opacity:1}100%{opacity:1;transform:none}}
-@keyframes pop{0%{transform:scale(.4) rotate(-12deg);opacity:0}70%{transform:scale(1.12) rotate(2deg);opacity:1}100%{transform:none;opacity:1}}
-.view.play :is(.back,h1,p.s,.cat,a.f,.vid,.empty){animation:cas .6s cubic-bezier(.2,.85,.25,1) both;animation-delay:calc(var(--i,0)*95ms)}
-.view.play :is(.cat,a.f) .ic{animation:pop .55s cubic-bezier(.2,.9,.3,1.2) both;animation-delay:calc(var(--i,0)*95ms + 160ms)}
-main{position:relative;overflow-x:clip}
-@keyframes inR{from{opacity:0;transform:translateX(80px)}to{opacity:1;transform:none}}@keyframes inL{from{opacity:0;transform:translateX(-80px)}to{opacity:1;transform:none}}
-@keyframes outL{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-80px)}}@keyframes outR{from{opacity:1;transform:none}to{opacity:0;transform:translateX(80px)}}
-.view.in-fwd{animation:inR .42s .12s cubic-bezier(.2,.8,.25,1) both}.view.in-back{animation:inL .42s .12s cubic-bezier(.2,.8,.25,1) both}
-.view.leaving{position:absolute;left:20px;right:20px;top:30px;pointer-events:none;animation:outL .26s cubic-bezier(.5,0,.8,.4) both}.view.leaving.toback{animation-name:outR}
-
-.scanbtn{width:100%;font-family:inherit;text-align:left;cursor:pointer;color:var(--tx)}
+.hero img{height:40px;width:auto;display:block}
+.hero .div{width:1px;align-self:stretch;background:#d5dbe8;min-height:36px}
+.hero .t{color:#14213d}.hero .t small{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#5a6478;font-weight:700}
+.hero .t b{display:block;font-size:21px;letter-spacing:-.01em;line-height:1.15;font-weight:800}
+main{flex:1;width:100%;max-width:980px;margin:0 auto;padding:16px 16px 14px}
+#app.fade{animation:fd .22s ease-out both}@keyframes fd{from{opacity:0}to{opacity:1}}
+h1{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--mu);margin:0 0 2px;font-weight:700}
+p.s{color:var(--mu);margin:0 0 12px;font-size:15px}p.upd{margin:-8px 0 12px;font-size:13px;opacity:.75}
+h2.sec{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--mu);margin:20px 2px 8px;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:12px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.back,.homeb{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bd);background:var(--card);border-radius:10px;padding:10px 14px;font:inherit;font-weight:700;color:var(--pri);text-decoration:none;min-height:44px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.back{min-width:0;max-width:78%}.back span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.homeb{font-weight:600;color:var(--mu);padding:10px 12px}.homeb svg{width:18px;height:18px}
+.back:active,.homeb:active{transform:scale(.97)}
+.cat{position:relative;display:flex;gap:14px;align-items:center;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px 38px 14px 16px;margin-bottom:12px;box-shadow:var(--sh);text-decoration:none;color:inherit;min-height:84px;overflow:hidden;transition:transform .2s,box-shadow .2s,border-color .2s;-webkit-tap-highlight-color:transparent;font:inherit;text-align:left;width:100%;cursor:pointer}
+.cat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:linear-gradient(var(--acc),var(--pri))}
+.cat::after{content:"\203A";position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:26px;color:var(--mu)}
+@media(hover:hover){.cat:hover{transform:translateY(-3px);box-shadow:var(--shh);border-color:var(--acc)}}
+.cat:active{transform:scale(.985)}.cat:focus-visible,a.f:focus-visible,.row:focus-visible,.xbtn:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.ic{flex:none;width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:var(--pri);color:#fff}.ic svg{width:26px;height:26px}
+.cat b{display:block;font-size:18px;line-height:1.25}.cat .d{display:block;color:var(--mu);font-size:13.5px;line-height:1.35;margin-top:2px}
+.n{display:inline-block;margin-top:5px;font-size:11.5px;font-weight:700;background:var(--ic);color:var(--pri);border-radius:20px;padding:1px 9px}.n+.n{margin-left:6px}
+.tag{display:inline-block;vertical-align:middle;margin-left:8px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#fff;background:var(--acc);font-weight:700;border-radius:20px;padding:1px 8px}
+.tag.grey{background:#6b7686}
+.cat.wipc{opacity:.78}
+.th-home{--pri:#1d3b6a;--acc:#5b8dd6;--ic:#e6eefb}.th-int{--pri:#5b6575;--acc:#8a94a3;--ic:#e3e7ee}.th-svc{--pri:#1d5fc4;--acc:#4f8be0;--ic:#dce8fb}.th-ai{--pri:#4b4fc4;--acc:#7b7fe0;--ic:#e1e2fa}
+.th-lvss{--pri:#1d5fc4;--acc:#4f8be0;--ic:#dce8fb}.th-sw{--pri:#d1500d;--acc:#ef8040;--ic:#fbe5d8}.th-cerberus{--pri:#0f6b6b;--acc:#2a9d9d;--ic:#d6eeee}.th-argus{--pri:#4a3a9c;--acc:#7c6fd1;--ic:#e4e1f6}.th-devices{--pri:#3c5a78;--acc:#6f8fab;--ic:#dfe7ef}.th-ret{--pri:#2f6f4f;--acc:#4f9a72;--ic:#dcefe4}
+@media(prefers-color-scheme:dark){.th-home,.th-int,.th-svc,.th-ai,.th-lvss,.th-sw,.th-cerberus,.th-argus,.th-devices,.th-ret{--ic:#22304a}.n{color:#e8edf7}}
+@media(min-width:640px){.homegrid{display:grid;grid-template-columns:1fr 1fr;column-gap:12px;align-items:stretch}.homegrid>.full{grid-column:1/-1}}
+a.f{position:relative;display:flex;gap:14px;align-items:center;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px 38px 14px 16px;color:inherit;text-decoration:none;min-height:80px;box-shadow:var(--sh);overflow:hidden;transition:transform .2s,box-shadow .2s,border-color .2s;-webkit-tap-highlight-color:transparent;cursor:pointer}
+a.f::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--fc)}
+a.f::after{content:"\203A";position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:26px;color:var(--mu)}
+@media(hover:hover){a.f:hover{transform:translateY(-3px);box-shadow:var(--shh);border-color:var(--fc)}}
+a.f:active{transform:scale(.985)}
+a.f .ic{background:var(--fc);font-weight:800;font-size:19px}
+a.f b{display:block;font-size:17px;line-height:1.25}a.f .d{display:block;color:var(--mu);font-size:13.5px;line-height:1.35;margin-top:2px}
+a.f.wip{opacity:.6;box-shadow:none;cursor:default}a.f.wip::after{content:none}
+a.f.folder{border-style:dashed;border-width:1.5px;border-color:var(--pri)}a.f.folder .ic{background:var(--ic);color:var(--pri)}
+a.f.sug{border:2px solid var(--fc)}a.f.last{border-color:var(--fc)}
+.note{font-size:13px;color:var(--mu);margin:10px 2px 0}
+.wflink{display:flex;align-items:center;gap:12px;margin:2px 0 12px;padding:12px 16px;background:var(--card);border:1.5px dashed var(--pri);border-radius:14px;color:inherit;text-decoration:none;min-height:64px;-webkit-tap-highlight-color:transparent}
+.wflink .wfi{flex:none;width:38px;height:38px;border-radius:10px;background:var(--ic);color:var(--pri);display:grid;place-items:center}.wflink .wfi svg{width:22px;height:22px}
+.wflink .wft{flex:1}.wflink .wft b{display:block;font-size:15.5px;color:var(--pri)}.wflink .wft span{display:block;font-size:12.5px;color:var(--mu)}.wflink .wfa{font-size:24px;color:var(--pri);line-height:1}
+.wflink:active{transform:scale(.985)}
+.scanbox{background:var(--card);border:1px solid var(--bd);border-left:6px solid var(--pri);border-radius:14px;padding:12px 16px;box-shadow:var(--sh);margin-bottom:4px}
+.scanbox .w{font-size:13px;color:var(--mu);font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.scanbox .sn{font-weight:900;font-size:clamp(26px,7vw,38px);line-height:1.1;margin:4px 0;word-break:break-word}
+.scanbox .got{font-size:14px;color:var(--mu)}
+.info{background:var(--soft);border:1px solid var(--bd);border-radius:12px;padding:10px 14px;font-size:13.5px;color:var(--mu);margin:10px 0 0}
+.xbtn{display:flex;align-items:center;gap:10px;width:100%;margin:16px 0 0;padding:14px 16px;border-radius:14px;border:1.5px solid var(--bd);background:var(--card);color:var(--tx);font:inherit;font-weight:700;font-size:16px;text-align:left;cursor:pointer;min-height:56px;-webkit-tap-highlight-color:transparent}
+.xbtn .c{margin-left:auto;font-size:18px;color:var(--mu)}.xbtn small{display:block;font-weight:500;font-size:12.5px;color:var(--mu)}
+.xbtn[aria-expanded=true]{border-color:var(--pri)}
+.others{margin-top:6px}
+.grp{background:var(--card);border:1px solid var(--bd);border-radius:14px;margin-top:10px;overflow:hidden}
+.grp .gh{display:flex;align-items:center;gap:10px;padding:10px 14px;font-weight:800;font-size:15px;border-bottom:1px solid var(--bd);background:var(--soft)}
+.grp .gh .ic{width:30px;height:30px;border-radius:8px}.grp .gh .ic svg{width:18px;height:18px}
+.row{display:flex;align-items:center;gap:12px;padding:11px 14px;min-height:52px;text-decoration:none;color:inherit;border-top:1px solid var(--bd);-webkit-tap-highlight-color:transparent}
+.grp .gh+.row{border-top:0}
+.row .dot{flex:none;width:26px;height:26px;border-radius:7px;background:var(--fc,var(--pri));color:#fff;display:grid;place-items:center;font-size:13px;font-weight:800}
+.row .dot svg{width:15px;height:15px}
+.row .rt{flex:1;min-width:0;font-size:15px;font-weight:600}.row .rt small{display:block;font-weight:400;font-size:12.5px;color:var(--mu)}
+.row .ch{color:var(--mu);font-size:22px}
+.rsn{font-weight:800;word-break:break-word}.rtag{display:inline-block;margin-left:8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;border-radius:20px;padding:1px 8px;background:#6b7686;color:#fff;vertical-align:middle}.rtag.ok{background:#2f6f4f}
+.row.wip{opacity:.55}.row.wip .ch{display:none}
+.row:active{background:var(--soft)}
+.vid{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:14px;overflow:hidden;box-shadow:var(--sh)}.vid .vcv{position:absolute;left:0;top:0;height:13%;width:100%;background:#000;z-index:2}.vid .vcb{position:absolute;left:0;bottom:0;height:13%;width:100%;background:#000;z-index:2}.vid iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 #qrov{position:fixed;inset:0;background:rgba(10,14,22,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
 #qrov .bx{background:var(--card);color:var(--tx);border-radius:16px;max-width:520px;width:100%;max-height:94dvh;overflow:auto;padding:16px;box-shadow:var(--shh)}
 #qrov h3{margin:0 0 8px;font-size:20px}#qrov video{width:100%;border-radius:10px;background:#000;max-height:44vh}
 #qrov button{display:block;width:100%;margin:8px 0 0;padding:13px 14px;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-family:inherit;font-weight:600;font-size:16px;line-height:1.2;cursor:pointer;text-align:left}
 #qrov button.p{background:var(--pri);color:#fff;border-color:var(--pri)}
 @media(prefers-color-scheme:dark){#qrov button.p{color:#0e131b}}
-#qrov .sn{font-weight:900;font-size:clamp(28px,8vw,42px);text-align:center;margin:4px 0 6px;word-break:break-word}
 #qrov .m{color:var(--mu);font-size:14px;margin:6px 0}
-#qrov .got{background:var(--ic);border-radius:10px;padding:8px 10px;font-size:14px;margin:6px 0}
-/* compact home screen (Rev 17, Ravi 2026-10-29): smaller cards, two columns on a tablet */
-.hero{padding:calc(12px + env(safe-area-inset-top)) 16px 12px;border-bottom-width:4px}
-.hero img{height:40px}.hero .div{min-height:36px}.hero .t small{font-size:11px}.hero .t b{font-size:21px}
-main{padding:18px 16px 14px}
-h1{font-size:13px;margin:0 0 2px}
-p.s{font-size:15px;margin:0 0 12px}
-.cat{gap:14px;padding:14px 38px 14px 16px;margin-bottom:12px;min-height:84px;border-radius:14px}
-.cat::before{width:6px}
-.cat::after{font-size:26px;right:14px}
-.cat .ic{width:46px;height:46px;border-radius:12px}
-.cat .ic svg{width:26px;height:26px}
-.cat b{font-size:18px;line-height:1.25}
-.cat .d{font-size:13.5px;line-height:1.35;margin-top:2px}
-.cat .n{margin-top:5px;font-size:11.5px;padding:1px 9px}
-.cat .tag{position:static;display:inline-block;vertical-align:middle;margin-left:8px;font-size:10px;padding:1px 8px}
-.scanbtn{min-height:72px}
-@media(min-width:640px){
- #v-home[hidden]{display:none}#v-home{display:grid;grid-template-columns:1fr 1fr;column-gap:12px;align-items:stretch}
- #v-home>:not(.cat),#v-home>.scanbtn{grid-column:1/-1}
-}
-a.f{gap:14px;padding:14px 38px 14px 16px;min-height:80px;border-radius:14px}
-a.f .ic{width:46px;height:46px;border-radius:12px}
-a.f .ic svg{width:26px;height:26px}
-a.f b{font-size:17px}
-a.f span.d{font-size:13.5px;line-height:1.35}
-a.f::after{font-size:26px;right:14px}
-.grid{gap:12px}
-@media(prefers-color-scheme:dark){.cat .n{background:var(--acc);color:#0e131b}}
+footer{text-align:center;font-size:11px;color:var(--mu);opacity:.7;padding:12px 10px calc(14px + env(safe-area-inset-bottom))}
+@media(max-width:560px){.hero img{height:34px}.hero .div{display:none}.hero .t b{font-size:19px}.hero-in{gap:10px}}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition:none!important}}
 </style></head><body>
 <header class="hero"><div class="hero-in"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA5kAAADuCAYAAACzmcPCAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAADirSURBVHhe7d0HlBRl9vfxZ8hBMoIEkSy4JBcVFxEkCChgIodFMaCC4hJUFBMqorJLWEBFUAHJkrMISBAMmBYTAsa/EQSJgqR5+9beeVekh+kK3V1V/f2cU8e6j1DTMEN3/epJaekRBgAAAAAAD2TT/wIAAAAA4BohEwAAAADgGUImAAAAAMAzhEwAAAAAgGcImQAAAAAAzxAyAQAAAACeIWQCAAAAADxDyAQAAAAAeIaQCQAAAADwDCETAAAAAOAZQiYAAAAAwDOETAAAAACAZwiZAAAAAADPEDIBAAAAAJ4hZAIAAAAAPEPIBAAAAAB4Ji09Qs8BAAiNLVu2mIULF2oVLuecc47p2LGjVqf6/PPPzYIFC7QKhq5du5oyZcpolTX53sr32I3LL7/cnH/++Volx5o1a8w777yjVTDcfffdJi0tTausLVq0yHz22WdaJYa8vhw5cphChQqZs846y5QsWdKUKlXKOuy8drvWr19v3nzzTa3cueWWW0yRIkW0io9JkyaZn3/+WStnatWqZVq2bKnVqb755hszc+ZMrbyVP39+07t3b62883//939m+vTpWtlXqVIl07ZtW63sGT16tDl06JBW/nfeeeeZ1q1ba/UHEjIBAAibGTNmyEPUUB6NGzfWP2V0s2bNivr7/HxEbs711cemffv2Ua9j54jczOnVkqdfv35RX5ufj6NHj+qrj02nTp2iXicZR9GiRdObN2+efv/996evXLnS9p8lK5GAGfXrOjnGjRunV42PH374IT1btmxRv7adY/HixXrF6OTvOdrv8+r44IMP9Ct5Z+3atVG/VqxHq1at9Er2FStWLOo1/Xp07dpVX/nJ6Mn0wE8//WTGjx8vgV1bEFTydPP666835cqV0xbvRG76XD91hz90797dlC9fXiv4lTw5j9zcahUukZBpVq9erdWpXnnlFdOhQwetgkF6gBo0aKBV1uTPJ39ON6TH4I477tAqOfr372+GDx+uVTBEgpnVSxirzp07mxkzZmjlLyVKlLB6nG699VZTu3ZtbXVO7gXlOh999JG2ONewYUMTCTtaeW/YsGHmnnvu0coZ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9ux6BgD+QMgEVKVKlayAWaVKFW3xVvXq1a0e0jJlymgLACCVxbL3cixy5cqlZwDgD4RMIEIC4Lp168w555yjLfFRtWpVK2hKjykAILV5MZdSVjH3qkcUALxCyETKq1OnjhX8SpcurS3xJT2m8vXiHWgBAP62b98+PXOubNmyegYA/kHIREq7+OKLrUV5zjzzTG1JjAoVKlhBs2LFitoCAEg1H374oZ45R8gE4EeETKQsWTpe9sGUoUbJID2ZEjQrV66sLQCAVLJp0yY9c65atWp6BgD+QchESrryyivN0qVLTYECBbQlOeQJtATNc889V1sAAKkgPT3dvPPOO1o559VemwDgJUImUk7btm3NvHnzfLNQgswFle1NzjvvPG0BAITd559/bnbt2qWVM2lpaebSSy/VCgD8g5CJlNKtWzczY8YM3y33LvtnytzQmjVragsAIMyefvppPXPuggsuMEWLFtUKAPyDkImUceutt5pJkyaZHDlyaIu/lChRwqxevdpa7RYAEF5btmyxPo/c6tWrl54BgL8QMpES+vbta5599lmTLZu/f+SLFy9uVq1aZerWrastAIAwOXLkiOndu7c5ceKEtjgjDyY7deqkFQD4S1q6zDxH6GXPnt31B1pQPfjgg2bw4MHW3JWg2LNnj2nRooUni0IESZEiRczu3bu1AuJjw4YNpkGDBlo5U6pUKfPMM89oFR+tWrUyOXPm1Co6eYA2cuRIrZwZOHCgGTp0qFbJ4dX7s51bmp49e5rx48dr5czjjz9uBg0apFXWjh49am644QYzbdo0bXHuiSeeMPfdd59WAOAvhMwUkaoh88knnzT33nuvVsGyd+9ec8UVV5g333xTW8KPkIlE8CJkJoK8BxQsWFCr6AiZJ/NryJTXJT93t99+u/n444+11TmZi7lx48YsH0IAQLIQMlNEKobMMWPGWEOSgmz//v3WditvvPGGtoQbIROJQMg8GSHTucaNG5uGDRtqdSoZGvvDDz+YlStXmu+//15b3cmTJ4/54IMP2B8TgK8RMlNEKoVMmXf5wgsvWEOSwuDAgQOmTZs21jYnYUfIRCIQMk9GyAyO3Llzm1mzZpmrrrpKWwDAn1j4B6EiK8fKXJewBExxxhlnmCVLlpimTZtqCwAg1chnwbJlywiYAAKBkInQkL0v586dazp27Kgt4ZEvXz6zaNEi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" alt="Teledyne FLIR"><span class="div"></span><div class="t"><small>Field inspection forms</small><b>Tucson Service Center</b></div></div></header>
-<main>
-<div class="view" id="v-home"><h1>Inspection Forms</h1><p class="s">Scan a QR code or choose a category.</p><p class="s" style="margin-top:-6px;font-size:13px;opacity:.75">Latest update: 11/03/2026 6:43 PM MST</p><button class="cat scanbtn" id="scanGo" type="button"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="6" height="6" rx="1"/><rect x="14.5" y="3.5" width="6" height="6" rx="1"/><rect x="3.5" y="14.5" width="6" height="6" rx="1"/><path d="M6 6h1M17 6h1M6 17h1M14.5 14.5h2v2h-2zM18.5 14.5h2M14.5 18.5h2M18.5 18.5v2h-2"/></svg></span><span><b>Scan a QR code</b><span class="d">Scan a report QR, choose the form, and the serial numbers and SW/FW revs carry over</span></span></button><a class="cat th3 qcq" href="#intake" id="qcQuick"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 12l2 2 4-4M9 17h6"/></svg></span><span><b>LVSS Intake<span class="tag">Quick access</span></b><span class="d">LVSS, eMSC-L and M2S2 – short form (quick: core data, issues, main functions) or long form (full intake inspection)</span></span></a><a class="cat th1" href="#new" data-cat="new"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17h2m14 0h2M5 17V9l2-3h8l3 4v7M3 17h18"/><circle cx="8" cy="17.5" r="1.6"/><circle cx="16" cy="17.5" r="1.6"/></svg></span><span><b>New Builds &amp; Upfits</b><span class="d">Intake, floor test, ATP, calibration and final inspection</span><span class="n"></span></span></a><a class="cat th2" href="#service" data-cat="service"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.1L3 17.7 6.3 21l6.3-6.3a4 4 0 0 0 5.1-5.4l-2.5 2.5-2.3-.5-.5-2.3z"/></svg></span><span><b>Service Forms</b><span class="d">Intake, repairs, calibration and field inspections</span><span class="n"></span></span></a><a class="cat th4" href="#docs" data-cat="docs"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="1.5"/><path d="M9 3v4M15 3v4M9 17v4M15 17v4M3 9h4M3 15h4M17 9h4M17 15h4"/></svg></span><span><b>AI Chatbot Troubleshooting Support</b><span class="d">Tech tips and resources</span></span></a><a class="wflink" href="workflow/"><span class="wfi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="6" height="5" rx="1.2"/><rect x="16" y="3" width="6" height="5" rx="1.2"/><rect x="9" y="16" width="6" height="5" rx="1.2"/><path d="M8 5.5h8M19 8v3a2 2 0 0 1-2 2H7a2 2 0 0 0-2 2"/><path d="M12 13v3"/></svg></span><span class="wft"><b>Form process workflow</b><span>How the forms connect, step by step</span></span><span class="wfa">›</span></a><a class="wflink" href="quickstart/"><span class="wfi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="6" height="5" rx="1.2"/><rect x="16" y="3" width="6" height="5" rx="1.2"/><rect x="9" y="16" width="6" height="5" rx="1.2"/><path d="M8 5.5h8M19 8v3a2 2 0 0 1-2 2H7a2 2 0 0 0-2 2"/><path d="M12 13v3"/></svg></span><span class="wft"><b>Quick start for technicians</b><span>One idea, how to scan, and what to do if something goes wrong</span></span><span class="wfa">›</span></a><a class="wflink" href="about/"><span class="wfi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="6" height="5" rx="1.2"/><rect x="16" y="3" width="6" height="5" rx="1.2"/><rect x="9" y="16" width="6" height="5" rx="1.2"/><path d="M8 5.5h8M19 8v3a2 2 0 0 1-2 2H7a2 2 0 0 0-2 2"/><path d="M12 13v3"/></svg></span><span class="wft"><b>About this app</b><span>How the forms are built and how they reach your device</span></span><span class="wfa">›</span></a></div><div class="view" id="v-intake" hidden><a class="back" href="#">‹ All categories</a><h1>LVSS Intake</h1><p class="s">LVSS, eMSC-L and M2S2. Choose the short form or the long form for this truck.</p><div class="grid"><a class="f" data-k="qc" href="qc/"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></span><span><b>Short form</b><span class="d">Quick: core data, issues and a main functions check. Good for several trucks on a site visit. Makes a QR code for the other forms</span></span></a><a class="f" data-k="intake" href="intake/"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 12l2 2 4-4M9 17h6"/></svg></span><span><b>Long form</b><span class="d">Full intake inspection: exterior damage, customer property, device tests and serial / SW/FW rev capture. Makes a QR code for the other forms</span></span></a></div></div><div class="view" id="v-new" hidden><a class="back" href="#">‹ All categories</a><h1>New Builds &amp; Upfits</h1><p class="s">Intake, floor test, ATP, calibration and final inspection.</p><div class="grid"><a class="f" data-k="intakeform" href="#intake"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 12l2 2 4-4M9 17h6"/></svg></span><span><b>LVSS Intake</b><span class="d">LVSS, eMSC-L and M2S2 – short form (quick capture of core data and main functions) or long form (full intake inspection)</span></span></a><a class="f" data-k="floor" href="floor/"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><rect x="5" y="9" width="14" height="8" rx="1.5"/><path d="M9 9V6h6v3"/></svg></span><span><b>Floor Test for eMSC-L &amp; M2S2</b><span class="d">Wiring and comms check of the enclosures before the skid is mounted and before ATP – new build or upfit</span></span></a><a class="f" data-k="atp" href="atp/"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg></span><span><b>eMSC-L / M2S2 ATP Inspection</b><span class="d">Acceptance test for eMSC-L and M2S2 trucks, with the DD1149 form and serial checksheet</span></span></a><a class="f" data-k="atpdd" href="atp/" id="ddGo"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg></span><span><b>DD1149 form</b><span class="d">After PIVCO: scan the "DD1149 code – audit passed" on the audit report (or a completed ATP report) to make the DD1149 and attachment – customer and traveler copies</span></span></a><a class="f" data-k="cal" href="cal/"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg></span><span><b>eMSC-L TFU to Radar Cal</b><span class="d">Roll, pitch, camera and radar calibration – normally before the ATP (after PIVCO if the customer agrees) and after any camera/TFU swap</span></span></a><a class="f" data-k="final" href="final/"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 4h13l-3 4 3 4H5"/></svg></span><span><b>Jake's New Build Final Inspection Form</b><span class="d">Final inspection before the ATP on a new build or upfit – serial numbers and checklist. Ends with a code that starts the ATP</span></span></a></div></div><div class="view" id="v-service" hidden><a class="back" href="#">‹ All categories</a><h1>Service Forms</h1><p class="s">Intake, repairs, calibration and field inspections.</p><div class="grid"><a class="f" data-k="intakeform" href="#intake"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 12l2 2 4-4M9 17h6"/></svg></span><span><b>LVSS Intake</b><span class="d">LVSS, eMSC-L and M2S2 – short form (quick capture of core data and main functions) or long form (full intake inspection)</span></span></a><a class="f" data-k="quote" href="quote/"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></span><span><b>Z2 Repair Quote</b><span class="d">Non-warranty repairs: issues, parts, quantities and labor hours to quote (no prices). Scan the Intake QR to start; Post-Repair scans the quote's QR</span></span></a><a class="f" data-k="mvb" href="mvb/"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16"/><path d="M9 9l6 6"/></svg></span><span><b>Ranger Radars Pan-Tilt Moving Base ATP/ATR</b><span class="d">Step-by-step acceptance test for the 961-0037 / 961-0038 moving base. Fills in the ATR to sign, print or e-mail. Needs the 8-digit code</span></span></a><a class="f" data-k="lvss" href="lvss/"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.1L3 17.7 6.3 21l6.3-6.3a4 4 0 0 0 5.1-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg></span><span><b>LVSS / eMSC-L Post-Repair Checklist</b><span class="d">Post-repair inspection, punch list, swaps and repair report e-mail</span></span></a><a class="f" data-k="cal" href="cal/"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg></span><span><b>eMSC-L TFU to Radar Cal</b><span class="d">Roll, pitch, camera and radar calibration – normally before the ATP (after PIVCO if the customer agrees) and after any camera/TFU swap</span></span></a><a class="f" data-k="sw" href="skywatch/"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 3-3 3-3-3z"/><path d="M12 8v14M8 22h8M7 14l5-4 5 4"/></svg></span><span><b>SkyWatch PM &amp; Trip Planner</b><span class="d">Trip planner, tower inspection and completion certificate</span></span></a><a class="f wip" data-k="cerberus" aria-disabled="true" tabindex="-1"><span class="tag">WIP</span><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span><span><b>Cerberus Inspection</b><span class="d">Not ready for deployment – WIP. Device list and inspection form to come.</span></span></a><a class="f wip" data-k="argus" aria-disabled="true" tabindex="-1"><span class="tag">WIP</span><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><span><b>Argus Inspection</b><span class="d">Not ready for deployment – WIP. Device list and inspection form to come.</span></span></a></div></div><div class="view" id="v-docs" hidden><a class="back" href="#">‹ All categories</a><h1>AI Chatbot Troubleshooting Support</h1><p class="s">Tech tips and resources.</p><div id="docsBox" class="vid"></div><p class="s" style="font-size:13px;margin:10px 2px 0">Video not playing? <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" rel="noopener" style="color:var(--pri)">Open it in a new tab</a></p></div>
-<div class="box"><b>Continuing a paused inspection?</b> Open the form named at the top of the carry-over sheet, then tap <b>Scan QR</b> on its Home screen.<br><br>Open a form once while online so it can work offline, then add it to your Home Screen.</div>
-</main><footer>Designed &amp; developed by Ravi Ramsundar · Rev 54 · 11/03/2026 6:43 PM MST</footer>
+<span hidden id="updStamp">Latest update: 11/03/2026 7:35 PM MST</span>
+<main><div id="app"></div></main>
+<footer>Designed &amp; developed by Ravi Ramsundar · Rev 55 · 11/03/2026 7:35 PM MST</footer>
 <div id="qrov"><div class="bx" id="qrbx"></div></div><script>(function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -10346,30 +10338,204 @@ async function openCam(input){if(ov)return;css();
 }
 window.CamFix={open:function(i){openCam(i);},native:nativeOpen,pick:lsGet,inForm:function(){inNext=Date.now();}};
 })();
-</script>
-<script>
-(function(){const V=['home','intake','new','service','docs'];
-function cascade(v){if(!v)return;const els=v.querySelectorAll('.back,h1,p.s,.cat,a.f,.vid,.empty');els.forEach((e,i)=>e.style.setProperty('--i',i));v.classList.remove('play');void v.offsetWidth;v.classList.add('play');clearTimeout(window._ct);window._ct=setTimeout(()=>v.classList.remove('play'),1100+els.length*95);}
-let cur=null,lt=null;
-function show(){let h=(location.hash||'').replace('#','');if(V.indexOf(h)<0||h==='')h='home';
- const prev=cur;cur=h;if(prev===h)return;
- const nv=document.getElementById('v-'+h),ov=prev?document.getElementById('v-'+prev):null,back=(h==='home');
- V.forEach(v=>{const e=document.getElementById('v-'+v);if(e&&e!==nv&&e!==ov){e.hidden=true;}e&&e.classList.remove('leaving','in-fwd','in-back','toback');});
- clearTimeout(lt);
- if(nv){nv.hidden=false;if(ov){nv.classList.add(back?'in-back':'in-fwd');}}
- if(ov&&ov!==nv){ov.hidden=false;ov.classList.add('leaving');if(back)ov.classList.add('toback');lt=setTimeout(()=>{ov.hidden=true;ov.classList.remove('leaving','toback');if(nv)nv.classList.remove('in-fwd','in-back');},420);}
- const bx=document.getElementById('docsBox');if(bx)bx.innerHTML=(h==='docs')?'<div class="vcv"></div><div class="vcb"></div><iframe src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1&rel=0&playsinline=1&cc_load_policy=0&iv_load_policy=3" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="Docs"></iframe>':'';window.scrollTo(0,0);cascade(nv);}
-window.addEventListener('hashchange',show);
-document.querySelectorAll('.cat[data-cat]').forEach(c=>{if(c.dataset.cat==='docs')return;const n=document.getElementById('v-'+c.dataset.cat).querySelectorAll('a.f:not(.wip)').length;c.querySelector('.n').textContent=n+(n===1?' form':' forms');});
-try{const k=localStorage.getItem('launcherLast');if(k){document.querySelectorAll('a.f[data-k='+k+']').forEach(e=>{e.classList.add('last');e.insertAdjacentHTML('afterbegin','<span class="tag">Last used</span>');const v=e.closest('.view');if(v){const c=document.querySelector('.cat[data-cat='+v.id.slice(2)+'] .d');if(c)c.parentNode.insertAdjacentHTML('beforeend','<span class="n">Last used here</span>');}});}}catch(e){}
-document.querySelectorAll('a.f').forEach(a=>a.addEventListener('click',()=>{try{localStorage.setItem('launcherLast',a.dataset.k)}catch(e){}}));
-show();})();
-/* ---- QR scanner: scan, pick a form, hand the data to it ---- */
+</script><script>
+/* Rev 55 (Ravi, 2026-11-03): home page restructured. Home: Scan a QR code, LVSS Intake, Service Forms, Device Forms,
+   Open last form, AI Chatbot, About this website, then the reports opened on this device. Service Forms holds one
+   category per platform (LVSS / eMSC-L / M2S2, SkyWatch, Cerberus, Argus, Devices), each with a Forms folder for
+   printable blanks. A scanned code shows its platform's forms first; every other form is in a collapsed list and opens
+   without the scanned data. Back returns to the previous screen at the same scroll spot. */
+(function(){
+'use strict';
+var app=document.getElementById('app');
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+var IC={
+ qr:'<rect x="3.5" y="3.5" width="6" height="6" rx="1"/><rect x="14.5" y="3.5" width="6" height="6" rx="1"/><rect x="3.5" y="14.5" width="6" height="6" rx="1"/><path d="M6 6h1M17 6h1M6 17h1M14.5 14.5h2v2h-2zM18.5 14.5h2M14.5 18.5h2M18.5 18.5v2h-2"/>',
+ clip:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 12l2 2 4-4M9 17h6"/>',
+ wrench:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.1L3 17.7 6.3 21l6.3-6.3a4 4 0 0 0 5.1-5.4l-2.5 2.5-2.3-.5-.5-2.3z"/>',
+ chip:'<rect x="7" y="7" width="10" height="10" rx="1.5"/><path d="M9 3v4M15 3v4M9 17v4M15 17v4M3 9h4M3 15h4M17 9h4M17 15h4"/>',
+ truck:'<path d="M2 7h11v9H2z"/><path d="M13 10h4l3 3v3h-7z"/><circle cx="6" cy="17.5" r="1.8"/><circle cx="16.5" cy="17.5" r="1.8"/>',
+ tower:'<path d="M12 11v10M8.5 21h7"/><circle cx="12" cy="9" r="1.8"/><path d="M8.2 5.6a5 5 0 0 0 0 6.8M15.8 5.6a5 5 0 0 1 0 6.8M5.6 3.4a8.5 8.5 0 0 0 0 11.2M18.4 3.4a8.5 8.5 0 0 1 0 11.2"/>',
+ shield:'<path d="M12 3 5 6v5.5c0 4.4 3 7.8 7 9.5 4-1.7 7-5.1 7-9.5V6z"/>',
+ eye:'<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
+ device:'<rect x="3" y="6" width="12" height="9" rx="2"/><path d="m15 9.5 5-2.5v8l-5-2.5z"/><path d="M9 15v3.5M5.5 20.5h7"/>',
+ folder:'<path d="M3 7.5a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+ printer:'<path d="M7 9V3.5h10V9"/><rect x="3.5" y="9" width="17" height="7.5" rx="2"/><path d="M7 14h10v6.5H7z"/>',
+ info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.4"/>',
+ flow:'<rect x="3" y="3" width="7" height="6" rx="1.2"/><rect x="14" y="15" width="7" height="6" rx="1.2"/><path d="M6.5 9v3.5a2.5 2.5 0 0 0 2.5 2.5h5"/>',
+ book:'<path d="M4 4.5h5.5A2.5 2.5 0 0 1 12 7v13a2 2 0 0 0-2-2H4z"/><path d="M20 4.5h-5.5A2.5 2.5 0 0 0 12 7v13a2 2 0 0 1 2-2h6z"/>',
+ ret:'<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+ doc:'<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/>',
+ home:'<path d="M3 11 12 4l9 7"/><path d="M5.5 9.5V20h13V9.5"/>'
+};
+function svg(n){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+IC[n]+'</svg>';}
+
+/* ---------- forms ---------- */
+var PATH={qc:'qc/',intake:'intake/',quote:'quote/',lvss:'lvss/',floor:'floor/',final:'final/',cal:'cal/',atp:'atp/',atpdd:'atp/',sw:'skywatch/',mvb:'mvb/'};
+var F={
+ intakeform:{t:'LVSS Intake',d:'LVSS, eMSC-L and M2S2 – short form (quick capture of core data and main functions) or long form (full intake inspection)',c:'#1d3b6a',go:'intake'},
+ qc:{t:'Short form',full:'LVSS Intake – Short Form',d:'Quick: core data, issues and a main functions check. Good for several trucks on a site visit. Makes a QR code for the other forms',c:'#3b4a5c'},
+ intake:{t:'Long form',full:'LVSS Intake – Long Form',d:'Full intake inspection: exterior damage, customer property, device tests and serial / SW/FW rev capture. Makes a QR code for the other forms',c:'#1d3b6a'},
+ quote:{t:'Z2 Repair Quote',d:'Non-warranty repairs: issues, parts, quantities and labor hours to quote (no prices). Scan the Intake QR to start; Post-Repair scans the quote’s QR',c:'#2f6f4f'},
+ lvss:{t:'LVSS / eMSC-L Post-Repair Checklist',d:'Post-repair inspection, punch list, swaps and repair report e-mail',c:'#1d5fc4'},
+ floor:{t:'Floor Test for eMSC-L & M2S2',d:'Wiring and comms check of the enclosures before the skid is mounted and before ATP – new build or upfit',c:'#8a5a1e'},
+ final:{t:'Jake’s New Build Final Inspection Form',d:'Final inspection before the ATP on a new build or upfit – serial numbers and checklist. Ends with a code that starts the ATP',c:'#b02a4f'},
+ cal:{t:'eMSC-L TFU to Radar Cal',d:'Roll, pitch, camera and radar calibration – normally before the ATP (after PIVCO if the customer agrees) and after any camera/TFU swap',c:'#8a3fb0'},
+ atp:{t:'eMSC-L / M2S2 ATP Inspection',d:'Acceptance test for eMSC-L and M2S2 trucks, with the serial checksheet. The DD1149 is in the Forms folder',c:'#1f4e8c'},
+ atpdd:{t:'DD1149 form (from this ATP)',d:'Makes the DD1149 and attachment – customer and traveler copies',c:'#1f4e8c'},
+ sw:{t:'SkyWatch PM & Trip Planner',d:'Trip planner, tower inspection and completion certificate',c:'#d1500d'},
+ mvb:{t:'Ranger Radars Pan-Tilt Moving Base ATP/ATR',d:'Step-by-step acceptance test for the 961-0037 / 961-0038 moving base. Fills in the ATR to sign, print or e-mail. Needs the 8-digit code',c:'#3c5a78'}
+};
+function nm(k){return F[k].full||F[k].t;}
+var CAT={
+ lvss:{t:'LVSS / eMSC-L / M2S2',d:'Intake, repair quote, post-repair, floor test, final, calibration and ATP',ic:'truck',forms:['intakeform','quote','lvss','floor','final','cal','atp'],numbered:true},
+ sw:{t:'SkyWatch',d:'Tower PM visits: trip planner, inspection and completion certificate',ic:'tower',forms:['sw']},
+ cerberus:{t:'Cerberus',d:'Not ready for deployment. Device list and inspection form to come',ic:'shield',wip:'Cerberus Inspection',forms:[]},
+ argus:{t:'Argus',d:'Not ready for deployment. Device list and inspection form to come',ic:'eye',wip:'Argus Inspection',forms:[]},
+ devices:{t:'Devices',d:'FLIR-owned devices repaired at TSC: Pan-Tilt now, TFU / camera and radar next',ic:'device',groups:[{t:'Pan-Tilt',forms:['mvb']},{t:'TFU / Camera',wip:'Coming next'},{t:'Radar',wip:'Coming later'}]}
+};
+var ORDER=['lvss','sw','cerberus','argus','devices'];
+/* recent-report keys (form folder) -> colour */
+var DIRC={qc:'#3b4a5c',intake:'#1d3b6a',quote:'#2f6f4f',lvss:'#1d5fc4',floor:'#8a5a1e',final:'#b02a4f',cal:'#8a3fb0',atp:'#1f4e8c',skywatch:'#d1500d',mvb:'#3c5a78'};
+
+function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+function recent(){try{var L=JSON.parse(lsGet('tscRecent')||'[]');return Array.isArray(L)?L.filter(function(x){return x&&x.k&&x.id;}).slice(0,10):[];}catch(e){return [];}}
+function rHref(e){return encodeURIComponent(e.k)+'/#resume='+encodeURIComponent(e.id);}
+function when(t){if(!t)return '';var d=new Date(t);if(isNaN(d))return '';var n=new Date(),tm=d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+ var day=function(x){return new Date(x.getFullYear(),x.getMonth(),x.getDate()).getTime();},dd=Math.round((day(n)-day(d))/864e5);
+ return dd===0?tm+' today':dd===1?'yesterday '+tm:d.toLocaleDateString([],{month:'short',day:'numeric'})+', '+tm;}
+function rTag(e){return e.done?'<span class="rtag ok">Report ready</span>':'<span class="rtag">Not finished</span>';}
+
+/* ---------- titles and parents (Back labels) ---------- */
+function split(r){var i=r.indexOf('/');return i<0?[r,'']:[r.slice(0,i),r.slice(i+1)];}
+function title(r){var p=split(r||'home'),v=p[0],a=p[1];
+ switch(v){case 'intake':return 'LVSS Intake';case 'service':return 'Service Forms';case 'cat':return CAT[a]?(a==='devices'?'Device Forms':CAT[a].t):'Service Forms';
+  case 'forms':return (CAT[a]?CAT[a].t+' ':'')+'Forms';case 'about':return 'About this website';case 'docs':return 'AI Chatbot Support';case 'scan':return 'Scanned code';}
+ return 'Home';}
+function parent(r){var p=split(r),v=p[0],a=p[1];if(v==='cat')return a==='devices'?'home':'service';if(v==='forms')return 'cat/'+a;return 'home';}
+function norm(r){if(r==='new')return 'cat/lvss';var p=split(r);if(p[0]==='cat'||p[0]==='forms'){if(!CAT[p[1]]||(p[0]==='forms'&&p[1]==='devices'))return 'service';return r;}
+ return ['home','intake','service','about','docs','scan'].indexOf(r)>=0?r:'home';}
+
+/* ---------- building blocks ---------- */
+function L(r){return 'href="#'+r+'" data-go="'+r+'"';}
+function last(){return lsGet('launcherLast');}
+function formCard(k,num){var f=F[k],lu=(last()===k);
+ var href=f.go?L(f.go):'href="'+PATH[k]+'" data-k="'+k+'"';
+ return '<a class="f'+(lu?' last':'')+'" style="--fc:'+f.c+'" '+href+'><span class="ic">'+(num?num:svg('clip'))+'</span><span><b>'+esc(f.t)+(lu?'<span class="tag" style="background:'+f.c+'">Last used</span>':'')+'</b><span class="d">'+esc(f.d)+'</span></span></a>';}
+function wipCard(t,d){return '<a class="f wip" style="--fc:#6b7686" aria-disabled="true"><span class="ic">'+svg('clip')+'</span><span><b>'+esc(t)+'<span class="tag grey">WIP</span></b><span class="d">'+esc(d)+'</span></span></a>';}
+function folderLine(k){return k==='lvss'?'DD1149 · printable blank forms coming soon':k==='sw'?'Blank pre-trip checklist and blank inspection form':'Printable blank forms – none yet';}
+function folderCard(k){return '<a class="f folder" '+L('forms/'+k)+'><span class="ic">'+svg('folder')+'</span><span><b>Forms</b><span class="d">'+folderLine(k)+'</span></span></a>';}
+function catCount(k){var c=CAT[k];if(c.wip)return '<span class="n">WIP</span>';if(k==='devices')return '<span class="n">1 device</span><span class="n">More coming</span>';
+ var n=c.forms.length;return '<span class="n">'+n+' form'+(n===1?'':'s')+'</span><span class="n">Forms folder</span>';}
+function catCard(k){var c=CAT[k];return '<a class="cat th-'+k+(c.wip?' wipc':'')+'" '+L('cat/'+k)+'><span class="ic">'+svg(c.ic)+'</span><span><b>'+esc(c.t)+(c.wip?'<span class="tag grey">WIP</span>':'')+'</b><span class="d">'+esc(c.d)+'</span>'+catCount(k)+'</span></a>';}
+function catBody(k){var c=CAT[k],h='';
+ if(k==='devices'){c.groups.forEach(function(g){h+='<h2 class="sec">'+esc(g.t)+'</h2><div class="grid">'+(g.forms?g.forms.map(function(f){return formCard(f);}).join(''):wipCard(g.t+' repair forms',g.wip+'. Repair forms will be added here.'))+'</div>';});
+  return h+'<p class="note">More FLIR-owned devices with repair forms will be added here. The Pan-Tilt ATP/ATR is digital only (no printable version).</p>';}
+ return '<div class="grid">'+(c.wip?wipCard(c.wip,'Not ready for deployment – WIP. Device list and inspection form to come.'):'')+c.forms.map(function(f,i){return formCard(f,c.numbered?i+1:0);}).join('')+folderCard(k)+'</div>';}
+function row(k,href,num,extra){var f=F[k];return '<a class="row" style="--fc:'+f.c+'" '+href+'><span class="dot">'+(num||svg('clip'))+'</span><span class="rt">'+esc(nm(k))+(extra?'<small>'+esc(extra)+'</small>':'')+'</span><span class="ch">›</span></a>';}
+function plainRows(keys){return keys.map(function(k){return row(k,'href="'+PATH[k]+'" data-k="'+k+'"');}).join('');}
+function wipRow(t,s,ic){return '<div class="row wip"><span class="dot" style="--fc:#6b7686">'+svg(ic)+'</span><span class="rt">'+esc(t)+'<small>'+esc(s)+'</small></span></div>';}
+function folderRow(k){return '<a class="row" '+L('forms/'+k)+'><span class="dot" style="--fc:var(--pri)">'+svg('folder')+'</span><span class="rt">Forms<small>'+folderLine(k)+'</small></span><span class="ch">›</span></a>';}
+var LVSS_KEYS=['qc','intake','quote','lvss','floor','final','cal','atp'];
+function groupRows(k,skip){skip=skip||[];var c=CAT[k];
+ if(k==='devices')return plainRows(['mvb'])+wipRow('TFU / Camera','Coming next','device')+wipRow('Radar','Coming later','device');
+ if(c.wip)return wipRow(c.wip,'WIP – form to come','clip')+folderRow(k);
+ var keys=k==='lvss'?LVSS_KEYS:c.forms;return plainRows(keys.filter(function(x){return skip.indexOf(x)<0;}))+folderRow(k);}
+
+/* ---------- views ---------- */
+var V={};
+V.home=function(){var R=recent(),e=R[0],stamp=(document.getElementById('updStamp')||{}).textContent||'';
+ var h='<h1>Inspection Forms</h1><p class="s">Scan a QR code or choose a form.</p>'+(stamp?'<p class="s upd">'+esc(stamp)+'</p>':'')+'<div class="homegrid">'
+ +'<button class="cat th-home full" type="button" data-act="scan"><span class="ic">'+svg('qr')+'</span><span><b>Scan a QR code</b><span class="d">Scan a report QR: that platform’s forms come first, and the serial numbers and SW/FW revs carry over</span></span></button>'
+ +'<a class="cat th-int" '+L('intake')+'><span class="ic">'+svg('clip')+'</span><span><b>LVSS Intake<span class="tag">Quick access</span></b><span class="d">LVSS, eMSC-L and M2S2 – short form (quick: core data, issues, main functions) or long form (full intake inspection)</span></span></a>'
+ +'<a class="cat th-svc" '+L('service')+'><span class="ic">'+svg('wrench')+'</span><span><b>Service Forms</b><span class="d">LVSS / eMSC-L / M2S2, SkyWatch, Cerberus, Argus and Devices</span><span class="n">5 categories</span></span></a>'
+ +'<a class="cat th-devices" '+L('cat/devices')+'><span class="ic">'+svg('device')+'</span><span><b>Device Forms</b><span class="d">Pan-Tilt now; TFU / camera and radar coming</span><span class="n">1 device</span></span></a>'
+ +(e?'<a class="cat th-ret" href="'+rHref(e)+'"><span class="ic">'+svg('ret')+'</span><span><b>Open last form'+rTag(e)+'</b><span class="d"><b style="display:inline;font-size:inherit">'+esc(e.sn)+'</b> · '+esc(e.n)+(e.st?' · '+esc(e.st)+' step':'')+'<br>Last saved '+esc(when(e.t))+' · reopens where you left off</span></span></a>':'')
+ +'<a class="cat th-ai'+(e?' full':'')+'" '+L('docs')+'><span class="ic">'+svg('chip')+'</span><span><b>AI Chatbot Troubleshooting Support</b><span class="d">Tech tips and resources</span></span></a>'
+ +'</div><a class="wflink" '+L('about')+'><span class="wfi">'+svg('info')+'</span><span class="wft"><b>About this website</b><span>How the forms flow, quick-start how-to guide, and how the app works</span></span><span class="wfa">›</span></a>';
+ if(R.length)h+='<h2 class="sec">Last '+(R.length>1?R.length+' reports':'report')+' opened on this device</h2><div class="grp">'+R.map(function(x,i){
+  return '<a class="row" style="--fc:'+(DIRC[x.k]||'#5b6575')+'" href="'+rHref(x)+'"><span class="dot">'+(i+1)+'</span><span class="rt"><span class="rsn">'+esc(x.sn||'(no serial)')+'</span>'+rTag(x)+'<small>'+esc(x.n)+(x.st?' · '+esc(x.st)+' step':'')+' · '+esc(when(x.t))+'</small></span><span class="ch">›</span></a>';}).join('')
+  +'</div><p class="note">Only reports opened on this tablet or phone show here. Tap one to reopen it where you left off.</p>';
+ return h;};
+V.intake=function(){return '<h1>LVSS Intake</h1><p class="s">LVSS, eMSC-L and M2S2. Choose the short form or the long form for this truck.</p><div class="grid">'+formCard('qc')+formCard('intake')+'</div>';};
+V.service=function(){return '<h1>Service Forms</h1><p class="s">Choose a platform or device.</p>'+ORDER.map(catCard).join('');};
+V.cat=function(k){var c=CAT[k];
+ return '<h1>'+esc(k==='devices'?'Device Forms':c.t)+'</h1><p class="s">'+(c.numbered?'Forms in workflow order. Printable blanks and the DD1149 are in the Forms folder.':c.wip?'Not ready for deployment yet.':k==='devices'?'Bench and repair forms for FLIR-owned devices.':'Printable blanks are in the Forms folder.')+'</p><div class="th-'+k+'">'+catBody(k)+'</div>';};
+V.forms=function(k){var c=CAT[k],h='<h1>'+esc(c.t)+' · Forms</h1><p class="s">Printable blank forms for working on paper.</p><div class="th-'+k+'">';
+ if(k==='lvss')h+='<div class="grid"><a class="f" style="--fc:#1f4e8c" href="atp/" data-act="dd"><span class="ic">'+svg('doc')+'</span><span><b>DD1149 form</b><span class="d">After PIVCO: scan the “DD1149 code – audit passed” on the audit report (or a completed ATP report) to make the DD1149 and attachment – customer and traveler copies</span></span></a></div>'
+  +'<h2 class="sec">Blank forms</h2><div class="info">Printable blank versions of the LVSS, eMSC-L and M2S2 forms are coming soon. They’ll be listed here.</div>';
+ else if(k==='sw')h+='<div class="grid"><a class="f" style="--fc:#d1500d" href="skywatch/" data-k="sw"><span class="ic">'+svg('printer')+'</span><span><b>Blank pre-trip checklist and blank inspection form</b><span class="d">Opens SkyWatch PM & Trip Planner. Tap “\u{1F5A8} Print blank forms” under More options on its home screen</span></span></a></div>';
+ else h+='<div class="info">No printable forms yet. They’ll be added here when the '+esc(c.t)+' form is built.</div>';
+ return h+'</div>';};
+V.about=function(){return '<h1>About this website</h1><p class="s">How the forms flow, how to use them, and how the app works.</p>'
+ +'<a class="cat th-home" href="workflow/"><span class="ic">'+svg('flow')+'</span><span><b>Form process workflow</b><span class="d">How the forms connect, step by step</span></span></a>'
+ +'<a class="cat th-ret" href="quickstart/"><span class="ic">'+svg('book')+'</span><span><b>Quick start for technicians</b><span class="d">One idea, how to scan, continuing a paused inspection, and what to do if something goes wrong</span></span></a>'
+ +'<a class="cat th-int" href="about/"><span class="ic">'+svg('info')+'</span><span><b>About this app</b><span class="d">How the forms are built and how they reach your device</span></span></a>';};
+V.docs=function(){return '<h1>AI Chatbot Troubleshooting Support</h1><p class="s">Tech tips and resources.</p><div class="vid"><div class="vcv"></div><div class="vcb"></div><iframe src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1&rel=0&playsinline=1&cc_load_policy=0&iv_load_policy=3" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="Docs"></iframe></div><p class="s" style="font-size:13px;margin:10px 2px 0">Video not playing? <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" rel="noopener" style="color:var(--pri)">Open it in a new tab</a></p>';};
+function scanRes(){try{return JSON.parse(sessionStorage.getItem('scanRes')||'null');}catch(e){return null;}}
+V.scan=function(){var R=scanRes();if(!R||!R.order)return '<h1>Scanned code</h1><div class="info">Nothing scanned yet. Go back and tap <b>Scan a QR code</b>.</div>';
+ var c=CAT[R.plat],others=ORDER.filter(function(k){return k!==R.plat;}),open=!!(S&&S.open);
+ var h='<h1>Code scanned</h1><p class="s">Choose the form to open. '+esc(c.t)+' forms are first.</p>'
+ +'<div class="scanbox th-'+R.plat+'"><div class="w">'+esc(R.what)+' code</div>'+(R.sn?'<div class="sn">'+esc(R.sn)+'</div>':'')+'<div class="got">'+esc(R.got)+'</div></div>'
+ +'<h2 class="sec">Which form do you want to open?</h2><div class="grid">'+R.order.map(function(k,i){var f=F[k];
+  return '<a class="f'+(i===0?' sug':'')+'" style="--fc:'+f.c+'" href="'+PATH[k]+'" data-scan="'+k+'"><span class="ic">'+svg(k==='atpdd'?'doc':'clip')+'</span><span><b>'+esc(nm(k))+(i===0&&R.paused?' – continue':'')+(i===0?'<span class="tag" style="background:'+f.c+'">Suggested</span>':'')+'</b><span class="d">'+esc(f.d)+'</span></span></a>';}).join('')+'</div>';
+ var skip=R.order.slice(),rest=R.plat==='lvss'?LVSS_KEYS.filter(function(k){return skip.indexOf(k)<0;}):[];
+ h+='<button type="button" class="xbtn" data-act="others" aria-expanded="'+open+'"><span><span class="xl">'+(open?'Hide other forms':'Show all other forms')+'</span><small>Every other form, grouped by platform. These open without the scanned data</small></span><span class="c">'+(open?'▴':'▾')+'</span></button>'
+ +'<div class="others"'+(open?'':' hidden')+'>'
+ +'<div class="grp th-'+R.plat+'"><div class="gh"><span class="ic">'+svg(c.ic)+'</span>Other '+esc(c.t)+' forms</div>'+(rest.length?plainRows(rest):'')+folderRow(R.plat)+'</div>'
+ +others.map(function(k){var x=CAT[k];return '<div class="grp th-'+k+'"><div class="gh"><span class="ic">'+svg(x.ic)+'</span>'+esc(x.t)+(x.wip?'<span class="tag grey">WIP</span>':'')+'</div>'+groupRows(k)+'</div>';}).join('')+'</div>';
+ return h;};
+
+/* ---------- router: Back returns to the previous screen and the same scroll spot ---------- */
+try{history.scrollRestoration='manual';}catch(e){}
+var S=null,canPush=true;
+function parse(h){var r;try{r=decodeURIComponent((h||'').replace(/^#/,''));}catch(e){r='';}return norm(r||'home');}
+function topbar(st){var lbl=st.d>0&&st.from?st.from:title(parent(st.r));
+ return '<div class="topbar"><button class="back" type="button" data-act="back"><span>‹ Back to '+esc(lbl)+'</span></button><a class="homeb" '+L('home')+' aria-label="Home">'+svg('home')+'Home</a></div>';}
+function render(st){S=st;var p=split(st.r),fn=V[p[0]]||V.home;
+ app.innerHTML=(p[0]==='home'?'':topbar(st))+fn(p[1],st);
+ document.title=(p[0]==='home'?'Inspection Forms':title(st.r))+' – Tucson Service Center';
+ app.classList.remove('fade');void app.offsetWidth;app.classList.add('fade');}
+function saveState(extra){var ns={};for(var k in S)ns[k]=S[k];ns.y=window.scrollY||window.pageYOffset||0;if(extra)for(var j in extra)ns[j]=extra[j];S=ns;if(canPush){try{history.replaceState(ns,'');}catch(e){}}}
+function go(r){r=norm(r);if(r==='home'&&S.r==='home'){window.scrollTo(0,0);return;}
+ saveState();var st={r:r,d:r==='home'?0:S.d+1,from:title(S.r),y:0};
+ if(canPush){try{history.pushState(st,'','#'+r);}catch(e){canPush=false;}}
+ if(!canPush){S=st;location.hash=r;}
+ render(st);window.scrollTo(0,0);}
+function back(){if(S.d>0&&canPush){history.back();return;}
+ var r=parent(S.r),st={r:r,d:0,y:0};if(canPush){try{history.replaceState(st,'','#'+r);}catch(e){}}else{location.hash=r;}render(st);window.scrollTo(0,0);}
+window.addEventListener('popstate',function(e){var st=e.state&&e.state.r?e.state:{r:parse(location.hash),d:0,y:0};render(st);window.scrollTo(0,st.y||0);});
+window.addEventListener('hashchange',function(){var r=parse(location.hash);if(S&&r===S.r)return;var st={r:r,d:0,y:0};render(st);window.scrollTo(0,0);});
+window.__go=go;
+/* keep the home screen's recent list current when coming back from a form */
+function repaintHome(){if(S&&S.r==='home'){var y=window.scrollY;render(S);window.scrollTo(0,y);}}
+window.addEventListener('pageshow',function(e){if(e.persisted)repaintHome();});window.addEventListener('storage',repaintHome);
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')repaintHome();});
+
+/* ---------- clicks ---------- */
+document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;
+ var g=t.closest('[data-go]');if(g){e.preventDefault();go(g.getAttribute('data-go'));return;}
+ if(t.closest('.wip')){e.preventDefault();return;}
+ var sc=t.closest('[data-scan]');if(sc){e.preventDefault();var R=scanRes(),k=sc.getAttribute('data-scan');if(!R)return;saveState();
+  lsSet('qrHandoff',JSON.stringify({q:R.q,t:Date.now(),k:k}));lsSet('launcherLast',k);location.href=PATH[k];return;}
+ var fk=t.closest('a[data-k]');if(fk){saveState();lsSet('launcherLast',fk.getAttribute('data-k'));return;}
+ var b=t.closest('[data-act]');if(!b)return;var act=b.getAttribute('data-act');
+ if(act==='back'){back();}
+ else if(act==='scan'){if(window.__scan)window.__scan(false);}
+ else if(act==='dd'){e.preventDefault();if(window.__scan)window.__scan(true);}
+ else if(act==='others'){var on=b.getAttribute('aria-expanded')!=='true',box=b.nextElementSibling;box.hidden=!on;b.setAttribute('aria-expanded',on);
+  b.querySelector('.xl').textContent=on?'Hide other forms':'Show all other forms';b.querySelector('.c').textContent=on?'▴':'▾';saveState({open:on});}
+});
+
+var r0=parse(location.hash),st0=(history.state&&history.state.r===r0)?history.state:{r:r0,d:0,y:0};
+try{history.replaceState(st0,'',r0==='home'?location.pathname+location.search:'#'+r0);}catch(e){canPush=false;}
+render(st0);if(st0.y)window.scrollTo(0,st0.y);
+})();
+
+/* ---- QR scanner: scan, then show that platform's forms first (Rev 55); the chosen form receives the data ---- */
 (function(){
 const $=id=>document.getElementById(id),ov=$('qrov'),bx=$('qrbx');let stream=null,on=false;
-const FORMS={intake:['LVSS Intake – Long Form','intake'],lvss:['LVSS / eMSC-L Post-Repair Checklist','lvss'],atp:['eMSC-L / M2S2 ATP Inspection','atp'],atpdd:['DD1149 form (from this ATP)','atp'],cal:['TFU to Radar Cal','cal'],floor:['Floor Test','floor'],final:["Jake's New Build Final Inspection",'final'],sw:['SkyWatch Inspection & Certificate','sw'],qc:['LVSS Intake – Short Form','qc'],quote:['Z2 Repair Quote','quote']};
 const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-function href(k){if(k==='atpdd')k='atp';const a=document.querySelector('a.f[data-k='+k+']');return a?a.getAttribute('href'):null;}
 function stop(){on=false;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}}
 function close(){stop();ov.style.display='none';bx.innerHTML='';}
 function dec(c,both){var r=decJs(c,both);if(r)return r;try{if(!window.__bdInit){window.__bdInit=1;if(window.BarcodeDetector)window.__bdv=new window.BarcodeDetector({formats:['qr_code']});}
@@ -10389,30 +10555,27 @@ function dlg(){ov.style.display='flex';bx.innerHTML='<h3>Scan a QR code</h3><vid
  .catch(()=>{v.style.display='none';msg('The camera could not start. Use “Take a photo of the QR code” below.');});}
 function pick(cam){const i=document.createElement('input');i.type='file';i.accept='image/*';if(cam)i.capture='environment';i.style.cssText='position:fixed;left:-9999px;opacity:0';document.body.appendChild(i);
  i.onchange=()=>{const f=i.files[0];setTimeout(()=>i.remove(),60000);if(!f)return;msg('Reading the photo…');const url=URL.createObjectURL(f),im=new Image();im.onload=()=>setTimeout(()=>{let t=null;try{t=tryImg(im)}catch(e){}URL.revokeObjectURL(url);if(t)got(t);else msg('No QR code found in that picture. Try again, closer and in focus.');},30);im.onerror=()=>msg('That picture could not be read.');im.src=url;};i.click();}
+
 function got(txt){stop();txt=String(txt);let o=null;try{o=JSON.parse(txt);}catch(e){}
- if(window.__ddMode){window.__ddMode=0;if(!o||o.a!=='ATP'){bx.innerHTML='<h3>Not an ATP code</h3><p class="m">The DD1149 is made from the QR code on a completed ATP report.</p><button class="p" id="qrag">Scan again</button><button id="qrx2">Close</button>';$('qrag').onclick=()=>{window.__ddMode=1;dlg();};$('qrx2').onclick=close;return;}try{localStorage.setItem('qrHandoff',JSON.stringify({q:txt,t:Date.now(),k:'atpdd'}));localStorage.setItem('launcherLast','atpdd');}catch(e){}location.href=href('atpdd');return;}
+ if(window.__ddMode){window.__ddMode=0;if(!o||o.a!=='ATP'){bx.innerHTML='<h3>Not an ATP code</h3><p class="m">The DD1149 is made from the QR code on a completed ATP report.</p><button class="p" id="qrag">Scan again</button><button id="qrx2">Close</button>';$('qrag').onclick=()=>{window.__ddMode=1;dlg();};$('qrx2').onclick=close;return;}try{localStorage.setItem('qrHandoff',JSON.stringify({q:txt,t:Date.now(),k:'atpdd'}));localStorage.setItem('launcherLast','atpdd');}catch(e){}location.href='atp/';return;}
  if(txt.indexOf('WIP1~')===0){bx.innerHTML='<h3>Pause code</h3><p class="m">This is a pause / carry-over code. Open the form you were using, tap <b>Scan QR</b> there, and scan every code on the carry-over sheet.</p><button class="p" id="qrx2">OK</button>';$('qrx2').onclick=close;return;}
  if(!o||typeof o!=='object'||!o.a){bx.innerHTML='<h3>Not an inspection code</h3><p class="m">That QR code is not from one of these forms.</p><button class="p" id="qrag">Scan again</button><button id="qrx2">Close</button>';$('qrag').onclick=dlg;$('qrx2').onclick=close;return;}
- let order=[],what='',sn=o.sn||o.ts||'';
+ let order=[],what='',sn=o.sn||o.ts||'',plat='lvss';
  if(o.a==='LVSS'){what=o.qc?'LVSS intake short form':o.it?'LVSS intake long form':(o.k==='A'?'Post-repair audit':'Post-repair');order=o.k==='A'?['lvss','qc']:o.qc?['intake','lvss','quote','qc','atp','cal','floor','final']:['atp','lvss','quote','intake','cal','floor','final','qc'];}
  else if(o.a==='QTE'){what=o.k==='P'?'Paused Z2 quote':'Z2 quote';order=o.k==='P'?['quote']:['lvss','quote'];}
  else if(o.a==='ATP'){what=o.ap?'ATP audit passed (DD1149)':'ATP inspection';order=o.ap?['atpdd','atp']:['atp','atpdd','final','lvss','intake','cal','floor','qc'];}
  else if(o.a==='CAL'){what='Calibration';order=o.k==='P'?['cal','qc']:['cal','atp','lvss','intake','floor','final','qc'];}
  else if(o.a==='FLR'){what='Floor test';order=o.k==='P'?['floor','qc']:['floor','atp','lvss','intake','cal','final','qc'];}
  else if(o.a==='FIN'){what='Final inspection';order=['atp','final','qc'];}
- else if(o.a==='SKYW'){what='SkyWatch';order=['sw'];}
- order=order.filter(k=>href(k));
+ else if(o.a==='SKYW'){what='SkyWatch';order=['sw'];plat='sw';}
  if(!order.length){bx.innerHTML='<h3>Not an inspection code</h3><p class="m">That QR code is not from one of these forms.</p><button class="p" id="qrx2">Close</button>';$('qrx2').onclick=close;return;}
  const ser=Array.isArray(o.s)?o.s.length:(o.sv?o.sv.filter(Boolean).length:0);
- const snv=String(sn||'').trim();
- bx.innerHTML='<h3>'+esc(what)+' code scanned</h3>'+(snv?'<div class="sn">'+esc(snv)+'</div>':'')+'<div class="got">Carries the serial number'+(ser?', '+ser+' device serial'+(ser===1?'':'s'):'')+(o.i||o.rr?', SW/FW revs':'')+(o.vin||o.vn?', VIN':'')+' – whatever the chosen form uses is filled in for you.</div><p class="m"><b>Which form do you want to open?</b></p>'+order.map((k,i)=>'<button'+(i===0?' class="p"':'')+' data-k="'+k+'">'+esc(FORMS[k][0])+(o.k==='P'&&i===0?' – continue':'')+'</button>').join('')+'<button id="qrx2">Cancel</button>';
- $('qrx2').onclick=close;
- bx.querySelectorAll('button[data-k]').forEach(b=>b.onclick=()=>{const k=b.dataset.k,h=href(k);try{localStorage.setItem('qrHandoff',JSON.stringify({q:txt,t:Date.now(),k}));localStorage.setItem('launcherLast',k);}catch(e){}location.href=h;});}
-$('scanGo').addEventListener('click',()=>{window.__ddMode=0;dlg();});
-{const g=$('ddGo');if(g)g.addEventListener('click',e=>{e.preventDefault();window.__ddMode=1;dlg();});}
+ const gotTxt='Carries the serial number'+(ser?', '+ser+' device serial'+(ser===1?'':'s'):'')+(o.i||o.rr?', SW/FW revs':'')+(o.vin||o.vn?', VIN':'')+' – whatever the chosen form uses is filled in for you.';
+ try{sessionStorage.setItem('scanRes',JSON.stringify({q:txt,what:what,sn:String(sn||'').trim(),order:order,plat:plat,paused:o.k==='P',got:gotTxt}));}catch(e){}
+ close();if(window.__go)window.__go('scan');}
+window.__scan=function(dd){window.__ddMode=dd?1:0;dlg();};
 window.__qrGot=got;
 })();
-
 </script><script>(function(){var S='4a1e45';window.__SUITE=S;var last='',lt=0;
 function warn(t){if(!document.body||document.getElementById('qrVerWarn'))return;var d=document.createElement('div');d.id='qrVerWarn';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:64px;z-index:2147483001;background:#8a4b00;color:#fff;font:600 15px/1.35 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -10427,50 +10590,4 @@ window.__qrChk=chk;})();</script><script>/* Rev 28: the main page updates itself
 (function(){var last=0;function mk(t){var m=/Latest update: ([^<]+)</.exec(t||'');return m?m[1]:'';}
 function chk(){if(navigator.onLine===false||Date.now()-last<30000)return;last=Date.now();var cur=mk(document.documentElement.innerHTML);
  fetch(location.pathname+'?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():'';}).then(function(t){var nv=mk(t);if(!nv||!cur||nv===cur)return;var ov=document.getElementById('qrov');if(ov&&ov.style.display&&ov.style.display!=='none')return;var k='autoUpd:/';try{if(sessionStorage.getItem(k)===nv)return;sessionStorage.setItem(k,nv);}catch(e){return;}location.reload();}).catch(function(){});}
-window.addEventListener('load',function(){setTimeout(chk,1200);});document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')chk();});})();</script><style>
-/* Return to last opened report card + Last 3 list (Ravi, 2026-11-02) */
-.rs-wrap{grid-column:1/-1;width:100%;margin:4px 0 16px}
-.rs-row{display:flex;gap:10px;align-items:stretch}
-.cat.rs-card{flex:1;min-width:0;margin:0;--pri:#1d3b6a;--acc:#5b8dd6;border:3px solid #1d3b6a;background:#eef3fb;box-shadow:0 0 0 3px rgba(29,59,106,.15),var(--sh)}
-.rs-card .ic{display:flex;align-items:center;justify-content:center;flex:none}
-.rs-card .d b{display:inline;font-size:inherit;line-height:inherit;color:var(--tx)}
-.rs-tag{position:static!important;display:inline-block;vertical-align:middle;margin-left:8px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:1px 8px;border-radius:20px;background:#1d3b6a;color:#fff}
-.rs-tag.rs-done{background:#d6f0de;color:#14602a}
-.rs-btn{flex:0 0 96px;border:2px solid #1d3b6a;border-radius:14px;background:var(--card);color:#1d3b6a;font:700 14px/1.2 inherit;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;box-shadow:var(--sh);-webkit-tap-highlight-color:transparent}
-.rs-btn.on{background:#1d3b6a;color:#fff}
-.rs-car{font-size:12px}
-.rs-list{margin-top:8px;padding:10px 12px 12px;border:1px solid var(--bd);border-radius:14px;background:#f7f9fd}
-.rs-h{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu)}
-.rs-item{display:block;position:relative;padding:12px 40px 12px 14px;border:1px solid var(--bd);border-radius:12px;background:var(--card);text-decoration:none;color:inherit;margin-top:8px;-webkit-tap-highlight-color:transparent}
-.rs-item::after{content:"\203A";position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:24px;color:var(--mu)}
-.rs-item b{font-size:16px}.rs-m{color:var(--mu);font-size:13.5px}
-@media(max-width:520px){.rs-btn{flex-basis:76px;font-size:13px}}
-@media(prefers-color-scheme:dark){.cat.rs-card{background:#1b2740;border-color:#8fb2f0}.rs-btn{border-color:#8fb2f0;color:#8fb2f0}.rs-btn.on{background:#8fb2f0;color:#0e131b}.rs-list{background:#141b26}.rs-tag{background:#8fb2f0;color:#0e131b}}
-</style>
-<script>
-/* Main page: "Return to last opened report" with a Last 3 drop-down. The forms record the last 3 reports opened on this
-   device in localStorage 'tscRecent'; each link opens the form with #resume=<id> and the form reopens it where the tech left off. */
-(function(){
-var ICON='<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>';
-var HIST='<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>';
-function rd(){try{var L=JSON.parse(localStorage.getItem('tscRecent')||'[]');return Array.isArray(L)?L.filter(function(x){return x&&x.k&&x.id;}).slice(0,3):[];}catch(e){return [];}}
-function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
-function when(t){if(!t)return '';var d=new Date(t);if(isNaN(d))return '';var n=new Date(),tm=d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
- var day=function(x){return new Date(x.getFullYear(),x.getMonth(),x.getDate()).getTime();},dd=Math.round((day(n)-day(d))/864e5);
- return dd===0?tm+' today':dd===1?'yesterday '+tm:d.toLocaleDateString([],{month:'short',day:'numeric'})+', '+tm;}
-function href(e){return encodeURIComponent(e.k)+'/#resume='+encodeURIComponent(e.id);}
-function tag(e){return e.done?'<span class="rs-tag rs-done">Report ready</span>':'<span class="rs-tag">Not finished</span>';}
-function meta(e){return esc(e.n)+(e.st?' · '+esc(e.st)+' step':'');}
-var open=false;
-function paint(){var home=document.getElementById('v-home');if(!home)return;var w=document.getElementById('rsWrap'),L=rd();
- if(!L.length){if(w)w.remove();return;}
- if(!w){w=document.createElement('div');w.id='rsWrap';w.className='rs-wrap';var wf=home.querySelector('.wflink');if(wf)wf.parentNode.insertBefore(w,wf);else home.appendChild(w);}
- if(L.length<2)open=false;var e=L[0];
- w.innerHTML='<div class="rs-row"><a class="cat rs-card" href="'+href(e)+'"><span class="ic">'+ICON+'</span><span><b>Return to last opened report'+tag(e)+'</b><span class="d"><b>'+esc(e.sn)+'</b> · '+meta(e)+'<br>Last saved '+esc(when(e.t))+' · reopens where you left off</span></span></a>'
-  +(L.length>1?'<button type="button" class="rs-btn'+(open?' on':'')+'" id="rsMore" aria-expanded="'+open+'">'+HIST+'<span>Last '+L.length+'</span><span class="rs-car">'+(open?'▴':'▾')+'</span></button>':'')+'</div>'
-  +(open?'<div class="rs-list"><div class="rs-h">Last '+L.length+' reports opened on this device</div>'+L.map(function(x){return '<a class="rs-item" href="'+href(x)+'"><b>'+esc(x.sn)+'</b>'+tag(x)+'<br><span class="rs-m">'+meta(x)+' · '+esc(when(x.t))+'</span></a>';}).join('')+'</div>':'');}
-document.addEventListener('click',function(ev){var b=ev.target&&ev.target.closest&&ev.target.closest('#rsMore');if(!b)return;open=!open;paint();});
-paint();window.addEventListener('pageshow',paint);window.addEventListener('storage',paint);
-document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')paint();});
-})();
-</script></body></html>
+window.addEventListener('load',function(){setTimeout(chk,1200);});document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')chk();});})();</script></body></html>
