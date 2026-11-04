@@ -13258,11 +13258,11 @@ function render(){if(S.view==='home')return renderHome();if(S.view==='admin')ret
 /* ----- home ----- */
 async function renderHome(){S.recs=(await dbAll('recs')).sort((a,b)=>b.updated-a.updated);
  app.innerHTML=`<div class="top"><div class="bar"><img src="${LOGO2}" alt="Teledyne FLIR"><div class="brand">SkyWatch Inspection + Completion Certificate<small>${esc(curTpl().revision||'')}</small></div>${HOMELINK}</div></div>
- <div class="wrap"><div class="card"><div class="row"><button class="pri" data-act="new">＋ New inspection</button><button data-act="scan">📷 Scan QR (audit / continue)</button></div>
+ <div class="wrap"><div class="card"><div class="row"><button class="pri" data-pt="tripnew" style="flex:1 1 260px">🧳 New PM visit – start with the trip planner</button><button data-act="new" style="flex:1 1 220px">＋ Go direct to the inspection form</button></div><div class="row" style="margin-top:8px"><button data-act="scan" style="flex:1">📷 Scan QR – last report's Next visit code, audit or continue</button></div>
  <p class="muted">Everything is stored on this tablet and works with no internet. Internet is only needed at the very end to send the e-mail.</p></div>
  ${S.recs.length?'':'<div class="card muted">No inspections yet.</div>'}
- ${S.recs.map(r=>{const st=stats(r);return `<div class="card home-c"><div class="gr"><b style="font-size:18px">${esc(title(r))}</b> ${r.signed?'<span class="tag" style="background:#d6f0de">SIGNED</span>':'<span class="tag">In progress – step '+r.step+' of 5</span>'}${(r.audit&&r.audit.done)?`<span class="tag" style="background:${r.audit.verdict==='pass'?'#d6f0de':'#fdecec'}">Audit ${r.audit.verdict==='pass'?'PASSED':'FAILED'}</span>`:''}<br><span class="muted">${esc(r.hdr.customer||'No customer')} · ${esc(fmtD(r.hdr.date))} · updated ${new Date(r.updated).toLocaleString()}</span><br><span class="muted">${st.f} failed · ${st.open} open${st.blk?` · ${st.blk} not tested`:''}${st.dno?` · <b style="color:#c62828">${st.dno} DO NOT OPERATE</b>`:''}</span></div>
- <button class="pri" data-act="open" data-rid="${r.id}">Open</button>${r.signed?`<button data-act="auditrec" data-rid="${r.id}" style="border-color:#6b3fa0;color:#6b3fa0;font-weight:700">🔍 Audit</button>`:''}<button class="dng" data-act="del" data-rid="${r.id}">Delete</button></div>`}).join('')}<div class="card home-more"><div class="muted" style="font-size:13px;margin:0 0 6px">More options</div><div class="row"><button data-act="backup">Backup file</button><button data-act="restore">Restore from backup file</button><button data-act="admin">Admin</button></div></div></div>`;}
+ ${S.recs.map(r=>{const st=stats(r);return `<div class="card home-c"><div class="gr"><b style="font-size:18px">${esc(title(r))}</b> ${r.signed?'<span class="tag" style="background:#d6f0de">SIGNED</span>':(r.step===0?'<span class="tag" style="background:#fde5c8">🧳 Trip planning</span>':'<span class="tag">In progress – step '+r.step+' of 5</span>')}${(r.audit&&r.audit.done)?`<span class="tag" style="background:${r.audit.verdict==='pass'?'#d6f0de':'#fdecec'}">Audit ${r.audit.verdict==='pass'?'PASSED':'FAILED'}</span>`:''}<br><span class="muted">${esc(r.hdr.customer||'No customer')} · ${esc(fmtD(r.hdr.date))} · updated ${new Date(r.updated).toLocaleString()}</span><br><span class="muted">${st.f} failed · ${st.open} open${st.blk?` · ${st.blk} not tested`:''}${st.dno?` · <b style="color:#c62828">${st.dno} DO NOT OPERATE</b>`:''}</span></div>
+ <button class="pri" data-act="open" data-rid="${r.id}">Open</button>${r.signed?`<button data-act="auditrec" data-rid="${r.id}" style="border-color:#6b3fa0;color:#6b3fa0;font-weight:700">🔍 Audit</button>`:''}<button class="dng" data-act="del" data-rid="${r.id}">Delete</button></div>`}).join('')}<div class="card home-more"><div class="muted" style="font-size:13px;margin:0 0 6px">More options</div><div class="row"><button data-pt="blank">🖨 Print blank forms</button><button data-act="backup">Backup file</button><button data-act="restore">Restore from backup file</button><button data-act="admin">Admin</button></div></div></div>`;}
 
 function newDlg(){modal(`<h3>New inspection</h3><label class="f">Tower Serial # (names the saved file)</label><input id="n-ts"><div class="sp"></div><label class="f">Customer</label><input id="n-cu"><div class="sp"></div><label class="f">Teledyne FLIR Technician (name)</label><input id="n-te" value="${esc(S.techDraft||'')}">${techChips()}<button class="pri" data-act="start">Start inspection</button><button data-act="mclose">Cancel</button>`);}
 
@@ -13270,10 +13270,10 @@ function newDlg(){modal(`<h3>New inspection</h3><label class="f">Tower Serial # 
 const STEPN=['Info','Inspect','Punch List','Certificate & Sign','E-mail'];
 function renderRec(){if(S.audit&&S.rec)return renderAudit();const r=S.rec;const st=stats(r);
  app.innerHTML=`<div class="top"><div class="bar"><img src="${LOGO2}" alt="Teledyne FLIR"><div class="brand">${esc(title(r))}<small>${esc(r.hdr.customer||'')} ${r.signed?'· SIGNED':''}</small></div><button id="saveInd" data-act="save" class="save"></button>${r.signed?'':'<button data-act="wip-pause" title="Pause and move this inspection to another tablet">⏸ Pause</button>'}<button data-act="home">Home</button></div>
- <div class="steps">${STEPN.map((n,i)=>`<button data-act="step" data-s="${i+1}" class="${r.step===i+1?'on':''} ${(i+1<r.step)?'dn':''}">${i+1}. ${n}</button>`).join('')}</div></div>
+ <div class="steps">${r.trip?`<button data-act="step" data-s="0" class="${r.step===0?'on':'dn'}">🧳 Trip prep</button>`:''}${STEPN.map((n,i)=>`<button data-act="step" data-s="${i+1}" class="${r.step===i+1?'on':''} ${(i+1<r.step)?'dn':''}">${i+1}. ${n}</button>`).join('')}</div></div>
  <div class="wrap ${r.signed&&r.step<4?'locked':''}" id="body"></div>`;
  paintSave();const b=$('#body');
- if(r.step===1)b.innerHTML=infoHtml();else if(r.step===2)b.innerHTML=inspectHtml();else if(r.step===3)b.innerHTML=punchHtml();else if(r.step===4){b.innerHTML=certHtml();initPads();}else{b.innerHTML=sendHtml();prepPdfs();}
+ if(r.step===0&&typeof tripHtml==='function')b.innerHTML=tripHtml();else if(r.step===1)b.innerHTML=infoHtml();else if(r.step===2)b.innerHTML=inspectHtml();else if(r.step===3)b.innerHTML=punchHtml();else if(r.step===4){b.innerHTML=certHtml();initPads();}else{b.innerHTML=sendHtml();prepPdfs();}
  wipBanner($('#body'));window.scrollTo(0,0);}
 function go(n){S.pin=null;save();S.rec.step=n;S.open=-1;S.dirty=true;save();renderRec();}
 
@@ -13291,10 +13291,10 @@ const slot=(key,label)=>{const n=phOwner('sp:'+key).ph.length;return `<div><div 
 function wlHtml(r){const has=r.gear.some(e=>e.t===WL);return `<div class="warn" style="background:#eef5ff;border-color:#9bbbe8"><b>Is there a FLIR-warrantied wireless device on this tower (e.g. Cradlepoint)?</b><div class="row" style="margin-top:8px"><button class="${r.wireless==='yes'?'pri':''}" data-act="wl" data-v="yes">Yes – add it</button><button class="${r.wireless==='no'?'pri':''}" data-act="wl" data-v="no">No wireless device</button>${r.wireless==='yes'&&!has?'<span class="need" style="margin:0">Tap Yes to add its model and serial #</span>':''}</div></div>`}
 function serHtml(){const r=S.rec;const cnt={};
  return `<div class="warn" style="background:#eef5ff;border-color:#9bbbe8"><b>Photos for the Completion Certificate</b><br><span class="muted">Take one picture of the tower serial number plate and one of the whole tower. Both print on the certificate.</span><div class="grid" style="margin-top:8px">${slot('towerSerial','Tower serial number plate')}${slot('towerWhole','Whole tower')}</div></div>
- <h2>Serial numbers</h2><p class="muted">Tap 📷 to attach a photo of a serial plate.</p><div class="grid">${HDR_SER.map(f=>`<div><label class="f">${f[1]}</label><div class="row" style="flex-wrap:nowrap"><input data-b="hdr.${f[0]}" value="${esc(r.hdr[f[0]]||'')}" style="flex:1">${SERCAM.includes(f[0])?camBtn('sp:'+f[0]):''}</div>${SERCAM.includes(f[0])?thumbs('sp:'+f[0]):''}</div>`).join('')}</div>
+ <h2>Serial numbers</h2><p class="muted">Tap 📷 to attach a photo of a serial plate.</p><div class="grid">${HDR_SER.map(f=>`<div><label class="f">${f[1]}</label><div class="row" style="flex-wrap:nowrap"><input data-b="hdr.${f[0]}" value="${esc(r.hdr[f[0]]||'')}" style="flex:1">${SERCAM.includes(f[0])?camBtn('sp:'+f[0]):''}</div>${SERCAM.includes(f[0])?thumbs('sp:'+f[0]):''}${typeof carryNote==='function'?carryNote(f[0]):''}</div>`).join('')}</div>
  <h3 style="margin-top:16px">Cameras, NVR / DVR / MER, Wireless device</h3>
  ${r.gear.length?'':'<div class="warn"><b>Add the cameras and NVR / DVR on this tower.</b> Tap a button below for each one, then enter its model and serial number (and photo, if you like).</div>'}
- ${r.gear.map((e,i)=>{cnt[e.t]=(cnt[e.t]||0)+1;return `<div class="card" style="background:#f8fafd"><div class="row"><b>${esc(e.t)} ${cnt[e.t]}</b><span style="flex:1"></span><button class="dng" data-act="rmeq" data-id="${e.id}" style="min-height:36px;padding:4px 10px">Remove</button></div><div class="grid"><div><label class="f">Model</label><input data-b="gear.${i}.m" value="${esc(e.m)}"></div><div><label class="f">Serial #</label><div class="row" style="flex-wrap:nowrap"><input data-b="gear.${i}.s" value="${esc(e.s)}" style="flex:1">${camBtn(e.id)}</div></div></div>${thumbs(e.id)}</div>`}).join('')}
+ ${r.gear.map((e,i)=>{cnt[e.t]=(cnt[e.t]||0)+1;return `<div class="card" style="background:#f8fafd"><div class="row"><b>${esc(e.t)} ${cnt[e.t]}</b><span style="flex:1"></span><button class="dng" data-act="rmeq" data-id="${e.id}" style="min-height:36px;padding:4px 10px">Remove</button></div><div class="grid"><div><label class="f">Model</label><input data-b="gear.${i}.m" value="${esc(e.m)}"></div><div><label class="f">Serial #</label><div class="row" style="flex-wrap:nowrap"><input data-b="gear.${i}.s" value="${esc(e.s)}" style="flex:1">${camBtn(e.id)}</div></div></div>${thumbs(e.id)}${typeof carryNoteGear==='function'?carryNoteGear(e):''}</div>`}).join('')}
  <div class="row"><button class="pri" data-act="addeq" data-t="Camera">＋ Add camera</button><button class="pri" data-act="addeq" data-t="NVR / DVR / MER">＋ Add NVR / DVR / MER</button><button class="pri" data-act="addeq" data-t="${WL}">＋ Add wireless device</button></div>
  ${r.swap.list.length?`<div class="card" style="border:2px solid #7b4fb5;margin-top:14px"><h3>Serialized devices swapped</h3><p class="muted" style="margin:0">Recorded automatically when a serial number was changed and confirmed as an actual swap.</p>${r.swap.list.map((e,i)=>swEntryHtml(e,i)).join('')}</div>`:''}`;}
 function infoRepHtml(){const r=S.rec,L=r.cust||[];
@@ -13596,7 +13596,7 @@ function auFromQr(o){const r=newRec({towerSerial:o.sn||'',customer:o.cu||'',rma:
  o.f.forEach(a=>{const [id,k,lvl,war,fl,note,res,by,why,xs,xt]=a;if(!ids.has(id)){const sc=r.tpl.sections.find(z=>z.id===xs)||r.tpl.sections[0];(r.extra[sc.id]=r.extra[sc.id]||[]).push({id,t:xt||'(added line item)'});}
   r.items[id]={st:k==='b'?'blk':'fail',lvl:lvl||'',note:note||'',ph:[],v:{},rep:!!(fl&1),courtesy:!!(fl&2),pend:!!(fl&4),adv:!!(fl&8),res:res||'',war:war||'',quote:'',by:by?String(by).split(','):[],why:why||''};});
  return r;}
-async function scanDone(txt){if(String(txt).startsWith('WIP1~')){wipChunk(txt);return;}scanStop();const o=qrParse(txt);if(!o){const m=$('#scanMsg');if(m)m.textContent='That is not a SkyWatch audit QR code. Try again.';if($('#scanV')&&$('#scanV').style.display!=='none')scanDlg();return;}
+async function scanDone(txt){if(String(txt).startsWith('WIP1~')){wipChunk(txt);return;}scanStop();{const nv=typeof nvParse==='function'?nvParse(txt):null;if(nv){closeModal();nvStart(nv);return;}}const o=qrParse(txt);if(!o){const m=$('#scanMsg');if(m)m.textContent='That is not a SkyWatch QR code (Next visit or audit). Try again.';if($('#scanV')&&$('#scanV').style.display!=='none')scanDlg();return;}
  closeModal();const n=o.f.length;if(!await ask(`Start an audit of Tower S/N ${o.sn||'(no serial)'}${o.cu?' ('+o.cu+')':''} with ${n} fault${n===1?'':'s'} from the tech's punch list?\n\nThe tech's photos are not in the QR code. Mark each fault Verified or Not acceptable, add your own photos and details, then submit the audit.`,{title:'Start audit from QR code?',ok:'Start audit'}))return;
  S.rec=auFromQr(o);S.photos={};S.view='rec';S.audit=true;S.open=-1;S.detail={};S.dirty=true;await save();render();}
 /* ---- one-page audit PDF ---- */
@@ -13638,7 +13638,7 @@ function sendHtml(){const r=S.rec,md=mailDefaults(r),m=r.mail;const st=stats(r);
  return `${st.openDno?`<div class="dno-banner">⛔ DO NOT OPERATE – ${st.openDno} open<small>Included in the e-mail text</small></div>`:''}
  <div class="ok"><b>Signed ${new Date(r.signedAt||Date.now()).toLocaleString()}.</b> The PDF is created on this tablet.</div>
  <div class="card"><h3>File</h3><div id="pdfst" class="muted">Preparing PDF…</div></div>
- ${fyiHtml()}${auEntryCard(r)}${auQrCard(r)}
+ ${fyiHtml()}${auEntryCard(r)}${auQrCard(r)}${typeof nvQrCard==='function'?nvQrCard(r):''}
  <div class="card"><h3>Recipients</h3><p class="muted" style="margin:0 0 6px">Customer and SkyWatch support are addressed To; the technician is Cc, and TSC@teledyne.com is always copied.</p>${rcpList(r).map(x=>`<label class="row" style="padding:6px 0"><input type="checkbox" style="width:24px;min-height:24px" data-act="rcp" data-e="${esc(x.e)}" ${x.lock?'checked disabled':r.recipients.off[x.e]?'':'checked'}> <span><b>${esc(x.e)}</b> <span class="tag">${x.l}</span></span></label>`).join('')}
  <div class="row" style="margin-top:8px"><input id="newRcp" type="email" placeholder="Add another e-mail address" style="flex:1;min-width:200px"><button data-act="addrcp">Add</button></div>
  <div class="sp"></div><label class="f">TSC Teledyne FLIR admin e-mail (remembered on this tablet)</label><input data-set="tscEmail" value="${esc(S.settings.tscEmail||TSC_EMAIL)}"></div>
@@ -13719,11 +13719,11 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
  pair('Customer',h.customer,'Date',fmtD(h.date));pair('Contact Name',h.contact,'Tower Location Address',h.address);pair('Phone Number',h.phone,'Email Address',h.email);
  pair('Customer PO #',h.po,'Teledyne FLIR Sales Order #',h.salesOrder);pair('RMA #',h.rma,'Service Order #',h.serviceOrder);pair('Teledyne FLIR Technician',h.tech,'Tower Type',r.legacy?'Legacy DC tower':'Standard');
  y+=8;hx(d,'setFillColor','#5b8dd6');d.rect(MX,y,CW,15,'F');d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(255);d.text('Serial Numbers',PW/2,y+11,{align:'center'});y+=15;
- const SL=HDR_SER.map(f=>{const e=r.swap.list.find(z=>z.dev==='hdr:'+f[0]);const nv=e&&(e.nw||'').trim();return [f[1]+((r.serPh[f[0]]||[]).length?' (photo in appendix)':''),nv?`${e.nw} (Old: ${e.old||h[f[0]]||''})`:h[f[0]]]});
+ const SL=HDR_SER.map(f=>{const e=r.swap.list.find(z=>z.dev==='hdr:'+f[0]);const nv=e&&(e.nw||'').trim();return [f[1]+((r.serPh[f[0]]||[]).length?' (photo in appendix)':'')+(typeof carryPdfTag==='function'?carryPdfTag(r,f[0]):''),nv?`${e.nw} (Old: ${e.old||h[f[0]]||''})`:(h[f[0]]||'')+(f[0]==='genHours'&&typeof hoursPdf==='function'?hoursPdf(r):'')]});
  for(let i=0;i<SL.length;i+=3){for(let j=0;j<3;j++){const q=SL[i+j]||['',''];cell(MX+j*CW/3,y,CW/3,26,q[0],q[1]);}y+=26;}
  ens(60);hx(d,'setFillColor','#dbe6f6');d.rect(MX,y,CW,15,'F');d.setFont('helvetica','bold');d.setFontSize(9);d.setTextColor(30);d.text('Cameras / NVR / DVR / MER',MX+4,y+10.5);y+=15;
  if(!r.gear.length){cell(MX,y,CW,22,'','None entered');y+=22;}
- r.gear.forEach(e=>{ens(24);cell(MX,y,120,24,'Type',e.t===WL?'Wireless device':e.t);cell(MX+120,y,210,24,'Model',e.m);{const sw=r.swap.list.find(z=>z.dev==='g:'+e.id);const nv=sw&&(sw.nw||'').trim();cell(MX+330,y,210,24,'Serial #'+((e.ph||[]).length?' (photo in appendix)':''),nv?`${sw.nw} (Old: ${sw.old||e.s||''})`:e.s);}y+=24;});
+ r.gear.forEach(e=>{ens(24);cell(MX,y,120,24,'Type',e.t===WL?'Wireless device':e.t);cell(MX+120,y,210,24,'Model',e.m);{const sw=r.swap.list.find(z=>z.dev==='g:'+e.id);const nv=sw&&(sw.nw||'').trim();cell(MX+330,y,210,24,'Serial #'+((e.ph||[]).length?' (photo in appendix)':'')+(typeof carryPdfTag==='function'?carryPdfTag(r,e.id):''),nv?`${sw.nw} (Old: ${sw.old||e.s||''})`:e.s);}y+=24;});
  const miniTbl=(title,sc,rowsA)=>{y+=8;ens(70);hx(d,'setFillColor','#dbe6f6');d.rect(MX,y,CW,15,'F');d.setFont('helvetica','bold');d.setFontSize(9);d.setTextColor(30);d.text(cl(title),MX+4,y+10.5);y+=15;
   const sh=()=>{hx(d,'setFillColor','#eef3fb');d.rect(MX,y,CW,15,'F');d.setDrawColor(170);d.setLineWidth(.6);d.rect(MX,y,CW,15);d.setFont('helvetica','bold');d.setFontSize(8.5);d.setTextColor(30);sc.forEach((c,i)=>{if(i)d.line(MX+c[0],y,MX+c[0],y+15);d.text(c[2],MX+c[0]+4,y+10.5);});y+=15;};sh();
   rowsA.forEach(cs=>{d.setFont('helvetica','normal');d.setFontSize(9);const ls=cs.map((t,k)=>wrap(d,String(t||''),sc[k][1]-8));const hh=Math.max(18,6+Math.max(...ls.map(z=>z.length))*10.5);if(y+hh>BOT){d.addPage();y=TOP;sh();}
@@ -13789,6 +13789,7 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
   y=qrBigPdf(d,PW,y,h.towerSerial,MX);try{const q=auQrMake(r),n=q.getModuleCount(),qz=4,sz=330,cs=sz/(n+2*qz),x0=(PW-sz)/2;d.setFillColor(255,255,255);d.rect(x0,y,sz,sz,'F');d.setFillColor(0,0,0);
    for(let i=0;i<n;i++)for(let j=0;j<n;j++)if(q.isDark(i,j))d.rect(x0+(j+qz)*cs,y+(i+qz)*cs,cs+.15,cs+.15,'F');
    d.setDrawColor(150);d.setLineWidth(.6);d.rect(x0,y,sz,sz);y+=sz+14;}catch(e){d.setTextColor(200,0,0);d.text('Could not generate the audit QR code: '+cl(e.message),MX,y+10);y+=24;}}}
+ if(typeof nvPdfPage==='function')nvPdfPage(d,r);
  wipNotePage(d,r,TOP);footers(d,r,true,skip);return d;}
 function sigDims(url,mw,mh){const m=/^data:image\/png/.test(url);const b=atob(url.split(',')[1].slice(0,60));const w=(b.charCodeAt(16)<<24)|(b.charCodeAt(17)<<16)|(b.charCodeAt(18)<<8)|b.charCodeAt(19);const hh=(b.charCodeAt(20)<<24)|(b.charCodeAt(21)<<16)|(b.charCodeAt(22)<<8)|b.charCodeAt(23);const k=Math.min(mw/w,mh/hh,1);return [w*k,hh*k];}
 function pbox(d,x,yy,w,hh,label,list){d.setFont('helvetica','bold');d.setFontSize(8.5);d.setTextColor(0);d.text(cl(label),x,yy+8);d.setDrawColor(150);d.setLineWidth(.6);d.rect(x,yy+12,w,hh);
@@ -14520,7 +14521,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/03/2026',site:'53'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/03/2026',site:'54'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14583,7 +14584,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='77ae1d7eb6';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='07e3bb7ce6';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -14750,7 +14751,8 @@ var mo=new MutationObserver(function(){clearTimeout(mo.t);mo.t=setTimeout(functi
 function start(){mo.observe(document.body,{childList:true,subtree:true});}
 if(document.body)start();else document.addEventListener('DOMContentLoaded',start);
 })();
-</script><style>/* ===== Pre-trip prep checklist (Rev 53) ===== */
+</script>
+<style>/* ===== SkyWatch PM visit: trip prep stage, next-visit code, blank forms (Rev 54) ===== */
 .ptit{display:flex;align-items:flex-start;gap:12px;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);border-radius:0;background:#fff;padding:12px 4px;min-height:52px;color:var(--ink)}
 .ptl>.ptit:last-child{border-bottom:0}
 .ptbx{flex:none;width:30px;height:30px;border:2px solid #98a4b6;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;margin-top:-3px}
@@ -14759,45 +14761,47 @@ if(document.body)start();else document.addEventListener('DOMContentLoaded',start
 .pttx{flex:1;min-width:0}
 .ptit.on .pttx{color:var(--mut)}
 .pttx small{display:block;color:var(--mut);font-size:13px;margin-top:3px;line-height:1.35}
+.pttx em{font-style:normal;font-size:11px;font-weight:700;color:#6b7686;background:#eef1f6;border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:1px}
 .pth{display:flex;align-items:baseline;gap:10px}.pth h3{flex:1;margin:0 0 6px}
 .ptsc{font-size:13px;font-weight:700;color:var(--mut);white-space:nowrap}.ptsc.done{color:var(--pass)}
-.ptn{margin:0 0 4px}
+.ptn{margin:0 0 8px}
 .ptbar{height:8px;background:#e3e7ee;border-radius:4px;overflow:hidden;margin-top:8px}.ptbar i{display:block;height:100%;background:var(--pass);width:0}
 .ptxr{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line)}.ptxr .ptit{border-bottom:0;flex:1}
 .ptdel{flex:none;min-width:44px;min-height:44px;padding:0;font-size:22px;line-height:1;color:var(--fail);border-color:#e3b3b3}
-#ptCard{border-left:6px solid var(--blue)}
-</style><script>/* ===== SkyWatch pre-trip prep checklist (Ravi, 2026-11-03, Rev 53) =====
-   "Pre-trip prep" card on the SkyWatch home screen opens a checklist of what to do and pack before a PM visit.
-   Ticks, the trip name and the tech's own added items are saved on this tablet until "Start new trip".
-   Print / PDF carries the author credit footer. The list matches the "SkyWatch PM Pre-Trip Checklist" doc. */
+.ptcarry{background:#eef5ff;border:1px solid #9bbbe8;border-radius:10px;padding:10px 12px;margin-bottom:12px}
+.cnote{font-size:13px;margin-top:5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cnote.rem{color:#c25a00;font-weight:600}.cnote.sk{color:var(--mut)}
+.cnote button{min-height:32px;padding:2px 10px;font-size:13px;font-weight:600;color:#c25a00;border-color:#e8b98e}
+#hrsSince{font-size:13px;margin-top:5px;color:var(--mut)}#hrsSince b{color:var(--ink)}#hrsSince .rem{color:#c25a00;font-weight:600}
+.ptgt{display:flex;gap:8px;flex-wrap:wrap}.ptgt button{flex:1;min-width:120px}
+</style><script>/* ===== SkyWatch PM visit (Ravi, 2026-11-03, Rev 54) =====
+   - "New PM visit" starts a record at a Trip prep stage (step 0). Job info and tower / generator details are real fields that ARE the
+     inspection header; the ticks and added items stay behind the scenes (never on the inspection report). "Skip to inspection" at any time.
+   - Every report gets a "Next visit" QR code. Scanning it on the home screen pre-fills a new visit: customer, site, tower, generator,
+     equipment, and this visit's generator hours as "last visit". Carried serials ask for a fresh photo - a reminder, never a block.
+   - Print the trip checklist, a blank pre-trip checklist, or a blank SkyWatch inspection form (all with the author credit footer). */
 (function(){
-if(window.__ptPrep)return;window.__ptPrep=1;
-var PTL=[
- {id:'s1',t:'1. Job info to get before leaving',n:'These fill the SkyWatch form header and the completion certificate.',g:[{i:[
-  ['j1','Customer name, site contact name and phone number'],
-  ['j2','Customer e-mail address (the report goes to them on the To line)'],
-  ['j3','Tower location address'],
-  ['j4','Customer PO #, Teledyne FLIR Sales Order #, Service Order #'],
-  ['j5','RMA # (repairs only)'],
-  ['j6','Service type(s) for the certificate: PMx, warranty repair, non-warranty repair, inspection'],
+if(window.__pmVisit)return;window.__pmVisit=1;
+var JOBF=[['customer','Customer'],['contact','Site contact name'],['phone','Phone number','tel'],['email','Customer e-mail address(es)','email'],['address','Tower location address'],['po','Customer PO #'],['salesOrder','Teledyne FLIR Sales Order #'],['serviceOrder','Service Order #'],['rma','RMA # (repairs only)']];
+var TOWF=[['towerVin','Tower VIN #'],['towerSerial','Tower Serial #'],['genSerial','Generator Serial #'],['genModel','Generator Model']];
+var SECS=[
+ {id:'s1',t:'1. Job info',n:'These are the inspection’s own header fields, so they carry straight into the Info step and the certificate.',f:JOBF,svc:1,g:[{i:[
   ['j7','Who will sign the completion certificate on site (printed name and title)'],
   ['j8','Door key: confirm the customer has it (form item 17)']]}]},
- {id:'s2',t:'2. Pull the tower’s last report (if available)',n:'The last SkyWatch report tells you which parts to bring and what is already on site. If there is no earlier report, these get captured on site.',g:[{i:[
-  ['r1','Tower VIN #, tower serial #, generator serial # and model'],
-  ['r2','Generator type: diesel or gas (gas adds the spark plug and ignition coil checks)'],
-  ['r3','Last generator hours, to see what is due',['Every 500 h (or yearly): oil change, spark arrestor cleaning','Every 1000 h (or yearly): spark plug (gas only)','Every 4000 h (or yearly): coolant flush and pressure cap']],
+ {id:'s2',t:'2. Tower & generator (from the last report, if available)',tow:1,g:[{i:[
+  ['r3','Check the generator hours to see what is due',['Every 500 h (or yearly): oil change, spark arrestor cleaning','Every 1000 h (or yearly): spark plug (gas only)','Every 4000 h (or yearly): coolant flush and pressure cap']],
   ['r4','Oil grade and quarts the generator takes (last report, or the generator label / manual)'],
-  ['r5','Legacy DC tower? (adds the DC battery section)'],
-  ['r6','Equipment on the tower: cameras, DVR / NVR / Meridian VMS, PTZ, broadband router or Cradlepoint (subscription active?)'],
-  ['r7','Open punch-list items from last visit'],
-  ['r8','Spares left on site last visit (so you don’t buy what is already there)'],
+  ['r6','Equipment on the tower, and whether the broadband router or Cradlepoint subscription is active','eq'],
+  ['r7','Open punch-list items from last visit','op'],
+  ['r8','Spares left on site last visit (so you don’t buy what is already there)','sp'],
   ['r9','Hydraulic fluid noted low last visit? (if so, add it to Buy on arrival)']]}]},
  {id:'s3',t:'3. Bring',n:'Pack these before you fly; everything else is bought on arrival (section 4).',g:[
   {h:'Generator parts',i:[
    ['b1','Oil filter, air filter, fuel filter for that generator model'],
    ['b2','When due by hours: coolant and pressure cap, spark plug(s) (gas only)']]},
   {h:'Grease',i:[
-   ['b3','Grease gun and grease',['The form lists 35 grease points: 18 left side, 17 right side (count varies by model)']]]},
+   ['b3','Grease gun and grease',['The form lists 35 grease points: 18 left side, 17 right side (count varies by model)']],
+   ['b9','Spare Zerk grease fittings',null,1]]},
   {h:'Tools',i:[
    ['b4','Multimeter',['Start battery readings, gen-set voltage; DC towers: battery readings at ground level and fully raised']],
    ['b5','GFCI outlet tester',['Two GFCI outlet checks']],
@@ -14807,111 +14811,183 @@ var PTL=[
    ['b8','Digital copy of the operation manual (form item 134)']]}]},
  {id:'s4',t:'4. Buy on arrival',n:'Techs usually fly to the customer’s city, so these are bought locally. Check section 2 first for spares already left on site.',g:[{i:[
   ['a1','Engine oil (grade and quarts from section 2)'],
-  ['a2','Oil drain pan'],
-  ['a3','Oil mat'],
-  ['a4','Funnel'],
-  ['a5','Roll of shop towels'],
-  ['a6','Cleaner spray'],
+  ['a2','Oil drain pan'],['a3','Oil mat'],['a4','Funnel'],['a5','Roll of shop towels'],['a6','Cleaner spray'],
   ['a7','Hydraulic fluid, only if the last report showed it low']]}],
-  f:'Whatever is left over goes in the form’s “Spare consumables left with the tower” section, so the next tech knows.'},
+  foot:'Whatever is left over goes in the form’s “Spare consumables left with the tower” section, so the next tech knows.'},
  {id:'s5',t:'5. Tablet',g:[{i:[
   ['t1','Tablet charged, plus charger'],
   ['t2','SkyWatch form opened once on Wi-Fi before the trip, so it is ready to work offline at the tower'],
   ['t3','Your technician e-mail entered on the form, so you are copied on the report'],
   ['t4','Know the photos the form needs',['Tower serial number plate and whole tower (both print on the certificate), plus the serial photos']]]}]}
 ];
-var NOTES=['Inspect only, no parts needed: engine V-belt, crankcase breather, coolant hoses, water pump and thermostat. The form says an Onan-authorized mechanic replaces these.','The coolant anti-freeze protection check (form item 89) is not done on PM visits, so no tester is on the list.'];
-var KEY='pretrip',PT=null,loading=null,tmr=null;
-function items(sec){var a=[];sec.g.forEach(function(g){g.i.forEach(function(x){a.push(x)})});return a;}
-var ALL=[];PTL.forEach(function(s){items(s).forEach(function(x){ALL.push(x[0])})});
-function blank(){return {v:1,started:Date.now(),updated:Date.now(),trip:'',ck:{},extra:[]};}
-function load(){if(loading)return loading;loading=Promise.resolve().then(function(){return setting(KEY);}).then(function(v){PT=(v&&v.v)?v:blank();PT.ck=PT.ck||{};PT.extra=PT.extra||[];PT.trip=PT.trip||'';}).catch(function(){PT=PT||blank();}).then(function(){loading=null;});return loading;}
-function storeNow(){if(!PT)return;clearTimeout(tmr);PT.updated=Date.now();try{setting(KEY,JSON.parse(JSON.stringify(PT))).catch(function(){});}catch(e){}}
-function storeSoon(){clearTimeout(tmr);tmr=setTimeout(storeNow,400);}
-function counts(){var n=0;ALL.forEach(function(k){if(PT.ck[k])n++});PT.extra.forEach(function(x){if(x.on)n++});return {n:n,tot:ALL.length+PT.extra.length};}
-function secCount(sec){var it=items(sec),n=0;it.forEach(function(x){if(PT.ck[x[0]])n++});return {n:n,tot:it.length};}
-function e(s){return typeof esc==='function'?esc(s):String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]});}
-function dstr(ts){var d=new Date(ts);return String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0')+'/'+d.getFullYear();}
+var NOTES=['Inspect only, no parts needed: engine V-belt, crankcase breather, coolant hoses, water pump and thermostat. The form says an Onan-authorized mechanic replaces these.','The coolant anti-freeze protection check (form item 89) is not done on PM visits, so no tester is on the list.','This trip checklist stays behind the scenes: it is not part of the inspection report.'];
+function e(s){return esc(s==null?'':String(s));}
+function its(sec){var a=[];sec.g.forEach(function(g){g.i.forEach(function(x){a.push(x)})});return a;}
+function num(v){var n=parseFloat(String(v||'').replace(/,/g,''));return isFinite(n)?n:null;}
+function fmtN(n){return Math.round(n).toLocaleString('en-US');}
+function T(r){if(!r.trip)r.trip={ck:{},extra:[]};r.trip.ck=r.trip.ck||{};r.trip.extra=r.trip.extra||[];if(!r.last)r.last={};return r.trip;}
+var svT=null;function dirty(){markDirty();clearTimeout(svT);svT=setTimeout(function(){save();},800);}
 
-/* ---- home screen card ---- */
-function cardSub(){if(!PT)return 'What to do and pack before a PM visit';var c=counts();if(!c.n&&!PT.trip&&!PT.extra.length)return 'What to do and pack before a PM visit';return c.n+' of '+c.tot+' ticked'+(PT.trip?' · '+e(PT.trip):'')+' · saved on this tablet';}
-function ptCard(){try{if(S.view!=='home')return;var first=document.querySelector('#app .wrap > .card');if(!first)return;var c=document.getElementById('ptCard');
- if(!c){c=document.createElement('div');c.id='ptCard';c.className='card home-c';first.insertAdjacentElement('afterend',c);}
- c.innerHTML='<div class="gr"><b style="font-size:17px">🧳 Pre-trip prep</b><br><span class="muted" id="ptCardSub">'+cardSub()+'</span></div><button data-pt="open">Open checklist</button>';
- if(!PT)load().then(function(){var s=document.getElementById('ptCardSub');if(s)s.innerHTML=cardSub();});}catch(err){}}
+/* ---------- counting ---------- */
+function secDone(r,sec){var t=T(r),n=0,tot=0;its(sec).forEach(function(x){tot++;if(t.ck[x[0]])n++;});
+ if(sec.f)sec.f.forEach(function(f){tot++;if(String(r.hdr[f[0]]||'').trim())n++;});
+ if(sec.tow){TOWF.forEach(function(f){tot++;if(String(r.hdr[f[0]]||'').trim())n++;});tot++;if(r.genType)n++;}
+ return {n:n,tot:tot};}
+function allDone(r){var n=0,tot=0;SECS.forEach(function(s){var c=secDone(r,s);n+=c.n;tot+=c.tot;});var t=T(r);t.extra.forEach(function(x){tot++;if(x.on)n++;});return {n:n,tot:tot};}
+function xcount(r){var t=T(r),n=0;t.extra.forEach(function(x){if(x.on)n++});return n+' / '+t.extra.length;}
+function paint(){var r=S.rec;if(!r||r.step!==0)return;var c=allDone(r),el=document.getElementById('ptCnt'),b=document.getElementById('ptBar');
+ if(el)el.textContent=c.n+' of '+c.tot+' done';if(b)b.style.width=(c.tot?Math.round(c.n*100/c.tot):0)+'%';
+ SECS.forEach(function(s){var q=document.getElementById('ptsc-'+s.id);if(!q)return;var k=secDone(r,s);q.textContent=k.n+' / '+k.tot;q.classList.toggle('done',k.n===k.tot);});
+ var x=document.getElementById('ptsc-x');if(x)x.textContent=xcount(r);}
 
-/* ---- checklist screen ---- */
-function itemHtml(x,on,act,xid){return '<button type="button" class="ptit'+(on?' on':'')+'" data-pt="'+act+'" '+(xid?'data-x="'+xid+'"':'data-k="'+x[0]+'"')+' aria-pressed="'+(on?'true':'false')+'"><span class="ptbx" aria-hidden="true"></span><span class="pttx">'+e(x[1])+(x[2]?'<small>'+x[2].map(e).join('<br>')+'</small>':'')+'</span></button>';}
-function secHtml(sec){var c=secCount(sec);return '<div class="card"><div class="pth"><h3>'+e(sec.t)+'</h3><span class="ptsc'+(c.n===c.tot?' done':'')+'" id="ptsc-'+sec.id+'">'+c.n+' / '+c.tot+'</span></div>'+(sec.n?'<p class="muted ptn">'+e(sec.n)+'</p>':'')+
- sec.g.map(function(g){return (g.h?'<div class="grp">'+e(g.h)+'</div>':'')+'<div class="ptl">'+g.i.map(function(x){return itemHtml(x,!!PT.ck[x[0]],'tick')}).join('')+'</div>';}).join('')+
- (sec.f?'<p class="muted" style="margin:10px 0 0">'+e(sec.f)+'</p>':'')+'</div>';}
-function xlist(){if(!PT.extra.length)return '<p class="muted" style="margin:4px 0">Nothing added yet.</p>';return PT.extra.map(function(x){return '<div class="ptxr">'+itemHtml([x.id,x.t],!!x.on,'xtick',x.id)+'<button type="button" class="ptdel" data-pt="xdel" data-x="'+x.id+'" aria-label="Remove this item">×</button></div>';}).join('');}
-function xcount(){var n=0;PT.extra.forEach(function(x){if(x.on)n++});return n+' / '+PT.extra.length;}
-function top(){return '<div class="top"><div class="bar"><img src="'+LOGO2+'" alt="Teledyne FLIR"><div class="brand">Pre-trip prep<small>SkyWatch PM visit · saved on this tablet</small></div><button data-pt="pdf">🖨 Print / PDF</button><button data-pt="home">Home</button></div></div>';}
-function ptRender(){S.view='pretrip';if(!PT){app.innerHTML=top()+'<div class="wrap"><div class="card muted">Loading…</div></div>';load().then(function(){if(S.view==='pretrip')ptRender();});return;}
- var c=counts(),pct=c.tot?Math.round(c.n*100/c.tot):0;
- app.innerHTML=top()+'<div class="wrap" id="ptWrap">'+
- '<div class="card"><div class="row" style="justify-content:space-between"><b id="ptCnt" style="font-size:17px">'+c.n+' of '+c.tot+' ticked</b><span class="muted">Started '+dstr(PT.started)+'</span></div><div class="ptbar"><i id="ptBar" style="width:'+pct+'%"></i></div><div class="sp"></div><div class="sp"></div>'+
- '<label class="f" for="ptTrip">Trip – tower / customer (optional, prints on the PDF)</label><input id="ptTrip" value="'+e(PT.trip)+'" placeholder="e.g. Tower 1234 – City of Example"><p class="muted" style="margin:8px 0 0">Ticks stay on this tablet until you tap Start new trip at the bottom.</p></div>'+
- PTL.map(secHtml).join('')+
- '<div class="card" id="ptX"><div class="pth"><h3>Added for this trip</h3><span class="ptsc" id="ptsc-x">'+xcount()+'</span></div><p class="muted ptn">Your own items for this trip only. They clear with Start new trip.</p><div id="ptXl">'+xlist()+'</div>'+
+/* ---------- trip prep screen (record step 0) ---------- */
+function sub(r,x){var L=x[2],t=[];if(Array.isArray(L))t=L.slice();else if(L==='eq'){t=r.gear.length?r.gear.map(function(g){return (g.t===WL?'Wireless device':g.t)+(g.m?' '+g.m:'')+(g.s?' – S/N '+g.s:'');}):['None recorded yet'];}
+ else if(L==='op'){var o=(r.last&&r.last.op)||[];t=o.length?o.map(function(q){return '#'+q[0]+' '+q[1];}):[r.last&&r.last.d?'None open on the last report':'No earlier report loaded'];}
+ else if(L==='sp'){t=[(r.last&&r.last.sp)?r.last.sp:(r.last&&r.last.d?'Nothing was left on site':'No earlier report loaded')];}
+ return t;}
+function tick(r,x,act,xid,on){var opt=x[3]?'<em>OPTIONAL</em>':'',sb=act==='xtick'?[]:sub(r,x);
+ return '<button type="button" class="ptit'+(on?' on':'')+'" data-pt="'+act+'" '+(xid?'data-x="'+xid+'"':'data-k="'+x[0]+'"')+' aria-pressed="'+(on?'true':'false')+'"><span class="ptbx" aria-hidden="true"></span><span class="pttx">'+e(x[1])+opt+(sb.length?'<small>'+sb.map(e).join('<br>')+'</small>':'')+'</span></button>';}
+function lastHtml(r){var L=r.last||{};if(r.fromNv)return '<div class="cnote sk" style="margin-top:10px">Generator hours at the last visit'+(L.d?' ('+fmtD(L.d)+')':'')+': <b style="color:var(--ink)">'+(num(L.h)!=null?fmtN(num(L.h))+' h':'not recorded')+'</b></div>';
+ return '<div class="grid" style="margin-top:10px">'+inp('last.h','Generator hours at the last visit (if known)',{ph:'e.g. 2345'})+inp('last.d','Date of the last visit (if known)',{type:'date'})+'</div>';}
+function secHtml(r,sec){var c=secDone(r,sec),t=T(r),h='<div class="card"><div class="pth"><h3>'+e(sec.t)+'</h3><span class="ptsc'+(c.n===c.tot?' done':'')+'" id="ptsc-'+sec.id+'">'+c.n+' / '+c.tot+'</span></div>'+(sec.n?'<p class="muted ptn">'+e(sec.n)+'</p>':'');
+ if(sec.f){h+='<div class="grid">'+sec.f.map(function(f){return inp('hdr.'+f[0],f[1],{type:f[2]})}).join('')+'</div>';}
+ if(sec.svc){var sel=r.svc&&r.svc.sel||{};h+='<label class="f" style="margin-top:12px">Service type(s) for the certificate</label><div class="ptgt">'+SVC.map(function(s){return '<button type="button" class="'+(sel[s[0]]?'pri':'')+'" data-pt="svc" data-v="'+s[0]+'">'+e(s[1].replace(' (Preventative Maintenance Service)',' (PM)'))+'</button>';}).join('')+'</div>';}
+ if(sec.tow){h+='<div class="grid">'+TOWF.map(function(f){return inp('hdr.'+f[0],f[1])}).join('')+'</div>'+
+  '<label class="f" style="margin-top:12px">Generator type (gas adds the spark plug and ignition coil checks)</label><div class="ptgt" id="ptGt">'+[['diesel','Diesel'],['gas','Gas / spark-ignition'],['other','Other']].map(function(x){return '<button type="button" class="'+(r.genType===x[0]?'pri':'')+'" data-pt="gt" data-v="'+x[0]+'">'+x[1]+'</button>';}).join('')+'</div>'+
+  '<label class="row" style="gap:12px;margin-top:12px"><input type="checkbox" data-pt="lg" style="width:26px;min-height:26px" '+(r.legacy?'checked':'')+'><span><b>Legacy DC tower</b><br><span class="muted">Adds Section 7 (Legacy DC Towers only) to the inspection.</span></span></label>'+lastHtml(r);}
+ h+=sec.g.map(function(g){return (g.h?'<div class="grp">'+e(g.h)+'</div>':'')+'<div class="ptl"'+(sec.f||sec.tow?' style="margin-top:8px"':'')+'>'+g.i.map(function(x){return tick(r,x,'tick',null,!!t.ck[x[0]])}).join('')+'</div>';}).join('');
+ return h+(sec.foot?'<p class="muted" style="margin:10px 0 0">'+e(sec.foot)+'</p>':'')+'</div>';}
+function xlist(r){var t=T(r);if(!t.extra.length)return '<p class="muted" style="margin:4px 0">Nothing added yet.</p>';return t.extra.map(function(x){return '<div class="ptxr">'+tick(r,[x.id,x.t],'xtick',x.id,!!x.on)+'<button type="button" class="ptdel" data-pt="xdel" data-x="'+x.id+'" aria-label="Remove this item">×</button></div>';}).join('');}
+window.tripHtml=function(){var r=S.rec;T(r);var c=allDone(r),pct=c.tot?Math.round(c.n*100/c.tot):0;
+ return (r.fromNv?'<div class="ptcarry"><b>Pre-filled from the '+e(fmtD(r.last.d)||'earlier')+' report</b><br><span class="muted">Customer, site, tower, generator and equipment came from the Next visit code. Check them; the serial numbers ask for a fresh photo on site.</span></div>':'')+
+ '<div class="card"><div class="row"><button class="pri" data-act="step" data-s="1" style="flex:1">Skip to inspection →</button><button data-pt="blank" style="flex:1">🖨 Print blank…</button></div><div class="sp"></div>'+
+ '<div class="row" style="justify-content:space-between"><b id="ptCnt" style="font-size:17px">'+c.n+' of '+c.tot+' done</b><span class="muted">Trip prep · not on the inspection report</span></div><div class="ptbar"><i id="ptBar" style="width:'+pct+'%"></i></div></div>'+
+ SECS.map(function(s){return secHtml(r,s)}).join('')+
+ '<div class="card"><div class="pth"><h3>Added for this trip</h3><span class="ptsc" id="ptsc-x">'+xcount(r)+'</span></div><p class="muted ptn">Your own items for this trip only.</p><div id="ptXl">'+xlist(r)+'</div>'+
  '<div class="row" style="flex-wrap:nowrap;margin-top:10px"><input id="ptAdd" placeholder="Add an item for this trip" enterkeyhint="done"><button data-pt="add" style="flex:none">＋ Add</button></div></div>'+
  '<div class="card"><h3>Notes</h3>'+NOTES.map(function(t){return '<p class="muted" style="margin:0 0 6px">'+e(t)+'</p>'}).join('')+'</div>'+
- '<div class="row" style="margin:6px 0 4px"><button class="dng" data-pt="reset" style="flex:1">Start new trip – clear all ticks</button></div></div>';
- window.scrollTo(0,0);}
-function paintCounts(){var c=counts(),el=document.getElementById('ptCnt'),b=document.getElementById('ptBar');if(el)el.textContent=c.n+' of '+c.tot+' ticked';if(b)b.style.width=(c.tot?Math.round(c.n*100/c.tot):0)+'%';
- PTL.forEach(function(sec){var s=document.getElementById('ptsc-'+sec.id);if(!s)return;var k=secCount(sec);s.textContent=k.n+' / '+k.tot;s.classList.toggle('done',k.n===k.tot);});
- var x=document.getElementById('ptsc-x');if(x)x.textContent=xcount();}
-function goHome(){S.view='home';render();}
-function addItem(){var inp=document.getElementById('ptAdd');if(!inp)return;var t=inp.value.trim();if(!t){inp.focus();return;}
- try{inp.dispatchEvent(new Event('change',{bubbles:true}));}catch(err){}
- PT.extra.push({id:'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),t:t,on:false});storeNow();
- inp.value='';document.getElementById('ptXl').innerHTML=xlist();paintCounts();inp.focus();}
+ '<div class="row" style="margin-bottom:8px"><button data-pt="pdf" style="flex:1">🖨 Print trip checklist</button><button class="pri" data-act="step" data-s="1" style="flex:1">Start the inspection on site →</button></div>';};
 
-/* ---- PDF ---- */
-function pdf(){var J=window.jspdf&&window.jspdf.jsPDF;if(!J){alert('The PDF maker did not load. Reload the page and try again.');return;}
- var d=new J({unit:'pt',format:'letter',compress:true}),W=d.internal.pageSize.getWidth(),H=d.internal.pageSize.getHeight(),MX=40,CW=W-2*MX,y,c=counts();
- function ens(h){if(y+h>H-44){d.addPage();y=44;}}
- function box(x,yy,on){d.setLineWidth(1);if(on){hx(d,'setFillColor','#1b8a3a');hx(d,'setDrawColor','#1b8a3a');d.rect(x,yy,11,11,'FD');d.setDrawColor(255);d.setLineWidth(1.7);d.line(x+2.3,yy+5.8,x+4.6,yy+8.4);d.line(x+4.6,yy+8.4,x+8.9,yy+2.6);}else{d.setDrawColor(120);d.rect(x,yy,11,11);}}
- function item(t,sub,on){d.setFont('helvetica','normal');d.setFontSize(10);var L=wrap(d,t,CW-26),S2=[];d.setFontSize(8.5);(sub||[]).forEach(function(s){S2=S2.concat(wrap(d,s,CW-26))});
-  var h=L.length*12.5+S2.length*10.5+6;ens(h);box(MX+4,y-9,on);d.setFontSize(10);d.setTextColor(on?110:20);d.text(L,MX+24,y);var yy=y+L.length*12.5;if(S2.length){d.setFontSize(8.5);d.setTextColor(115);d.text(S2,MX+24,yy-2);yy+=S2.length*10.5;}y=yy+4;}
- function head(t,right){ens(46);y+=10;hx(d,'setFillColor','#d1500d');d.rect(MX,y-13,CW,19,'F');d.setFont('helvetica','bold');d.setFontSize(11);d.setTextColor(255);d.text(cl(t),MX+8,y);if(right)d.text(cl(right),W-MX-8,y,{align:'right'});y+=20;}
- function note(t){d.setFont('helvetica','italic');d.setFontSize(8.5);d.setTextColor(95);var L=wrap(d,t,CW);ens(L.length*10.5+4);d.text(L,MX,y);y+=L.length*10.5+5;}
- try{d.addImage(LOGO2,'JPEG',MX,28,120,27);}catch(err){}
- d.setFont('helvetica','italic');d.setFontSize(20);d.setTextColor(30);d.text('SkyWatch PM Pre-Trip Checklist',MX+140,50);
- y=78;d.setFont('helvetica','normal');d.setFontSize(10);d.setTextColor(60);
- d.text(cl((PT.trip?'Trip: '+PT.trip+'     ':'')+'Printed '+dstr(Date.now())+'     Started '+dstr(PT.started)+'     '+c.n+' of '+c.tot+' ticked'),MX,y);y+=10;
- d.setDrawColor(200);d.setLineWidth(.6);d.line(MX,y,W-MX,y);y+=8;
- PTL.forEach(function(sec){var k=secCount(sec);head(sec.t,k.n+' / '+k.tot);if(sec.n)note(sec.n);
-  sec.g.forEach(function(g){if(g.h){ens(30);d.setFont('helvetica','bold');d.setFontSize(9.5);hx(d,'setTextColor','#8a3b0a');d.text(cl(g.h),MX,y+2);y+=15;}g.i.forEach(function(x){item(x[1],x[2],!!PT.ck[x[0]])});});
-  if(sec.f)note(sec.f);});
- if(PT.extra.length){head('Added for this trip',xcount());PT.extra.forEach(function(x){item(x.t,null,!!x.on)});}
- head('Notes');NOTES.forEach(function(t){note(t)});
- var n=d.getNumberOfPages();for(var i=1;i<=n;i++){d.setPage(i);creditLine(d,'');d.setFont('helvetica','normal');d.setFontSize(7.5);d.setTextColor(120);d.text('SkyWatch PM Pre-Trip Checklist'+(PT.trip?' | '+cl(PT.trip):''),MX,H-20);d.text('Page '+i+' of '+n,W-MX,H-20,{align:'right'});}
- dlBlob(d.output('blob'),stdName(null,PT.trip||'SkyWatch','PRE-TRIP',today())+'.pdf');}
+/* ---------- new visit ---------- */
+function startRec(r,trip){if(trip){T(r);r.step=0;r.svc=r.svc||{extra:[]};r.svc.sel={pmx:true};}S.rec=r;S.photos={};S.view='rec';S.open=-1;S.detail={};S.dirty=true;return save().then(function(){render();});}
+function newTripDlg(){modal('<h3>New PM visit</h3><p class="muted" style="margin-top:-4px">Starts with the trip planner. You can skip to the inspection at any time.</p><label class="f">Tower Serial # (names the saved file)</label><input id="n-ts"><div class="sp"></div><label class="f">Customer</label><input id="n-cu"><div class="sp"></div><label class="f">Teledyne FLIR Technician (name)</label><input id="n-te" value="'+e(S.techDraft||'')+'">'+techChips()+'<button class="pri" data-pt="tripgo">🧳 Start the trip planner</button><button data-act="mclose">Cancel</button><p class="muted" style="margin:10px 0 0">Have the last report? Cancel and use <b>Scan QR</b> on its Next visit code to pre-fill everything.</p>');}
 
-/* ---- events ---- */
-document.addEventListener('click',function(ev){var b=ev.target.closest('[data-pt]');if(!b)return;var a=b.getAttribute('data-pt');
- if(a==='open'){ev.preventDefault();var go=function(){try{history.pushState({pt:1},'',location.href);}catch(err){}ptRender();};if(PT)go();else load().then(go);return;}
- if(!PT)return;
- if(a==='home'){if(history.state&&history.state.pt){try{history.back();return;}catch(err){}}goHome();return;}
- if(a==='tick'){var k=b.getAttribute('data-k');PT.ck[k]=!PT.ck[k];if(!PT.ck[k])delete PT.ck[k];b.classList.toggle('on',!!PT.ck[k]);b.setAttribute('aria-pressed',PT.ck[k]?'true':'false');storeNow();paintCounts();return;}
- if(a==='xtick'){var x=PT.extra.find(function(q){return q.id===b.getAttribute('data-x')});if(!x)return;x.on=!x.on;b.classList.toggle('on',x.on);b.setAttribute('aria-pressed',x.on?'true':'false');storeNow();paintCounts();return;}
- if(a==='xdel'){var i=PT.extra.findIndex(function(q){return q.id===b.getAttribute('data-x')});if(i<0)return;if(!confirm('Remove “'+PT.extra[i].t+'” from this trip?'))return;PT.extra.splice(i,1);storeNow();document.getElementById('ptXl').innerHTML=xlist();paintCounts();return;}
+/* ---------- next-visit QR code ---------- */
+var NVQ_MAX=2600;
+window.nvPayload=function(r){var h=r.hdr,C=function(x,n){return cl(x||'').trim().slice(0,n);};
+ var sp=sparesLeft(r).map(function(x){return x.n+(x.det?' ('+x.det+')':'');}).join('; ');
+ var op=punch(r).filter(function(x){var d=r.items[x.id]||{};return !d.rep;}).map(function(x){return [String(x.label),C(x.t,60)];});
+ var o={a:'SKYW',k:'N',v:1,cu:C(h.customer,60),ct:C(h.contact,50),ph:C(h.phone,30),em:C(h.email,120),ad:C(h.address,120),vin:C(h.towerVin,30),sn:C(h.towerSerial,30),gs:C(h.genSerial,30),gm:C(h.genModel,40),gh:C(h.genHours,12),d:h.date||'',gt:r.genType||'',lg:r.legacy?1:0,
+  g:r.gear.map(function(x){return [C(x.t,32),C(x.m,30),C(x.s,30)];}),sp:C(sp,200),op:op};
+ var tries=[function(){},function(){o.op=op.map(function(q){return [q[0],q[1].slice(0,25)];});},function(){o.op=op.map(function(q){return [q[0],''];});},function(){o.op=[];o.sp=o.sp.slice(0,60);}];
+ for(var i=0;i<tries.length;i++){tries[i]();var j=JSON.stringify(o),b=new TextEncoder().encode(j).length;if(b<=NVQ_MAX)return {json:j,bytes:b,level:i,ok:true};}
+ return {ok:false,bytes:new TextEncoder().encode(JSON.stringify(o)).length};};
+function nvMake(r){var p=nvPayload(r);if(!p.ok)return null;var q=window.qrcode(0,'L');q.addData(p.json);q.make();return q;}
+window.nvParse=function(t){try{var o=JSON.parse(t);if(o&&o.a==='SKYW'&&o.k==='N')return o;}catch(err){}return null;};
+var NVTXT='On the next PM visit, tap Scan QR on the SkyWatch home screen and scan this code. It fills in the customer, site, tower, generator and equipment details, and keeps this visit’s generator hours as “last visit”. Photos are not in the code.';
+window.nvQrCard=function(r){var p=nvPayload(r),qs='';if(p.ok){try{qs=nvMake(r).createSvgTag({cellSize:4,margin:4,scalable:true});}catch(err){qs='';}}
+ return '<div class="card" style="border:2px solid var(--blue)"><h3>Next visit code</h3>'+(qs?'<p class="muted">Printed on the last page of the PDF. '+e(NVTXT)+'</p>'+qrBigHtml(r.hdr.towerSerial)+'<div style="width:240px;max-width:100%;background:#fff;border:1px solid var(--line);padding:6px">'+qs+'</div>':'<div class="err">The details are too large to fit in a QR code ('+p.bytes+' bytes).</div>')+'</div>';};
+window.nvPdfPage=function(d,r){var q;try{q=nvMake(r);}catch(err){q=null;}if(!q)return;d.addPage();var y=TOP;
+ d.setFont('helvetica','bold');d.setFontSize(15);d.setTextColor(0);d.text('Next Visit Code - pre-fill the next PM visit',MX,y+12);y+=22;
+ d.setFont('helvetica','normal');d.setFontSize(9.5);d.setTextColor(90);var L=wrap(d,'Tower S/N '+cl(r.hdr.towerSerial||'')+' - '+fmtD(r.hdr.date)+' - generator hours '+cl(r.hdr.genHours||'not recorded')+'. '+NVTXT,CW);d.text(L,MX,y+8);y+=L.length*12+16;
+ y=qrBigPdf(d,PW,y,r.hdr.towerSerial,MX);var n=q.getModuleCount(),qz=4,sz=300,cs=sz/(n+2*qz),x0=(PW-sz)/2;d.setFillColor(255,255,255);d.rect(x0,y,sz,sz,'F');d.setFillColor(0,0,0);
+ for(var i=0;i<n;i++)for(var j=0;j<n;j++)if(q.isDark(i,j))d.rect(x0+(j+qz)*cs,y+(i+qz)*cs,cs+.15,cs+.15,'F');d.setDrawColor(150);d.setLineWidth(.6);d.rect(x0,y,sz,sz);};
+var NV=null;
+window.nvStart=function(o){NV=o;var sv=[o.sn?'Tower S/N '+o.sn:'',o.cu||''].filter(Boolean).join(' – ');
+ modal('<h3>Start a new PM visit from this report?</h3><p class="muted"><b style="color:var(--ink)">'+e(sv||'SkyWatch tower')+'</b><br>Report dated '+e(fmtD(o.d)||'?')+(o.gh?' · generator hours then: '+e(o.gh):'')+'</p><p class="muted">Fills in the customer, site, tower, generator and equipment details. The new generator hours are entered on site, and the form shows the hours since this visit. Serial numbers ask for a fresh photo to confirm them.</p><button class="pri" data-pt="nvtrip">🧳 Start with the trip planner</button><button data-pt="nvdirect">Go direct to the inspection form</button><button data-act="mclose">Cancel</button>');};
+function nvRec(o){var r=newRec({customer:o.cu||'',contact:o.ct||'',phone:o.ph||'',email:o.em||'',address:o.ad||'',towerVin:o.vin||'',towerSerial:o.sn||'',genSerial:o.gs||'',genModel:o.gm||'',techEmail:S.settings.lastTechEmail||''});
+ r.genType=o.gt||'';r.legacy=!!o.lg;r.gear=(o.g||[]).map(function(a){return {id:'eq'+uid(),t:a[0]||'Camera',m:a[1]||'',s:a[2]||'',ph:[],c:1};});
+ if(r.gear.some(function(x){return x.t===WL;}))r.wireless='yes';r.fromNv=1;r.last={h:o.gh||'',d:o.d||'',sp:o.sp||'',op:o.op||[]};
+ r.carry={};['towerVin','towerSerial','genSerial'].forEach(function(k){if(String(r.hdr[k]||'').trim())r.carry[k]=1;});return r;}
+
+/* ---------- carried serials and hours since last visit (Info step) ---------- */
+function hasPh(k){var r=S.rec;return k.indexOf('eq')===0?!!((r.gear.find(function(g){return g.id===k})||{}).ph||[]).length:!!(r.serPh[k]||[]).length;}
+function cnote(k,val){var r=S.rec,c=r.carry||{},st=c[k];if(!st||hasPh(k))return '<div class="cnote" data-cn="'+k+'"></div>';var src=r.last&&r.last.d?'the '+fmtD(r.last.d)+' report':'the last report';
+ if(st==='skip')return '<div class="cnote sk" data-cn="'+k+'">Carried from '+e(src)+' – photo skipped (noted on the report)</div>';
+ return '<div class="cnote rem" data-cn="'+k+'">Carried from '+e(src)+' – '+(k==='towerSerial'?'take the serial number plate photo above to confirm it.':'take a photo to confirm it.')+'<button type="button" data-pt="cskip" data-k="'+k+'">Skip photo</button></div>';}
+function hrsHtml(){var r=S.rec,L=r.last||{},lh=num(L.h);if(lh==null)return '';var nh=num(r.hdr.genHours),s='Last visit'+(L.d?' ('+fmtD(L.d)+')':'')+': <b>'+fmtN(lh)+' h</b>';
+ if(nh!=null){var df=nh-lh;s+=df>=0?' · <b>+'+fmtN(df)+' h</b> since last visit':' · <span class="rem">Lower than the last visit – check the reading</span>';}return s;}
+window.carryNote=function(k){if(k==='genHours'){var h=hrsHtml();return h?'<div id="hrsSince">'+h+'</div>':'';}if(k==='towerSerial'||k==='towerVin'||k==='genSerial')return cnote(k);return '';};
+window.carryNoteGear=function(g){if(!g.c)return '';if(!S.rec.carry)S.rec.carry={};if(S.rec.carry[g.id]==null)S.rec.carry[g.id]=1;return cnote(g.id);};
+window.carryPdfTag=function(r,k){var c=r.carry||{};if(!c[k])return '';var ph=k.indexOf('eq')===0?((r.gear.find(function(g){return g.id===k})||{}).ph||[]).length:(r.serPh[k]||[]).length;return ph?'':(c[k]==='skip'?' - carried, photo skipped':' - carried, no photo');};
+window.hoursPdf=function(r){var lh=num((r.last||{}).h),nh=num(r.hdr.genHours);if(lh==null)return '';return nh!=null&&nh>=lh?'  (+'+fmtN(nh-lh)+' since last visit)':'  (last visit '+fmtN(lh)+')';};
+
+/* ---------- PDFs ---------- */
+function pdfBase(){var J=window.jspdf&&window.jspdf.jsPDF;if(!J)throw new Error('The PDF maker did not load. Reload the page and try again.');return new J({unit:'pt',format:'letter',compress:true});}
+function endPdf(d,label,name){var W=d.internal.pageSize.getWidth(),H=d.internal.pageSize.getHeight(),n=d.getNumberOfPages();for(var i=1;i<=n;i++){d.setPage(i);creditLine(d,'');d.setFont('helvetica','normal');d.setFontSize(7.5);d.setTextColor(120);d.text(cl(label),40,H-20);d.text('Page '+i+' of '+n,W-40,H-20,{align:'right'});}dlBlob(d.output('blob'),name);}
+function kit(d){var W=d.internal.pageSize.getWidth(),H=d.internal.pageSize.getHeight(),MX=40,CW=W-80,K={W:W,H:H,MX:MX,CW:CW,y:0};
+ K.ens=function(h){if(K.y+h>H-44){d.addPage();K.y=44;}};
+ K.box=function(x,yy,on){d.setLineWidth(1);if(on){hx(d,'setFillColor','#1b8a3a');hx(d,'setDrawColor','#1b8a3a');d.rect(x,yy,11,11,'FD');d.setDrawColor(255);d.setLineWidth(1.7);d.line(x+2.3,yy+5.8,x+4.6,yy+8.4);d.line(x+4.6,yy+8.4,x+8.9,yy+2.6);}else{d.setDrawColor(120);d.rect(x,yy,11,11);}};
+ K.item=function(t,sb,on,opt){d.setFont('helvetica','normal');d.setFontSize(10);var L=wrap(d,t+(opt?'  (optional)':''),CW-26),S2=[];d.setFontSize(8.5);(sb||[]).forEach(function(s){S2=S2.concat(wrap(d,s,CW-26))});
+  var h=L.length*12.5+S2.length*10.5+6;K.ens(h);K.box(MX+4,K.y-9,on);d.setFontSize(10);d.setTextColor(on?110:20);d.text(L,MX+24,K.y);var yy=K.y+L.length*12.5;if(S2.length){d.setFontSize(8.5);d.setTextColor(115);d.text(S2,MX+24,yy-2);yy+=S2.length*10.5;}K.y=yy+4;};
+ K.head=function(t,right){K.ens(46);K.y+=10;hx(d,'setFillColor','#d1500d');d.rect(MX,K.y-13,CW,19,'F');d.setFont('helvetica','bold');d.setFontSize(11);d.setTextColor(255);d.text(cl(t),MX+8,K.y);if(right)d.text(cl(right),W-MX-8,K.y,{align:'right'});K.y+=20;};
+ K.note=function(t){d.setFont('helvetica','italic');d.setFontSize(8.5);d.setTextColor(95);var L=wrap(d,t,CW);K.ens(L.length*10.5+4);d.text(L,MX,K.y);K.y+=L.length*10.5+5;};
+ K.grp=function(t){K.ens(30);d.setFont('helvetica','bold');d.setFontSize(9.5);hx(d,'setTextColor','#8a3b0a');d.text(cl(t),MX,K.y+2);K.y+=15;};
+ K.fields=function(F,get){var cw=CW/2;for(var i=0;i<F.length;i+=2){K.ens(30);for(var j=0;j<2;j++){var f=F[i+j];if(!f)continue;var x=MX+j*cw;d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(110);d.text(cl(f[1]),x,K.y);var v=get?String(get(f[0])||''):'';d.setFontSize(10);d.setTextColor(0);if(v)d.text(wrap(d,v,cw-14)[0],x,K.y+13);d.setDrawColor(170);d.setLineWidth(.6);d.line(x,K.y+16,x+cw-14,K.y+16);}K.y+=28;}};
+ K.title=function(t,sub){try{d.addImage(LOGO2,'JPEG',MX,28,120,27);}catch(err){}d.setFont('helvetica','italic');d.setFontSize(19);d.setTextColor(30);d.text(t,MX+140,50);K.y=78;if(sub){d.setFont('helvetica','normal');d.setFontSize(10);d.setTextColor(60);d.text(cl(sub),MX,K.y);K.y+=10;}d.setDrawColor(200);d.setLineWidth(.6);d.line(MX,K.y,W-MX,K.y);K.y+=8;};
+ return K;}
+function tripPdf(r){var d=pdfBase(),K=kit(d),blank=!r,t=r?T(r):{ck:{},extra:[]},c=r?allDone(r):null;
+ K.title('SkyWatch PM Pre-Trip Checklist',blank?'Blank copy - fill in by hand.     Tower / customer: ______________________________     Date: ____________':('Tower '+(r.hdr.towerSerial||'-')+(r.hdr.customer?'  |  '+r.hdr.customer:'')+'     Printed '+fmtD(today())+'     '+c.n+' of '+c.tot+' done'));
+ var get=function(k){return r?r.hdr[k]:'';};
+ SECS.forEach(function(s){var k=r?secDone(r,s):null;K.head(s.t,k?k.n+' / '+k.tot:'');if(s.n)K.note(s.n);
+  if(s.f)K.fields(s.f,get);
+  if(s.svc){var sel=r?(r.svc&&r.svc.sel||{}):{};K.ens(22);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(110);d.text('SERVICE TYPE(S)',K.MX,K.y);K.y+=12;var x=K.MX;SVC.forEach(function(q){var lab=q[1].replace(' (Preventative Maintenance Service)',' (PM)');K.box(x,K.y-9,!!sel[q[0]]);d.setFontSize(9.5);d.setTextColor(20);d.text(cl(lab),x+15,K.y);x+=d.getTextWidth(cl(lab))+34;});K.y+=16;}
+  if(s.tow){K.fields(TOWF,get);K.ens(22);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(110);d.text('GENERATOR TYPE',K.MX,K.y);K.y+=12;var x2=K.MX;[['diesel','Diesel'],['gas','Gas / spark-ignition'],['other','Other'],['lg','Legacy DC tower']].forEach(function(q){var on=r?(q[0]==='lg'?r.legacy:r.genType===q[0]):false;K.box(x2,K.y-9,on);d.setFontSize(9.5);d.setTextColor(20);d.text(q[1],x2+15,K.y);x2+=d.getTextWidth(q[1])+34;});K.y+=16;
+   K.fields([['lh','Generator hours at the last visit'],['ld','Date of the last visit']],function(q){if(!r)return '';var L=r.last||{};return q==='lh'?(L.h||''):(L.d?fmtD(L.d):'');});}
+  s.g.forEach(function(g){if(g.h)K.grp(g.h);g.i.forEach(function(x){K.item(x[1],r?sub(r,x):(Array.isArray(x[2])?x[2]:null),!!t.ck[x[0]],x[3]);});});
+  if(s.foot)K.note(s.foot);});
+ if(blank){K.head('Added for this trip');for(var i=0;i<4;i++)K.item('______________________________________________________',null,false);}
+ else if(t.extra.length){K.head('Added for this trip',xcount(r));t.extra.forEach(function(x){K.item(x.t,null,!!x.on)});}
+ K.head('Notes');NOTES.forEach(function(n){K.note(n)});
+ endPdf(d,'SkyWatch PM Pre-Trip Checklist'+(r&&r.hdr.towerSerial?' | Tower '+r.hdr.towerSerial:blank?' | blank':''),stdName(null,blank?'BLANK':(r.hdr.towerSerial||r.hdr.customer||'SkyWatch'),'PRE-TRIP',today())+'.pdf');}
+function blankInspPdf(){var d=pdfBase(),K=kit(d),tpl=curTpl(),MX=K.MX,CW=K.CW,W=K.W;
+ K.title('SkyWatch Inspection Form','Blank copy - fill in by hand.   Mark each line P (pass), F (fail) or N/A.   '+cl((tpl.revision||'').replace(/\s*\(.*\)\s*$/,'')));
+ K.head('Customer & order');K.fields(HDR_CUST.concat([['email','Customer e-mail']]),null);
+ K.head('Serial numbers');K.fields(HDR_SER,null);
+ K.ens(22);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(110);d.text('GENERATOR TYPE',MX,K.y);K.y+=12;var x=MX;['Diesel','Gas / spark-ignition','Other','Legacy DC tower'].forEach(function(q){K.box(x,K.y-9,false);d.setFontSize(9.5);d.setTextColor(20);d.text(q,x+15,K.y);x+=d.getTextWidth(q)+34;});K.y+=18;
+ K.grp('Cameras, NVR / DVR / MER, wireless device');K.fields([['a','Type / model'],['b','Serial #'],['c','Type / model'],['d','Serial #'],['e','Type / model'],['f','Serial #']],null);
+ var all=flat({tpl:tpl,legacy:true,genType:'gas',items:{},extra:{}}),cur=null,cg=null,bx=W-MX-96;
+ all.forEach(function(it){if(it.sec!==cur){cur=it.sec;cg=null;K.head(it.sec.title+(isLegacy(it.sec)?' (legacy DC towers only)':''));d.setFont('helvetica','bold');d.setFontSize(7.5);d.setTextColor(110);['P','F','N/A'].forEach(function(l,i){d.text(l,bx+5+i*32,K.y-4,{align:'center'});});K.y+=4;}
+  if(it.g!==cg){cg=it.g;K.grp(it.g);}
+  d.setFont('helvetica','normal');d.setFontSize(9.5);var L=wrap(d,it.t,bx-MX-34),fl=(it.f||[]),h=L.length*11.5+(fl.length?14:0)+6;K.ens(h);
+  d.setFont('helvetica','bold');d.setTextColor(90);d.text(String(it.label),MX,K.y);d.setFont('helvetica','normal');d.setTextColor(20);d.text(L,MX+28,K.y);
+  for(var i=0;i<3;i++){d.setDrawColor(120);d.setLineWidth(.8);d.rect(bx+i*32,K.y-9,11,11);}
+  var yy=K.y+L.length*11.5;if(fl.length){var fx=MX+28;d.setFontSize(8.5);d.setTextColor(90);fl.forEach(function(f){d.text(cl(f)+':',fx,yy+1);var w=d.getTextWidth(cl(f)+':');d.setDrawColor(170);d.setLineWidth(.6);d.line(fx+w+4,yy+2,fx+w+84,yy+2);fx+=w+100;});yy+=14;}
+  d.setDrawColor(225);d.setLineWidth(.4);d.line(MX,yy-4,W-MX,yy-4);K.y=yy+6;});
+ K.head('Spare consumables left with the tower');for(var i=0;i<2;i++){K.ens(22);d.setDrawColor(170);d.line(MX,K.y+10,W-MX,K.y+10);K.y+=22;}
+ K.head('General comments / additional or altered equipment found');for(var j=0;j<5;j++){K.ens(22);d.setDrawColor(170);d.line(MX,K.y+10,W-MX,K.y+10);K.y+=22;}
+ K.head('Sign-off');K.fields([['tn','Teledyne FLIR Technician (print name and title)'],['ts','Signature / date'],['cn','Customer (print name and title)'],['cs','Signature / date']],null);
+ endPdf(d,'SkyWatch Inspection Form | blank',stdName(null,'BLANK','SKYWATCH-FORM',today())+'.pdf');}
+function blankDlg(){modal('<h3>Print a blank form</h3><p class="muted" style="margin-top:-4px">For writing in by hand.</p><button class="pri" data-pt="blankpt">Blank pre-trip checklist</button><button class="pri" data-pt="blankinsp">Blank SkyWatch inspection form</button><button data-act="mclose">Cancel</button>');}
+
+/* ---------- events ---------- */
+function addItem(){var r=S.rec,inp=document.getElementById('ptAdd');if(!r||!inp)return;var t=inp.value.trim();if(!t){inp.focus();return;}try{inp.dispatchEvent(new Event('change',{bubbles:true}));}catch(err){}
+ T(r).extra.push({id:'x'+uid(),t:t,on:false});dirty();inp.value='';document.getElementById('ptXl').innerHTML=xlist(r);paint();inp.focus();}
+document.addEventListener('click',function(ev){var b=ev.target.closest('[data-pt]');if(!b)return;var a=b.getAttribute('data-pt'),r=S.rec;
+ var run=function(f){try{f();}catch(err){alert(String(err&&err.message||err));}};
+ if(a==='tripnew'){newTripDlg();return;}
+ if(a==='tripgo'){var ts=$('#n-ts').value.trim(),cu=$('#n-cu').value.trim(),te=$('#n-te').value.trim();closeModal();var nr=newRec({towerSerial:ts,customer:cu,tech:te,techEmail:S.settings.lastTechEmail||''});techRemember(te);S.techDraft='';startRec(nr,true);return;}
+ if(a==='nvtrip'||a==='nvdirect'){if(!NV)return;closeModal();var q=NV;NV=null;startRec(nvRec(q),a==='nvtrip');return;}
+ if(a==='blank'){blankDlg();return;}
+ if(a==='blankpt'){closeModal();run(function(){tripPdf(null);});return;}
+ if(a==='blankinsp'){closeModal();run(function(){blankInspPdf();});return;}
+ if(!r)return;
+ if(a==='cskip'){var k=b.getAttribute('data-k');r.carry=r.carry||{};r.carry[k]='skip';dirty();var n=b.closest('.cnote');if(n)n.outerHTML=cnote(k);return;}
+ if(r.step!==0)return;var t=T(r);
+ if(a==='tick'){var key=b.getAttribute('data-k');t.ck[key]=!t.ck[key];if(!t.ck[key])delete t.ck[key];b.classList.toggle('on',!!t.ck[key]);b.setAttribute('aria-pressed',t.ck[key]?'true':'false');dirty();paint();return;}
+ if(a==='xtick'){var x=t.extra.find(function(q){return q.id===b.getAttribute('data-x')});if(!x)return;x.on=!x.on;b.classList.toggle('on',x.on);b.setAttribute('aria-pressed',x.on?'true':'false');dirty();paint();return;}
+ if(a==='xdel'){var i=t.extra.findIndex(function(q){return q.id===b.getAttribute('data-x')});if(i<0)return;if(!confirm('Remove “'+t.extra[i].t+'” from this trip?'))return;t.extra.splice(i,1);dirty();document.getElementById('ptXl').innerHTML=xlist(r);paint();return;}
  if(a==='add'){addItem();return;}
- if(a==='reset'){if(!confirm('Start a new trip?\n\nThis clears every tick, the trip name and the items you added for this trip. The checklist itself stays.'))return;PT=blank();storeNow();ptRender();return;}
- if(a==='pdf'){try{pdf();}catch(err){alert('Could not make the PDF: '+err);}return;}
+ if(a==='gt'){r.genType=b.getAttribute('data-v');dirty();[].forEach.call(document.querySelectorAll('#ptGt button'),function(z){z.classList.toggle('pri',z.getAttribute('data-v')===r.genType);});paint();return;}
+ if(a==='lg'){r.legacy=!!b.checked;dirty();return;}
+ if(a==='svc'){var v=b.getAttribute('data-v');r.svc=r.svc||{sel:{},extra:[]};r.svc.sel=r.svc.sel||{};r.svc.sel[v]=!r.svc.sel[v];b.classList.toggle('pri',!!r.svc.sel[v]);dirty();return;}
+ if(a==='pdf'){save();run(function(){tripPdf(r);});return;}
 });
-document.addEventListener('input',function(ev){var t=ev.target;if(t&&t.id==='ptTrip'&&PT){PT.trip=t.value.trim();storeSoon();}});
+document.addEventListener('input',function(ev){var t=ev.target,r=S.rec;if(!r||!t||!t.dataset)return;var p=t.dataset.b||'';
+ if(p==='hdr.genHours'){var h=document.getElementById('hrsSince');if(h)h.innerHTML=hrsHtml();}
+ if(r.step===0&&(p.indexOf('hdr.')===0||p.indexOf('last.')===0))paint();});
 document.addEventListener('keydown',function(ev){if(ev.key==='Enter'&&ev.target&&ev.target.id==='ptAdd'){ev.preventDefault();addItem();}});
-window.addEventListener('popstate',function(){if(typeof S!=='undefined'&&S.view==='pretrip')goHome();});
-window.addEventListener('pagehide',function(){if(tmr)storeNow();});
-
-/* ---- hook into the form's own screens ---- */
-var _render=render;render=function(){if(S.view==='pretrip')return ptRender();return _render.apply(this,arguments);};
-var _home=renderHome;renderHome=function(){var p=_home.apply(this,arguments);return Promise.resolve(p).then(function(v){ptCard();return v;});};
-if(S.view==='home')ptCard();
-window.__ptApi={load:load,get:function(){return PT;},render:ptRender,card:ptCard,pdf:pdf};
+window.__pmApi={tripPdf:tripPdf,blankInspPdf:blankInspPdf,nvRec:nvRec,nvPayload:window.nvPayload};
 })();
 </script>
 </body></html>
