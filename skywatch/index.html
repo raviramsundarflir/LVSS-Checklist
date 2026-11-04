@@ -14521,7 +14521,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'63'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'66'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14584,7 +14584,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='a3e261b669';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='63a266da08';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -14979,11 +14979,11 @@ function gpnHtml(){var k=GPN.m,E=k&&GENBY[k],F=E&&GENFAM[E.fam],X=E&&GENTS[E.fam
  h+='<div class="card"><label class="f" style="margin-top:0">Generator model</label><div class="ptgt">'+GENLIB.map(function(q){return '<button type="button" class="'+(k===q.k?'pri':'')+'" data-pt="gpm" data-v="'+q.k+'">'+e(q.n)+'</button>';}).join('')+'</div>'+
   '<p class="muted" style="margin:8px 0 0;font-size:13px">Only models with a manual in the library are listed. For any other model, use QSOL under Full manual.</p></div>';
  if(!X)return h+gpnLinks();
+ h+='<div class="card"><h3 style="margin-top:0">Service parts</h3><ul class="gpr">'+F.parts.map(function(p){return '<li><b>'+e(p.t)+':</b> '+e(p.pn)+(p.was?' (supersedes '+e(p.was)+')':'')+'</li>';}).join('')+
+  (F.brush?'<li><b>Brush block:</b> '+e(F.brush.pn)+'</li>':'')+(F.plugs?'<li><b>Spark plugs:</b> '+e(F.plugs.pn)+' × '+F.plugs.qty+'</li>':'')+'<li><b>Oil:</b> '+e(F.oil)+'</li>'+(F.cool?'<li><b>Coolant:</b> '+e(F.cool)+'</li>':'')+'</ul></div>';
  h+='<div class="card"><h3 style="margin-top:0">Reading the fault code</h3><ul class="gpr">'+X.read.map(function(s){return '<li>'+e(s)+'</li>';}).join('')+'</ul></div>';
  h+='<div class="card"><h3 style="margin-top:0">Fault codes</h3><input id="gpnQ" inputmode="numeric" autocomplete="off" placeholder="Type the code number, e.g. 36" style="margin-bottom:8px"><p class="muted" id="gpnNo" hidden>No code with that number in this manual.</p>'+gpnList(X.codes,'c')+'</div>';
  h+='<div class="card"><h3 style="margin-top:0">Other problems</h3>'+gpnList(X.sym,'s')+'</div>';
- h+='<div class="card"><h3 style="margin-top:0">Service parts</h3><ul class="gpr">'+F.parts.map(function(p){return '<li><b>'+e(p.t)+':</b> '+e(p.pn)+(p.was?' (supersedes '+e(p.was)+')':'')+'</li>';}).join('')+
-  (F.brush?'<li><b>Brush block:</b> '+e(F.brush.pn)+'</li>':'')+(F.plugs?'<li><b>Spark plugs:</b> '+e(F.plugs.pn)+' × '+F.plugs.qty+'</li>':'')+'<li><b>Oil:</b> '+e(F.oil)+'</li>'+(F.cool?'<li><b>Coolant:</b> '+e(F.cool)+'</li>':'')+'</ul></div>';
  return h+gpnLinks();}
 function gpnPaint(){var b=document.getElementById('gpnBody');if(b)b.innerHTML=gpnHtml()+'<p class="gpn-cr">'+e(creditText())+'</p>';}
 function gpnPop(){gpnClose(false);}
