@@ -272,4 +272,34 @@ if(navigator.share)$('#shareB').hidden=false;
 env();paint();
 })();
 </script>
+<script>/* ===== shared: on-screen Back / Home bar (Ravi, 2026-11-04) =====
+   Back = the previous screen you were on (kept per app, not the browser history). Home = the main launcher.
+   Each app gives Nav.init() a snap() (where am I) and restore() (go back there). Pages without one use the browser's Back. */
+(function(){if(window.Nav)return;
+var A=null,stack=[],cur=null,busy=0,tm=null,HOME='../',NAME='';
+var CSS='#navBar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:10px;padding:8px 12px;background:#0b3d6b;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.25)}'+
+ '.gpn-h b{flex:1;text-align:center}#navBar b{flex:1;text-align:center;font:700 17px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
+ '#navBar button,.gpn-h button.nb{min-height:48px;min-width:96px;border-radius:10px;border:2px solid #fff;background:#fff;color:#0b3d6b;font:700 17px system-ui,-apple-system,"Segoe UI",sans-serif;cursor:pointer;padding:0 14px;touch-action:manipulation}'+
+ ':root{--navh:64px}html{scroll-padding-top:calc(var(--navh) + 80px)}.top,header.bar{top:var(--navh)!important}@media print{#navBar{display:none!important}}';
+function key(s){try{return JSON.stringify(s);}catch(e){return '';}}
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function sameOrigin(r){try{return !!r&&new URL(r).origin===location.origin;}catch(e){return false;}}
+function note(){if(busy||!A||!A.snap)return;var s;try{s=A.snap();}catch(e){return;}if(!s)return;if(cur&&key(s)===key(cur))return;if(cur){stack.push(cur);if(stack.length>60)stack.shift();}cur=s;}
+function sched(){if(tm)return;tm=setTimeout(function(){tm=null;note();},120);}
+function home(){var d=false,go=function(){if(d)return;d=true;location.href=HOME;};try{var p=A&&A.save&&A.save();if(p&&p.then){p.then(go,go);setTimeout(go,1500);return;}}catch(e){}go();}
+function overlay(){var g=document.getElementById('genPanel');if(g){var c=g.querySelector('[data-pt="gpclose"]');if(c){c.click();return true;}}return false;}
+function back(){if(overlay())return;
+ if(!A||!A.restore){if(sameOrigin(document.referrer)&&history.length>1)history.back();else home();return;}
+ note();if(!stack.length){home();return;}
+ var s=stack.pop();busy++;cur=s;var p;try{p=A.restore(s);}catch(e){p=null;}
+ Promise.resolve(p).catch(function(){}).then(function(){setTimeout(function(){busy=Math.max(0,busy-1);},200);});}
+function mount(){if(document.getElementById('navBar')||!document.body)return;
+ var st=document.createElement('style');st.id='navCss';st.textContent=CSS;(document.head||document.documentElement).appendChild(st);
+ var b=document.createElement('div');b.id='navBar';b.innerHTML='<button type="button" data-nav="back">‹ Back</button><b>'+esc(NAME||document.title||'')+'</b><button type="button" data-nav="home">⌂ Home</button>';
+ document.body.insertBefore(b,document.body.firstChild);document.documentElement.style.setProperty('--navh',b.offsetHeight+'px');
+ try{new MutationObserver(sched).observe(document.body,{childList:true,subtree:true});}catch(e){}sched();}
+document.addEventListener('pointerdown',function(){note();},true);
+document.addEventListener('click',function(ev){var b=ev.target.closest&&ev.target.closest('[data-nav]');if(!b)return;ev.preventDefault();ev.stopPropagation();if(b.getAttribute('data-nav')==='home')home();else back();},true);
+window.Nav={dbg:function(){return {stack:stack.slice(),cur:cur};},init:function(o){A=o||{};NAME=A.name||'';mount();},back:back,home:home};
+})();</script><script>Nav.init({name:document.title});</script>
 </body></html>

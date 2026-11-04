@@ -13644,7 +13644,36 @@ function row(d,y,cells,o){var CWc=o.CWc,GAP=o.GAP,IH=o.IH,tw=CWc-10;
  d.setTextColor(0,0,0);d.setDrawColor(0,0,0);d.setLineWidth(.5);return y+H+12;}
 window.PhotoBox={row:row};
 })();
-</script><script>/* ===== shared: camera (Ravi, 2026-10-29) =====
+</script><script>/* ===== shared: on-screen Back / Home bar (Ravi, 2026-11-04) =====
+   Back = the previous screen you were on (kept per app, not the browser history). Home = the main launcher.
+   Each app gives Nav.init() a snap() (where am I) and restore() (go back there). Pages without one use the browser's Back. */
+(function(){if(window.Nav)return;
+var A=null,stack=[],cur=null,busy=0,tm=null,HOME='../',NAME='';
+var CSS='#navBar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:10px;padding:8px 12px;background:#0b3d6b;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.25)}'+
+ '.gpn-h b{flex:1;text-align:center}#navBar b{flex:1;text-align:center;font:700 17px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
+ '#navBar button,.gpn-h button.nb{min-height:48px;min-width:96px;border-radius:10px;border:2px solid #fff;background:#fff;color:#0b3d6b;font:700 17px system-ui,-apple-system,"Segoe UI",sans-serif;cursor:pointer;padding:0 14px;touch-action:manipulation}'+
+ ':root{--navh:64px}html{scroll-padding-top:calc(var(--navh) + 80px)}.top,header.bar{top:var(--navh)!important}@media print{#navBar{display:none!important}}';
+function key(s){try{return JSON.stringify(s);}catch(e){return '';}}
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function sameOrigin(r){try{return !!r&&new URL(r).origin===location.origin;}catch(e){return false;}}
+function note(){if(busy||!A||!A.snap)return;var s;try{s=A.snap();}catch(e){return;}if(!s)return;if(cur&&key(s)===key(cur))return;if(cur){stack.push(cur);if(stack.length>60)stack.shift();}cur=s;}
+function sched(){if(tm)return;tm=setTimeout(function(){tm=null;note();},120);}
+function home(){var d=false,go=function(){if(d)return;d=true;location.href=HOME;};try{var p=A&&A.save&&A.save();if(p&&p.then){p.then(go,go);setTimeout(go,1500);return;}}catch(e){}go();}
+function overlay(){var g=document.getElementById('genPanel');if(g){var c=g.querySelector('[data-pt="gpclose"]');if(c){c.click();return true;}}return false;}
+function back(){if(overlay())return;
+ if(!A||!A.restore){if(sameOrigin(document.referrer)&&history.length>1)history.back();else home();return;}
+ note();if(!stack.length){home();return;}
+ var s=stack.pop();busy++;cur=s;var p;try{p=A.restore(s);}catch(e){p=null;}
+ Promise.resolve(p).catch(function(){}).then(function(){setTimeout(function(){busy=Math.max(0,busy-1);},200);});}
+function mount(){if(document.getElementById('navBar')||!document.body)return;
+ var st=document.createElement('style');st.id='navCss';st.textContent=CSS;(document.head||document.documentElement).appendChild(st);
+ var b=document.createElement('div');b.id='navBar';b.innerHTML='<button type="button" data-nav="back">‹ Back</button><b>'+esc(NAME||document.title||'')+'</b><button type="button" data-nav="home">⌂ Home</button>';
+ document.body.insertBefore(b,document.body.firstChild);document.documentElement.style.setProperty('--navh',b.offsetHeight+'px');
+ try{new MutationObserver(sched).observe(document.body,{childList:true,subtree:true});}catch(e){}sched();}
+document.addEventListener('pointerdown',function(){note();},true);
+document.addEventListener('click',function(ev){var b=ev.target.closest&&ev.target.closest('[data-nav]');if(!b)return;ev.preventDefault();ev.stopPropagation();if(b.getAttribute('data-nav')==='home')home();else back();},true);
+window.Nav={dbg:function(){return {stack:stack.slice(),cur:cur};},init:function(o){A=o||{};NAME=A.name||'';mount();},back:back,home:home};
+})();</script><script>/* ===== shared: camera (Ravi, 2026-10-29) =====
    1) Photos: "Take photo" opens the tablet's own camera app (asked for the back camera), as before Rev 10.
       Every "Add photo" dialog also gets a small "Back camera (in form)" button: a camera inside the form
       that always starts on the back camera (Switch camera, Light, shutter, Retake / Use this photo).
@@ -15100,6 +15129,9 @@ function coreIssues(rec){ var out=[];
   analyze(rec).issues.forEach(function(it){ if(['FAIL','AWP','NOT TESTED'].indexOf(it.kind)<0) return; var d=it.d, fx=!!d.rep;
     out.push([it.kind==='NOT TESTED'?'b':'f',('#'+it.r.num+' '+lineText(it.r,d)).slice(0,110),'',coreT(d.note).slice(0,120),'','ATP',fx?'fx':'',fx?'Fixed':'',fx?'ATP':'']); });
   return out; }
+Nav.init({name:'ATP Inspection',snap:function(){return (S.rec&&(S.view==='insp'||S.view==='review'||S.view==='audit'))?{v:S.view,id:S.rec.id}:{v:'home'};},
+restore:async function(s){if(S.rec&&dirty())await save();if(s.v==='home'||!s.id){renderHome();window.scrollTo(0,0);return;}await openInspection(s.id);if(s.v==='review')await renderReview();},
+save:function(){return (S.rec&&dirty())?save():null;}});
 Core.use({form:'ATP',rec:function(){ return (S.view==='insp'||S.view==='review')?S.rec:null; },fields:coreFields,dirty:function(){ markDirty(); },swaps:coreSwaps,pend:corePend,issues:coreIssues});
 function coreJson(rec,o){ try{ var cx=Core.pack(rec,o); if(!Object.keys(cx).length) return Core.json(o); return Core.json(o,cx,AUQ_MAX); }catch(e){ return JSON.stringify(o); } }
 /* the new-inspection screen: fill what the scanned code carries */
@@ -15176,7 +15208,7 @@ function renderAudit(){
   var rec=S.rec; auEns(rec); S.view='audit'; var au=rec.audit;
   if(!au.date&&!au.done) au.date=today(); if(!au.name&&!au.done&&S.lastAuditor) au.name=S.lastAuditor;
   document.title=snFile(rec.header.newSerial)+'_AUDIT';
-  app.innerHTML='<header class="bar"><button class="btn light" data-act="au-back">‹ Back</button><div class="brand"><strong>S/N '+esc(snD(rec.header)||rec.header.newSerial||'')+'</strong><span>Auditor review</span></div><div class="bar-actions"><button class="save-ind" id="saveInd" data-act="save"></button><button class="btn light" data-act="home">Home</button></div></header>'+storageBanner()+'<main id="auBody">'+auditHTML()+'</main>';
+  app.innerHTML='<header class="bar"><button class="btn light" data-act="au-back">‹ Back</button><div class="brand"><strong>S/N '+esc(snD(rec.header)||rec.header.newSerial||'')+'</strong><span>Auditor review</span></div><div class="bar-actions"><button class="save-ind" id="saveInd" data-act="save"></button><button class="btn light" data-act="home">Forms list</button></div></header>'+storageBanner()+'<main id="auBody">'+auditHTML()+'</main>';
   if(auTech(rec)){ var hs=app.querySelector('.brand span'); if(hs) hs.textContent='Technician repair record'; }
   setSaveInd(); measureBar(); window.scrollTo(0,0);
 }
@@ -15665,7 +15697,7 @@ window.offReadiness=readiness;
 })();
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'65'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'67'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -16663,7 +16695,7 @@ SendTo.init({rec:function(){ return S.rec; },dirty:function(){ markDirty(); save
 })();
 
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='e230218fa5';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='dbe5c6f85f';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';

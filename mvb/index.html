@@ -613,7 +613,7 @@ function homeHtml(){const list=Object.values(RECS).sort((a,b)=>b.updated-a.updat
  h+='<div style="text-align:center;margin-top:8px"><button data-act="forget">Forget the code on this tablet</button></div>'+credit()+'</div>';return h;}
 function pageIdx(){return S.tab;}
 function formHtml(){const r=S.rec,m=modelOf(r);
- let h=topbar(m.label.split(' (')[0]+(r.hdr.sn?' · S/N '+r.hdr.sn:''),'<span class="muted" id="savedT">'+(savedAt?'Saved '+hm(savedAt):'')+'</span><button data-act="home">Home</button>')+'<div class="steps">'+T.pages.map((p,i)=>'<button data-act="tab" data-i="'+i+'" class="'+(i===S.tab?'on ':'')+(r.conf[p.id]?'dn':'')+'">'+esc((i+1)+'. '+p.t)+'</button>').join('')+'</div></div><div class="wrap">';
+ let h=topbar(m.label.split(' (')[0]+(r.hdr.sn?' · S/N '+r.hdr.sn:''),'<span class="muted" id="savedT">'+(savedAt?'Saved '+hm(savedAt):'')+'</span><button data-act="home">Forms list</button>')+'<div class="steps">'+T.pages.map((p,i)=>'<button data-act="tab" data-i="'+i+'" class="'+(i===S.tab?'on ':'')+(r.conf[p.id]?'dn':'')+'">'+esc((i+1)+'. '+p.t)+'</button>').join('')+'</div></div><div class="wrap">';
  h+=pageHtml(T.pages[S.tab].id);
  h+='<div class="nav">'+(S.tab>0?'<button data-act="prev">‹ Back</button>':'')+(S.tab<T.pages.length-1?'<button class="pri" data-act="next">Next: '+esc(T.pages[S.tab+1].t)+' ›</button>':'')+'</div>'+credit()+'</div>';return h;}
 function inp(path,label,opts){opts=opts||{};const v=path.split('.').reduce((o,k)=>o&&o[k],S.rec)||'';const id='f-'+path.replace(/\./g,'_');
@@ -825,7 +825,7 @@ function sendInner(){const r=S.rec;const to=addrs(r.send.to);return '<button cla
  '<div class="stk" style="margin-top:8px"><div><b>To:</b> '+(to.length?esc(to.join(', ')):'<span class="warn">add at least one address, or send to yourself</span>')+'</div><div><b>Cc:</b> '+(r.send.tsc?'TSC@teledyne.com':'—')+'</div></div><div class="row"><button data-act="copyto">📋 Copy To</button><button data-act="copycc">📋 Copy Cc</button></div>';}
 function paintSend(){const b=$('#sendBox');if(b)b.innerHTML=sendInner();}
 function doneHtml(){const r=S.rec,c=counts(r),res=result(r);
- return topbar('S/N '+(r.hdr.sn||'—'),'<button data-act="home">Home</button>')+'</div><div class="wrap"><div class="card"><h3>The ATR is ready</h3><p style="margin:0 0 6px"><b>'+esc(S.pdf.name)+'</b></p><div class="kpis"><div class="kpi"><b>'+c.pass+'</b>Pass / Done</div><div class="kpi"><b style="color:var(--fail)">'+c.fail+'</b>Fail</div><div class="kpi"><b>'+c.na+'</b>N/A</div><div class="kpi"><b style="color:var(--warn)">'+(c.nt+c.awp)+'</b>Not tested / AWP</div><div class="kpi'+(c.todo?' todo':'')+'"><b>'+c.todo+'</b>Not completed</div></div>'+(res==='FAIL'?'<p class="warn" style="margin:0">Has failures: complete Failure Report '+esc(T.failRep.code)+'.</p>':'')+'</div>'+
+ return topbar('S/N '+(r.hdr.sn||'—'),'<button data-act="home">Forms list</button>')+'</div><div class="wrap"><div class="card"><h3>The ATR is ready</h3><p style="margin:0 0 6px"><b>'+esc(S.pdf.name)+'</b></p><div class="kpis"><div class="kpi"><b>'+c.pass+'</b>Pass / Done</div><div class="kpi"><b style="color:var(--fail)">'+c.fail+'</b>Fail</div><div class="kpi"><b>'+c.na+'</b>N/A</div><div class="kpi"><b style="color:var(--warn)">'+(c.nt+c.awp)+'</b>Not tested / AWP</div><div class="kpi'+(c.todo?' todo':'')+'"><b>'+c.todo+'</b>Not completed</div></div>'+(res==='FAIL'?'<p class="warn" style="margin:0">Has failures: complete Failure Report '+esc(T.failRep.code)+'.</p>':'')+'</div>'+
  '<div class="card"><h3>Send to</h3><label class="f" for="sendTo">Recipients (separate several with commas)</label><input id="sendTo" data-k="send.to" data-h="sendto" type="email" inputmode="email" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" value="'+esc(r.send.to||'')+'" placeholder="name@example.com">'+histHtml('sendto','sendTo',6)+'<div id="sendBox" style="margin-top:8px">'+sendInner()+'</div></div>'+
  '<div class="card"><button class="pri big" data-act="email">✉ Email the ATR</button><div style="height:8px"></div><div class="row"><button class="big" style="flex:1" data-act="print">🖨 Print</button><button class="big" style="flex:1" data-act="download">⬇ Download</button></div><div style="height:8px"></div><button class="big" data-act="backedit">‹ Back to the test</button></div>'+credit()+'</div>';}
 function mailParts(){const r=S.rec,res=result(r),c=counts(r);const subj='Pan-Tilt Moving Base ATR - S/N '+(r.hdr.sn||'?')+' - '+({PASS:'PASS',FAIL:'FAIL',INCOMPLETE:'INCOMPLETE'})[res];
@@ -950,4 +950,35 @@ init();
 
 </script>
 <script>(function(){var B='664c61ca';function chk(){fetch('version.json?'+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(v){if(v&&v.build&&v.build!==B){if(navigator.serviceWorker)navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister()});});if(window.caches)caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k)});});var t=document.createElement('div');t.className='toast';t.textContent='A newer version is available - reload to update';document.body.appendChild(t);}}).catch(function(){});}setTimeout(chk,4000);document.addEventListener('visibilitychange',function(){if(!document.hidden)chk();});})();</script>
+<script>/* ===== shared: on-screen Back / Home bar (Ravi, 2026-11-04) =====
+   Back = the previous screen you were on (kept per app, not the browser history). Home = the main launcher.
+   Each app gives Nav.init() a snap() (where am I) and restore() (go back there). Pages without one use the browser's Back. */
+(function(){if(window.Nav)return;
+var A=null,stack=[],cur=null,busy=0,tm=null,HOME='../',NAME='';
+var CSS='#navBar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:10px;padding:8px 12px;background:#0b3d6b;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.25)}'+
+ '.gpn-h b{flex:1;text-align:center}#navBar b{flex:1;text-align:center;font:700 17px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
+ '#navBar button,.gpn-h button.nb{min-height:48px;min-width:96px;border-radius:10px;border:2px solid #fff;background:#fff;color:#0b3d6b;font:700 17px system-ui,-apple-system,"Segoe UI",sans-serif;cursor:pointer;padding:0 14px;touch-action:manipulation}'+
+ ':root{--navh:64px}html{scroll-padding-top:calc(var(--navh) + 80px)}.top,header.bar{top:var(--navh)!important}@media print{#navBar{display:none!important}}';
+function key(s){try{return JSON.stringify(s);}catch(e){return '';}}
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function sameOrigin(r){try{return !!r&&new URL(r).origin===location.origin;}catch(e){return false;}}
+function note(){if(busy||!A||!A.snap)return;var s;try{s=A.snap();}catch(e){return;}if(!s)return;if(cur&&key(s)===key(cur))return;if(cur){stack.push(cur);if(stack.length>60)stack.shift();}cur=s;}
+function sched(){if(tm)return;tm=setTimeout(function(){tm=null;note();},120);}
+function home(){var d=false,go=function(){if(d)return;d=true;location.href=HOME;};try{var p=A&&A.save&&A.save();if(p&&p.then){p.then(go,go);setTimeout(go,1500);return;}}catch(e){}go();}
+function overlay(){var g=document.getElementById('genPanel');if(g){var c=g.querySelector('[data-pt="gpclose"]');if(c){c.click();return true;}}return false;}
+function back(){if(overlay())return;
+ if(!A||!A.restore){if(sameOrigin(document.referrer)&&history.length>1)history.back();else home();return;}
+ note();if(!stack.length){home();return;}
+ var s=stack.pop();busy++;cur=s;var p;try{p=A.restore(s);}catch(e){p=null;}
+ Promise.resolve(p).catch(function(){}).then(function(){setTimeout(function(){busy=Math.max(0,busy-1);},200);});}
+function mount(){if(document.getElementById('navBar')||!document.body)return;
+ var st=document.createElement('style');st.id='navCss';st.textContent=CSS;(document.head||document.documentElement).appendChild(st);
+ var b=document.createElement('div');b.id='navBar';b.innerHTML='<button type="button" data-nav="back">‹ Back</button><b>'+esc(NAME||document.title||'')+'</b><button type="button" data-nav="home">⌂ Home</button>';
+ document.body.insertBefore(b,document.body.firstChild);document.documentElement.style.setProperty('--navh',b.offsetHeight+'px');
+ try{new MutationObserver(sched).observe(document.body,{childList:true,subtree:true});}catch(e){}sched();}
+document.addEventListener('pointerdown',function(){note();},true);
+document.addEventListener('click',function(ev){var b=ev.target.closest&&ev.target.closest('[data-nav]');if(!b)return;ev.preventDefault();ev.stopPropagation();if(b.getAttribute('data-nav')==='home')home();else back();},true);
+window.Nav={dbg:function(){return {stack:stack.slice(),cur:cur};},init:function(o){A=o||{};NAME=A.name||'';mount();},back:back,home:home};
+})();</script><script>Nav.init({name:'Pan-Tilt ATP/ATR',snap:function(){return (S.view==='form'||S.view==='done')&&S.rec?{v:S.view,id:S.rec.id,t:S.tab}:(S.view==='home'?{v:'home'}:null);},
+restore:function(s){if((s.v==='form'||s.v==='done')&&RECS[s.id]){S.rec=RECS[s.id];S.tab=s.t||0;S.view='form';render();}else goHome();},save:function(){try{flush();}catch(e){}}});</script>
 </body></html>

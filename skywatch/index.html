@@ -12974,7 +12974,36 @@ function show(){if(dlg)return;css();dlg=document.createElement('div');dlg.id='bg
  var st=dlg.querySelector('.st');if(st)st.focus();}
 window.BackGuard={show:show};
 })();
-</script><script>/* ===== shared: camera (Ravi, 2026-10-29) =====
+</script><script>/* ===== shared: on-screen Back / Home bar (Ravi, 2026-11-04) =====
+   Back = the previous screen you were on (kept per app, not the browser history). Home = the main launcher.
+   Each app gives Nav.init() a snap() (where am I) and restore() (go back there). Pages without one use the browser's Back. */
+(function(){if(window.Nav)return;
+var A=null,stack=[],cur=null,busy=0,tm=null,HOME='../',NAME='';
+var CSS='#navBar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:10px;padding:8px 12px;background:#0b3d6b;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.25)}'+
+ '.gpn-h b{flex:1;text-align:center}#navBar b{flex:1;text-align:center;font:700 17px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
+ '#navBar button,.gpn-h button.nb{min-height:48px;min-width:96px;border-radius:10px;border:2px solid #fff;background:#fff;color:#0b3d6b;font:700 17px system-ui,-apple-system,"Segoe UI",sans-serif;cursor:pointer;padding:0 14px;touch-action:manipulation}'+
+ ':root{--navh:64px}html{scroll-padding-top:calc(var(--navh) + 80px)}.top,header.bar{top:var(--navh)!important}@media print{#navBar{display:none!important}}';
+function key(s){try{return JSON.stringify(s);}catch(e){return '';}}
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function sameOrigin(r){try{return !!r&&new URL(r).origin===location.origin;}catch(e){return false;}}
+function note(){if(busy||!A||!A.snap)return;var s;try{s=A.snap();}catch(e){return;}if(!s)return;if(cur&&key(s)===key(cur))return;if(cur){stack.push(cur);if(stack.length>60)stack.shift();}cur=s;}
+function sched(){if(tm)return;tm=setTimeout(function(){tm=null;note();},120);}
+function home(){var d=false,go=function(){if(d)return;d=true;location.href=HOME;};try{var p=A&&A.save&&A.save();if(p&&p.then){p.then(go,go);setTimeout(go,1500);return;}}catch(e){}go();}
+function overlay(){var g=document.getElementById('genPanel');if(g){var c=g.querySelector('[data-pt="gpclose"]');if(c){c.click();return true;}}return false;}
+function back(){if(overlay())return;
+ if(!A||!A.restore){if(sameOrigin(document.referrer)&&history.length>1)history.back();else home();return;}
+ note();if(!stack.length){home();return;}
+ var s=stack.pop();busy++;cur=s;var p;try{p=A.restore(s);}catch(e){p=null;}
+ Promise.resolve(p).catch(function(){}).then(function(){setTimeout(function(){busy=Math.max(0,busy-1);},200);});}
+function mount(){if(document.getElementById('navBar')||!document.body)return;
+ var st=document.createElement('style');st.id='navCss';st.textContent=CSS;(document.head||document.documentElement).appendChild(st);
+ var b=document.createElement('div');b.id='navBar';b.innerHTML='<button type="button" data-nav="back">‹ Back</button><b>'+esc(NAME||document.title||'')+'</b><button type="button" data-nav="home">⌂ Home</button>';
+ document.body.insertBefore(b,document.body.firstChild);document.documentElement.style.setProperty('--navh',b.offsetHeight+'px');
+ try{new MutationObserver(sched).observe(document.body,{childList:true,subtree:true});}catch(e){}sched();}
+document.addEventListener('pointerdown',function(){note();},true);
+document.addEventListener('click',function(ev){var b=ev.target.closest&&ev.target.closest('[data-nav]');if(!b)return;ev.preventDefault();ev.stopPropagation();if(b.getAttribute('data-nav')==='home')home();else back();},true);
+window.Nav={dbg:function(){return {stack:stack.slice(),cur:cur};},init:function(o){A=o||{};NAME=A.name||'';mount();},back:back,home:home};
+})();</script><script>/* ===== shared: camera (Ravi, 2026-10-29) =====
    1) Photos: "Take photo" opens the tablet's own camera app (asked for the back camera), as before Rev 10.
       Every "Add photo" dialog also gets a small "Back camera (in form)" button: a camera inside the form
       that always starts on the back camera (Switch camera, Light, shutter, Retake / Use this photo).
@@ -13269,7 +13298,7 @@ function newDlg(){modal(`<h3>New inspection</h3><label class="f">Tower Serial # 
 /* ----- record shell ----- */
 const STEPN=['Info','Inspect','Punch List','Certificate & Sign','E-mail'];
 function renderRec(){if(S.audit&&S.rec)return renderAudit();const r=S.rec;const st=stats(r);
- app.innerHTML=`<div class="top"><div class="bar"><img src="${LOGO2}" alt="Teledyne FLIR"><div class="brand">${esc(title(r))}<small>${esc(r.hdr.customer||'')} ${r.signed?'· SIGNED':''}</small></div><button id="saveInd" data-act="save" class="save"></button>${r.signed?'':'<button data-act="wip-pause" title="Pause and move this inspection to another tablet">⏸ Pause</button>'}<button data-act="home">Home</button></div>
+ app.innerHTML=`<div class="top"><div class="bar"><img src="${LOGO2}" alt="Teledyne FLIR"><div class="brand">${esc(title(r))}<small>${esc(r.hdr.customer||'')} ${r.signed?'· SIGNED':''}</small></div><button id="saveInd" data-act="save" class="save"></button>${r.signed?'':'<button data-act="wip-pause" title="Pause and move this inspection to another tablet">⏸ Pause</button>'}<button data-act="home">Forms list</button></div>
  <div class="steps">${r.trip?`<button data-act="step" data-s="0" class="${r.step===0?'on':'dn'}">🧳 Trip prep</button>`:''}${STEPN.map((n,i)=>`<button data-act="step" data-s="${i+1}" class="${r.step===i+1?'on':''} ${(i+1<r.step)?'dn':''}">${i+1}. ${n}</button>`).join('')}</div></div>
  <div class="wrap ${r.signed&&r.step<4?'locked':''}" id="body"></div>`;
  paintSave();const b=$('#body');
@@ -13565,7 +13594,7 @@ function auditHtml(){const r=S.rec,au=auEns(r),P=auF(r),st=stats(r);
  ${auNeedHtml()}</div>
  <div class="row"><button data-act="auback">← Back to the report</button></div>`;}
 function renderAudit(){const r=S.rec;auEns(r);if(!r.audit.date&&!r.audit.done){r.audit.date=today();}if(!r.audit.name&&!r.audit.done&&S.settings.lastAuditor)r.audit.name=S.settings.lastAuditor;
- app.innerHTML=`<div class="top"><div class="bar"><img src="${LOGO2}" alt="Teledyne FLIR"><div class="brand">${esc(snD(r)||title(r))}<small>Auditor review</small></div><button id="saveInd" data-act="save" class="save"></button><button data-act="home">Home</button></div></div><div class="wrap" id="body">${auditHtml()}</div>`;
+ app.innerHTML=`<div class="top"><div class="bar"><img src="${LOGO2}" alt="Teledyne FLIR"><div class="brand">${esc(snD(r)||title(r))}<small>Auditor review</small></div><button id="saveInd" data-act="save" class="save"></button><button data-act="home">Forms list</button></div></div><div class="wrap" id="body">${auditHtml()}</div>`;
  paintSave();if(r.audit.done)prepPdfs();window.scrollTo(0,0);}
 function auRefresh(){const y=window.scrollY;const b=$('#body');if(b)b.innerHTML=auditHtml();window.scrollTo(0,y);}const repName=r=>((r.hdr.customer||'').trim()?r.hdr.customer.trim()+' - ':'')+'Tower S/N '+(r.hdr.towerSerial||'');
 /* ---- serial confirmation popup (shown before the certificate step) ---- */
@@ -14521,7 +14550,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'66'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'67'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14584,7 +14613,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='63a266da08';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='483120a157';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -14989,7 +15018,7 @@ function gpnPaint(){var b=document.getElementById('gpnBody');if(b)b.innerHTML=gp
 function gpnPop(){gpnClose(false);}
 function gpnKey(ev){if(ev.key==='Escape'&&GPN.open){ev.preventDefault();gpnClose();}}
 function genPanel(){if(GPN.open)return;GPN.open=true;GPN.m=gpnStart();var p=document.createElement('div');p.id='genPanel';p.setAttribute('role','dialog');p.setAttribute('aria-modal','true');
- p.innerHTML='<div class="gpn-h"><b>Generator manual &amp; fault codes</b><button type="button" class="pri" data-pt="gpclose">Close</button></div><div class="gpn-s"><div id="gpnBody" class="gpn-in"></div></div>';
+ p.innerHTML='<div class="gpn-h"><button type="button" class="nb" data-pt="gpclose">‹ Back</button><b>Generator manual &amp; fault codes</b><button type="button" class="nb" data-nav="home">⌂ Home</button></div><div class="gpn-s"><div id="gpnBody" class="gpn-in"></div></div>';
  document.body.appendChild(p);document.documentElement.classList.add('gpn-lock');gpnPaint();
  try{history.pushState({camx:1,gpn:1},'',location.href);}catch(err){}
  window.addEventListener('popstate',gpnPop);document.addEventListener('keydown',gpnKey,true);}
@@ -15228,4 +15257,10 @@ document.addEventListener('keydown',function(ev){if(ev.key==='Enter'&&ev.target&
 window.__pmApi={tripPdf:tripPdf,blankInspPdf:blankInspPdf,nvRec:nvRec,nvPayload:window.nvPayload};
 })();
 </script>
+<script>Nav.init({name:'SkyWatch',snap:function(){return S.view==='rec'&&S.rec?{v:'rec',id:S.rec.id,s:S.rec.step,a:!!S.audit}:{v:'home'};},
+restore:async function(s){try{await save();}catch(e){}
+ if(s.v==='rec'){if(S.rec&&S.rec.id===s.id&&S.view==='rec'){S.audit=!!s.a;if(!s.a&&s.s&&S.rec.step!==s.s)go(s.s);else render();return;}
+  var x=await dbGet('recs',s.id);if(x){x=migrate(x);S.rec=x;await loadPhotos(x);S.view='rec';S.open=-1;S.detail={};S.dirty=false;S.audit=!!s.a;if(s.s)x.step=s.s;render();return;}}
+ S.view='home';S.rec=null;S.audit=false;render();},
+save:function(){return save();}});</script>
 </body></html>
