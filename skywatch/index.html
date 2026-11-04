@@ -13258,7 +13258,7 @@ function render(){if(S.view==='home')return renderHome();if(S.view==='admin')ret
 /* ----- home ----- */
 async function renderHome(){S.recs=(await dbAll('recs')).sort((a,b)=>b.updated-a.updated);
  app.innerHTML=`<div class="top"><div class="bar"><img src="${LOGO2}" alt="Teledyne FLIR"><div class="brand">SkyWatch Inspection + Completion Certificate<small>${esc(curTpl().revision||'')}</small></div>${HOMELINK}</div></div>
- <div class="wrap"><div class="card"><div class="row"><button class="pri" data-pt="tripnew" style="flex:1 1 260px">🧳 New PM visit – start with the trip planner</button><button data-act="new" style="flex:1 1 220px">＋ Go direct to the inspection form</button></div><div class="row" style="margin-top:8px"><button data-act="scan" style="flex:1">📷 Scan QR – last report's Next visit code, audit or continue</button></div>
+ <div class="wrap"><div class="card"><div class="row"><button class="pri" data-pt="tripnew" style="flex:1 1 260px">🧳 New PM visit – start with the trip planner</button><button data-act="new" style="flex:1 1 220px">＋ Go direct to the inspection form</button></div><div class="row" style="margin-top:8px"><button data-act="scan" style="flex:1">📷 Scan QR – last report's Next visit code, audit or continue</button></div><div class="row" style="margin-top:8px"><button data-pt="genpanel" style="flex:1">🔧 Generator manual &amp; fault codes</button></div>
  <p class="muted">Everything is stored on this tablet and works with no internet. Internet is only needed at the very end to send the e-mail.</p></div>
  ${S.recs.length?'':'<div class="card muted">No inspections yet.</div>'}
  ${S.recs.map(r=>{const st=stats(r);return `<div class="card home-c"><div class="gr"><b style="font-size:18px">${esc(title(r))}</b> ${r.signed?'<span class="tag" style="background:#d6f0de">SIGNED</span>':(r.step===0?'<span class="tag" style="background:#fde5c8">🧳 Trip planning</span>':'<span class="tag">In progress – step '+r.step+' of 5</span>')}${(r.audit&&r.audit.done)?`<span class="tag" style="background:${r.audit.verdict==='pass'?'#d6f0de':'#fdecec'}">Audit ${r.audit.verdict==='pass'?'PASSED':'FAILED'}</span>`:''}<br><span class="muted">${esc(r.hdr.customer||'No customer')} · ${esc(fmtD(r.hdr.date))} · updated ${new Date(r.updated).toLocaleString()}</span><br><span class="muted">${st.f} failed · ${st.open} open${st.blk?` · ${st.blk} not tested`:''}${st.dno?` · <b style="color:#c62828">${st.dno} DO NOT OPERATE</b>`:''}</span></div>
@@ -13336,7 +13336,7 @@ function secBodyHtml(si){const r=S.rec,sec=r.tpl.sections[si];const all=flat(r).
  if(isLegacy(sec))h+=`<div style="margin-top:10px"><button data-act="legacy-off">Not a legacy tower – hide this section</button></div>`;
  return h+`<div class="row" style="margin:12px 0"><button data-act="addx" data-si="${si}">＋ Add line item to this section</button><button data-act="markp" data-si="${si}">Mark all unmarked items Pass</button><span style="flex:1"></span><button data-act="prevsec" data-si="${si}">← Previous section</button><button class="pri" data-act="nextsec" data-si="${si}">Section done → next</button></div>`;}
 function secHeadHtml(si,title,s){return `<div class="hd-sec" data-act="sec" data-si="${si}"><h3>${si+1<=S.rec.tpl.sections.length?'Section '+(si+1)+': ':''}${esc(title)}</h3>${s?`<span class="pg">${s.m}/${s.t}${s.f?` · <b>${s.f} fail</b>`:''}</span><div class="pbar"><i style="width:${s.t?100*s.m/s.t:0}%"></i></div>`:''}<span>${S.open===si?'▾':'▸'}</span></div>`;}
-function inspectHtml(){const r=S.rec,n=r.tpl.sections.length;let h='<p class="muted" style="margin:0 0 8px">Tap the box: 1 = Pass ✓, 2 = Fail ✗, 3 = N/A, 4 = blank. Tap again any time to change (override). Failed items ask for a concern level.</p>';
+function inspectHtml(){const r=S.rec,n=r.tpl.sections.length;let h='<div class="row" style="justify-content:flex-end;margin:0 0 8px"><button type="button" class="gpb" data-pt="genpanel">🔧 Generator manual &amp; fault codes</button></div><p class="muted" style="margin:0 0 8px">Tap the box: 1 = Pass ✓, 2 = Fail ✗, 3 = N/A, 4 = blank. Tap again any time to change (override). Failed items ask for a concern level.</p>';
  r.tpl.sections.forEach((s,si)=>{if(hidden(r,s)){h+=`<div class="card" id="sec-${si}"><div class="row"><div style="flex:1;min-width:200px"><b>Section ${si+1}: ${esc(s.title)}</b><br><span class="muted">Not included – only applies to legacy DC towers.</span></div><button class="pri" data-act="legacy-on">Legacy DC tower – include this section</button></div></div>`;return;}h+=`<div id="sec-${si}">`+secHeadHtml(si,s.title,secStats(si))+(S.open===si?secBodyHtml(si):'')+'</div>';});
  h+=`<div id="sec-${n}">`+secHeadHtml(n,'Additional Comments, Parts & Equipment',null)+(S.open===n?commentsHtml():'')+'</div>';
  h+=swapHtml();return h+`<div class="row" style="margin-top:14px;flex-wrap:nowrap;gap:8px"><button data-act="step" data-s="1" style="flex:1">← Previous: Info</button><button class="pri" data-act="step" data-s="3" style="flex:2">Finish inspection → Punch List</button></div><button data-act="step" data-s="4" style="width:100%;margin-top:8px;border-color:#1b8a3a;color:#1b8a3a;font-weight:700">⏭ Go to the final page – certificate & sign-off</button>`;}
@@ -14521,7 +14521,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'59'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'60'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14584,7 +14584,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='95d5ca4158';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='ad0700cafc';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -14770,6 +14770,22 @@ if(document.body)start();else document.addEventListener('DOMContentLoaded',start
 .ptpr{border-bottom:1px solid var(--line)}.ptl>.ptpr:last-child{border-bottom:0}.ptpr .ptit{border-bottom:0;padding-bottom:4px}
 .ptol{padding:0 4px 12px 46px;font-size:13.5px;color:var(--mut)}.ptol a{color:#1d5fc4;font-weight:700;text-decoration:none;display:inline-block;padding:4px 2px}
 .ptgn{margin:6px 0 0;font-size:13px}#ptGm{margin-top:4px}
+#genPanel{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column}
+html.gpn-lock,html.gpn-lock body{overflow:hidden}
+.gpn-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:var(--blue2);border-bottom:3px solid var(--blue)}
+.gpn-h b{font-size:19px;color:var(--ink)}.gpn-h button{min-width:110px}
+.gpn-s{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}
+.gpn-in{max-width:900px;margin:0 auto;padding:12px 12px 24px}
+.gpc{border-bottom:1px solid var(--line)}.gpc:last-of-type{border-bottom:0}
+.gpc summary{display:flex;align-items:center;gap:12px;min-height:52px;padding:8px 4px;cursor:pointer;list-style:none;font-weight:600}
+.gpc summary::-webkit-details-marker{display:none}
+.gpc summary::after{content:"\25BE";margin-left:auto;color:var(--mut)}.gpc[open] summary::after{content:"\25B4"}
+.gpcn{flex:none;min-width:44px;height:34px;border-radius:8px;background:#3b4a5c;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;padding:0 6px}
+.gpcb{padding:0 4px 12px}.gpcb p{margin:0}.gpcb ol{margin:6px 0;padding-left:22px}.gpcb li{margin:4px 0}.gpcp{font-size:12.5px;margin-top:4px!important}
+.gpr{margin:0;padding-left:20px}.gpr li{margin:5px 0}
+.gpl{display:block;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0 0;text-decoration:none;color:var(--ink)}.gpl b{display:block;color:#1d5fc4}.gpl span{font-size:13px}
+.gpb{margin-top:10px}
+.gpn-cr{text-align:center;font-size:11px;color:var(--mut);opacity:.75;margin:18px 0 0}
 .ptdel{flex:none;min-width:44px;min-height:44px;padding:0;font-size:22px;line-height:1;color:var(--fail);border-color:#e3b3b3}
 .ptcarry{background:#eef5ff;border:1px solid #9bbbe8;border-radius:10px;padding:10px 12px;margin-bottom:12px}
 .cnote{font-size:13px;margin-top:5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -14777,7 +14793,7 @@ if(document.body)start();else document.addEventListener('DOMContentLoaded',start
 .cnote button{min-height:32px;padding:2px 10px;font-size:13px;font-weight:600;color:#c25a00;border-color:#e8b98e}
 #hrsSince{font-size:13px;margin-top:5px;color:var(--mut)}#hrsSince b{color:var(--ink)}#hrsSince .rem{color:#c25a00;font-weight:600}
 .ptgt{display:flex;gap:8px;flex-wrap:wrap}.ptgt button{flex:1;min-width:120px}
-</style><script>/* ===== SkyWatch PM visit (Ravi, 2026-11-03, Rev 54; Rev 56 2026-11-04: hydraulic fluid removed from the pre-trip checklist; Rev 57: certificate-signer line removed, door key moved to Bring; Rev 58: service-interval notes removed from the generator hours check; Rev 59: generator parts list by model) =====
+</style><script>/* ===== SkyWatch PM visit (Ravi, 2026-11-03, Rev 54; Rev 56 2026-11-04: hydraulic fluid removed from the pre-trip checklist; Rev 57: certificate-signer line removed, door key moved to Bring; Rev 58: service-interval notes removed from the generator hours check; Rev 59: generator parts list by model; Rev 60: generator manual & fault codes panel) =====
    - "New PM visit" starts a record at a Trip prep stage (step 0). Job info and tower / generator details are real fields that ARE the
      inspection header; the ticks and added items stay behind the scenes (never on the inspection report). "Skip to inspection" at any time.
    - Every report gets a "Next visit" QR code. Scanning it on the home screen pre-fills a new visit: customer, site, tower, generator,
@@ -14823,6 +14839,82 @@ function genItems(r){var G=genOf(r);
  return S2;}
 function genNote(r){if(!r)return 'Write in the part numbers from the generator\u2019s service manual.';var G=genOf(r);
  return G?G.e.n+': part numbers from '+G.f.src+', checked online '+G.f.chk+'.':'Pick the generator model in section 2 to fill in its part numbers (and brush block or spark plugs where it has them). Standard list until then.';}
+/* ---- Generator manual & fault codes panel (Rev 60, Ravi 2026-11-04) ----
+   Opens over the app (home screen, trip planner section 2, Inspect step) so the tech never loses their place;
+   Close, Escape or the tablet's Back button return to the same spot. Steps are summarized from the model's manual
+   with its page numbers; the full manual is a link out (Cummins' manuals page, or QSOL with the tech's own login). */
+var GENTS={
+ onanqd:{
+  man:'Onan Commercial Mobile operator manual 0981-0161 (Issue 20, 2024)',
+  read:[
+   'After a fault shutdown, the status light in the control switch flashes the fault code.',
+   '1 flash = engine over temperature (Code 1). 2 flashes = low oil pressure (Code 2). 4 flashes = cranked over 30 seconds without starting (Code 4).',
+   '3 flashes = service fault (Code 3): press STOP/PRIME once and the 2-digit code flashes. The first set of flashes is the tens digit, a short pause, then the units digit, a long pause, then it repeats. Example, Code 36: 3 flashes, pause, 6 flashes. Press STOP/PRIME again to stop it.',
+   'Codes 33 and 34 are not used, so don’t read Code 3 or Code 4 as a 2-digit code.',
+   'The code stops flashing after 5 minutes. Press STOP/PRIME 3 times within 5 seconds to see it again.',
+   'The last fault keeps flashing even after its cause is fixed.'],
+  codes:[
+   ['1','Engine over temperature','Coolant was above 115 °C (239 °F) for 10 seconds.',['Check the coolant level. Top it up and fix any leaks.','Clear anything blocking the air inlet or outlet under the generator. Clean dirt off the radiator fins with compressed air or a light water rinse (no pressure washer; keep water out of the components).','Reduce the load.'],48],
+   ['2','Low oil pressure','The low oil pressure cutoff switch did not open.',['Check the oil on the dipstick. Add oil if it is low; drain the excess if it is above the full mark.'],48],
+   ['3','Service check','A second-level (2-digit) fault.',['Press STOP/PRIME once to read the 2-digit code, then look it up in this list.'],48],
+   ['4','Over crank','Cranked for over 30 seconds without starting.',['Check the fuel level and fill if low, then prime: hold the control switch at STOP/PRIME for 30 seconds.','Replace the air filter if it is dirty.','Change the oil to the right viscosity for the temperature (thick oil slows cranking).','Tighten any fuel fitting that leaks fuel or air, then prime again for 30 seconds.','Replace the fuel filter.'],49],
+   ['12','Over voltage','The control cannot hold rated voltage.',['Contact a Cummins dealer or distributor.'],49],
+   ['13','Under voltage','The control cannot hold rated voltage.',['Reduce the load.'],49],
+   ['14','Over frequency','The governor cannot hold rated frequency.',['Contact a Cummins dealer or distributor.'],49],
+   ['15','Under frequency','The governor cannot hold rated frequency.',['Reduce the load.'],50],
+   ['19','Governor actuator','The control sensed an open or shorted circuit.',['Contact a Cummins dealer or distributor.'],50],
+   ['22','Governor actuator overload','Running near full duty cycle, beyond the design limit.',['Reduce the load.','Replace the air filter if it is dirty.','Clear any blockage in the exhaust.'],50],
+   ['27','Voltage sense','The control cannot sense the output voltage.',['Contact a Cummins dealer or distributor.'],50],
+   ['29','High battery voltage','Over 19 V across the battery system.',['Check the batteries feeding the generator are connected in parallel (12 V), not in series (24 V).','Use a lower battery boost charge rate.'],50],
+   ['32','Low cranking speed','Cranking below 180 RPM for over 2 seconds.',['Clean and tighten the + and – battery cables, at the battery and at the generator.','Recharge or replace the battery.','Change the oil to the right viscosity for the temperature (thick oil slows cranking).'],50],
+   ['35','Control card failure','A memory (EEPROM) error in the control’s self test.',['Contact a Cummins dealer or distributor.'],51],
+   ['36','Engine stopped','The engine stopped without a command from the control.',['Check the fuel level and fill if low, then prime: hold the control switch at STOP/PRIME for 30 seconds.','Replace the air filter if it is dirty.','Check for mechanical damage.'],51],
+   ['38','Over current (field overload)','Low power factor loads.',['Reduce the load.','Have the connected equipment (A/C units and the like) checked.'],51],
+   ['41','Generator rotor','The control cannot sense field or output voltage.',['Contact a Cummins dealer or distributor.'],52],
+   ['42','Processor','A memory (ROM) error in the control’s self test.',['Contact a Cummins dealer or distributor.'],52],
+   ['43','Processor','A memory (RAM) error in the control’s self test.',['Contact a Cummins dealer or distributor.'],52],
+   ['45','Speed sense','The control cannot sense the quadrature frequency.',['Contact a Cummins dealer or distributor.'],52],
+   ['48','Generator field sense','The control cannot sense the field voltage.',['Contact a Cummins dealer or distributor.'],52],
+   ['57','Over prime','Priming went on for over 3 minutes.',['Check that nothing is holding either control switch (remote or on the generator) at STOP/PRIME.'],52]],
+  sym:[
+   ['Status light not working','Loose connections or no battery voltage.',['Try the other control switch (the generator’s or the remote).','Clean and tighten the + and – battery cables, at the battery and at the generator.','Recharge or replace the battery.'],52],
+   ['Starting battery runs down','Battery, connections, charging system or a parasitic load.',['Clean and tighten the + and – battery cables, at the battery and at the generator.','Recharge or replace the battery.','Check the battery charging system.'],53],
+   ['Starter engages, then lets go','Cranking voltage drops below 6 V.',['Clean and tighten the + and – battery cables, at the battery and at the generator.','Recharge or replace the battery.','Use heavier battery cables, or run a second set in parallel.','(The manual’s first step, running the vehicle engine while starting, is for vehicle installs.)'],53],
+   ['No power: running, status light on','A line circuit breaker is off, or tripped by a short or overload.',['Turn on or reset the line circuit breaker on the generator.','Turn on or reset the breaker on the main distribution panel.'],53]]}
+};
+var GMLINKS=[['Cummins Commercial Mobile generator manuals','https://www.cummins.com/cm-generator-manuals','Cummins’ public manuals page'],
+ ['QuickServe Online (QSOL)','https://quickserve.cummins.com/','Sign in with your own QSOL account']];
+var GPN={open:false,m:null};
+function gpnStart(){var G=S.rec?genOf(S.rec):null;if(G)return G.e.k;try{var k=localStorage.getItem('genPanelModel');if(k&&GENBY[k])return k;}catch(err){}return null;}
+function gpnList(L,kind){return L.map(function(c){var code=kind==='c',ttl=code?c[1]:c[0],mean=code?c[2]:c[1],st=code?c[3]:c[2],pg=code?c[4]:c[3];
+ return '<details class="gpc"'+(code?' data-c="'+c[0]+'"':'')+'><summary>'+(code?'<span class="gpcn">'+e(c[0])+'</span>':'')+'<span class="gpct">'+e(ttl)+'</span></summary><div class="gpcb"><p class="muted">'+e(mean)+'</p><ol>'+st.map(function(s){return '<li>'+e(s)+'</li>';}).join('')+'</ol><p class="muted gpcp">Manual page '+pg+'</p></div></details>';}).join('');}
+function gpnLinks(){return '<div class="card"><h3 style="margin-top:0">Full manual</h3>'+(GPN.m&&GENBY[GPN.m]?'<p class="muted" style="margin:-4px 0 8px">'+e(GENTS[GENBY[GPN.m].fam].man)+'</p>':'')+
+ GMLINKS.map(function(l){return '<a class="gpl" href="'+l[1]+'" target="_blank" rel="noopener"><b>'+e(l[0])+' ›</b><span class="muted">'+e(l[2])+'</span></a>';}).join('')+'<p class="muted" style="margin:8px 0 0;font-size:13px">These open in the browser and need a connection.</p></div>';}
+function gpnHtml(){var k=GPN.m,E=k&&GENBY[k],F=E&&GENFAM[E.fam],X=E&&GENTS[E.fam],h='';
+ h+='<div class="card"><label class="f" style="margin-top:0">Generator model</label><div class="ptgt">'+GENLIB.map(function(q){return '<button type="button" class="'+(k===q.k?'pri':'')+'" data-pt="gpm" data-v="'+q.k+'">'+e(q.n)+'</button>';}).join('')+'</div>'+
+  '<p class="muted" style="margin:8px 0 0;font-size:13px">Only models with a manual in the library are listed. For any other model, use QSOL under Full manual.</p></div>';
+ if(!X)return h+gpnLinks();
+ h+='<div class="card"><h3 style="margin-top:0">Reading the fault code</h3><ul class="gpr">'+X.read.map(function(s){return '<li>'+e(s)+'</li>';}).join('')+'</ul></div>';
+ h+='<div class="card"><h3 style="margin-top:0">Fault codes</h3><input id="gpnQ" inputmode="numeric" autocomplete="off" placeholder="Type the code number, e.g. 36" style="margin-bottom:8px"><p class="muted" id="gpnNo" hidden>No code with that number in this manual.</p>'+gpnList(X.codes,'c')+'</div>';
+ h+='<div class="card"><h3 style="margin-top:0">Other problems</h3>'+gpnList(X.sym,'s')+'</div>';
+ h+='<div class="card"><h3 style="margin-top:0">Service parts</h3><ul class="gpr">'+F.parts.map(function(p){return '<li><b>'+e(p.t)+':</b> '+e(p.pn)+(p.was?' (supersedes '+e(p.was)+')':'')+'</li>';}).join('')+
+  (F.brush?'<li><b>Brush block:</b> '+e(F.brush.pn)+'</li>':'')+(F.plugs?'<li><b>Spark plugs:</b> '+e(F.plugs.pn)+' × '+F.plugs.qty+'</li>':'')+'<li><b>Oil:</b> '+e(F.oil)+'</li>'+(F.cool?'<li><b>Coolant:</b> '+e(F.cool)+'</li>':'')+'</ul></div>';
+ return h+gpnLinks();}
+function gpnPaint(){var b=document.getElementById('gpnBody');if(b)b.innerHTML=gpnHtml()+'<p class="gpn-cr">'+e(creditText())+'</p>';}
+function gpnPop(){gpnClose(false);}
+function gpnKey(ev){if(ev.key==='Escape'&&GPN.open){ev.preventDefault();gpnClose();}}
+function genPanel(){if(GPN.open)return;GPN.open=true;GPN.m=gpnStart();var p=document.createElement('div');p.id='genPanel';p.setAttribute('role','dialog');p.setAttribute('aria-modal','true');
+ p.innerHTML='<div class="gpn-h"><b>Generator manual &amp; fault codes</b><button type="button" class="pri" data-pt="gpclose">Close</button></div><div class="gpn-s"><div id="gpnBody" class="gpn-in"></div></div>';
+ document.body.appendChild(p);document.documentElement.classList.add('gpn-lock');gpnPaint();
+ try{history.pushState({camx:1,gpn:1},'',location.href);}catch(err){}
+ window.addEventListener('popstate',gpnPop);document.addEventListener('keydown',gpnKey,true);}
+function gpnClose(back){if(!GPN.open)return;GPN.open=false;var p=document.getElementById('genPanel');if(p)p.remove();document.documentElement.classList.remove('gpn-lock');
+ window.removeEventListener('popstate',gpnPop);document.removeEventListener('keydown',gpnKey,true);
+ if(back!==false){try{if(history.state&&history.state.gpn)history.back();}catch(err){}}}
+document.addEventListener('input',function(ev){var t=ev.target;if(!t||t.id!=='gpnQ')return;var q=String(t.value||'').replace(/\D/g,''),hit=0;
+ [].forEach.call(document.querySelectorAll('#gpnBody details[data-c]'),function(d){var c=d.getAttribute('data-c'),on=!q||c.indexOf(q)===0;d.hidden=!on;if(on)hit++;d.open=!!q&&c===q;});
+ var no=document.getElementById('gpnNo');if(no)no.hidden=!q||hit>0;});
+
 var SECS=[
  {id:'s1',t:'1. Job info',n:'These are the inspection’s own header fields, so they carry straight into the Info step and the certificate.',f:JOBF,svc:1,g:[]},
  {id:'s2',t:'2. Tower & generator (from the last report, if available)',tow:1,g:[{i:[
@@ -14904,7 +14996,7 @@ function secHtml(r,sec){var c=secDone(r,sec),t=T(r),h='<div class="card"><div cl
  if(sec.f){h+='<div class="grid">'+sec.f.map(function(f){return inp('hdr.'+f[0],f[1],{type:f[2]})}).join('')+'</div>';}
  if(sec.svc){var sel=r.svc&&r.svc.sel||{};h+='<label class="f" style="margin-top:12px">Service type(s) for the certificate</label><div class="ptgt">'+SVC.map(function(s){return '<button type="button" class="'+(sel[s[0]]?'pri':'')+'" data-pt="svc" data-v="'+s[0]+'">'+e(s[1].replace(' (Preventative Maintenance Service)',' (PM)'))+'</button>';}).join('')+'</div>';}
  if(sec.tow){h+='<div class="grid">'+TOWF.map(function(f){return inp('hdr.'+f[0],f[1])}).join('')+'</div>'+
-  '<label class="f" style="margin-top:12px">Generator model (fills in the parts to bring and the oil)</label>'+gmBtns(r)+
+  '<label class="f" style="margin-top:12px">Generator model (fills in the parts to bring and the oil)</label>'+gmBtns(r)+'<button type="button" class="gpb" data-pt="genpanel">🔧 Fault codes &amp; manual for this generator ›</button>'+
   '<label class="f" style="margin-top:12px">Generator type (gas adds the spark plug and ignition coil checks)</label><div class="ptgt" id="ptGt">'+[['diesel','Diesel'],['gas','Gas / spark-ignition'],['other','Other']].map(function(x){return '<button type="button" class="'+(r.genType===x[0]?'pri':'')+'" data-pt="gt" data-v="'+x[0]+'">'+x[1]+'</button>';}).join('')+'</div>'+
   '<label class="row" style="gap:12px;margin-top:12px"><input type="checkbox" data-pt="lg" style="width:26px;min-height:26px" '+(r.legacy?'checked':'')+'><span><b>Legacy DC tower</b><br><span class="muted">Adds Section 7 (Legacy DC Towers only) to the inspection.</span></span></label>'+lastHtml(r);}
  h+=sec.g.map(function(g){return (g.h?'<div class="grp">'+e(g.h)+'</div>':'')+(g.gen?'<div id="ptGp">'+gpHtml(r)+'</div>':'<div class="ptl"'+(sec.f||sec.tow?' style="margin-top:8px"':'')+'>'+g.i.map(function(x){return tick(r,x,'tick',null,!!t.ck[x[0]])}).join('')+'</div>');}).join('');
@@ -15023,6 +15115,9 @@ document.addEventListener('click',function(ev){var b=ev.target.closest('[data-pt
  if(a==='blank'){blankDlg();return;}
  if(a==='blankpt'){closeModal();run(function(){tripPdf(null);});return;}
  if(a==='blankinsp'){closeModal();run(function(){blankInspPdf();});return;}
+ if(a==='genpanel'){genPanel();return;}
+ if(a==='gpclose'){gpnClose();return;}
+ if(a==='gpm'){GPN.m=b.getAttribute('data-v');try{localStorage.setItem('genPanelModel',GPN.m);}catch(err){}gpnPaint();return;}
  if(!r)return;
  if(a==='cskip'){var k=b.getAttribute('data-k');r.carry=r.carry||{};r.carry[k]='skip';dirty();var n=b.closest('.cnote');if(n)n.outerHTML=cnote(k);return;}
  if(r.step!==0)return;var t=T(r);
