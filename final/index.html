@@ -14106,8 +14106,8 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'phzip':{const z=photoZipFile(r);if(z)dlBlob(z.blob,z.name);break;}
  case 'sigclr':{r.done.sig='';const c=$('#sigc');if(c)c.getContext('2d').clearRect(0,0,c.width,c.height);const m=$('#sigMsg');if(m)m.textContent='Not signed yet.';markDirty();break;}
  case 'finish':{if(tkMissing(r).length&&!S.tkSkip){tkPrompt(()=>{S.tkSkip=1;b.click();});break;}S.tkSkip=0;const m=[];if(!(r.hdr.sn||'').trim()&&!r.hdr.was)m.push('Skid serial number (Serials page)');if(!String(r.done.name||r.hdr.tech||'').trim())m.push('Print name');if(!r.done.sig)m.push('Technician signature');
-  const n=$('#finNeed');if(m.length){n.innerHTML=`<div class="err"><b>Still needed:</b><ul style="margin:6px 0 0 18px;padding:0">${m.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;break;}
-  if(!/\d/.test(r.hdr.sn||'')&&!await ask('The skid serial number is still blank. The report will show '+(String(r.hdr.sn||'').trim()||'the serial')+' ____ so it can be written in.\n\nFinish anyway?',{title:'Serial number not entered',ok:'Finish anyway',no:'Go back'}))break;const bf=blankFields(r),cL=ckLeft(r),nm=bf.length+cL.length;if(nm&&!await ask('These are not filled in. The report will show them highlighted in yellow.'+(bf.length?'\n\nSerial numbers:\n'+bf.map(x=>'  • '+x).join('\n'):'')+(cL.length?'\n\nChecklist (not completed):\n'+cL.map(o=>'  • '+(o.x+1)+'. '+o.i.t).join('\n'):'')+'\n\nFinish anyway?',{title:nm+' item'+(nm===1?'':'s')+' missing',ok:'Finish anyway',no:'Go back'}))break;
+  const n=$('#finNeed');
+  const bf=blankFields(r),cL=ckLeft(r),nm=bf.length+cL.length;
   if((r.ph||[]).length&&r.done.incPh===''){const inc=await ask('The '+r.ph.length+' picture'+(r.ph.length===1?' is':'s are')+' in the PDF report. Also send '+(r.ph.length===1?'it':'them')+' as a separate ZIP (full size)?',{title:'Pictures',ok:'Also send ZIP',no:'PDF only'});r.done.incPh=inc?'1':'0';}
   r.done.complete=true;if(!r.done.name)r.done.name=r.hdr.tech;if(!r.done.date)r.done.date=today();techRemember(r.done.name);markDirty();await save();render();break;}
  case 'toatp':{try{localStorage.setItem('qrHandoff',JSON.stringify({q:finDone(r),t:Date.now(),k:'atp'}));}catch(e){}location.href='../atp/';break;}
@@ -14129,7 +14129,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)save();});
 function curTpl(){return TPL}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'67'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'70'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14252,7 +14252,7 @@ document.addEventListener('focusout',e=>{histCommit(e.target);setTimeout(()=>{if
 document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='53bb6a8704';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='6468a19a90';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';

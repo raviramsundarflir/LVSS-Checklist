@@ -13919,10 +13919,10 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'home':await save();S.view='home';S.rec=null;S.audit=false;render();break;
  case 'save':save();break;
  case 'step':{const n=+b.dataset.s;if(n>=4&&r.step<4&&!(n===5&&!r.signed)){{const m=swGate(r);if(m.length){swGateDlg(m);break;}}if(!S.serBypass&&n<=4&&!(await proceedCheck()))break;if(!S.serBypass){S.serAct={act:'step',s:n};serConfirmDlg();break;}S.serBypass=false;}if(n===5&&!r.signed){alert('Complete the sign-off on step 4 first.');break;}
-  if(r.step===1&&n>=2&&(!(r.serPh.towerSerial||[]).length||!(r.serPh.towerWhole||[]).length)&&!r.noPhotoOk){const m=[];if(!(r.serPh.towerSerial||[]).length)m.push('the tower serial number plate');if(!(r.serPh.towerWhole||[]).length)m.push('the whole tower');if(!confirm('The Completion Certificate shows a photo of the tower serial number and of the whole tower.\n\nStill needed: '+m.join(' and ')+'.\n\nOK = continue without them\nCancel = go back and add them'))break;r.noPhotoOk=true;}
-  if(r.step===2&&n>=3&&(!r.spares.a||(r.spares.a==='yes'&&!r.spares.sec))&&!r.noSpOk){if(!confirm((!r.spares.a?'Not answered: are any spare consumables (oil pan, filters, oil, towels, cleaning spray) being left with the tower?':'Not answered: are the spare consumables secured?')+'\n\nOK = continue without answering\nCancel = go back and answer'))break;r.noSpOk=true;}
-  if(r.step===1&&n>=2&&!svcLines(r).length&&!r.noSvcOk){if(!confirm('No description of service has been selected (PMx, Warranty Repair, Non-Warranty Repair, Inspection).\n\nOK = continue without\nCancel = go back and select'))break;r.noSvcOk=true;}
-  if(r.step===1&&n>=2&&!r.gear.length&&!r.noEquipOk){if(!confirm('No cameras or NVR / DVR have been added yet.\n\nOK = continue without them\nCancel = go back and add them'))break;r.noEquipOk=true;}
+  if(r.step===1&&n>=2&&(!(r.serPh.towerSerial||[]).length||!(r.serPh.towerWhole||[]).length)&&!r.noPhotoOk){const m=[];if(!(r.serPh.towerSerial||[]).length)m.push('the tower serial number plate');if(!(r.serPh.towerWhole||[]).length)m.push('the whole tower');if(false)break;r.noPhotoOk=true;}
+  if(r.step===2&&n>=3&&(!r.spares.a||(r.spares.a==='yes'&&!r.spares.sec))&&!r.noSpOk){if(false)break;r.noSpOk=true;}
+  if(r.step===1&&n>=2&&!svcLines(r).length&&!r.noSvcOk){if(false)break;r.noSvcOk=true;}
+  if(r.step===1&&n>=2&&!r.gear.length&&!r.noEquipOk){if(false)break;r.noEquipOk=true;}
   go(n);break;}
  case 'sec':enterSec(+b.dataset.si);break;
  case 'nextsec':{const si=+b.dataset.si;let j=si+1;while(j<r.tpl.sections.length&&hidden(r,r.tpl.sections[j]))j++;S.open=si;enterSec(j);break;}
@@ -13971,13 +13971,13 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'rmsvc':{r.svc.extra.splice(+b.dataset.i,1);markDirty();if($('#svcCard'))$('#svcCard').outerHTML=svcCardHtml();else{$('#body').innerHTML=certHtml();initPads();}break;}
  case 'clrsig':{const w=b.dataset.w;r.cert[w+'Sig']=null;r.cert[w+'Date']='';markDirty();$('#body').innerHTML=certHtml();initPads();break;}
  case 'finish':{const c=r.cert,st=stats(r);const miss=[];if(!c.custSig)miss.push('customer signature');if(!c.techSig)miss.push('Teledyne FLIR technician signature');if(!custName(r).trim())miss.push('customer printed name');if(!(r.hdr.tech||'').trim())miss.push('technician printed name');
-  if(st.nolv)miss.push(st.nolv+' failed item(s) without a concern level');if(!r.verdict)miss.push('final answer: did the tower pass');if(st.nwun)miss.push(st.nwun+' non-warranty item(s) not marked Repaired or Advised');if(!emailOk((r.hdr.techEmail||'').trim()))miss.push('technician e-mail');{const bad=mails(r.hdr.email).filter(e=>!emailOk(e));if(bad.length)miss.push('a valid customer e-mail ('+bad[0]+')');}if(st.nowar)miss.push(st.nowar+' failed item(s) without Warranty / Non-warranty');if(miss.length){alert('Still needed: '+miss.join(', ')+'.');break;}
-  if(!r.linesOk){if(!confirm('Do you want to add any other completed service lines to the Completion Certificate?\n\nOK = no, continue to sign-off\nCancel = go back and add lines'))break;r.linesOk=true;}
-  if(!mails(r.hdr.email).length&&!confirm('No customer e-mail was entered, so the customer will not be copied. Complete sign-off anyway?'))break;
-  {const np=[];if(!(r.serPh.towerSerial||[]).length)np.push('tower serial number');if(!(r.serPh.towerWhole||[]).length)np.push('whole tower');if(np.length&&!confirm('No photo of the '+np.join(' or ')+' – the certificate will say "No photo provided". Complete sign-off anyway?'))break;}
-  S.settings.lastTechEmail=r.hdr.techEmail.trim();setting('lastTechEmail',S.settings.lastTechEmail);
+  if(st.nolv)miss.push(st.nolv+' failed item(s) without a concern level');if(!r.verdict)miss.push('final answer: did the tower pass');if(st.nwun)miss.push(st.nwun+' non-warranty item(s) not marked Repaired or Advised');if(!emailOk((r.hdr.techEmail||'').trim()))miss.push('technician e-mail');{const bad=mails(r.hdr.email).filter(e=>!emailOk(e));if(bad.length)miss.push('a valid customer e-mail ('+bad[0]+')');}if(st.nowar)miss.push(st.nowar+' failed item(s) without Warranty / Non-warranty');
+  r.linesOk=true;
+  
+  {const np=[];if(!(r.serPh.towerSerial||[]).length)np.push('tower serial number');if(!(r.serPh.towerWhole||[]).length)np.push('whole tower');if(false)break;}
+  S.settings.lastTechEmail=(r.hdr.techEmail||'').trim();if(S.settings.lastTechEmail)setting('lastTechEmail',S.settings.lastTechEmail);
   if(r.cert.custName==null)r.cert.custName=custName(r);
-  if(st.open&&!confirm(`${st.open} punch-list item(s) are still open${st.openDno?` (including ${st.openDno} DO NOT OPERATE)`:''}. They will be shown as OPEN on the certificate. Complete sign-off anyway?`))break;
+  if(false)break;
   r.signed=true;r.signedAt=Date.now();S.dirty=true;await save();go(5);break;}
  case 'reopen':{const p=prompt('Admin PIN to reopen (this clears both signatures):');if(p!==ADMIN_PIN){if(p!==null)alert('Wrong PIN');break;}r.signed=false;r.cert.custSig=r.cert.techSig=null;r.cert.custDate=r.cert.techDate='';S.dirty=true;await save();renderRec();break;}
  case 'rcp':{const x=b.dataset.e;if(b.checked)delete r.recipients.off[x];else r.recipients.off[x]=true;markDirty();break;}
@@ -14086,7 +14086,7 @@ function swapHtml(){const r=S.rec,w=r.swap,L=w.list,fs=swFinal(r);
  <div class="row">${devs.filter(d=>!L.some(e=>e.dev===d.k)).map(d=>`<button data-act="lcsel" data-id="${d.k}">${esc(d.t)}</button>`).join('')}</div>
  <div class="row" style="margin-top:8px"><input id="swNew" placeholder="Device not in the list – type its name" style="flex:1;min-width:220px"><button data-act="swadd">＋ Add unlisted device</button></div>
  <div class="row" style="margin-top:10px"><button class="${w.chk?'pri':''}" data-act="lcno" style="flex:1">${w.chk?'✓ ':''}${L.length?'No, nothing else swapped':'No, nothing was swapped'}</button></div></div></div>`;}
-function swGate(r){const m=[];if(!r.swap.chk)m.push('"One last check" on swapped devices (end of the Inspect step)');return m;}
+function swGate(r){const m=[];return m;if(!r.swap.chk)m.push('"One last check" on swapped devices (end of the Inspect step)');return m;}
 function swGateDlg(m){notice('Finish these first:\n\n• '+m.join('\n• '),{title:'Swapped devices',fix:()=>{if(S.rec.step!==2)go(2);setTimeout(()=>{const el=$('#swapCard');if(el){el.scrollIntoView({block:'center'});el.classList.add('target');setTimeout(()=>el.classList.remove('target'),5000);}},180);},fixLabel:'Take me there'});}
 function failedUnits(r){const o=[];r.swap.list.forEach((e,i)=>(e.mid||[]).forEach((m,j)=>o.push({e,i,m,j})));return o;}
 function rmaCard(u){const {e,i,m,j}=u,tbd=m.rma==='TBD';
@@ -14176,7 +14176,8 @@ function showFyiNext(){let b=$('#fyiNext');const L=fyiList(S.rec);if(!L.length||
  b.innerHTML='<button class="pri" data-act="fyinext" style="writing-mode:vertical-rl;transform:rotate(180deg);width:56px;min-width:56px;min-height:200px;padding:14px 0;margin:0;font-size:17px;font-weight:700;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.35);white-space:nowrap;line-height:1">Next missing item →</button><button data-act="fyiclose" aria-label="Hide" style="width:56px;min-width:56px;min-height:46px;padding:0;margin:0;background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.25)">✕</button>';}
 function fyiNextKey(){const L=fyiList(S.rec),ks=L.map(y=>y.k);if(!ks.length)return null;const i=ks.indexOf(S.fyiLast);return ks[(i+1)%ks.length];}
 function rmaTbdList(r){const o=[];r.swap.list.forEach(e=>{if(e.rma==='TBD')o.push((e.t||'device')+' (swap)');(e.mid||[]).forEach(m=>{if(m.rma==='TBD')o.push((e.t||'device')+' '+m.s+' (failed unit)');});});return o;}
-async function proceedCheck(){const r=S.rec,L=fyiList(r),tbd=rmaTbdList(r);if(!L.length&&!tbd.length)return true;
+async function proceedCheck(){return true;}
+async function proceedCheckOld(){const r=S.rec,L=fyiList(r),tbd=rmaTbdList(r);if(!L.length&&!tbd.length)return true;
  const rm=L.filter(y=>y.rmaMiss);
  let msg='';if(L.length)msg+='These details are not recorded. They do not stop the report – tap an item to go straight to it, or continue anyway.';
  if(tbd.length)msg+=(msg?'\n\n':'')+'RMA TBD is set for: '+tbd.join(', ')+'.';
@@ -14548,7 +14549,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'69'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'70'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14611,7 +14612,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='f734105707';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='da92c25e8b';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
