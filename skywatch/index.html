@@ -13918,7 +13918,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'del':if(confirm('Delete this inspection from the tablet? This cannot be undone. (Use Backup file first if unsure.)')){const x=await dbGet('recs',b.dataset.rid);if(x){for(const d of Object.values(x.items))for(const p of d.ph||[])await dbDel('photos',p);for(const e of x.gear||[])for(const p of e.ph||[])await dbDel('photos',p);for(const l of Object.values(x.serPh||{}))for(const p of l)await dbDel('photos',p);}await dbDel('recs',b.dataset.rid);window.tscDrop&&tscDrop(b.dataset.rid);render();}break;
  case 'home':await save();S.view='home';S.rec=null;S.audit=false;render();break;
  case 'save':save();break;
- case 'step':{const n=+b.dataset.s;if(n>=4&&r.step<4&&!(n===5&&!r.signed)){{const m=swGate(r);if(m.length){swGateDlg(m);break;}}if(!S.serBypass&&n<=4&&!(await proceedCheck()))break;if(!S.serBypass){S.serAct={act:'step',s:n};serConfirmDlg();break;}S.serBypass=false;}if(n===5&&!r.signed){alert('Complete the sign-off on step 4 first.');break;}
+ case 'step':{const n=+b.dataset.s;if(n>=4&&r.step<4&&!(n===5&&!r.signed)){{const m=swGate(r);if(m.length){swGateDlg(m);break;}}if(!S.serBypass&&n<=4&&!(await proceedCheck()))break;S.serBypass=false;}if(n===5&&!r.signed){alert('Complete the sign-off on step 4 first.');break;}
   if(r.step===1&&n>=2&&(!(r.serPh.towerSerial||[]).length||!(r.serPh.towerWhole||[]).length)&&!r.noPhotoOk){const m=[];if(!(r.serPh.towerSerial||[]).length)m.push('the tower serial number plate');if(!(r.serPh.towerWhole||[]).length)m.push('the whole tower');if(false)break;r.noPhotoOk=true;}
   if(r.step===2&&n>=3&&(!r.spares.a||(r.spares.a==='yes'&&!r.spares.sec))&&!r.noSpOk){if(false)break;r.noSpOk=true;}
   if(r.step===1&&n>=2&&!svcLines(r).length&&!r.noSvcOk){if(false)break;r.noSvcOk=true;}
@@ -13965,7 +13965,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'markp':{flat(r).filter(x=>x.si===+b.dataset.si&&!x.extra).forEach(x=>{const q=itm(x.id);if(!q.st)q.st='pass'});markDirty();resec(+b.dataset.si);break;}
  case 'addpart':r.parts.push({li:'',desc:'',part:'',qty:''});markDirty();resec(r.tpl.sections.length);break;
  case 'rmpart':r.parts.splice(+b.dataset.i,1);markDirty();resec(r.tpl.sections.length);break;
- case 'topunchnext':{{const m=swGate(r);if(m.length){swGateDlg(m);break;}}if(!S.serBypass&&!(await proceedCheck()))break;if(r.step<4&&!S.serBypass){S.serAct={act:'topunchnext',s:4};serConfirmDlg();break;}S.serBypass=false;go(4);break;}
+ case 'topunchnext':{{const m=swGate(r);if(m.length){swGateDlg(m);break;}}if(!S.serBypass&&!(await proceedCheck()))break;S.serBypass=false;go(4);break;}
  case 'svc':{r.svc.sel[b.dataset.k]=!r.svc.sel[b.dataset.k];markDirty();$('#svcCard').outerHTML=svcCardHtml();break;}
  case 'addsvc':{r.svc.extra.push({id:'x'+uid(),t:''});markDirty();if($('#svcCard'))$('#svcCard').outerHTML=svcCardHtml();else{$('#body').innerHTML=certHtml();initPads();}const ins=document.querySelectorAll(`[data-b="svc.extra.${r.svc.extra.length-1}.t"]`);ins.length&&ins[ins.length-1].focus();break;}
  case 'rmsvc':{r.svc.extra.splice(+b.dataset.i,1);markDirty();if($('#svcCard'))$('#svcCard').outerHTML=svcCardHtml();else{$('#body').innerHTML=certHtml();initPads();}break;}
@@ -14549,7 +14549,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'72'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'73'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14612,7 +14612,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='40a4469563';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='521580c28c';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';

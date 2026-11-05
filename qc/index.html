@@ -14005,7 +14005,7 @@ function rerenderPh0(id){wipAfterPhoto();if(id==='rmaf'){const el=$('#infoRep');
 function finalSerials(r){const out=[];r.gear.forEach(g=>{if(g.na)return;const sw=swOn(r)?r.swap.list.find(e=>e.dev===g.id):null;const v=((sw&&(sw.nw||'').trim())?sw.nw:g.s||'').trim();if(v)out.push({n:g.t,s:v,swapped:!!(sw&&(sw.nw||'').trim()),dev:g.id});});
  if(swOn(r))r.swap.list.filter(e=>!e.dev&&(e.nw||'').trim()).forEach(e=>out.push({n:e.t||'Other device',s:e.nw.trim(),swapped:true,dev:null}));return out;}
 function gateIssues(r){const m=[];
- if(!r.swap.chk)m.push('"One last check" on swapped devices (end of the Inspect step)');
+ 
  blockedList(r).forEach(x=>{const q=r.items[x.id]||{};if(!(q.by||[]).length&&!(q.why||'').trim())m.push('Item #'+x.label+' is marked "can\'t test yet" - say what is blocking it');});
  return m;}
 
@@ -14217,7 +14217,7 @@ const thumbs=id=>{const l=phOwner(id).ph;return l.length?`<div class="ph">${l.ma
 const camBtn=id=>{const n=phOwner(id).ph.length;return `<button class="ic" data-act="cam" data-id="${id}" title="Attach a photo of the serial number plate">📷${n?`<b>${n}</b>`:''}</button>`};
 function acctHtml(){const v=S.rec.hdr.acct||'',pre=ACCT.includes(v);return `<div id="acctBox"><label class="f">Account indicator</label><div class="row" style="flex-wrap:wrap;gap:6px">${ACCT.map(a=>`<button class="${v===a?'pri':''}" data-act="acct" data-v="${a}" style="min-width:54px;padding:8px 10px">${a}</button>`).join('')}<input data-b="hdr.acct" value="${esc(pre?'':v)}" placeholder="Other code" style="width:110px"></div></div>`}
 function gateNote(){const r=S.rec,gi=gateIssues(r),fy=fyiList(r).filter(y=>y.k==='sn'||y.k[0]==='g');return gi.length?`<div class="err" style="margin-bottom:10px"><b>Required before you can go to the Punch List:</b> the “One last check” on swapped devices at the end of the Inspect step.<div style="margin:6px 0 0">Still needed: ${esc(gi.join(' · '))}</div></div>`:fy.length?`<div class="ok" style="margin-bottom:10px;background:#f1faf4"><b>FYI:</b> ${fy.length} serial detail${fy.length>1?'s are':' is'} not recorded yet (${esc(fy.map(y=>y.t).join(', '))}). This won't stop you – fill in what you can.</div>`:`<div class="ok" style="margin-bottom:10px"><b>All serial numbers are validated${r.noPhoto?' (photos waived – camera override)':' with photos'}.</b></div>`}
-function gateDlg(m){modal(`<h3>Finish these first</h3><p class="muted">The “One last check” on swapped devices must be completed, and items marked “can't test yet” need a reason.</p><ul style="margin:6px 0 10px 18px;padding:0">${m.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><button class="pri" data-act="gotofix">➜ Take me there</button><button data-act="mclose">Close</button>`);}
+function gateDlg(m){modal(`<h3>Finish these first</h3><p class="muted">Items marked “can't test yet” need a reason.</p><ul style="margin:6px 0 10px 18px;padding:0">${m.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><button class="pri" data-act="gotofix">➜ Take me there</button><button data-act="mclose">Close</button>`);}
 function tkCardHtml(g,i){const has=(g.ph||[]).length,om=g.omit&&!has;const tag=has?'<span class="tag" style="background:#d6f0de">✓ photo</span>':om?'<span class="tag" style="background:#eee">photo omitted</span>':'<span class="tag" style="background:#fde5c8">photo needed</span>';let inp;
  if(g.tk==='plate'){const on=CUST.pf(g.pf),raw=String(g.v||''),shown=on?raw.replace(/^dhs\s*/i,''):raw;inp=`<div class="row" style="flex-wrap:nowrap;margin-top:8px;gap:6px"><button data-act="tkpf" data-id="${g.id}" class="${on?'pri':''}" style="min-height:44px;padding:4px 12px;font-weight:800" title="Tap to turn the DHS prefix on or off">${on?'DHS':'no prefix'}</button><input data-tk="${g.id}" value="${esc(shown)}" placeholder="e.g. 201838" style="flex:1">${camBtn(g.id)}</div>`;}
  else inp=`<div class="row" style="flex-wrap:nowrap;margin-top:8px"><input data-b="gear.${i}.v" value="${esc(g.v||'')}" placeholder="${esc(g.t)}" style="flex:1">${camBtn(g.id)}</div>`;
@@ -14865,8 +14865,6 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
   
   if(n>=4&&r.step<4&&!(await qcRevisit()))break;
   
-  if(n>=4&&r.step!==4){serConfirmDlg();break;}
-  if(n>=4&&r.step<4&&!(r.ci&&r.ci.a)){ciDlg();break;}
   go(n);break;}
  case 'purp-new':{S.newPurp=b.dataset.v;document.querySelectorAll('[data-act=purp-new]').forEach(x=>x.classList.toggle('pri',x.dataset.v===S.newPurp));const u=$('#upBox');if(u)u.style.display=S.newPurp==='upfit'?'block':'none';const nb=$('#nbBox');if(nb)nb.style.display=S.newPurp==='newbuild'?'block':'none';const sl=$('#snLbl');if(sl)sl.textContent=S.newPurp==='newbuild'?'Planned platform serial number (if known – blank is fine)':'Platform Serial Number (required – names the saved file)';break;}
  case 'nblab-new':{S.nbLab=b.dataset.v;document.querySelectorAll('[data-act=nblab-new]').forEach(x=>x.classList.toggle('pri',x.dataset.v===S.nbLab));const k=$('#n-nbk');if(k&&(k.value===''||k.value==='K'||k.value==='F'))k.value=S.nbLab==='Kilo'?'K':'';break;}
@@ -14880,7 +14878,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
   else{const has=r.gear.filter(g=>g.em&&((g.s||'').trim()||(g.ph||[]).length));if(has.length&&!await ask('Switching to LVSS removes the eMSC-L devices you already filled in ('+has.map(g=>g.t).join(', ')+'). Continue?',{title:'Switch to LVSS?',ok:'Switch to LVSS',danger:1}))break;
    r.gear.filter(g=>g.em).forEach(g=>(g.ph||[]).forEach(p=>dbDel('photos',p)));const emIds=r.gear.filter(g=>g.em).map(g=>g.id);r.swap.list=r.swap.list.filter(e=>!emIds.includes(e.dev));r.gear=r.gear.filter(g=>!g.em);r.hdr.ptype=v;r.gear=gearSort(r.gear,v);}
   r.hdr.sn=plSwitch(v,r.hdr.sn);markDirty();{const y=window.scrollY;renderRec();window.scrollTo(0,y);}break;}
- case 'serok':{r.serConf=serSig(r);markDirty();closeModal();if(!(r.ci&&r.ci.a)){ciDlg();break;}go(4);break;}
+ case 'serok':{r.serConf=serSig(r);markDirty();closeModal();go(4);break;}
  case 'cinone':{ciEnsure(r).a=true;markDirty();closeModal();go(4);break;}
  case 'ciyes':{const c=ciEnsure(r);c.a=true;if(!c.items.length)c.items.push({id:uid(),area:'',t:''});markDirty();modal(ciEditHtml());break;}
  case 'ciopen':{const c=ciEnsure(r);if(!c.items.length)c.items.push({id:uid(),area:'',t:''});modal(ciEditHtml());break;}
@@ -14987,7 +14985,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
   {const q=itm(t);(q.parts=q.parts||[]).push({pn:P.pn,desc:P.ds,qty:P.qt});markDirty();const x=flat(r).find(y=>y.id===t);if(x){const el=$('#r-'+t);if(el)rerenderRow(t);}resec(n);refreshJump();break;}}
  case 'rmipart':{const q=r.items[b.dataset.id];if(q&&q.parts){q.parts.splice(+b.dataset.i,1);markDirty();rerenderRow(b.dataset.id);resec(r.tpl.sections.length);}break;}
  case 'rmpart':r.parts.splice(+b.dataset.i,1);markDirty();resec(r.tpl.sections.length);break;
- case 'topunchnext':{const m=gateIssues(r);if(m.length){gateDlg(m);break;}if(!(await proceedCheck()))break;if(r.step!==4){serConfirmDlg();break;}go(4);break;}
+ case 'topunchnext':{const m=gateIssues(r);if(m.length){gateDlg(m);break;}if(!(await proceedCheck()))break;go(4);break;}
  case 'gotofix':{closeModal();const t=gateTarget(r);if(!t)break;if(r.step!==t.step)go(t.step);setTimeout(()=>{const el=$('#'+t.id);if(el){el.scrollIntoView({block:'center'});el.classList.add('target');setTimeout(()=>el.classList.remove('target'),5000);}},120);break;}
  case 'rmatbd':{const e=r.swap.list[+b.dataset.i];if(e){e.rma=e.rma==='TBD'?'':'TBD';markDirty();rerenderSwap();}break;}
  case 'nophoto':{r.noPhoto=!r.noPhoto;markDirty();$('#infoSer').innerHTML=serHtml();const sc=$('#swapCard');if(sc)sc.outerHTML=swapHtml();break;}
@@ -15226,7 +15224,7 @@ function swEntryHtml(e,i,cmp){const r=S.rec,dv=!!e.dev;
 function swapHtml(){const r=S.rec,w=r.swap,L=w.list,fs=finalSerials(r);
  const devs=r.gear.filter(g=>!g.na&&!g.tk);
  return `<div id="swapCard">${L.length?`<div class="card" style="border:2px solid #7b4fb5;margin-top:14px"><h3>Serialized devices swapped</h3><p class="muted" style="margin:0">Recorded automatically when a serial number was changed and confirmed as an actual swap.</p>${L.map((e,i)=>swEntryHtml(e,i,0)).join('')}</div>`:''}
- <div class="card" id="lastChk" style="border:2px solid var(--blue);margin-top:14px"><h3>One last check – serialized devices</h3>${w.chk?'':'<p class="need">Please complete this check before the final report:</p>'}
+ <div class="card" id="lastChk" style="border:2px solid var(--blue);margin-top:14px"><h3>One last check – serialized devices</h3>
  <table class="t">${devs.map(g=>{const f=fs.find(x=>x.dev===g.id);return `<tr><td>${esc(g.t)}</td><td>${esc(f?f.s:(g.s||'—'))}${f&&f.swapped?' <span class="tag" style="background:#e6d9f5">swapped</span>':''}</td></tr>`}).join('')}${L.filter(e=>!e.dev).map(e=>`<tr><td>${esc(e.t||'Other device')}</td><td>${esc(e.nw||'—')} <span class="tag" style="background:#e6d9f5">swapped</span></td></tr>`).join('')}</table>
  <label class="f" style="margin-top:10px">${L.length?'Were any other devices swapped?':'Were any devices swapped?'}</label><p class="muted" style="margin:2px 0 6px">Tap a device to record its swap (old serial is kept, then enter the new serial # and photo), or add one that isn't listed. To swap a device again, change its new serial # in the card above.</p>
  <div class="row">${devs.filter(g=>!L.some(e=>e.dev===g.id)).map(g=>`<button data-act="lcsel" data-id="${g.id}">${esc(g.t)}</button>`).join('')}</div>
@@ -15763,7 +15761,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'72'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'73'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -15827,7 +15825,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='73170396b9';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='9eb32bb636';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';

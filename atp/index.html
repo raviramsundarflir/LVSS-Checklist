@@ -14918,7 +14918,6 @@ function dd49Why(rec){ var w=[]; if(rec.fromQr){ if(rec.ddAud) return w; if(rec.
   var au=rec.audit; if(blk&&!(au&&au.done&&au.verdict==='pass')) w.push(au&&au.done?'the punch list audit did not pass':'the punch list audit is not done yet'); return w; }
 async function dd1149Dlg(rec){
   var cu=CUST.of(rec); if(!cu.g){ notice('This truck\u2019s customer is '+cu.n+', which is not marked as a government customer, so it has no DD1149. To make one, set the customer to CBP / DHS or tick \u201cGovernment customer\u201d in the truck details.','No DD1149 for this customer'); return; }
-  var why=dd49Why(rec); if(why.length&&!await ask('The DD1149 is made once the ATP is complete and the auditor has verified the punch list, then PIVCO.\n\nRight now '+why.join(', and ')+'.\n\nMake the DD1149 anyway?',{title:'ATP not finished',ok:'Make it anyway',no:'Cancel'})) return;
   var v=dd49Vals(rec), x=DD(rec), R=function(k){ return dd49Get('r_'+k)||[]; }, SV=dd49Get('t_'+dd49Key(rec))||{};
   var chips=function(k,tgt){ var L=R(k); return L.length?'<div class="dd49chips">'+L.map(function(t,i){ return '<button type="button" class="btn light" data-ddx="chip" data-k="'+k+'" data-i="'+i+'" data-t="'+tgt+'">'+esc(t.split('\n')[0])+'</button>'; }).join('')+'</div>':''; };
   var head=(v.up?'Upfit: new '+(v.known?v.sn:(v.pfx?v.pfx.trim()+' ____':'____'))+' (old '+v.old+')':'New build: '+(v.known?v.sn:(v.pfx?v.pfx.trim()+' ____':'____')));
@@ -15697,7 +15696,7 @@ window.offReadiness=readiness;
 })();
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'72'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'73'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -15799,7 +15798,7 @@ function swapEndHTML(){
   '<div class="row2"><input id="swNew" placeholder="Device not in the list – type its name" style="flex:1;min-width:200px;min-height:44px;font-size:16px;padding:6px 10px;border:2px solid var(--line);border-radius:8px"><button class="btn light" data-act="sw-add">＋ Add unlisted device</button></div>'+
   '<div style="display:flex;align-items:center;gap:10px;margin-top:10px">'+((w.chk||L.length)?'':'<span class="arw grn"><i>&#10140;</i></span>')+'<button class="btn big" data-act="sw-lcno" style="flex:1;'+(w.chk?'background:#6b3fa0;color:#fff;':'background:#fff;color:#6b3fa0;')+'border:2px solid #4d2a78;font-weight:800">'+(w.chk?'<span style="color:#7CFC9A;font-size:1.2em">✔</span> ':'')+(L.length?'No, nothing else swapped':'No, nothing was swapped')+'</button></div></div>';
 }
-function swGate(rec){ var m=[], w=SW(rec); if(!w.chk) m.push('"One last check" on swapped devices (bottom of the checklist)'); return m; }
+function swGate(rec){ return []; }
 function failedUnits(rec){ var o=[]; SW(rec).list.forEach(function(e,i){ e.mid.forEach(function(m,j){ o.push({e:e,i:i,m:m,j:j}); }); }); return o; }
 function swRmaHTML(rec){ var FU=failedUnits(rec); if(!FU.length) return '';
   return '<h2>RMA required – failed units removed</h2>'+FU.map(function(u){ var tbd=u.m.rma==='TBD';
@@ -15941,7 +15940,7 @@ function calAskDlg(){ dlg('<h2 style="margin-top:0">TFU to Radar Cal</h2><p clas
 
 function calNext(){ var mr=document.getElementById('modal-root'); if(mr) mr.innerHTML=''; if(S.calGate){ S.calGate=false; afterCalGate(); } else renderReview(); }
 /* ---- Jake's New Build Final Inspection link ---- */
-function afterCalGate(){ if(!S.finAsked&&!(S.rec.fin&&S.rec.fin.st)){ S.finAsked=true; S.finGate=true; finAskDlg(); return; } serConfirmDlg(); }
+function afterCalGate(){ if(!S.finAsked&&!(S.rec.fin&&S.rec.fin.st)){ S.finAsked=true; S.finGate=true; finAskDlg(); return; } renderReview(); }
 function finAtpTxt(rec){ var c=rec.fin||{}; return c.st==='done'?'Completed'+(c.date?' '+fmtDate(c.date):''):c.st==='later'?'To be completed later':'Not recorded'; }
 function finAtpUrl(rec){ if(!/^https?:$/.test(location.protocol)) return ''; var h=rec.header||{}; return '../final/?sn='+encodeURIComponent(String(h.newSerial||'').trim())+'&vin='+encodeURIComponent(String(h.vin||'').trim())+'&cam='+encodeURIComponent(String(h.cameraSerial||'').trim())+'&radar='+encodeURIComponent(String(h.radarSerial||'').trim())+'&lcu='+encodeURIComponent(/^\s*PDX\s*$/i.test(h.lcuSerial||'')?'':String(h.lcuSerial||'').trim())+'&src='+encodeURIComponent('ATP '+fmtDate(h.date||'')+(h.inspector?', inspector '+String(h.inspector).trim():'')); }
 function finAtpCard(rec){ var c=rec.fin||{}, ok=c.st==='done';
@@ -15952,7 +15951,7 @@ function finLaterDlg(){ var rec=S.rec, svg=''; try{ svg=auQrMake(rec).createSvgT
   rec.fin=Object.assign({st:'',date:''},rec.fin||{}); if(rec.fin.st!=='done') rec.fin.st='later'; markDirty();
   dlg('<h2 style="margin-top:0">Start the final inspection later</h2><p class="muted">Take a picture of this code (it is also on the last page of the ATP report). In <b>Jake\'s New Build Final Inspection Form</b> tap <b>Scan QR</b> and a final inspection for '+esc(rec.header.newSerial||'this unit')+' opens with the S/N, VIN and serials filled in.</p><div style="background:#fff;border:1px solid #ccd;padding:6px;max-width:260px;margin:0 auto">'+svg+'</div><div class="sheet-btns"><button class="btn primary big" data-act="fin-cont">Continue</button></div>','sheet'); }
 function finAskDlg(){ dlg('<h2 style="margin-top:0">Jake\'s New Build Final Inspection</h2><p class="muted">Is this a new build that needs Jake\'s final inspection? Start it now, or start it later from the QR code on this report.</p><div class="sheet-btns"><button class="btn primary big" data-act="fin-open">Yes – open it now</button><button class="btn light big" data-act="fin-later">Later – show QR code</button><button class="btn light big" data-act="fin-done">Already completed</button><button class="btn light big" data-act="fin-cont">Not a new build / skip</button></div>','sheet'); }
-function finNext(){ var mr=document.getElementById('modal-root'); if(mr) mr.innerHTML=''; if(S.finGate){ S.finGate=false; serConfirmDlg(); } else renderReview(); }
+function finNext(){ var mr=document.getElementById('modal-root'); if(mr) mr.innerHTML=''; S.finGate=false; renderReview(); }
 /* ===== ATP: audit resolve flow (verified -> retest blocked -> check unassociated) + FYI list ===== */
 function labOf(n){ return '#'+n; }
 function trunc(t,n){ t=String(t||'').replace(/\s+/g,' ').trim(); return t.length>n?t.slice(0,n-1)+'…':t; }
@@ -16696,7 +16695,7 @@ SendTo.init({rec:function(){ return S.rec; },dirty:function(){ markDirty(); save
 })();
 
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='2a797877e6';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='7b1c1ddcac';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
