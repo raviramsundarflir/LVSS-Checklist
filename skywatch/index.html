@@ -12989,7 +12989,7 @@ function sameOrigin(r){try{return !!r&&new URL(r).origin===location.origin;}catc
 function note(){if(busy||!A||!A.snap)return;var s;try{s=A.snap();}catch(e){return;}if(!s)return;if(cur&&key(s)===key(cur))return;if(cur){stack.push(cur);if(stack.length>60)stack.shift();}cur=s;}
 function sched(){if(tm)return;tm=setTimeout(function(){tm=null;note();},120);}
 function home(){var d=false,go=function(){if(d)return;d=true;location.href=HOME;};try{var p=A&&A.save&&A.save();if(p&&p.then){p.then(go,go);setTimeout(go,1500);return;}}catch(e){}go();}
-function overlay(){var g=document.getElementById('genPanel');if(g){var c=g.querySelector('[data-pt="gpclose"]');if(c){c.click();return true;}}return false;}
+function overlay(){var t=document.getElementById('techPanel');if(t){var tc=t.querySelector('[data-pt="tdclose"]');if(tc){tc.click();return true;}}var g=document.getElementById('genPanel');if(g){var c=g.querySelector('[data-pt="gpclose"]');if(c){c.click();return true;}}return false;}
 function back(){if(overlay())return;
  if(!A||!A.restore){if(sameOrigin(document.referrer)&&history.length>1)history.back();else home();return;}
  note();if(!stack.length){home();return;}
@@ -13291,7 +13291,7 @@ async function renderHome(){S.recs=(await dbAll('recs')).sort((a,b)=>b.updated-a
  <p class="muted">Everything is stored on this tablet and works with no internet. Internet is only needed at the very end to send the e-mail.</p></div>
  ${S.recs.length?'':'<div class="card muted">No inspections yet.</div>'}
  ${S.recs.map(r=>{const st=stats(r);return `<div class="card home-c"><div class="gr"><b style="font-size:18px">${esc(title(r))}</b> ${r.signed?'<span class="tag" style="background:#d6f0de">SIGNED</span>':(r.step===0?'<span class="tag" style="background:#fde5c8">🧳 Trip planning</span>':'<span class="tag">In progress – step '+r.step+' of 5</span>')}${(r.audit&&r.audit.done)?`<span class="tag" style="background:${r.audit.verdict==='pass'?'#d6f0de':'#fdecec'}">Audit ${r.audit.verdict==='pass'?'PASSED':'FAILED'}</span>`:''}<br><span class="muted">${esc(r.hdr.customer||'No customer')} · ${esc(fmtD(r.hdr.date))} · updated ${new Date(r.updated).toLocaleString()}</span><br><span class="muted">${st.f} failed · ${st.open} open${st.blk?` · ${st.blk} not tested`:''}${st.dno?` · <b style="color:#c62828">${st.dno} DO NOT OPERATE</b>`:''}</span></div>
- <button class="pri" data-act="open" data-rid="${r.id}">Open</button>${r.signed?`<button data-act="auditrec" data-rid="${r.id}" style="border-color:#6b3fa0;color:#6b3fa0;font-weight:700">🔍 Audit</button>`:''}<button class="dng" data-act="del" data-rid="${r.id}">Delete</button></div>`}).join('')}<div class="card home-more"><div class="muted" style="font-size:13px;margin:0 0 6px">More options</div><div class="row"><button data-pt="blank">🖨 Print blank forms</button><button data-act="backup">Backup file</button><button data-act="restore">Restore from backup file</button><button data-act="admin">Admin</button></div></div></div>`;}
+ <button class="pri" data-act="open" data-rid="${r.id}">Open</button>${r.signed?`<button data-act="auditrec" data-rid="${r.id}" style="border-color:#6b3fa0;color:#6b3fa0;font-weight:700">🔍 Audit</button>`:''}<button class="dng" data-act="del" data-rid="${r.id}">Delete</button></div>`}).join('')}<div class="card home-more"><div class="muted" style="font-size:13px;margin:0 0 6px">More options</div><div class="row"><button data-pt="blank">🖨 Print blank forms</button><button data-act="backup">Backup file</button><button data-act="restore">Restore from backup file</button><button data-act="admin">Admin</button></div></div><div class="card"><button data-pt="techdocs" style="width:100%">📚 Tech docs – manuals &amp; support guides</button></div></div>`;}
 
 function newDlg(){modal(`<h3>New inspection</h3><label class="f">Tower Serial # (names the saved file)</label><input id="n-ts"><div class="sp"></div><label class="f">Customer</label><input id="n-cu"><div class="sp"></div><label class="f">Teledyne FLIR Technician (name)</label><input id="n-te" value="${esc(S.techDraft||'')}">${techChips()}<button class="pri" data-act="start">Start inspection</button><button data-act="mclose">Cancel</button>`);}
 
@@ -14549,7 +14549,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'74'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/05/2026',site:'75'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14612,7 +14612,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='db2df0f1a9';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='cd0561b6b4';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -14727,6 +14727,9 @@ window.addEventListener('pagehide',track);
 /* Rev 61: skywatch/#generator (link from the launcher's SkyWatch page) opens the generator manual & fault codes panel */
 if(/(?:^#|&)generator(?:&|$)/.test(location.hash)){var gt=0,gop=function(){if(typeof window.__openGenPanel==='function'){try{history.replaceState(null,'',location.pathname+location.search);}catch(x){}try{window.__openGenPanel();}catch(x){}return;}if(gt++<40)setTimeout(gop,250);};
  if(document.readyState==='complete')setTimeout(gop,400);else window.addEventListener('load',function(){setTimeout(gop,400);});}
+/* Rev 75: skywatch/#techdocs opens the Tech docs page */
+if(/(?:^#|&)techdocs(?:&|$)/.test(location.hash)){var tt=0,top_=function(){if(typeof window.__openTechDocs==='function'){try{history.replaceState(null,'',location.pathname+location.search);}catch(x){}try{window.__openTechDocs();}catch(x){}return;}if(tt++<40)setTimeout(top_,250);};
+ if(document.readyState==='complete')setTimeout(top_,400);else window.addEventListener('load',function(){setTimeout(top_,400);});}
 var m=/(?:^#|&)resume=([^&]+)/.exec(location.hash);
 if(m){var id=decodeURIComponent(m[1]),tries=0;
  var clear=function(){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}};
@@ -14801,8 +14804,12 @@ if(document.body)start();else document.addEventListener('DOMContentLoaded',start
 .ptpr{border-bottom:1px solid var(--line)}.ptl>.ptpr:last-child{border-bottom:0}.ptpr .ptit{border-bottom:0;padding-bottom:4px}
 .ptol{padding:0 4px 12px 46px;font-size:13.5px;color:var(--mut)}.ptol a{color:#1d5fc4;font-weight:700;text-decoration:none;display:inline-block;padding:4px 2px}
 .ptgn{margin:6px 0 0;font-size:13px}#ptGm{margin-top:4px}
-#genPanel{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column}
+#genPanel,#techPanel{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column}
 html.gpn-lock,html.gpn-lock body{overflow:hidden}
+.tdh{margin:14px 4px 6px;font-size:15px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+.tdc{display:flex;flex-direction:column;gap:6px}.tdt{font-size:17px;font-weight:700;color:var(--ink);margin:0}.tdd{margin:0;font-size:14px}.tdm{margin:0;font-size:12.5px}
+.tdb{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}.tdb>*{flex:1;min-width:130px;min-height:48px;display:flex;align-items:center;justify-content:center;text-align:center;text-decoration:none;box-sizing:border-box}
+.tdb a{background:var(--blue);color:#fff;border:1px solid var(--blue);border-radius:8px;font-weight:600;padding:10px 14px;cursor:pointer}
 .gpn-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:var(--blue2);border-bottom:3px solid var(--blue)}
 .gpn-h b{font-size:19px;color:var(--ink)}.gpn-h button{min-width:110px}
 .gpn-s{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}
@@ -15022,12 +15029,39 @@ function genPanel(){if(GPN.open)return;GPN.open=true;GPN.m=gpnStart();var p=docu
  try{history.pushState({camx:1,gpn:1},'',location.href);}catch(err){}
  window.addEventListener('popstate',gpnPop);document.addEventListener('keydown',gpnKey,true);}
 window.__openGenPanel=function(){genPanel();};
+window.__openTechDocs=function(){techPanel();};
 function gpnClose(back){if(!GPN.open)return;GPN.open=false;var p=document.getElementById('genPanel');if(p)p.remove();document.documentElement.classList.remove('gpn-lock');
  window.removeEventListener('popstate',gpnPop);document.removeEventListener('keydown',gpnKey,true);
  if(back!==false){try{if(history.state&&history.state.gpn)history.back();}catch(err){}}}
 document.addEventListener('input',function(ev){var t=ev.target;if(!t||t.id!=='gpnQ')return;var q=String(t.value||'').replace(/\D/g,''),hit=0;
  [].forEach.call(document.querySelectorAll('#gpnBody details[data-c]'),function(d){var c=d.getAttribute('data-c'),on=!q||c.indexOf(q)===0;d.hidden=!on;if(on)hit++;d.open=!!q&&c===q;});
  var no=document.getElementById('gpnNo');if(no)no.hidden=!q||hit>0;});
+
+/* ---- Tech docs page (Ravi, 2026-11-05, Rev 75): tower user guides and camera/NVR support guide; download or share ---- */
+var TDOCS=[
+ {g:'Towers',f:'docs/skywatch-user-guide-current-v4.pdf',dl:'SkyWatch User Guide - Current Tower (v4.0).pdf',t:'Current tower – SkyWatch User Guide',d:'User guide for SkyWatch Version 4.0.',m:'88 pages · 2.5 MB · marked export-controlled (EAR)'},
+ {g:'Towers',f:'docs/skywatch-user-guide-2012-legacy.pdf',dl:'SkyWatch User Guide - 2012 Legacy Tower.pdf',t:'2012 legacy tower – SkyWatch User Guide',d:'User guide for the 2012 legacy towers.',m:'46 pages · 1.0 MB'},
+ {g:'Towers',f:'docs/skywatch-operations-manual-2006-legacy.pdf',dl:'SkyWatch Operations Manual - 2006 Legacy Tower.pdf',t:'2006 legacy tower – Operations Manual',d:'ICx New Heights 2006 Operations Manual for the 2006 legacy towers.',m:'26 pages · 444 KB'},
+ {g:'Cameras',f:'docs/flir-enterprise-security-support-nvr-dome-stare.pdf',dl:'FLIR Enterprise Security Support - NVR, Dome and Stare Cameras.pdf',t:'NVR / Dome / Stare Camera Tech Support',d:'How to contact FLIR Enterprise Security Support: customer support portal registration, creating a support request, and phone support.',m:'13 pages · 785 KB · issued 04/13/2021 · marked Company Confidential'}];
+var TD={open:false};
+function tdHtml(){var h='',g='';TDOCS.forEach(function(D,i){if(D.g!==g){g=D.g;h+='<div class="tdh">'+e(g)+'</div>';}
+ h+='<div class="card tdc"><h3 class="tdt">'+e(D.t)+'</h3><p class="tdd">'+e(D.d)+'</p><p class="tdm muted">'+e(D.m)+'</p><div class="tdb"><a class="pri" role="button" href="'+e(D.f)+'" download="'+e(D.dl)+'">⬇ Download</a><button type="button" data-pt="tdshare" data-i="'+i+'">↗ Share</button></div></div>';});
+ return h;}
+function tdPaint(){var b=document.getElementById('tdBody');if(b)b.innerHTML=tdHtml()+'<p class="gpn-cr">'+e(creditText())+'</p>';}
+function tdPop(){tdClose(false);}
+function tdKey(ev){if(ev.key==='Escape'&&TD.open){ev.preventDefault();tdClose();}}
+function techPanel(){if(TD.open)return;TD.open=true;var p=document.createElement('div');p.id='techPanel';p.setAttribute('role','dialog');p.setAttribute('aria-modal','true');
+ p.innerHTML='<div class="gpn-h"><button type="button" class="nb" data-pt="tdclose">‹ Back</button><b>Tech docs</b><button type="button" class="nb" data-nav="home">⌂ Home</button></div><div class="gpn-s"><div id="tdBody" class="gpn-in"></div></div>';
+ document.body.appendChild(p);document.documentElement.classList.add('gpn-lock');tdPaint();
+ try{history.pushState({camx:1,td:1},'',location.href);}catch(err){}
+ window.addEventListener('popstate',tdPop);document.addEventListener('keydown',tdKey,true);}
+function tdClose(back){if(!TD.open)return;TD.open=false;var p=document.getElementById('techPanel');if(p)p.remove();document.documentElement.classList.remove('gpn-lock');
+ window.removeEventListener('popstate',tdPop);document.removeEventListener('keydown',tdKey,true);
+ if(back!==false){try{if(history.state&&history.state.td)history.back();}catch(err){}}}
+async function tdShare(i){var D=TDOCS[i];if(!D)return;
+ try{var r=await fetch(D.f);if(r.ok){var f=new File([await r.blob()],D.dl,{type:'application/pdf'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:D.t});return;}}}catch(err){if(err&&err.name==='AbortError')return;}
+ try{if(navigator.share){await navigator.share({title:D.t,url:new URL(D.f,location.href).href});return;}}catch(err){if(err&&err.name==='AbortError')return;}
+ alert('Sharing is not available on this device. Use Download instead.');}
 
 var SECS=[
  {id:'s1',t:'1. Job info',n:'These are the inspection’s own header fields, so they carry straight into the Info step and the certificate.',f:JOBF,svc:1,g:[]},
@@ -15250,6 +15284,9 @@ document.addEventListener('click',function(ev){var b=ev.target.closest('[data-pt
  if(a==='blankinsp'){closeModal();run(function(){blankInspPdf();});return;}
  if(a==='genpanel'){genPanel();return;}
  if(a==='gpclose'){gpnClose();return;}
+ if(a==='techdocs'){techPanel();return;}
+ if(a==='tdclose'){tdClose();return;}
+ if(a==='tdshare'){tdShare(+b.getAttribute('data-i'));return;}
  if(a==='gpm'){GPN.m=b.getAttribute('data-v');try{localStorage.setItem('genPanelModel',GPN.m);}catch(err){}gpnPaint();return;}
  if(!r)return;
  if(a==='cskip'){var k=b.getAttribute('data-k');r.carry=r.carry||{};r.carry[k]='skip';dirty();var n=b.closest('.cnote');if(n)n.outerHTML=cnote(k);return;}
