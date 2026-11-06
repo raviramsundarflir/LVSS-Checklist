@@ -14375,6 +14375,12 @@ function adminRows(){
       '<div class="a-foot"><button class="btn light" data-act="a-add" data-si="'+si+'">Add line item</button><label class="spares">Spare lines <input type="number" min="0" max="10" data-a="sspares" data-si="'+si+'" value="'+sp+'"></label><span class="muted">Items '+start+'\u2013'+(n-sp)+'; '+spTxt+'</span></div></section>';
   }).join('');
 }
+function adminOrders(){ var t=S.draft; if(!Array.isArray(t.orders)) t.orders=clone(ddOrders());
+  return '<section class="a-sec" style="margin-top:18px"><div class="a-sec-h"><strong>DD1149 saved orders</strong></div><p class="muted">Each saved order fills the DD1149 Sold to, Ship to, Customer PO and FLIR SO when the tech ticks “Use saved order details”. A report whose PO or SO matches is ticked automatically (the tech is asked to confirm).</p>'+
+    t.orders.map(function(o,i){ return '<div class="a-it" style="border:1px solid #cfd6e2;border-radius:10px;padding:10px;margin:8px 0"><div class="grid"><label class="fld">Customer PO<input data-a="opo" data-oi="'+i+'" value="'+esc(o.po||'')+'" autocomplete="off"></label><label class="fld">FLIR SO (sales order)<input data-a="oso" data-oi="'+i+'" value="'+esc(o.so||'')+'" autocomplete="off"></label></div>'+
+      '<label class="fld">Sold to (Block 2)<textarea rows="4" data-a="oto" data-oi="'+i+'">'+esc(o.to||'')+'</textarea></label><label class="fld">Ship to (Block 3)<textarea rows="4" data-a="oship" data-oi="'+i+'">'+esc(o.ship||'')+'</textarea></label>'+
+      '<button class="btn danger" data-act="a-orddel" data-oi="'+i+'">Remove this order</button></div>'; }).join('')+
+    '<button class="btn light big" style="color:var(--navy)" data-act="a-ordadd">Add PO / SO pair</button></section>'; }
 function renderAdmin(){
   S.view='admin';
   var t=S.draft, y=window.scrollY;
@@ -14385,7 +14391,7 @@ function renderAdmin(){
     '<div class="grid"><label class="fld">Checklist revision<input data-a="revision" value="'+esc(t.revision||'')+'"></label><label class="fld">Admin PIN<input data-a="pin" value="'+esc(t.pin||'')+'" inputmode="numeric"></label></div>'+
     '<label class="full">Required tools (one per line)<textarea data-a="tools">'+esc((t.requiredTools||[]).join('\n'))+'</textarea></label><div style="height:16px"></div>'+
     adminRows()+
-    '<button class="btn light big" style="color:var(--navy)" data-act="a-addsec">Add section</button>'+
+    '<button class="btn light big" style="color:var(--navy)" data-act="a-addsec">Add section</button>'+adminOrders()+
     '<footer class="home-foot"><button class="linkish" data-act="a-restore">Restore the checklist built into this file</button></footer></main>';
   measureBar(); window.scrollTo(0,y);
 }
@@ -14401,6 +14407,7 @@ function adminValidate(){
 async function adminSave(){
   if(!adminValidate()) return false;
   var t=S.draft; t.sections.forEach(function(s){ s.items.forEach(function(it){ it.text=it.text.trim(); it.timed=(it.timed||'').trim(); if(!it.timed) delete it.timed; }); if(!s.warning) delete s.warning; });
+  if(Array.isArray(t.orders)) t.orders=t.orders.filter(function(o){ return (o.po||'').trim()||(o.so||'').trim(); }).map(function(o){ return {po:(o.po||'').trim(),so:(o.so||'').trim(),to:(o.to||'').trim(),ship:(o.ship||'').trim()}; });
   t.stamp=new Date().toISOString();
   await DB.put('settings',{k:'tplOverride', v:clone(t)});
   S.tpl=clone(t); S.draftDirty=false;
@@ -14463,7 +14470,7 @@ function atpPdf(mode){
   var ens=function(n){ if(y+n>BOT){ d.addPage(); y=TOP; } };
   var photoCount={}; S.photos.forEach(function(p){ if(typeof p.num==='number') photoCount[p.num]=(photoCount[p.num]||0)+1; });
   // Rev 83: the ATP QR code (same as the last page) at the top right corner of the front page; the header details sit to its left and continue under it
-  var FQS=136, FQ=null; try{ FQ=auQrMake(rec); }catch(e){ FQ=null; } var FQX=MX+CW-FQS, FQY=24, FQEND=FQY+FQS+16, FQW=FQ?FQS+12:0;
+  var FQS=190, FQ=null; try{ FQ=auQrMake(rec); }catch(e){ FQ=null; } var FQX=MX+CW-FQS, FQY=24, FQEND=FQY+FQS+16, FQW=FQ?FQS+12:0;
   // cover
   var ip=d.getImageProperties(LOGO), lw=120, lh=Math.min(40,lw*ip.height/ip.width);
   d.addImage(LOGO,'PNG',MX,24,lw,lh);
@@ -14926,13 +14933,24 @@ function dd49Vn(ymd,sn){ return ymd?ymd+'-'+(dd49Num(sn)||''):''; }
 function dd49Why(rec){ var w=[]; if(rec.fromQr){ if(rec.ddAud) return w; if(rec.ddRv&&rec.ddRv!=='P') w.push('the ATP in this QR code still has open punch list items'); return w; }
   if(!rec.completed) w.push('the ATP is not marked complete'); var blk=0; try{ blk=analyze(rec).blocking.length; }catch(e){}
   var au=rec.audit; if(blk&&!(au&&au.done&&au.verdict==='pass')) w.push(au&&au.done?'the punch list audit did not pass':'the punch list audit is not done yet'); return w; }
+/* Rev 85: saved orders (PO / SO / Sold to / Ship to) for the DD1149; edited on the admin screen, stored in the checklist (S.tpl.orders) */
+var ORD_DEFAULT=[{po:'70B02C26C00000049',so:'25345390',to:'600603\nDHS-Customs and Border Protection\nAir and Marine Contracting Division\n1300 Pennsylvania Ave NW\nNP 1310\nWashington DC 20229',ship:'600603\nDHS-Customs and Border Protection\n1300 Pennsylvania Ave NW\nNP 1310\nWashington DC 20229'}];
+function ddOrders(){ var o=(S.tpl&&S.tpl.orders); return Array.isArray(o)?o:ORD_DEFAULT; }
+function ddOrdLabel(o){ return 'SO '+(o.so||'—')+' · PO '+(o.po||'—'); }
+function ddOrdMatch(rec){ var h=(rec&&rec.header)||{}, L=ddOrders(), n=function(x){ return String(x||'').replace(/\s+/g,'').toUpperCase(); }, po=n(h.po), so=n(h.fso)||n(h.so);
+  for(var i=0;i<L.length;i++){ if((po&&n(L[i].po)===po)||(so&&n(L[i].so)===so)) return i; } return -1; }
+function ddOrdFill(o){ var $=function(id){ return document.getElementById(id); }; if(!o) return; if($('dd49to')) $('dd49to').value=o.to||''; if($('dd49ship')) $('dd49ship').value=o.ship||''; if($('dd49po')) $('dd49po').value=o.po||''; if($('dd49so')) $('dd49so').value=o.so||''; }
+function ddOrdBlock(){ var L=ddOrders(); if(!L.length) return '';
+  return '<div class="dd49q" id="dd49ord" style="margin:10px 0"><label style="display:flex;gap:10px;align-items:center;font-weight:700"><input type="checkbox" id="dd49ordck" data-ddx="ordck" style="width:24px;height:24px"> Use saved order details</label>'+
+    '<div class="muted" style="margin:4px 0 6px">Fills Sold to, Ship to, Customer PO and FLIR SO. You can still change any of them.</div>'+
+    '<select id="dd49ordsel" style="width:100%;min-height:44px;font:inherit"><option value="">Choose a saved order…</option>'+L.map(function(o,i){ return '<option value="'+i+'">'+esc(ddOrdLabel(o))+'</option>'; }).join('')+'</select><div id="dd49ordq"></div></div>'; }
 async function dd1149Dlg(rec){
   var cu=CUST.of(rec); if(!cu.g){ notice('This truck\u2019s customer is '+cu.n+', which is not marked as a government customer, so it has no DD1149. To make one, set the customer to CBP / DHS or tick \u201cGovernment customer\u201d in the truck details.','No DD1149 for this customer'); return; }
   var v=dd49Vals(rec), x=DD(rec), R=function(k){ return dd49Get('r_'+k)||[]; }, SV=dd49Get('t_'+dd49Key(rec))||{};
   var chips=function(k,tgt){ var L=R(k); return L.length?'<div class="dd49chips">'+L.map(function(t,i){ return '<button type="button" class="btn light" data-ddx="chip" data-k="'+k+'" data-i="'+i+'" data-t="'+tgt+'">'+esc(t.split('\n')[0])+'</button>'; }).join('')+'</div>':''; };
   var head=(v.up?'Upfit: new '+(v.known?v.sn:(v.pfx?v.pfx.trim()+' ____':'____'))+' (old '+v.old+')':'New build: '+(v.known?v.sn:(v.pfx?v.pfx.trim()+' ____':'____')));
   dlg('<h2 style="margin-top:0">DD1149 form</h2><p class="muted" style="margin-top:0">'+esc(head)+(v.vin?' · VIN '+esc(v.vin):'')+'<br>Fill in what you have. Anything left blank becomes a box in the PDF that can be typed in later on a PC or phone.</p>'+
-    '<label class="fld">Block 2 – Sold to (name and address)<textarea id="dd49to" rows="3" placeholder="Leave blank if you don’t have it">'+esc(SV.to||'')+'</textarea></label>'+chips('to','dd49to')+
+    ddOrdBlock()+'<label class="fld">Block 2 – Sold to (name and address)<textarea id="dd49to" rows="3" placeholder="Leave blank if you don’t have it">'+esc(SV.to||'')+'</textarea></label>'+chips('to','dd49to')+
     '<label class="fld">Block 3 – Ship to / mark for (name, contact, address)<textarea id="dd49ship" rows="3" placeholder="Leave blank if you don’t have it">'+esc(SV.ship||'')+'</textarea></label><button type="button" class="btn light" data-ddx="same">Same as sold to</button>'+chips('ship','dd49ship')+
     (v.up?'':'<label class="fld">New build unit #<input id="dd49unit" value="'+esc(SV.unit||'')+'" inputmode="numeric" placeholder="e.g. 12 – leave blank to fill in later" autocomplete="off"></label>'+chips('unit','dd49unit'))+
     '<div class="dd49g"><label class="fld">Customer PO<input id="dd49po" value="'+esc(SV.po||rec.header.po||(v.up?'':'70B02C26C00000049'))+'" placeholder="Leave blank if unknown" autocomplete="off"></label><label class="fld">FLIR SO (sales order)<input id="dd49so" value="'+esc(SV.so||rec.header.fso||(v.up?'':'25345390'))+'" placeholder="Leave blank if unknown" autocomplete="off"></label></div>'+
@@ -14942,6 +14960,10 @@ async function dd1149Dlg(rec){
     '<p class="muted">Block 1 is the TSC address. Block 18 “Issued by” is left to fill in.</p>'+
     '<div class="sheet-btns"><button class="btn primary big" data-ddx="make" data-how="share">📄 Make and share the PDF</button><button class="btn primary big" data-ddx="make" data-how="copies">🖨 Print 2 copies (customer + traveler)</button><button class="btn light big" data-ddx="make" data-how="save">Save the PDF</button><button class="btn light big" data-ddx="cancel">Cancel</button></div>','sheet');
   S.dd49={rec:rec,sig:null,dirty:false,prev:SV.sig||null,dateOk:false,vEd:false};
+  (function(){ var mi=ddOrdMatch(rec), ck=document.getElementById('dd49ordck'), sl=document.getElementById('dd49ordsel'), q=document.getElementById('dd49ordq'); if(!ck||mi<0||SV.to||SV.ship) return;
+    var o=ddOrders()[mi]; ck.checked=true; sl.value=String(mi); ddOrdFill(o);
+    q.innerHTML='<div style="margin-top:8px"><b>This report matches a saved order ('+esc(ddOrdLabel(o))+'). Is it accurate for this truck?</b><div class="sheet-btns" style="margin-top:6px"><button type="button" class="btn primary" data-ddx="ordyes">✓ Yes, accurate</button><button type="button" class="btn light" data-ddx="ordno">No, clear it</button></div></div>'; })();
+  if(!window.__ddOrdSel){ window.__ddOrdSel=1; document.addEventListener('change',function(e){ var t=e.target; if(!t||t.id!=='dd49ordsel'||!S.dd49) return; var ck=document.getElementById('dd49ordck'), q=document.getElementById('dd49ordq'), o=ddOrders()[+t.value]; if(!o){ if(ck) ck.checked=false; return; } ck.checked=true; ddOrdFill(o); q.innerHTML='<div class="muted" style="margin-top:6px">✓ Filled from '+esc(ddOrdLabel(o))+'. Change anything below if needed.</div>'; }); }
   if(!document.getElementById('dd49css')){ var st=document.createElement('style'); st.id='dd49css'; st.textContent='.dd49chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}.dd49chips .btn{min-height:36px;padding:4px 10px;font-size:14px}.dd49g{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}.dd49g>*{min-width:0}.dd49g input{width:100%;box-sizing:border-box}.dd49q{background:#fff8e1;border:1.5px solid #e0a800;border-radius:10px;padding:8px 10px;margin:8px 0;font-size:15px}.dd49q.ok{background:#e9f7ee;border-color:#2e9e5b}.dd49q.err{background:#fde8e8;border-color:#c8202a}.dd49sig{width:100%;height:150px;border:2px dashed #9aa3b2;border-radius:10px;background:#fff;touch-action:none}#dd49to,#dd49ship{width:100%}'; document.head.appendChild(st); }
   var c=document.getElementById('dd49sig'), g=c.getContext('2d'), drawing=false, last=null;
   g.lineCap='round'; g.lineJoin='round'; g.strokeStyle=DD49.ink; g.lineWidth=3;
@@ -14959,6 +14981,9 @@ document.addEventListener('click',async function(e){
   var a=b.getAttribute('data-ddx'), $i=function(id){ return document.getElementById(id); };
   if(a==='chip'){ var L=dd49Get('r_'+b.dataset.k)||[], t=$i(b.dataset.t); if(t) t.value=L[+b.dataset.i]||''; return; }
   if(a==='same'){ $i('dd49ship').value=$i('dd49to').value; return; }
+  if(a==='ordck'){ var sl0=$i('dd49ordsel'), q2=$i('dd49ordq'); if(b.checked){ var mi0=ddOrdMatch(S.dd49.rec); if(mi0<0&&ddOrders().length===1) mi0=0; if(mi0>=0){ sl0.value=String(mi0); ddOrdFill(ddOrders()[mi0]); q2.innerHTML='<div class="muted" style="margin-top:6px">✓ Filled from '+esc(ddOrdLabel(ddOrders()[mi0]))+'. Change anything below if needed, or pick another order above.</div>'; } else { q2.innerHTML='<div class="muted" style="margin-top:6px">Pick the order above, or tick off and type the details in yourself.</div>'; } } else { q2.innerHTML=''; } return; }
+  if(a==='ordyes'){ var q3=$i('dd49ordq'); if(q3) q3.innerHTML='<div class="muted" style="margin-top:6px">✓ Confirmed accurate for this truck.</div>'; return; }
+  if(a==='ordno'){ ['dd49to','dd49ship','dd49po','dd49so'].forEach(function(id){ var e2=$i(id); if(e2) e2.value=''; }); var c0=$i('dd49ordck'), s0=$i('dd49ordsel'), q4=$i('dd49ordq'); if(c0) c0.checked=false; if(s0) s0.value=''; if(q4) q4.innerHTML='<div class="muted" style="margin-top:6px">Cleared. Pick a different order above, or type the details in.</div>'; return; }
   if(a==='sigclr'){ var c=$i('dd49sig'); c.getContext('2d').clearRect(0,0,c.width,c.height); S.dd49.dirty=false; S.dd49.atp=false; S.dd49.prev=null; return; }
   if(a==='sigatp'){ S.dd49.atp=true; toast('The customer signature from the ATP sign-off will be used.'); return; }
   if(a==='dok'){ S.dd49.dateOk=true; var q0=$i('dd49dq'); if(q0){ q0.className='dd49q ok'; q0.textContent='✓ Delivery date confirmed: '+fmtDate($i('dd49ship12').value); } return; }
@@ -15714,7 +15739,7 @@ window.offReadiness=readiness;
 })();
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/06/2026',site:'83'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/06/2026',site:'85'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -16644,6 +16669,8 @@ app.addEventListener('click', async function(e){
         else if(act==='a-secdown') move(t.sections, si, 1);
         else if(act==='a-secdel'){ if(!confirm('Delete the section \u201c'+t.sections[si].title+'\u201d and all its line items?')) return; t.sections.splice(si,1); }
         else if(act==='a-addsec') t.sections.push({title:'New section', items:[{text:''}], spares:3});
+        else if(act==='a-ordadd'){ if(!Array.isArray(t.orders)) t.orders=clone(ddOrders()); t.orders.push({po:'',so:'',to:'',ship:''}); }
+        else if(act==='a-orddel'){ var oi2=+el.dataset.oi; if(!confirm('Remove this saved order?')) return; t.orders.splice(oi2,1); }
         else return;
         S.draftDirty=true; renderAdmin();
         if(act==='a-add'){ var tas=app.querySelectorAll('textarea[data-si="'+si+'"][data-a="itext"]'); if(tas.length) tas[tas.length-1].focus(); }
@@ -16677,6 +16704,7 @@ app.addEventListener('input', function(e){
     else if(a==='revision') t.revision=el.value;
     else if(a==='pin') t.pin=el.value;
     else if(a==='tools') t.requiredTools=el.value.split('\n').map(function(x){ return x.trim(); }).filter(Boolean);
+    else if(a==='opo'||a==='oso'||a==='oto'||a==='oship'){ var oi=+el.dataset.oi; if(Array.isArray(t.orders)&&t.orders[oi]) t.orders[oi][{opo:'po',oso:'so',oto:'to',oship:'ship'}[a]]=el.value; }
     else if(a==='sspares') return;
     S.draftDirty=true; return;
   }
