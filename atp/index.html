@@ -14252,7 +14252,7 @@ async function renderReview(){
       var inl=revInline(it); if(inl) return inl;
       return '<li data-kind="'+it.kind+'"><button data-act="goto" data-num="'+it.r.num+'"><span class="pn">'+it.r.num+'</span><span class="pd"><b>'+esc(desc)+'</b><small>'+esc(lineText(it.r,it.d))+(n?' ('+n+' photo'+(n>1?'s':'')+')':'')+'</small></span><span class="tag tag-'+it.kind.split(' ')[0]+'">'+it.kind+'</span></button>'+(it.kind==='FAIL'?'<button type="button" class="ovrb" data-act="rx-ovr1" data-num="'+it.r.num+'">Mark N/A – doesn’t apply</button>':'')+'</li>';
     }).join('')+'</ol>' : '<p class="card">Nothing to rework. The punch list page will print as \u201cNo nonconformances found.\u201d</p>')+
-    swRmaHTML(rec)+ddReviewCard(rec)+calAtpCard(rec)+auQrCard(rec)+auEntryCard(rec)+SendTo.card(rec)+'<h2>Report PDFs</h2><div class="actions">'+CUST.tagBtn('btn light big')+'<button class="btn emailbig" data-act="pdf-share-full">\u2709 Email full report (PDF attached)<small>Recommended \u2013 opens your email app with the PDF attached</small></button><button class="btn light big" data-act="pdf-save-full">\u2b07 Save report PDF</button></div>'+Core.fold('more','More options','<div class="actions"><button class="btn light big" data-act="backup-cur">Backup file</button><button class="btn light big" data-act="wip-copy">\ud83d\udccb Copy '+WIP_MAIL+'</button></div>')+
+    swRmaHTML(rec)+ddReviewCard(rec)+auQrCard(rec)+auEntryCard(rec)+SendTo.card(rec)+'<h2>Report PDFs</h2><div class="actions">'+CUST.tagBtn('btn light big')+'<button class="btn emailbig" data-act="pdf-share-full">\u2709 Email full report (PDF attached)<small>Recommended \u2013 opens your email app with the PDF attached</small></button><button class="btn light big" data-act="pdf-save-full">\u2b07 Save report PDF</button></div>'+Core.fold('more','More options','<div class="actions"><button class="btn light big" data-act="backup-cur">Backup file</button><button class="btn light big" data-act="wip-copy">\ud83d\udccb Copy '+WIP_MAIL+'</button></div>')+
     '<p class="tip">PDFs are named '+PL(h)+'_'+esc(safeName(snNum(h.newSerial)))+'_ATP / _PunchList. Tap an item above to jump back to it.</p>'+rxBars()+Core.issBar(rec)+'</main>';
   setSaveInd(); measureBar(); window.scrollTo(0,_wr?_yr:0);
 }
@@ -15704,7 +15704,7 @@ window.offReadiness=readiness;
 })();
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/05/2026',site:'78'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/05/2026',site:'79'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -15879,8 +15879,7 @@ async function reviewGate(){
   S.serBypass=false; var m=swGate(S.rec);
   if(m.length){ dlg('<h2 style="margin-top:0">Swapped devices</h2><p class="muted" style="white-space:pre-line">Finish these first:\n\n• '+esc(m.join('\n• '))+'</p><div class="sheet-btns"><button class="btn primary big" data-act="sw-goto">➜ Take me there</button><button class="btn light big" data-act="mclose">Close</button></div>','sheet'); return; }
   if(!(await proceedCheck())) return;
-  if(!S.calAsked&&!(S.rec.cal&&S.rec.cal.st)){ S.calAsked=true; S.calGate=true; calAskDlg(); return; }
-  afterCalGate();
+  afterCalGate(); /* Rev 79: no TFU to Radar Cal question or card */
 }
 async function swAppAct(act,el){
   if(!S.rec||(act.indexOf('sw-')!==0&&act.indexOf('rv-')!==0&&act.indexOf('fyi')!==0&&act.indexOf('cu-')!==0)) return false;
