@@ -14880,7 +14880,7 @@ function dd49Stamp(d,cp,first){ var W=d.internal.pageSize.getWidth(), n=parseInt
   d.setLineWidth(0.6); d.setDrawColor(0); d.setTextColor(0); }
 /* one photo page: platform serial, VIN, plate, Kilo #, devices - one photo each */
 function dd49PhotoPage(rec,d){ var x=DD(rec), h=rec.header||{};
-  var items=[['Platform serial','newSerial'],['Vehicle VIN','vin'],['License plate','plate'],['Kilo #','kilo']].concat(DD_DEVS.map(function(z){ return [z[1],z[0]]; })).filter(function(it){ return !x.na[it[1]]&&!(it[1]==='plate'&&x.tkOm&&x.tkOm.plate&&!ddPhotos(rec,'plate').length); });
+  var items=[['Platform serial','newSerial'],['Vehicle VIN','vin'],['License plate','plate'],['Kilo #','kilo']].concat(DD_DEVS.map(function(z){ return [z[1],z[0]]; })).filter(function(it){ return !x.na[it[1]]&&!(/^(vin|plate|kilo)$/.test(it[1])&&!ddPhotos(rec,it[1]).length); });
   var C=4, per=20, G=8, PH=d.internal.pageSize.getHeight(), y0=TOP+26, avail=PH-40-y0;
   for(var s0=0;s0<items.length;s0+=per){ var pg=items.slice(s0,s0+per), rows=Math.ceil(pg.length/C), cw=(CW-(C-1)*G)/C, ch=Math.min(170,(avail-(rows-1)*G)/rows);
     d.addPage(); d.setFont('helvetica','bold'); d.setFontSize(14); d.setTextColor(0); d.text('DD1149 Attachment - Photos'+(s0?' (cont.)':''),MX,TOP+8);
@@ -15704,7 +15704,7 @@ window.offReadiness=readiness;
 })();
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/05/2026',site:'79'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/06/2026',site:'80'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -15841,7 +15841,7 @@ function swPickPhoto(key,cam){
   var i=document.createElement('input'); i.type='file'; i.accept='image/*'; if(cam) i.capture='environment'; else i.multiple=true; i.style.cssText='position:fixed;left:-9999px;top:0;opacity:0'; document.body.appendChild(i);
   i.onchange=async function(){ var files=Array.from(i.files||[]); try{ i.remove(); }catch(e){}
     for(var k=0;k<files.length;k++){ try{ var data=await compress(files[k]); var p={id:uid('ph-'),inspId:S.rec.id,num:key,data:data,created:new Date().toISOString()}; await DB.put('photos',p); S.photos.push(p); }catch(e){ toast('That photo could not be added.'); } }
-    markDirty(); swRefresh(); };
+    markDirty(); swRefresh(); if(S.verThen&&String(key).indexOf('dd:')===0) ddVerPrompt(S.verThen); };
   i.click();
 }
 /* ---- review: inline controls for unchecked / not-tested items ---- */
@@ -15875,7 +15875,7 @@ function revInline(it){
   return null;
 }
 async function reviewGate(){
-  if(typeof ddTkNeed==='function'&&ddTkNeed().length&&!S.tkSkip){ ddTkPrompt(function(){ S.tkSkip=1; reviewGate().then(function(){ S.tkSkip=0; }); }); return; }
+  if(ddVerNeed().length&&!S.verSkip){ ddVerPrompt(function(){ S.verSkip=1; reviewGate().then(function(){ S.verSkip=0; }); }); return; }
   S.serBypass=false; var m=swGate(S.rec);
   if(m.length){ dlg('<h2 style="margin-top:0">Swapped devices</h2><p class="muted" style="white-space:pre-line">Finish these first:\n\n• '+esc(m.join('\n• '))+'</p><div class="sheet-btns"><button class="btn primary big" data-act="sw-goto">➜ Take me there</button><button class="btn light big" data-act="mclose">Close</button></div>','sheet'); return; }
   if(!(await proceedCheck())) return;
@@ -16063,11 +16063,10 @@ function ddOldTxt(rec){ var x=DD(rec); return x.oldNa?'N/A':String((rec.header||
 /* missing list: {k,label,what} */
 function ddMissing(rec){ var x=DD(rec), h=rec.header||{}, m=[];
   var chk=function(k,lbl){ if(x.na[k]) return; if(!ddSerial(rec,k)||(k==='newSerial'&&!/\d/.test(ddSerial(rec,k)))) m.push({k:k,label:lbl,what:'serial'}); else if(ddShort(k,ddSerial(rec,k))) m.push({k:k,label:lbl+' (long-form serial, at least 9 characters)',what:'serial'}); if(!ddPhotos(rec,k).length&&!ddCarriedOk(rec,k)) m.push({k:k,label:lbl,what:'photo'}); };
-  chk('newSerial',DD_LBL.newSerial); DD_DEVS.forEach(function(d){ chk(d[0],d[1]); }); TK_L.forEach(function(t){ if(!ddSerial(rec,t[0])) m.push({k:t[0],label:t[1],what:'serial'}); if(!ddPhotos(rec,t[0]).length&&!x.tkOm[t[0]]) m.push({k:t[0],label:t[1],what:'photo'}); });
+  chk('newSerial',DD_LBL.newSerial); DD_DEVS.forEach(function(d){ chk(d[0],d[1]); }); TK_L.forEach(function(t){ if(!ddSerial(rec,t[0])) m.push({k:t[0],label:t[1],what:'serial'}); });
   if(!x.oldNa&&!String(h.oldSerial||'').trim()) m.push({k:'oldSerial',label:'Replaces old serial',what:'serial'});
   var dash=false;
   DD_REV.forEach(function(f){ var k=f[0]; if(k==='v0c') return; if(x.rvna[k]) return; if(!String(x.rev[k]||'').trim()) m.push({k:k,label:f[1],what:'revision'}); if(DD_SHARED[k]) dash=true; else if(!ddRevPhotos(k).length&&!ddCarriedOk(rec,k,1)) m.push({k:k,label:f[1],what:'photo'}); });
-  if(dash&&!ddRevPhotos('v7').length&&!ddCarriedOk(rec,'v7',1)) m.push({k:'dash',label:'Dashboard (mileage / engine / idle hours)',what:'photo'});
   return m; }
 function ddPassed(rec){ return true; }
 function ddCap(rec,p){ var k=String(p.num); if(k.indexOf('dd:s:')===0){ var kk=k.slice(5); return 'Serial photo - '+(DD_LBL[kk]||kk)+' '+ddSerial(rec,kk); } var rk=k.slice(5); if(rk==='dash') return 'Dashboard - mileage / engine / idle hours'; var f=DD_REV.filter(function(z){ return z[0]===rk; })[0]; return 'SW/FW rev photo - '+(f?f[1]:rk); }
@@ -16075,17 +16074,28 @@ function ddCap(rec,p){ var k=String(p.num); if(k.indexOf('dd:s:')===0){ var kk=k
 /* ---- UI ---- */
 function ddThumbs(key){ return swThumbs(key); }
 function ddCamBtn(key,n){ return '<button class="btn light" data-act="sw-cam" data-key="'+key+'" style="min-height:44px" title="Photo">📷'+(n?' <b>'+n+'</b>':'')+'</button>'; }
-function ddSerRow(k,lbl,opts){ opts=opts||{}; var x=DD(), na=!!x.na[k], v=S.rec.header[k]||'', key='dd:s:'+k, n=ddPhotos(S.rec,k).length, om=!!(x.tkOm&&x.tkOm[k]&&!n), cok=ddCarriedOk(S.rec,k), miss=!na&&(!ddSerial(S.rec,k)||(!n&&!om&&!cok)||ddShort(k,ddSerial(S.rec,k)));
+function ddSerRow(k,lbl,opts){ opts=opts||{}; var x=DD(), na=!!x.na[k], v=S.rec.header[k]||'', key='dd:s:'+k, n=ddPhotos(S.rec,k).length, om=!!(x.tkOm&&x.tkOm[k]&&!n), cok=ddCarriedOk(S.rec,k), nop=/^(vin|kilo)$/.test(k), miss=!na&&(!ddSerial(S.rec,k)||(!n&&!om&&!cok&&!nop)||ddShort(k,ddSerial(S.rec,k)));
   return '<div class="ddrow'+(miss?' ddmiss':'')+(na?' ddna':'')+'"><label class="fld">'+esc(lbl)+(k==='radarPtSerial'?'<span style="display:block;font-size:13px;font-weight:700;color:#c8202a">'+PT_NOTE+'</span>':'')+(opts.loc?'<span class="muted" style="display:block;font-size:13px;font-weight:400">Location: '+esc(opts.loc)+'</span>':'')+'<span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center"><input data-h="'+k+'" value="'+esc(na?'':v)+'"'+(na?' disabled placeholder="N/A"':'')+' autocomplete="off" autocapitalize="characters" style="flex:1;min-width:0">'+
-    (opts.noNa?'':'<button type="button" class="btn '+(na?'primary':'light')+'" data-act="dd-na" data-k="'+k+'" style="min-height:44px">'+(na?'✓ ':'')+'N/A</button>')+(na?'':ddCamBtn(key,n))+'</span></label>'+(na?'':ddThumbs(key))+(miss&&!na?'<small class="ddwarn">'+(!ddSerial(S.rec,k)?'Serial # missing. ':ddShort(k,ddSerial(S.rec,k))?'Too short - record the long-form serial (at least 9 characters). ':'')+((!n&&!om&&!cok)?'Photo missing.':'')+'</small>':'')+(om&&!na?'<small class="muted">Photo omitted.</small>':'')+'</div>'; }
+    (opts.noNa?'':'<button type="button" class="btn '+(na?'primary':'light')+'" data-act="dd-na" data-k="'+k+'" style="min-height:44px">'+(na?'✓ ':'')+'N/A</button>')+(na?'':ddCamBtn(key,n))+'</span></label>'+(na?'':ddThumbs(key))+(miss&&!na?'<small class="ddwarn">'+(!ddSerial(S.rec,k)?'Serial # missing. ':ddShort(k,ddSerial(S.rec,k))?'Too short - record the long-form serial (at least 9 characters). ':'')+((!n&&!om&&!cok&&!nop)?'Photo missing.':'')+'</small>':'')+(om&&!na?'<small class="muted">Photo omitted.</small>':'')+'</div>'; }
 function ddWinRow(){ var v=String((S.rec.header||{}).winKey||''), miss=!v.trim();
   return '<div class="ddrow'+(miss?' ddmiss':'')+'"><label class="fld">Server Windows activation key<span class="muted" style="display:block;font-size:13px;font-weight:400">Product key on the server label or in Windows (Settings, Activation)</span><span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center"><input data-h="winKey" value="'+esc(v)+'" placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" style="flex:1;min-width:0"></span></label>'+(miss?'<small class="ddwarn">Windows key missing.</small>':'')+'</div>'; }
-function ddPlateRow(){ var h=S.rec.header, x=DD(), on=CUST.pf(x.pf), raw=String(h.plate||''), shown=on?raw.replace(/^dhs\s*/i,''):raw, n=ddPhotos(S.rec,'plate').length, om=!!(x.tkOm.plate&&!n), miss=!raw.trim()||(!n&&!om);
-  return '<div class="ddrow'+(miss?' ddmiss':'')+'"><label class="fld">License plate #<span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center"><button type="button" class="btn '+(on?'primary':'light')+'" data-act="dd-tkpf" style="min-height:44px;font-weight:800" title="Tap to turn the DHS prefix on or off">'+(on?'DHS':'no prefix')+'</button><input data-tkplate="1" value="'+esc(shown)+'" placeholder="e.g. 201838" autocomplete="off" autocapitalize="characters" style="flex:1;min-width:0">'+ddCamBtn('dd:s:plate',n)+'</span></label>'+ddThumbs('dd:s:plate')+(miss?'<small class="ddwarn">'+(!raw.trim()?'Plate # missing. ':'')+((!n&&!om)?'Photo missing.':'')+'</small>':'')+(om?'<small class="muted">Photo omitted.</small>':'')+'</div>'; }
-function ddTkNeed(){ var x=DD(); return TK_L.filter(function(t){ return !ddPhotos(S.rec,t[0]).length&&!x.tkOm[t[0]]; }); }
+function ddPlateRow(){ var h=S.rec.header, x=DD(), on=CUST.pf(x.pf), raw=String(h.plate||''), shown=on?raw.replace(/^dhs\s*/i,''):raw, n=ddPhotos(S.rec,'plate').length, om=!!(x.tkOm.plate&&!n), miss=!raw.trim();
+  return '<div class="ddrow'+(miss?' ddmiss':'')+'"><label class="fld">License plate #<span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center"><button type="button" class="btn '+(on?'primary':'light')+'" data-act="dd-tkpf" style="min-height:44px;font-weight:800" title="Tap to turn the DHS prefix on or off">'+(on?'DHS':'no prefix')+'</button><input data-tkplate="1" value="'+esc(shown)+'" placeholder="e.g. 201838" autocomplete="off" autocapitalize="characters" style="flex:1;min-width:0">'+ddCamBtn('dd:s:plate',n)+'</span></label>'+ddThumbs('dd:s:plate')+(miss?'<small class="ddwarn">'+(!raw.trim()?'Plate # missing. ':'')+'</small>':'')+(om?'<small class="muted">Photo omitted.</small>':'')+'</div>'; }
+function ddTkNeed(){ return []; } /* Rev 80: VIN, kilo and plate photos are no longer asked for */
+/* end-of-ATP check: a picture of each serial number and SW/FW revision; every one can be skipped */
+var VER_SK={id:null};
+function ddVerList(){ var rec=S.rec, x=DD(), h=rec.header||{}, o=[];
+  if(String(h.newSerial||'').trim()) o.push({key:'dd:s:newSerial',k:'newSerial',rev:0,t:'Platform serial number',v:String(h.newSerial).trim()});
+  DD_DEVS.forEach(function(d){ var v=ddSerial(rec,d[0]); if(!x.na[d[0]]&&v) o.push({key:'dd:s:'+d[0],k:d[0],rev:0,t:d[1]+' serial number',v:v}); });
+  DD_REV.forEach(function(f){ var k=f[0], v=String(x.rev[k]||'').trim(); if(k==='v0c'||DD_SHARED[k]||x.rvna[k]||!v) return; o.push({key:'dd:r:'+k,k:k,rev:1,t:f[1],v:v}); });
+  return o; }
+function ddVerNeed(){ var rec=S.rec; if(!rec) return []; return ddVerList().filter(function(t){ return !(t.rev?ddRevPhotos(t.k):ddPhotos(rec,t.k)).length&&!(VER_SK.id===rec.id&&VER_SK[t.key]); }); }
+function ddVerSkip(keys){ if(VER_SK.id!==S.rec.id) VER_SK={id:S.rec.id}; keys.forEach(function(k){ VER_SK[k]=1; }); }
+function ddVerPrompt(then){ var m=ddVerNeed(); if(!m.length){ S.verThen=null; modalRoot.innerHTML=''; if(then) then(); return; } S.verThen=then||null; S.verKeys=m.map(function(t){ return t.key; });
+  dlg('<h2 style="margin-top:0">Verify the core details</h2><p class="muted">Take a picture of each serial number and SW/FW revision to confirm it. You can skip any of them and come back later.</p>'+m.map(function(t){ return "<div class='card' style='margin:6px 0'><b>"+esc(t.t)+'</b> \u2013 '+esc(t.v)+'<div class="sheet-btns" style="margin-top:6px"><button class="btn primary big" data-act="dd-vertake" data-key="'+t.key+'">\ud83d\udcf7 Take the picture</button><button class="btn light big" data-act="dd-verskip" data-key="'+t.key+'">Skip</button></div></div>'; }).join('')+'<div class="sheet-btns"><button class="btn big" data-act="dd-verdone">Skip the rest and continue</button></div>','sheet'); }
 function ddTkPrompt(then){ var m=ddTkNeed(); if(!m.length){ modalRoot.innerHTML=''; if(then) then(); return; } S.tkThen=then||null;
   dlg('<h2 style="margin-top:0">Truck photos needed</h2><p class="muted">Take a photo of each one, or omit it (no reason needed).</p>'+m.map(function(t){ var v=ddSerial(S.rec,t[0]); return "<div class='card' style='margin:6px 0'><b>"+esc(t[1])+'</b>'+(v?' \u2013 '+esc(v):'')+'<div class="sheet-btns" style="margin-top:6px"><button class="btn primary big" data-act="dd-tktake" data-k="'+t[0]+'">\ud83d\udcf7 Take the photo</button><button class="btn light big" data-act="dd-tkomit" data-k="'+t[0]+'">Omit</button></div></div>'; }).join('')+'<div class="sheet-btns"><button class="btn big" data-act="close-modal">Close</button></div>','sheet'); }
-function ddCarriedOk(rec,k,rev){ return ddCarried(k,rev)&&(rev?!!String((DD(rec).rev||{})[k]||'').trim():!!ddSerial(rec,k)); }
+function ddCarriedOk(rec,k,rev){ return !!(rev&&DD_SHARED[k]&&ddCarried(k,rev)&&String((DD(rec).rev||{})[k]||'').trim()); }
 function ddCarried(k,rev){ var c=DD().carry; return !!(c&&(rev?c.r:c.s)&&(rev?c.r:c.s).indexOf(k)>=0); }
 function ddCarryCount(rec){ var x=DD(rec), c=x.carry; if(!c) return null; var s=(c.s||[]).filter(function(k){ return !x.na[k]&&ddSerial(rec,k); }), r=(c.r||[]).filter(function(k){ return !x.rvna[k]&&String(x.rev[k]||'').trim(); }); var us=s.filter(function(k){ return !ddPhotos(rec,k).length; }), ur=r.filter(function(k){ return !DD_SHARED[k]&&!ddRevPhotos(k).length; }); return {n:s.length+r.length,ns:s.length,nr:r.length,left:us.length+ur.length}; }
 function ddGoneRow(lbl,old){ return '<div class="ddrow ddgone"><b>'+esc(lbl)+'</b> \u2013 Removed (upfit)'+(old?' <span class="muted">(was '+esc(old)+')</span>':'')+'</div>'; }
@@ -16107,7 +16117,7 @@ function ddHTML(){ var rec=S.rec, h=rec.header, x=DD(), ms=ddMissing(rec), nSer=
     ddPlateRow()+ddSerRow('kilo','Kilo #',{noNa:true})+ddSerRow('vin','Truck VIN',{noNa:true})+DD_DEVS.map(function(d,i){ return ddSerRow(d[0],(i+1)+'. '+d[1]+' serial number'+(d[3]?' \u00b7 '+d[3]:''),{loc:d[2]})+(d[0]==='serverSerial'?ddWinRow():''); }).join('')+(ddUpfit(rec)?ddGoneRow('Client',String(h.clientSerial||'').trim()):'')+'</div>';
   var nRev=ms.filter(function(m){ return m.what==='revision'||/^v\d|dash/.test(m.k); }).length;
   var revs='<div class="card" style="margin:14px 0 0;border:2px solid #1d3b6a"><h3 style="margin:0 0 2px">SW/FW Revs'+(nRev?' <span class="tag" style="background:#b58900">'+nRev+' missing</span>':'')+'</h3><p class="muted" style="margin:0 0 8px">Software, firmware and image revs, and the vehicle readings. Printed on the ATP report only.</p>'+
-    DD_REV.map(ddRevRow).join('')+'<div class="ddrow'+(ddRevPhotos('v7').length||ddCarriedOk(rec,'v7',1)||DD_REV.slice(8).every(function(f){ return x.rvna[f[0]]; })?'':' ddmiss')+'"><label class="fld">Photo(s) of the dashboard – vehicle mileage, engine hours and idle hours'+(ddRevPhotos('v7').length||ddCarriedOk(rec,'v7',1)?'':'<span class="muted" style="font-size:13px">One set of photos covers all three readings.</span>')+'</label><div class="au-cam">'+ddCamBtn('dd:r:dash',ddRevPhotos('v7').length)+'</div>'+ddThumbs('dd:r:dash')+'</div></div>';
+    DD_REV.map(ddRevRow).join('')+'<div class="ddrow'+''+'"><label class="fld">Photo(s) of the dashboard – vehicle mileage, engine hours and idle hours'+(ddRevPhotos('v7').length||ddCarriedOk(rec,'v7',1)?'':'<span class="muted" style="font-size:13px">One set of photos covers all three readings.</span>')+'</label><div class="au-cam">'+ddCamBtn('dd:r:dash',ddRevPhotos('v7').length)+'</div>'+ddThumbs('dd:r:dash')+'</div></div>';
   return top+'<div class="grid" style="margin-top:10px">'+rest+'</div>'+dates+sers+revs; }
 function ddRefresh(){ var e=document.getElementById('ddBox'); if(!e) return; var f=document.activeElement, id=f&&f.dataset&&(f.dataset.h||f.dataset.dd), pos=f&&f.selectionStart; var y=window.scrollY; e.innerHTML=ddHTML(); window.scrollTo(0,y); if(id){ var n=e.querySelector('[data-h="'+id+'"],[data-dd="'+id+'"]'); if(n&&!n.disabled){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } } }
 function ddSet(el){ var x=DD(), p=el.dataset.dd; if(p.indexOf('rev.')===0) x.rev[p.slice(4)]=DD_SHARED[p.slice(4)]?el.value.replace(/[,\s]/g,''):el.value; else x[p]=el.value; markDirty(); var ms=document.getElementById('ddBox'); }
@@ -16145,6 +16155,10 @@ async function ddAct(act,el){
   var x=DD(), rowEl=el.closest&&el.closest('.row'), num=rowEl&&rowEl.dataset?+rowEl.dataset.num:0;
   switch(act){
     case 'dd-tkpf': { var rw=String(S.rec.header.plate||'').replace(/^dhs\s*/i,''); x.pf=!CUST.pf(x.pf); S.rec.header.plate=(CUST.pf(x.pf)&&rw)?'DHS '+rw:rw; markDirty(); ddRefresh(); return true; }
+    case 'dd-vertake': { S.swKey=el.dataset.key; dlg('<h2 style="margin-top:0">Add photo</h2><div class="sheet-btns"><button class="btn primary big" data-act="sw-take">Take photo</button><button class="btn light big" data-act="sw-lib">Choose from library</button><button class="btn big" data-act="dd-verback">Cancel</button></div>','sheet'); return true; }
+    case 'dd-verback': { ddVerPrompt(S.verThen); return true; }
+    case 'dd-verskip': { ddVerSkip([el.dataset.key]); ddVerPrompt(S.verThen); return true; }
+    case 'dd-verdone': { ddVerSkip(S.verKeys||[]); ddVerPrompt(S.verThen); return true; }
     case 'dd-tkomit': { x.tkOm[el.dataset.k]=true; markDirty(); ddRefresh(); ddTkPrompt(S.tkThen); return true; }
     case 'dd-tktake': { S.swKey='dd:s:'+el.dataset.k; dlg('<h2 style="margin-top:0">Add photo</h2><div class="sheet-btns"><button class="btn primary big" data-act="sw-take">Take photo</button><button class="btn light big" data-act="sw-lib">Choose from library</button><button class="btn big" data-act="close-modal">Cancel</button></div>','sheet'); return true; }
     case 'dd-na': { var k=el.dataset.k; x.na[k]=!x.na[k]; markDirty(); ddRefresh(); return true; }
@@ -16194,14 +16208,14 @@ function ddReportPdf(d,rec,y,ens0,cell){
   var srows=[]; var oldv=ddOldTxt(rec);
   srows.push({l:'Platform (new upfit) serial',v:(function(v){return !v?'MISSING':/\d/.test(v)?v:v+' ________';})(ddSerial(rec,'newSerial')),vbad:!/\d/.test(ddSerial(rec,'newSerial')),p:ddPhotos(rec,'newSerial').length?ddPhotos(rec,'newSerial').length+' photo(s)':'NO PHOTO',pbad:!ddPhotos(rec,'newSerial').length});
   srows.push({l:'Replaces old serial',v:oldv||'MISSING',vbad:!oldv,p:'-'});
-  TK_L.slice().reverse().forEach(function(t){ var k=t[0], sv=ddSerial(rec,k), n=ddPhotos(rec,k).length; srows.unshift({l:t[1],v:sv||'MISSING',vbad:!sv,p:n?n+' photo(s)':(x.tkOm[k]?'Photo omitted':'NO PHOTO'),pbad:!n&&!x.tkOm[k]}); });
+  TK_L.slice().reverse().forEach(function(t){ var k=t[0], sv=ddSerial(rec,k), n=ddPhotos(rec,k).length; srows.unshift({l:t[1],v:sv||'MISSING',vbad:!sv,p:n?n+' photo(s)':'-',pbad:false}); });
   DD_DEVS.forEach(function(dv){ var k=dv[0], na=x.na[k], sv=ddSerial(rec,k), n=ddPhotos(rec,k).length, e=swFor(rec,k);
     srows.push({l:dv[1],v:na?'N/A':(sv||'MISSING')+(e&&e.nw?' (old: '+e.old+')':''),vbad:!na&&!sv,p:na?'-':(n?n+' photo(s)':'NO PHOTO'),pbad:!na&&!n}); if(k==='serverSerial'){ var wk=String(h.winKey||'').trim(); srows.push({l:'Server Windows activation key',v:wk||'MISSING',vbad:!wk,p:'-'}); } });
   if(ddUpfit(rec)) srows.push({l:'Client',v:'Removed (upfit)'+(String(h.clientSerial||'').trim()?' (was '+String(h.clientSerial).trim()+')':''),vbad:false,p:'-',gone:true});
   tbl('Serial Numbers',srows);
   y+=8;
   var rrows=DD_REV.filter(function(f){ return f[0]!=='v0c'||ddUpfit(rec); }).map(function(f){ var k=f[0]; if(k==='v0c'){ var cv=String(x.rev.v0c||'').trim(); return {l:f[1],v:'Removed (upfit)'+(cv?' (was '+cv+')':''),vbad:false,p:'-',gone:true}; } var na=x.rvna[k], v=String(x.rev[k]||'').trim(), sh=DD_SHARED[k], n=ddRevPhotos(k).length;
-    return {l:f[1],v:na?'N/A':((sh?numSep(v):v)||'MISSING'),vbad:!na&&!v,p:na?'-':(sh?(n?'dashboard photo':'NO DASH PHOTO'):(n?n+' photo(s)':'NO PHOTO')),pbad:!na&&!n}; });
+    return {l:f[1],v:na?'N/A':((sh?numSep(v):v)||'MISSING'),vbad:!na&&!v,p:na?'-':(sh?(n?'dashboard photo':'-'):(n?n+' photo(s)':'NO PHOTO')),pbad:!na&&!sh&&!n}; });
   tbl('SW/FW Revs',rrows);
   y+=8;
   var om=omitList(rec);
@@ -16541,7 +16555,7 @@ async function modalAct(act,el){
   if(await swModalAct(act,el)) return true;
   if(act.indexOf('wip-')===0){ await wipAct(act,el); return true; }
   if(await ddModalAct(act,el)) return true;
-  if(act.indexOf('cal-')===0||act.indexOf('fin-')===0||act.indexOf('dd-tk')===0){ return appAct(act,el); }
+  if(act.indexOf('cal-')===0||act.indexOf('fin-')===0||act.indexOf('dd-tk')===0||act.indexOf('dd-ver')===0){ return appAct(act,el); }
   switch(act){
     case 'noop': return true;
     case 'mclose': modalRoot.innerHTML=''; return true;
