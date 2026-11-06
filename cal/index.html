@@ -14104,7 +14104,7 @@ document.addEventListener('click',e=>{const t=e.target;if(t&&t.id==='hdX'){hdSto
 function curTpl(){return TPL}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'74'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/06/2026',site:'86'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14324,7 +14324,7 @@ var A={ready:homeUp,
 /* forms built on the Calibration/Floor Test/Final shell */
 var C={ready:homeUp,
  cur:function(){if(S.view!=='rec'||!S.rec)return null;var r=S.rec;
-  return {id:r.id,sn:String((typeof recName==='function'?recName(r):'')||'Untitled'),st:STEPS[S.step]||'',done:!!(r.done&&r.done.complete),t:+r.updated||0,pos:{y:Math.round(window.scrollY)}};},
+  return {id:r.id,sn:String((typeof recName==='function'?recName(r):'')||'Untitled'),st:STEPS[S.step]||'',done:!!(r.done&&r.done.complete),t:+r.updated||0,os:(function(){try{var v=snShow(r.hdr.sn)||'';return (/\d/.test(v)&&r.hdr.was)?String(r.hdr.was):'';}catch(e){return '';}})(),pos:{y:Math.round(window.scrollY)}};},
  open:async function(id,p){var f=function(){return (S.recs||[]).find(function(y){return y.id===id;});},x=f();if(!x&&typeof loadAll==='function'){await loadAll();x=f();}if(!x)return false;
   if(typeof openRec==='function')await openRec(x);else{S.rec=x;S.step=x.step||0;S.view='rec';render();}return true;}};
 function ad(){if(window.__tscAd)return window.__tscAd;

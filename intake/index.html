@@ -15480,7 +15480,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/06/2026',site:'81'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/06/2026',site:'86'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -16061,7 +16061,7 @@ var homeUp=function(){return S.view==='home'&&!!document.querySelector('[data-ac
 /* forms built on the Post-Repair/Intake/SkyWatch shell */
 var A={ready:homeUp,
  cur:function(){if(S.view!=='rec'||!S.rec)return null;var r=S.rec;
-  return {id:r.id,sn:String((typeof snD==='function'?snD(r):'')||(r.hdr&&r.hdr.sn)||'Untitled'),st:S.audit?'Audit':(STEPN[r.step-1]||''),done:!!(r.completed||r.signed),t:+r.updated||0,
+  var ui=(function(){try{var h=r.hdr||{};if(h.purpose==='upfit'&&typeof nsnFull==='function'){var n=nsnFull(h);if(n)return {n:n,o:String(typeof snD==='function'?snD(r):h.sn||'')};}}catch(e){}return null;})();return {id:r.id,sn:ui?ui.n:String((typeof snD==='function'?snD(r):'')||(r.hdr&&r.hdr.sn)||'Untitled'),os:ui?ui.o:'',st:S.audit?'Audit':(STEPN[r.step-1]||''),done:!!(r.completed||r.signed),t:+r.updated||0,
    pos:{a:S.audit?1:0,o:typeof S.open==='number'?S.open:-1,y:Math.round(window.scrollY),m:(typeof moreOpen==='function'&&moreOpen(r))?1:0}};},
  open:async function(id,p){var x=await dbGet('recs',id);if(!x)return false;x=migrate(x);S.audit=!!p.a;if(typeof moreOpen==='function')S.moreId=p.m?x.id:null;
   S.rec=x;await loadPhotos(x);S.view='rec';S.open=-1;S.detail={};S.dirty=false;render();

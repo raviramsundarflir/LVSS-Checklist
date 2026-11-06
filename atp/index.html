@@ -15142,7 +15142,7 @@ window.__sd=scanDone;
 /* Return to last opened report: ATP hooks for the shared block at the end of the page (Ravi, 2026-11-02) */
 window.__tscAd={ready:function(){return S.view==='home'&&!!document.querySelector('[data-act="new"]');},
  cur:function(){if(!S.rec||!(S.view==='insp'||S.view==='review'||S.view==='audit'))return null;var r=S.rec,h=r.header||{};
-  return {id:r.id,sn:String(snD(h)||h.newSerial||'(no serial)'),st:{insp:'Inspection',review:'Review',audit:'Audit'}[S.view],done:!!r.completed,t:Date.parse(r.updated)||0,pos:{v:S.view,y:Math.round(window.scrollY)}};},
+  return {id:r.id,sn:String(snD(h)||h.newSerial||'(no serial)'),os:(function(){try{var o=String(h.oldSerial||'').trim(),n=String(h.newSerial||'');return (o&&/\d/.test(n))?snShow(o):'';}catch(e){return '';}})(),st:{insp:'Inspection',review:'Review',audit:'Audit'}[S.view],done:!!r.completed,t:Date.parse(r.updated)||0,pos:{v:S.view,y:Math.round(window.scrollY)}};},
  open:async function(id,p){var rec=await DB.get('inspections',id);if(!rec)return false;if(p.v==='audit'){await openAudit(id);}else{await openInspection(id);if(p.v==='review')await renderReview();}return true;},
  say:function(t){toast(t);}};
 var _tscDel=deleteInspection;deleteInspection=async function(id){await _tscDel(id);try{if(!(await DB.get('inspections',id))&&window.tscDrop)window.tscDrop(id);}catch(e){}};
@@ -15739,7 +15739,7 @@ window.offReadiness=readiness;
 })();
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/06/2026',site:'85'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/06/2026',site:'86'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
