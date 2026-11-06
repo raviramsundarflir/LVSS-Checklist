@@ -14046,10 +14046,11 @@ function inspectHtml(){const r=S.rec,n=r.tpl.sections.length;const started=r.ins
 const COMLBL='Additional Comments & Parts';
 function verPhHtml(){const n=phOwner('ver').ph.length;return `<label class="f">HMI photo of the version screen</label><p class="muted" style="margin:2px 0 6px">One clear photo that shows most of these versions is enough. Add more if the versions don't fit in one picture.</p><div class="row" style="flex-wrap:nowrap"><button class="ic" data-act="cam" data-id="ver" title="Photo of the HMI version screen">📷${n?`<b>${n}</b>`:''}</button><span class="muted">${n?n+' photo'+(n>1?'s':'')+' attached':'No photo yet (optional)'}</span></div>${thumbs('ver')}`}
 const PHF=['v7','v8','v9'];
-function odoPhHtml(){const n=phOwner('vf:v7').ph.length;return `<label class="f">Photo(s) of the dashboard – vehicle mileage, engine hours and idle hours</label><p class="muted" style="margin:2px 0 6px">This set is attached to all three readings. Each reading also has its own camera button to add a photo for that reading only.</p><div class="row" style="flex-wrap:nowrap"><button class="ic" data-act="cam" data-id="vf:v7" title="Photo of the dashboard readings">📷${n?`<b>${n}</b>`:''}</button><span class="muted">${n?n+' photo'+(n>1?'s':'')+' attached':'No photo yet (optional)'}</span></div>${thumbs('vf:v7')}`}
+function odoPhHtml(){const n=phOwner('vf:v7').ph.length;return `<label class="f">Photo(s) of the dashboard – vehicle mileage, engine hours and idle hours</label><p class="muted" style="margin:2px 0 6px">One set of photos covers all three readings.</p><div class="row" style="flex-wrap:nowrap"><button class="ic" data-act="cam" data-id="vf:v7" title="Photo of the dashboard readings">📷${n?`<b>${n}</b>`:''}</button><span class="muted">${n?n+' photo'+(n>1?'s':'')+' attached':'No photo yet (optional)'}</span></div>${thumbs('vf:v7')}`}
 function verHtml(){const r=S.rec,vi=r.tpl.versionInfo||{fields:[]};
- const fld=f=>{const pv=r.prev&&r.prev[f.key],na=(r.ver||{})[f.key]==='N/A',sh=PHF.includes(f.key);return `<div><label class="f">${esc(f.label)}</label><div class="row" style="flex-wrap:nowrap">${sh?`<button class="ic" data-act="cam" data-id="vf:o${f.key.slice(1)}" title="Photo of ${esc(f.label)} only">📷${phOwner('vf:o'+f.key.slice(1)).ph.length?`<b>${phOwner('vf:o'+f.key.slice(1)).ph.length}</b>`:''}</button>`:''}<input data-b="ver.${f.key}" value="${esc(vDisp(f.key,getp(r,'ver.'+f.key)))}"${PZ_NUM.includes(f.key)?' inputmode="decimal"':''} style="flex:1"><button data-act="vna" data-k="${f.key}" class="${na?'pri':''}" style="min-height:44px;padding:4px 10px" title="Does not apply">${na?'✓ ':''}N/A</button>${sh?'':`<button class="ic" data-act="cam" data-id="vf:${f.key}" title="Photo of ${esc(f.label)}">📷${phOwner('vf:'+f.key).ph.length?`<b>${phOwner('vf:'+f.key).ph.length}</b>`:''}</button>`}</div>${sh?thumbs('vf:o'+f.key.slice(1)):thumbs('vf:'+f.key)}${pv?`<div class="muted" style="font-size:13px">Last recorded: ${esc(vDisp(f.key,pv))}</div>`:''}</div>`};
- return `<h2>Version info</h2><p class="muted">${esc(vi.note||'')}</p><div id="verPh">${verPhHtml()}</div><div class="sp"></div><div class="grid">${vi.fields.map(fld).join('')}</div><div class="sp"></div>${odoPhHtml()}`;}
+ const fld=f=>{const pv=r.prev&&r.prev[f.key],na=(r.ver||{})[f.key]==='N/A';return `<div><label class="f">${esc(f.label)}</label><div class="row" style="flex-wrap:nowrap"><input data-b="ver.${f.key}" value="${esc(vDisp(f.key,getp(r,'ver.'+f.key)))}"${PZ_NUM.includes(f.key)?' inputmode="decimal"':''} style="flex:1"><button data-act="vna" data-k="${f.key}" class="${na?'pri':''}" style="min-height:44px;padding:4px 10px" title="Does not apply">${na?'✓ ':''}N/A</button></div>${pv?`<div class="muted" style="font-size:13px">Last recorded: ${esc(vDisp(f.key,pv))}</div>`:''}</div>`};
+ const rv=vi.fields.filter(f=>!PHF.includes(f.key)),od=vi.fields.filter(f=>PHF.includes(f.key));
+ return `<h2>Version info</h2><p class="muted">${esc(vi.note||'')}</p><div id="verPh">${verPhHtml()}</div><div class="sp"></div><div class="grid">${rv.map(fld).join('')}</div><div class="sp"></div>${od.length?odoPhHtml()+'<div class="sp"></div><div class="grid">'+od.map(fld).join('')+'</div>':''}`;}
 function datesHtml(){const h=S.rec.hdr,t=h.pickType||'',tbd=!!h.pickTbd&&!h.pickDate;return `<div id="datesBox" style="margin-top:10px"><label class="f">Truck repair completion date</label><input type="date" data-b="hdr.doneDate" value="${esc(h.doneDate||'')}" style="max-width:260px"><label class="f" style="margin-top:10px">Truck picked up / dropped off</label><div class="row" style="flex-wrap:nowrap;gap:6px;margin-bottom:6px"><button class="${t==='pick'?'pri':''}" data-act="pickt" data-v="pick" style="flex:1">Picked up</button><button class="${t==='drop'?'pri':''}" data-act="pickt" data-v="drop" style="flex:1">Dropped off</button></div><div class="row" style="flex-wrap:nowrap;gap:6px"><input type="date" data-b="hdr.pickDate" value="${esc(h.pickDate||'')}" style="max-width:260px"><button class="${tbd?'pri':''}" data-act="pickbd">${tbd?'✓ ':''}TBD</button></div></div>`}
 const pickLbl=h=>h.pickType==='pick'?'Date Picked Up':h.pickType==='drop'?'Date Dropped Off':'Pickup / Drop-off Date';
 const pickVal=h=>h.pickDate?fmtD(h.pickDate):h.pickTbd?'TBD':'';
@@ -15372,7 +15373,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/04/2026',site:'74'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/06/2026',site:'81'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -15763,6 +15764,8 @@ function labelOf(el){var a=el.parentElement;for(var n=0;a&&n<5;n++,a=a.parentEle
 var css=document.createElement('style');css.textContent=
  'input.dk-mic,textarea.dk-mic{background-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%231d5fc4%27 stroke-width=%272%27 stroke-linecap=%27round%27%3E%3Crect x=%279%27 y=%273%27 width=%276%27 height=%2711%27 rx=%273%27/%3E%3Cpath d=%27M5 11a7 7 0 0 0 14 0M12 18v3%27/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-position:right 10px center!important;background-size:20px 20px!important;padding-right:38px!important}'+
  'input.dk-kbd,textarea.dk-kbd{background-image:none!important}'+
+ 'input.dk-mic.dk-hasb,textarea.dk-mic.dk-hasb{background-image:none!important;padding-right:10px!important}'+
+ '.dk-btns{display:inline-flex;gap:4px;flex:none}.dk-btns button{min-height:44px;min-width:44px;padding:4px 8px;font-size:20px;line-height:1;border-radius:10px}.dk-btns button.on{background:#1d5fc4;border-color:#1d5fc4;color:#fff}'+
  'input.dk-live,textarea.dk-live{border-color:#c2410c!important;background-color:#fff1e6!important;box-shadow:0 0 0 3px rgba(194,65,12,.18)!important}'+
  '#dkPanel{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom));width:min(680px,calc(100% - 20px));background:#fff;color:#14213d;border:1px solid #d5dce6;border-left:6px solid #1d5fc4;border-radius:14px;box-shadow:0 10px 30px rgba(20,33,61,.25);padding:10px 12px;z-index:900;font-size:15px;display:none}'+
  '#dkPanel.live{border-left-color:#c2410c}#dkPanel.ask{border-left-color:#e0a000}#dkPanel.err{border-left-color:#c62828}#dkPanel.ok{border-left-color:#1b8a3a}'+
@@ -15785,7 +15788,12 @@ function place(){var el=st.el,top=false;try{if(el){var r=el.getBoundingClientRec
 function show(cls,title,msg,btns,ed){mount();if(P.style.display!=='block')place();P.className=cls||'';P.innerHTML='<div class="t">'+(cls==='live'?'<span class="dot"></span>':'')+'<b>'+title+'</b><button data-dk-x="close" aria-label="Close">✕</button></div><div class="m">'+(msg||'')+'</div><div class="b">'+(btns||'')+'</div>'+(ed?'<div class="e">'+ed+'</div>':'');P.style.display='block';}
 function hide(){P.style.display='none';}
 /* ---------- marks on the fields ---------- */
-function paint(){var o=on();document.querySelectorAll('input,textarea').forEach(function(el){var k=kindOf(el);if(!k){el.classList.remove('dk-mic');return;}
+function btnsFor(el,o){var nx=el.nextElementSibling,has=!!(nx&&nx.classList&&nx.classList.contains('dk-btns')),ok=false;
+ if(o&&el.parentElement&&el.type!=='hidden'){try{ok=getComputedStyle(el.parentElement).display==='flex'&&getComputedStyle(el.parentElement).flexWrap==='nowrap';}catch(e){}}
+ if(!ok){if(has)nx.parentNode.removeChild(nx);el.classList.remove('dk-hasb');return;}
+ if(!has){nx=document.createElement('span');nx.className='dk-btns';nx.innerHTML='<button type="button" data-dk-f="mic" aria-label="Speak this field" title="Speak">🎤</button><button type="button" data-dk-f="kbd" aria-label="Type this field" title="Type">⌨</button>';el.parentNode.insertBefore(nx,el.nextSibling);}
+ el.classList.add('dk-hasb');var kb=nx.querySelector('[data-dk-f=kbd]');if(kb)kb.classList.toggle('on',kbd.has(el));}
+function paint(){var o=on();document.querySelectorAll('input,textarea').forEach(function(el){var k=kindOf(el);if(!k){el.classList.remove('dk-mic','dk-hasb');var nb=el.nextElementSibling;if(nb&&nb.classList&&nb.classList.contains('dk-btns'))nb.parentNode.removeChild(nb);return;}btnsFor(el,o);
   el.classList.toggle('dk-mic',o);el.classList.toggle('dk-kbd',o&&kbd.has(el));if(o&&!kbd.has(el))el.setAttribute('inputmode','none');else if(el.getAttribute('inputmode')==='none')el.removeAttribute('inputmode');});
  document.querySelectorAll('.dk-pill').forEach(function(b){b.classList.toggle('on',o);b.textContent=o?'🎤 On':'🎤 Off';b.setAttribute('aria-label','Dictation '+(o?'on':'off')+' - tap to switch');});
  document.querySelectorAll('.dk-seg button').forEach(function(b){b.classList.toggle('on',(b.getAttribute('data-dk')==='1')===o);});}
@@ -15846,7 +15854,7 @@ document.addEventListener('click',function(e){var el=e.target;
  if(el.closest&&el.closest('.dk-seg button')){setOn(el.closest('button').getAttribute('data-dk')==='1');return;}
  if(!on()||!kindOf(el)||kbd.has(el))return;if(st.ask&&st.el===el){try{st.caret=el.selectionStart;}catch(x){}listen(el,true);return;}if(st.busy&&st.el===el){var tc=null;try{tc=el.selectionStart;}catch(x){}pause();if(tc!=null)caretTo(el,tc);st.heard='';askDone(el,'Stopped listening. The cursor is where you tapped.');return;}if((st.busy||st.ask)&&st.el&&st.el!==el)finish(true);listen(el);},true);
 document.addEventListener('visibilitychange',function(){if(document.hidden&&(st.busy||st.ask))finish(true);});window.addEventListener('pagehide',function(){if(st.busy)finish(true);});
-document.addEventListener('pointerdown',function(e){if(!st.busy||!e.target.closest)return;if(e.target.closest('#dkPanel')||kindOf(e.target))return;finish(true);},true);
+document.addEventListener('pointerdown',function(e){if(!st.busy||!e.target.closest)return;if(e.target.closest('#dkPanel,.dk-btns')||kindOf(e.target))return;finish(true);},true);
 P.addEventListener('pointerdown',function(e){e.preventDefault();});P.addEventListener('mousedown',function(e){e.preventDefault();});
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-dk-x],[data-dk-alt]');if(!b)return;var x=b.getAttribute('data-dk-x'),el=st.el;
  if(x==='pill'){setOn(!on());return;}
@@ -15861,6 +15869,14 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
  if(x==='undo'&&st.last){stop();st.ask=false;put(st.last.el,st.last.before);show('','Undone','The field is back to what it was.','<button class="p" data-dk-x="close">Close</button>');return;}
  if(x==='kbd'&&el){if(st.busy||st.ask)finish(true);stop();hide();kbd.add(el);el.removeAttribute('inputmode');el.classList.add('dk-kbd');el.blur();el.focus();return;}
  if(x==='voice'&&el){kbd.delete(el);el.classList.remove('dk-kbd');el.setAttribute('inputmode','none');el.blur();el.focus();listen(el);return;}},true);
+/* the little 🎤 / ⌨ buttons beside a field (Ravi, 2026-11-06) */
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-dk-f]');if(!b)return;var el=b.parentElement&&b.parentElement.previousElementSibling;if(!el||!kindOf(el))return;e.stopPropagation();e.preventDefault();
+ if(b.getAttribute('data-dk-f')==='kbd'){if(st.busy||st.ask)finish(true);stop();hide();kbd.add(el);el.removeAttribute('inputmode');el.classList.add('dk-kbd');paint();el.blur();el.focus();return;}
+ kbd.delete(el);el.classList.remove('dk-kbd');el.setAttribute('inputmode','none');paint();
+ if(st.busy&&st.el===el)return;
+ if((st.busy||st.ask)&&st.el&&st.el!==el)finish(true);
+ if(st.ask&&st.el===el){try{st.caret=el.selectionStart;}catch(x){}listen(el,true);return;}
+ listen(el);},true);
 /* field in keyboard mode: offer to switch back to voice */
 document.addEventListener('focusin',function(e){var el=e.target;if(!on()||!kindOf(el)||!kbd.has(el))return;st.el=el;place();show('','⌨ Typing – '+esc(labelOf(el)),'The keyboard is open for this field.','<button class="p" data-dk-x="voice">🎤 Speak instead</button><button data-dk-x="close">Done</button>');});
 document.addEventListener('focusout',function(e){var el=e.target;if(kindOf(el)&&kbd.has(el)&&!st.busy)setTimeout(function(){if(document.activeElement!==el&&P.className==='')hide();},150);
