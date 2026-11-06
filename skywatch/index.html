@@ -14549,7 +14549,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/06/2026',site:'85'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/06/2026',site:'88'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -15071,40 +15071,36 @@ var SECS=[
   ['r6','Equipment on the tower, and whether the broadband router or Cradlepoint subscription is active','eq'],
   ['r7','Open punch-list items from last visit','op'],
   ['r8','Spares left on site last visit (so you don’t buy what is already there)','sp']]}]},
- {id:'s3',t:'3. Bring',n:'Pack these before you fly; everything else is bought on arrival (section 5).',g:[
+ {id:'s3',t:'3. Bring',n:'Pack these before you fly; everything else is bought on arrival (section 4).',g:[
   {h:'Generator parts',gen:1,i:[
-   ['b2','When due: coolant and pressure cap','cool']]},
+   ['b2','Coolant','cool']]},
   {h:'Grease',i:[
    ['b3','Grease gun and grease',['The form lists 35 grease points: 18 left side, 17 right side (count varies by model)']],
    ['b9','Spare Zerk: straight, 3/8"-24 UNF male, 5/8" tall (McMaster 1095K96)',['Two different Zerk sizes are used on the tower'],1],
    ['b10','Spare Zerk: 90° elbow, 1/2"-20 UNF male, 7/8" tall (McMaster 1095K119)',null,1]]},
   {h:'Tools',i:[
    ['b4','Multimeter',['Start battery readings, gen-set voltage; DC towers: battery readings at ground level and fully raised']],
-   ['b5','GFCI outlet tester',['Two GFCI outlet checks']],
    ['b6','Tire pressure gauge'],
-   ['b7','Battery terminal brush',['The form says remove and clean the terminals']],
    ['b15','Battery jumper pack'],
    ['b11','Fuel hose line clamp pliers'],
-   ['b12','Spare hose clamp fittings'],
+   ['b12','Hose clamps'],
    ['b13','Wi-Fi adapter (optional but very highly recommended)'],
-   ['b14','USB hub (optional but very highly recommended)']]},
-  {h:'Documents',i:[
-   ['b8','Digital copy of the operation manual (form item 134)']]},
+   ['b14','USB hub (optional but very highly recommended)'],
+   ['b16','RJ45 patch cable'],
+   ['b17','Disposable nitrile gloves']]},
   {h:'Keys',i:[
-   ['j8','Door key: confirm the customer has it (form item 17)']]}]},
- {id:'s5',t:'4. Tablet',g:[{i:[
-  ['t1','Tablet charged, plus charger'],
-  ['t2','SkyWatch form opened once on Wi-Fi before the trip, so it is ready to work offline at the tower'],
-  ['t3','Your technician e-mail entered on the form, so you are copied on the report'],
-  ['t4','Know the photos the form needs',['Tower serial number plate and whole tower (both print on the certificate), plus the serial photos']]]}]},
- {id:'s4',t:'5. Buy on arrival',n:'Techs usually fly to the customer’s city, so these are bought locally. Check section 2 first for spares already left on site.',g:[{i:[
+   ['j8','SkyWatch keys']]}]},
+ {id:'s4',t:'4. Buy on arrival',n:'Techs usually fly to the customer’s city, so these are bought locally. Check section 2 first for spares already left on site.',g:[{i:[
   ['a1','Engine oil (grade and quarts from section 2)','oilbuy'],
-  ['a2','Oil drain pan'],['a3','Oil mat'],['a4','Funnel'],['a5','Roll of shop towels'],['a6','Cleaner spray']]}],
+  ['a2','Oil drain pan'],['a3','Oil mat'],['a4','Funnel'],['a5','Roll of shop towels'],['a6','Cleaner spray']]},
+  {h:'Generator parts not packed (added automatically)',buyauto:1,i:[]}],
   foot:'Whatever is left over goes in the form’s “Spare consumables left with the tower” section, so the next tech knows.'}
 ];
 var NOTES=['Inspect only, no parts needed: engine V-belt, crankcase breather, coolant hoses, water pump and thermostat. The form says an Onan-authorized mechanic replaces these.','The coolant anti-freeze protection check (form item 89) is not done on PM visits, so no tester is on the list.','This trip checklist stays behind the scenes: it is not part of the inspection report.'];
 function e(s){return esc(s==null?'':String(s));}
-function gi(g,r){var a=g.gen?genItems(r).concat(g.i):g.i,G=r?genOf(r):null;if(G&&!G.f.cool)a=a.filter(function(x){return x[0]!=='b2';});return a;}
+function genGroup(){var f=null;SECS.forEach(function(s){s.g.forEach(function(q){if(q.gen)f=q;});});return f;}
+function gi(g,r){if(g.buyauto){if(!r)return [];var tk=T(r).ck;return gi(genGroup(),r).filter(function(x){return !tk[x[0]];}).map(function(x){return ['bb_'+x[0],x[1],x[2],0];});}
+ var a=g.gen?genItems(r).concat(g.i):g.i,G=r?genOf(r):null;if(G&&!G.f.cool)a=a.filter(function(x){return x[0]!=='b2';});return a;}
 function its(sec,r){var a=[];sec.g.forEach(function(g){gi(g,r).forEach(function(x){a.push(x)})});return a;}
 function num(v){var n=parseFloat(String(v||'').replace(/,/g,''));return isFinite(n)?n:null;}
 function fmtN(n){return Math.round(n).toLocaleString('en-US');}
@@ -15135,13 +15131,15 @@ function gpRow(r,x,on){var b=tick(r,x,'tick',null,on);if(!x[4]||!x[4].length)ret
  return '<div class="ptpr">'+b+'<div class="ptol">Check online: '+x[4].map(function(pn){return '<a href="https://www.google.com/search?q='+encodeURIComponent((x[5]?x[5]+' ':'')+pn)+'" target="_blank" rel="noopener">'+e(pn)+' \u203a</a>';}).join(' \u00b7 ')+'</div></div>';}
 function gpHtml(r){var t=T(r),g=null;SECS.forEach(function(s){s.g.forEach(function(q){if(q.gen)g=q;});});
  return '<p class="muted ptn ptgn">'+e(genNote(r))+'</p><div class="ptl">'+gi(g,r).map(function(x){return gpRow(r,x,!!t.ck[x[0]]);}).join('')+'</div>';}
+function buyAutoHtml(r,g){var a=gi(g,r),t=T(r);if(!a.length)return '';return '<div class="grp">'+e(g.h)+'</div><div class="ptl">'+a.map(function(x){return tick(r,x,'tick',null,!!t.ck[x[0]]);}).join('')+'</div>';}
+function buyRefresh(){var r=S.rec;if(!r||r.step!==0)return;var el=document.getElementById('ptBuyAuto');if(!el)return;var g=null;SECS.forEach(function(s){s.g.forEach(function(q){if(q.buyauto)g=q;});});if(g)el.innerHTML=buyAutoHtml(r,g);}
 function gmBtns(r){var G=genOf(r),cur=r.genLib||(G?G.e.k:'');
  return '<div class="ptgt" id="ptGm">'+GENLIB.map(function(q){return '<button type="button" class="'+(cur===q.k?'pri':'')+'" data-pt="gm" data-v="'+q.k+'">'+e(q.n)+'</button>';}).join('')+'<button type="button" class="'+(cur==='other'?'pri':'')+'" data-pt="gm" data-v="other">Other / not listed</button></div>';}
 function itemDef(id){var f=null;SECS.forEach(function(s){s.g.forEach(function(g){g.i.forEach(function(x){if(x[0]===id)f=x;});});});return f;}
 /* refresh only the parts that depend on the generator model, so the screen does not move */
 function genRefresh(){var r=S.rec;if(!r||r.step!==0)return;var t=T(r),g=document.getElementById('ptGm');if(g)g.outerHTML=gmBtns(r);
  var p=document.getElementById('ptGp');if(p)p.innerHTML=gpHtml(r);
- ['r4','a1'].forEach(function(id){var x=itemDef(id),b=document.querySelector('[data-pt=tick][data-k='+id+']');if(x&&b)b.outerHTML=tick(r,x,'tick',null,!!t.ck[id]);});}
+ ['r4','a1'].forEach(function(id){var x=itemDef(id),b=document.querySelector('[data-pt=tick][data-k='+id+']');if(x&&b)b.outerHTML=tick(r,x,'tick',null,!!t.ck[id]);});buyRefresh();}
 function tick(r,x,act,xid,on){var opt=x[3]?'<em>OPTIONAL</em>':'',sb=act==='xtick'?[]:sub(r,x);
  return '<button type="button" class="ptit'+(on?' on':'')+'" data-pt="'+act+'" '+(xid?'data-x="'+xid+'"':'data-k="'+x[0]+'"')+' aria-pressed="'+(on?'true':'false')+'"><span class="ptbx" aria-hidden="true"></span><span class="pttx">'+e(x[1])+opt+(sb.length?'<small>'+sb.map(e).join('<br>')+'</small>':'')+'</span></button>';}
 function lastHtml(r){var L=r.last||{};if(r.fromNv)return '<div class="cnote sk" style="margin-top:10px">Generator hours at the last visit'+(L.d?' ('+fmtD(L.d)+')':'')+': <b style="color:var(--ink)">'+(num(L.h)!=null?fmtN(num(L.h))+' h':'not recorded')+'</b></div>';
@@ -15153,7 +15151,7 @@ function secHtml(r,sec){var c=secDone(r,sec),t=T(r),h='<div class="card"><div cl
   '<label class="f" style="margin-top:12px">Generator model (fills in the parts to bring and the oil)</label>'+gmBtns(r)+'<button type="button" class="gpb" data-pt="genpanel">🔧 Fault codes &amp; manual for this generator ›</button>'+
   '<label class="f" style="margin-top:12px">Generator type (gas adds the spark plug and ignition coil checks)</label><div class="ptgt" id="ptGt">'+[['diesel','Diesel'],['gas','Gas / spark-ignition'],['other','Other']].map(function(x){return '<button type="button" class="'+(r.genType===x[0]?'pri':'')+'" data-pt="gt" data-v="'+x[0]+'">'+x[1]+'</button>';}).join('')+'</div>'+
   '<label class="row" style="gap:12px;margin-top:12px"><input type="checkbox" data-pt="lg" style="width:26px;min-height:26px" '+(r.legacy?'checked':'')+'><span><b>Legacy DC tower</b><br><span class="muted">Adds Section 7 (Legacy DC Towers only) to the inspection.</span></span></label>'+lastHtml(r);}
- h+=sec.g.map(function(g){return (g.h?'<div class="grp">'+e(g.h)+'</div>':'')+(g.gen?'<div id="ptGp">'+gpHtml(r)+'</div>':'<div class="ptl"'+(sec.f||sec.tow?' style="margin-top:8px"':'')+'>'+g.i.map(function(x){return tick(r,x,'tick',null,!!t.ck[x[0]])}).join('')+'</div>');}).join('');
+ h+=sec.g.map(function(g){if(g.buyauto)return '<div id="ptBuyAuto">'+buyAutoHtml(r,g)+'</div>';return (g.h?'<div class="grp">'+e(g.h)+'</div>':'')+(g.gen?'<div id="ptGp">'+gpHtml(r)+'</div>':'<div class="ptl"'+(sec.f||sec.tow?' style="margin-top:8px"':'')+'>'+g.i.map(function(x){return tick(r,x,'tick',null,!!t.ck[x[0]])}).join('')+'</div>');}).join('');
  return h+(sec.foot?'<p class="muted" style="margin:10px 0 0">'+e(sec.foot)+'</p>':'')+'</div>';}
 function xlist(r){var t=T(r);if(!t.extra.length)return '<p class="muted" style="margin:4px 0">Nothing added yet.</p>';return t.extra.map(function(x){return '<div class="ptxr">'+tick(r,[x.id,x.t],'xtick',x.id,!!x.on)+'<button type="button" class="ptdel" data-pt="xdel" data-x="'+x.id+'" aria-label="Remove this item">×</button></div>';}).join('');}
 window.tripHtml=function(){var r=S.rec;T(r);var c=allDone(r),pct=c.tot?Math.round(c.n*100/c.tot):0;
@@ -15234,7 +15232,7 @@ function tripPdf(r){var d=pdfBase(),K=kit(d),blank=!r,t=r?T(r):{ck:{},extra:[]},
   if(s.svc){var sel=r?(r.svc&&r.svc.sel||{}):{};K.ens(22);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(110);d.text('SERVICE TYPE(S)',K.MX,K.y);K.y+=12;var x=K.MX;SVC.forEach(function(q){var lab=q[1].replace(' (Preventative Maintenance Service)',' (PM)');K.box(x,K.y-9,!!sel[q[0]]);d.setFontSize(9.5);d.setTextColor(20);d.text(cl(lab),x+15,K.y);x+=d.getTextWidth(cl(lab))+34;});K.y+=16;}
   if(s.tow){K.fields(TOWF,get);K.ens(22);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(110);d.text('GENERATOR TYPE',K.MX,K.y);K.y+=12;var x2=K.MX;[['diesel','Diesel'],['gas','Gas / spark-ignition'],['other','Other'],['lg','Legacy DC tower']].forEach(function(q){var on=r?(q[0]==='lg'?r.legacy:r.genType===q[0]):false;K.box(x2,K.y-9,on);d.setFontSize(9.5);d.setTextColor(20);d.text(q[1],x2+15,K.y);x2+=d.getTextWidth(q[1])+34;});K.y+=16;
    K.fields([['lh','Generator hours at the last visit'],['ld','Date of the last visit']],function(q){if(!r)return '';var L=r.last||{};return q==='lh'?(L.h||''):(L.d?fmtD(L.d):'');});}
-  s.g.forEach(function(g){if(g.h)K.grp(g.h);if(g.gen)K.note(genNote(r));gi(g,r).forEach(function(x){K.item(x[1],r?sub(r,x):(Array.isArray(x[2])?x[2]:null),!!t.ck[x[0]],x[3]);});});
+  s.g.forEach(function(g){if(g.buyauto&&!gi(g,r).length)return;if(g.h)K.grp(g.h);if(g.gen)K.note(genNote(r));gi(g,r).forEach(function(x){K.item(x[1],r?sub(r,x):(Array.isArray(x[2])?x[2]:null),!!t.ck[x[0]],x[3]);});});
   if(s.foot)K.note(s.foot);});
  if(blank){K.head('Added for this trip');for(var i=0;i<4;i++)K.item('______________________________________________________',null,false);}
  else if(t.extra.length){K.head('Added for this trip',xcount(r));t.extra.forEach(function(x){K.item(x.t,null,!!x.on)});}
@@ -15297,7 +15295,7 @@ document.addEventListener('click',function(ev){var b=ev.target.closest('[data-pt
  if(!r)return;
  if(a==='cskip'){var k=b.getAttribute('data-k');r.carry=r.carry||{};r.carry[k]='skip';dirty();var n=b.closest('.cnote');if(n)n.outerHTML=cnote(k);return;}
  if(r.step!==0)return;var t=T(r);
- if(a==='tick'){var key=b.getAttribute('data-k');t.ck[key]=!t.ck[key];if(!t.ck[key])delete t.ck[key];b.classList.toggle('on',!!t.ck[key]);b.setAttribute('aria-pressed',t.ck[key]?'true':'false');dirty();paint();return;}
+ if(a==='tick'){var key=b.getAttribute('data-k');t.ck[key]=!t.ck[key];if(!t.ck[key])delete t.ck[key];b.classList.toggle('on',!!t.ck[key]);b.setAttribute('aria-pressed',t.ck[key]?'true':'false');if(key.indexOf('bb_')!==0)buyRefresh();dirty();paint();return;}
  if(a==='xtick'){var x=t.extra.find(function(q){return q.id===b.getAttribute('data-x')});if(!x)return;x.on=!x.on;b.classList.toggle('on',x.on);b.setAttribute('aria-pressed',x.on?'true':'false');dirty();paint();return;}
  if(a==='xdel'){var i=t.extra.findIndex(function(q){return q.id===b.getAttribute('data-x')});if(i<0)return;if(!confirm('Remove “'+t.extra[i].t+'” from this trip?'))return;t.extra.splice(i,1);dirty();document.getElementById('ptXl').innerHTML=xlist(r);paint();return;}
  if(a==='add'){addItem();return;}
