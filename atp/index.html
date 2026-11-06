@@ -14252,7 +14252,7 @@ async function renderReview(){
       var inl=revInline(it); if(inl) return inl;
       return '<li data-kind="'+it.kind+'"><button data-act="goto" data-num="'+it.r.num+'"><span class="pn">'+it.r.num+'</span><span class="pd"><b>'+esc(desc)+'</b><small>'+esc(lineText(it.r,it.d))+(n?' ('+n+' photo'+(n>1?'s':'')+')':'')+'</small></span><span class="tag tag-'+it.kind.split(' ')[0]+'">'+it.kind+'</span></button>'+(it.kind==='FAIL'?'<button type="button" class="ovrb" data-act="rx-ovr1" data-num="'+it.r.num+'">Mark N/A – doesn’t apply</button>':'')+'</li>';
     }).join('')+'</ol>' : '<p class="card">Nothing to rework. The punch list page will print as \u201cNo nonconformances found.\u201d</p>')+
-    swRmaHTML(rec)+ddReviewCard(rec)+auQrCard(rec)+auEntryCard(rec)+SendTo.card(rec)+'<h2>Report PDFs</h2><div class="actions">'+CUST.tagBtn('btn light big')+'<button class="btn emailbig" data-act="pdf-share-full">\u2709 Email full report (PDF attached)<small>Recommended \u2013 opens your email app with the PDF attached</small></button><button class="btn light big" data-act="pdf-save-full">\u2b07 Save report PDF</button></div>'+Core.fold('more','More options','<div class="actions"><button class="btn light big" data-act="backup-cur">Backup file</button><button class="btn light big" data-act="wip-copy">\ud83d\udccb Copy '+WIP_MAIL+'</button></div>')+
+    swRmaHTML(rec)+ddReviewCard(rec)+inspSigCard(rec)+auQrCard(rec)+auEntryCard(rec)+SendTo.card(rec)+'<h2>Report PDFs</h2><div class="actions">'+CUST.tagBtn('btn light big')+'<button class="btn emailbig" data-act="pdf-share-full">\u2709 Email full report (PDF attached)<small>Recommended \u2013 opens your email app with the PDF attached</small></button><button class="btn light big" data-act="pdf-save-full">\u2b07 Save report PDF</button></div>'+Core.fold('more','More options','<div class="actions"><button class="btn light big" data-act="backup-cur">Backup file</button><button class="btn light big" data-act="wip-copy">\ud83d\udccb Copy '+WIP_MAIL+'</button></div>')+
     '<p class="tip">PDFs are named '+PL(h)+'_'+esc(safeName(snNum(h.newSerial)))+'_ATP / _PunchList. Tap an item above to jump back to it.</p>'+rxBars()+Core.issBar(rec)+'</main>';
   setSaveInd(); measureBar(); window.scrollTo(0,_wr?_yr:0);
 }
@@ -14303,7 +14303,7 @@ function buildPrint(mode){
     '<tr><td class="k">FLIR KPI:</td><td>No Nonconformances Found During Unit Inspection</td><td class="kpi-c"><span class="cbx">'+(pass?'X':'')+'</span>KPI PASS</td><td class="kpi-c"><span class="cbx">'+(pass?'':'X')+'</span>KPI FAIL</td></tr>'+
     '<tr><td class="k">If KPI Fail, state reason:</td><td colspan="3">'+esc(reason)+'</td></tr>'+
     '<tr><td class="k">Inspector Name:</td><td colspan="3">'+esc(h.inspector||'')+'</td></tr>'+
-    '<tr><td class="k">Inspector Signature:</td><td class="sig"></td><td class="k" style="width:50pt">Date:</td><td>'+esc(fmtDate(h.date))+'</td></tr></tbody></table>';
+    '<tr><td class="k">Inspector Signature:</td><td class="sig">'+(DD(rec).inspSig?'<img src="'+DD(rec).inspSig+'" alt="" style="height:24pt;max-width:100%">':'')+'</td><td class="k" style="width:50pt">Date:</td><td>'+esc(fmtDate(h.date))+'</td></tr></tbody></table>';
   var issueNums={}; a.issues.forEach(function(it){ issueNums[it.r.num]=it; });
   var photos=S.photos.filter(function(p){ return full || issueNums[p.num]; }).sort(function(x,y){ return x.num-y.num || (x.created||'').localeCompare(y.created||''); });
   var pics = photos.length ? '<section class="p-page"><h2 class="p-h">Photos</h2><div class="p-grid">'+photos.map(function(p){
@@ -14462,20 +14462,28 @@ function atpPdf(mode){
   var d=pdfNew(), skip=new Set([1]), y;
   var ens=function(n){ if(y+n>BOT){ d.addPage(); y=TOP; } };
   var photoCount={}; S.photos.forEach(function(p){ if(typeof p.num==='number') photoCount[p.num]=(photoCount[p.num]||0)+1; });
+  // Rev 83: the ATP QR code (same as the last page) at the top right corner of the front page; the header details sit to its left and continue under it
+  var FQS=136, FQ=null; try{ FQ=auQrMake(rec); }catch(e){ FQ=null; } var FQX=MX+CW-FQS, FQY=24, FQEND=FQY+FQS+16, FQW=FQ?FQS+12:0;
   // cover
   var ip=d.getImageProperties(LOGO), lw=120, lh=Math.min(40,lw*ip.height/ip.width);
   d.addImage(LOGO,'PNG',MX,24,lw,lh);
   d.setFont('helvetica','italic'); d.setFontSize(19); d.setTextColor(30); d.text(cl(PLT(t.title||'ATP',h)+(full?'':' Punch List')),MX+lw+20,46);
   d.setFont('helvetica','normal'); d.setFontSize(10); d.setTextColor(90); d.text(cl(t.subtitle||''),MX+lw+20,60);
-  hx(d,'setFillColor','#5b8dd6'); d.rect(MX,24+lh+8,CW,7,'F'); y=24+lh+24;
+  hx(d,'setFillColor','#5b8dd6'); d.rect(MX,24+lh+8,CW-FQW,7,'F'); y=24+lh+24;
   var cell=function(x,yy,w,hh,lab,val){ d.setDrawColor(170); d.setLineWidth(.6); d.rect(x,yy,w,hh); d.setFont('helvetica','normal'); d.setFontSize(6.8); d.setTextColor(110); d.text(cl(lab),x+4,yy+8); d.setFontSize(9.5); d.setTextColor(0); d.text(wrap(d,val,w-8),x+4,yy+19); };
   var HFP=HF.filter(function(f){ return ['newSerial','oldSerial','inspector','date','auditor'].indexOf(f[0])>=0; }).concat([['customer','Customer']]).concat(HF.filter(function(f){ var w=String(h.wbs||'').trim(); var ids=w?['wbs']:['rma','so','acct']; return ids.concat(['po','fso']).indexOf(f[0])>=0 && String(h[f[0]]||'').trim(); }));
+  var frontQr=function(){ var n=FQ.getModuleCount(), qz=4, cs=FQS/(n+2*qz); d.setFillColor(255,255,255); d.rect(FQX,FQY,FQS,FQS,'F'); d.setFillColor(0,0,0);
+    for(var i3=0;i3<n;i3++) for(var j3=0;j3<n;j3++) if(FQ.isDark(i3,j3)) d.rect(FQX+(j3+qz)*cs,FQY+(i3+qz)*cs,cs+.15,cs+.15,'F');
+    d.setFont('helvetica','bold'); d.setFontSize(7.5); d.setTextColor(0); d.text('ATP QR code',FQX+FQS/2,FQY+FQS+8,{align:'center'}); d.setFont('helvetica','normal'); d.setFontSize(6.8); d.setTextColor(90); d.text('Scan in the next form',FQX+FQS/2,FQY+FQS+15,{align:'center'}); };
+  if(FQ) frontQr();
   for(var i=0;i<HFP.length;i+=2){
     var f1=HFP[i], f2=HFP[i+1];
     var hv=function(f){ if(f[0]==='customer') return CUST.of(rec).n; var sw=swFor(rec,f[0]), base=f[0]==='newSerial'?snD(h):f[0]==='oldSerial'?(DD(rec).oldNa?'N/A':h.oldSerial):(f[2]==='date'?fmtDate(h[f[0]]):h[f[0]]); return (sw&&(sw.nw||'').trim())?(sw.nw+' (Old: '+(sw.old||base)+')'):base; }; var v1=hv(f1), v2=f2?hv(f2):'';
-    d.setFontSize(9.5); var n1=wrap(d,v1||'',262).length, n2=wrap(d,v2||'',262).length, hh=Math.max(26,14+Math.max(n1,n2)*11);
-    ens(hh); cell(MX,y,CW/2,hh,f1[1],v1||''); cell(MX+CW/2,y,CW/2,hh,f2?f2[1]:'',v2||''); y+=hh;
+    var tw=(FQ&&y<FQEND)?CW-FQW:CW, cw=tw/2;
+    d.setFontSize(9.5); var n1=wrap(d,v1||'',cw-8).length, n2=wrap(d,v2||'',cw-8).length, hh=Math.max(26,14+Math.max(n1,n2)*11);
+    ens(hh); cell(MX,y,cw,hh,f1[1],v1||''); cell(MX+cw,y,cw,hh,f2?f2[1]:'',v2||''); y+=hh;
   }
+  if(FQ&&y<FQEND) y=FQEND;
   y+=6;
   y=ddReportPdf(d,rec,y,ens,cell);
   y=swPdf(d,rec,y);
@@ -14568,7 +14576,7 @@ function atpPdf(mode){
   d.setFont('helvetica','normal'); d.setFontSize(9); var rl=wrap(d,reason,CW-160);
   row(Math.max(24,10+rl.length*11),function(){ d.setFont('helvetica','bold'); d.text('If KPI Fail, state reason:',MX+6,y+15); d.setFont('helvetica','normal'); d.text(rl,MX+150,y+15); });
   row(24,function(){ d.setFont('helvetica','bold'); d.text('Inspector Name:',MX+6,y+15); d.setFont('helvetica','normal'); d.text(cl(h.inspector||''),MX+150,y+15); });
-  row(34,function(){ d.setFont('helvetica','bold'); d.text('Inspector Signature:',MX+6,y+20); d.line(MX+150,y+24,MX+380,y+24); d.text('Date:',MX+400,y+20); d.setFont('helvetica','normal'); d.text(cl(fmtDate(h.date)),MX+432,y+20); });
+  row(34,function(){ d.setFont('helvetica','bold'); d.text('Inspector Signature:',MX+6,y+20); var isg=DD(rec).inspSig; if(isg){ try{ d.addImage(isg,'PNG',MX+158,y+1,100,28); }catch(e){} } d.line(MX+150,y+24,MX+380,y+24); d.text('Date:',MX+400,y+20); d.setFont('helvetica','normal'); d.text(cl(fmtDate(h.date)),MX+432,y+20); });
   // photos
   var issueNums={}; a.issues.forEach(function(it){ issueNums[it.r.num]=it; });
   var photos=S.photos.filter(function(p){ return (typeof p.num==='number' && (full||issueNums[p.num])) || (typeof p.num==='string' && (p.num.indexOf('sw')===0||p.num.indexOf('dd:')===0)); }).sort(function(x,z){ var xs=typeof x.num==='string', zs=typeof z.num==='string'; if(xs!==zs) return xs?1:-1; return (xs?0:x.num-z.num) || (x.created||'').localeCompare(z.created||''); });
@@ -14599,7 +14607,7 @@ function atpPdf(mode){
 }
 function atpEmail(rec){
   var h=rec.header, a=analyze(rec), I=a.blocking, pass=!I.length;
-  var L=['Attached is the '+PL(h)+' ATP inspection report for '+(snD(h)||'this unit')+'.','','Unit S/N: '+(snD(h)||'-')+'  |  VIN '+(h.vin||'-')+'  |  Plate '+(h.plate||'-'),'Server Windows activation key: '+(String(h.winKey||'').trim()||'-'),'Inspector: '+(h.inspector||'-')+'  |  Date: '+(fmtDate(h.date)||'-'),'Result: '+(pass?'KPI PASS - no nonconformances found':'KPI FAIL - '+I.length+' item'+(I.length===1?'':'s')+' on the punch list')];
+  var L=['Attached is the '+PL(h)+' ATP inspection report for '+(snD(h)||'this unit')+'.','','Unit S/N: '+(snD(h)||'-')+'  |  VIN '+(h.vin||'-')+'  |  Plate '+(h.plate||'-'),'Server Windows activation key: '+(fmtWinKey(h.winKey)||'-'),'Inspector: '+(h.inspector||'-')+'  |  Date: '+(fmtDate(h.date)||'-'),'Result: '+(pass?'KPI PASS - no nonconformances found':'KPI FAIL - '+I.length+' item'+(I.length===1?'':'s')+' on the punch list')];
   if(!pass){ L.push('','Punch list:'); I.slice(0,20).forEach(function(it){ var t=lineText(it.r,it.d); L.push('  #'+it.r.num+' '+(t.length>110?t.slice(0,107)+'...':t)); }); if(I.length>20) L.push('  ... and '+(I.length-20)+' more - see the attached report.'); }
   L.push('','Thank you,',h.inspector||'');
   return {subj:PL(h)+' ATP Inspection - '+(snD(h)||'')+' - '+(pass?'PASS':'FAIL'),text:L.join('\n')};
@@ -14760,6 +14768,8 @@ function auFromQr(o){
 function qrExtras(rec){
   var h=rec.header||{}, x=DD(rec), w=SW(rec), e={}, T=function(v){ return cl(v==null?'':v).trim(); };
   var sv=SWD.map(function(d){ return T(h[d[0]]); }); if(sv.some(Boolean)) e.sv=sv;
+  /* Rev 83: the server Windows activation key travels to Jake's Final too (it is printed on the ATP's first page already) */
+  if(fmtWinKey(h.winKey)) e.wy=fmtWinKey(h.winKey);
   var rr=DD_REV.map(function(f){ return T(x.rev[f[0]]); }); if(rr.some(Boolean)) e.rr=rr;
   var rn=DD_REV.filter(function(f){ return x.rvna[f[0]]; }).map(function(f){ return f[0]; }); if(rn.length) e.rn=rn;
   var dn=Object.keys(x.na).filter(function(k){ return x.na[k]; }); if(dn.length) e.dn=dn;
@@ -15704,7 +15714,7 @@ window.offReadiness=readiness;
 })();
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/06/2026',site:'80'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/06/2026',site:'83'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -16077,7 +16087,9 @@ function ddCamBtn(key,n){ return '<button class="btn light" data-act="sw-cam" da
 function ddSerRow(k,lbl,opts){ opts=opts||{}; var x=DD(), na=!!x.na[k], v=S.rec.header[k]||'', key='dd:s:'+k, n=ddPhotos(S.rec,k).length, om=!!(x.tkOm&&x.tkOm[k]&&!n), cok=ddCarriedOk(S.rec,k), nop=/^(vin|kilo)$/.test(k), miss=!na&&(!ddSerial(S.rec,k)||(!n&&!om&&!cok&&!nop)||ddShort(k,ddSerial(S.rec,k)));
   return '<div class="ddrow'+(miss?' ddmiss':'')+(na?' ddna':'')+'"><label class="fld">'+esc(lbl)+(k==='radarPtSerial'?'<span style="display:block;font-size:13px;font-weight:700;color:#c8202a">'+PT_NOTE+'</span>':'')+(opts.loc?'<span class="muted" style="display:block;font-size:13px;font-weight:400">Location: '+esc(opts.loc)+'</span>':'')+'<span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center"><input data-h="'+k+'" value="'+esc(na?'':v)+'"'+(na?' disabled placeholder="N/A"':'')+' autocomplete="off" autocapitalize="characters" style="flex:1;min-width:0">'+
     (opts.noNa?'':'<button type="button" class="btn '+(na?'primary':'light')+'" data-act="dd-na" data-k="'+k+'" style="min-height:44px">'+(na?'✓ ':'')+'N/A</button>')+(na?'':ddCamBtn(key,n))+'</span></label>'+(na?'':ddThumbs(key))+(miss&&!na?'<small class="ddwarn">'+(!ddSerial(S.rec,k)?'Serial # missing. ':ddShort(k,ddSerial(S.rec,k))?'Too short - record the long-form serial (at least 9 characters). ':'')+((!n&&!om&&!cok&&!nop)?'Photo missing.':'')+'</small>':'')+(om&&!na?'<small class="muted">Photo omitted.</small>':'')+'</div>'; }
-function ddWinRow(){ var v=String((S.rec.header||{}).winKey||''), miss=!v.trim();
+function fmtWinKey(v){ var s=String(v==null?'':v).trim().toUpperCase(), c=s.replace(/[^A-Z0-9]/g,''); return c.length===25?c.replace(/(.{5})(?=.)/g,'$1-'):s; } /* Windows product keys are 25 characters in five dashed groups of five */
+document.addEventListener('change',function(e){ var t=e.target; if(t&&t.dataset&&t.dataset.h==='winKey'&&S.rec){ var f=fmtWinKey(t.value); if(f!==t.value) t.value=f; S.rec.header.winKey=f; markDirty(); } });
+function ddWinRow(){ var v=fmtWinKey((S.rec.header||{}).winKey), miss=!v.trim();
   return '<div class="ddrow'+(miss?' ddmiss':'')+'"><label class="fld">Server Windows activation key<span class="muted" style="display:block;font-size:13px;font-weight:400">Product key on the server label or in Windows (Settings, Activation)</span><span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center"><input data-h="winKey" value="'+esc(v)+'" placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" style="flex:1;min-width:0"></span></label>'+(miss?'<small class="ddwarn">Windows key missing.</small>':'')+'</div>'; }
 function ddPlateRow(){ var h=S.rec.header, x=DD(), on=CUST.pf(x.pf), raw=String(h.plate||''), shown=on?raw.replace(/^dhs\s*/i,''):raw, n=ddPhotos(S.rec,'plate').length, om=!!(x.tkOm.plate&&!n), miss=!raw.trim();
   return '<div class="ddrow'+(miss?' ddmiss':'')+'"><label class="fld">License plate #<span class="ddin" style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center"><button type="button" class="btn '+(on?'primary':'light')+'" data-act="dd-tkpf" style="min-height:44px;font-weight:800" title="Tap to turn the DHS prefix on or off">'+(on?'DHS':'no prefix')+'</button><input data-tkplate="1" value="'+esc(shown)+'" placeholder="e.g. 201838" autocomplete="off" autocapitalize="characters" style="flex:1;min-width:0">'+ddCamBtn('dd:s:plate',n)+'</span></label>'+ddThumbs('dd:s:plate')+(miss?'<small class="ddwarn">'+(!raw.trim()?'Plate # missing. ':'')+'</small>':'')+(om?'<small class="muted">Photo omitted.</small>':'')+'</div>'; }
@@ -16138,10 +16150,13 @@ function ddSigPad(id){ var c=document.getElementById(id); if(!c) return; var g=c
   c.addEventListener('pointerdown',function(e){ e.preventDefault(); try{ c.setPointerCapture(e.pointerId); }catch(_){} dn=true; c.dataset.has='1'; var p=pt(e); lx=p.x; ly=p.y; g.beginPath(); g.arc(lx,ly,1.2,0,7); g.fill(); });
   c.addEventListener('pointermove',function(e){ if(!dn) return; e.preventDefault(); var p=pt(e); g.beginPath(); g.moveTo(lx,ly); g.lineTo(p.x,p.y); g.stroke(); lx=p.x; ly=p.y; });
   var up=function(){ dn=false; }; c.addEventListener('pointerup',up); c.addEventListener('pointercancel',up);
-  var old=DD()[id==='sigFlir'?'flirSig':'custSig']; if(old){ var im=new Image(); im.onload=function(){ g.drawImage(im,0,0,c.width,c.height); c.dataset.has='1'; }; im.src=old; } }
+  var old=DD()[id==='sigFlir'?'flirSig':id==='sigInsp'?'inspSig':'custSig']; if(old){ var im=new Image(); im.onload=function(){ g.drawImage(im,0,0,c.width,c.height); c.dataset.has='1'; }; im.src=old; } }
 function ddSignDlg(){ var x=DD(), blk=function(id,lbl,nm,dt){ return '<div class="card" style="margin:8px 0"><b>'+lbl+'</b><canvas id="'+id+'" width="600" height="180" style="width:100%;height:150px;background:#fff;border:2px dashed #8a97ab;border-radius:8px;touch-action:none;display:block;margin:6px 0"></canvas><button class="btn light" data-act="dd-sigclr" data-id="'+id+'" style="min-height:38px">Clear</button><div class="grid" style="margin-top:6px"><label class="fld">Printed name<input id="'+id+'N" value="'+esc(nm)+'" autocomplete="off"></label><label class="fld">Date<input id="'+id+'D" type="date" value="'+esc(dt||calLocalDate())+'"></label></div></div>'; };
   dlg('<h2 style="margin-top:0">Checksheet signatures</h2><p class="muted">Sign with your finger. You can skip this and sign the printed page instead.</p>'+blk('sigFlir','FLIR signature',x.flirName||String(S.rec.header.inspector||''),x.flirDate)+blk('sigCust','Receiving (GOV employee) – DHS',x.custName,x.custDate)+'<div class="sheet-btns"><button class="btn primary big" data-act="dd-sigsave">Save signatures</button><button class="btn light big" data-act="mclose">Cancel</button></div>','sheet');
   ddSigPad('sigFlir'); ddSigPad('sigCust'); }
+/* Rev 83: optional technician signature on the review screen; prints on the Inspector Signature line */
+function inspSignDlg(){ dlg('<h2 style="margin-top:0">Technician signature</h2><p class="muted">Sign with your finger. It prints on the Inspector Signature line of the report. You can skip this and sign the printed page instead.</p><div class="card" style="margin:8px 0"><b>Inspector: '+esc(S.rec.header.inspector||'')+'</b><canvas id="sigInsp" width="600" height="180" style="width:100%;height:150px;background:#fff;border:2px dashed #8a97ab;border-radius:8px;touch-action:none;display:block;margin:6px 0"></canvas><button class="btn light" data-act="dd-sigclr" data-id="sigInsp" style="min-height:38px">Clear</button></div><div class="sheet-btns"><button class="btn primary big" data-act="insp-sigsave">Save signature</button><button class="btn light big" data-act="mclose">Cancel</button></div>','sheet'); ddSigPad('sigInsp'); }
+function inspSigCard(rec){ var sg=DD(rec).inspSig||''; return '<section class="card"><h2 style="margin:0 0 6px">Technician signature <span class="muted" style="font-weight:400;font-size:14px">(optional)</span></h2><p class="muted">Prints on the Inspector Signature line of the report. If you skip it, the line stays blank for a pen signature.</p>'+(sg?'<img src="'+sg+'" alt="Technician signature" style="height:70px;max-width:100%;background:#fff;border:1px solid #cfd6e2;border-radius:8px;padding:4px;display:block;margin:6px 0">':'')+'<div class="actions"><button class="btn light big" data-act="insp-sign">\u270d '+(sg?'Re-sign':'Sign as technician')+'</button>'+(sg?'<button class="btn light" data-act="insp-sigdel">Remove signature</button>':'')+'</div></section>'; }
 function ddSigSave(){ var x=DD(); [['sigFlir','flir'],['sigCust','cust']].forEach(function(p){ var c=document.getElementById(p[0]); if(!c) return; x[p[1]+'Name']=(document.getElementById(p[0]+'N').value||'').trim(); x[p[1]+'Date']=document.getElementById(p[0]+'D').value||''; x[p[1]+'Sig']=c.dataset.has?c.toDataURL('image/png'):''; }); markDirty(); modalRoot.innerHTML=''; if(S.view==='review') reReview(); }
 function ddOvDlg(){ var x=DD(); dlg('<h2 style="margin-top:0">Override – explain</h2><p class="muted">Some checklist items are still open. To pass the ATP anyway, explain why. This is printed on the final report.</p><textarea id="ddOvT" rows="4" style="width:100%;font-size:16px;border:2px solid var(--line);border-radius:8px;padding:8px">'+esc(x.ov||'')+'</textarea><div class="sheet-btns"><button class="btn primary big" data-act="dd-ovsave">Save override</button><button class="btn light big" data-act="mclose">Cancel</button></div>','sheet'); }
 /* ---- existing record: confirm carried-over serials ---- */
@@ -16180,6 +16195,9 @@ async function ddModalAct(act,el){
     case 'dd-ovsave': { var v=(document.getElementById('ddOvT').value||'').trim(); if(!v){ toast('Type the reason first.'); return true; } DD().ov=v; markDirty(); modalRoot.innerHTML=''; reReview(); return true; }
     case 'dd-sigclr': { var c=document.getElementById(el.dataset.id); if(c){ c.getContext('2d').clearRect(0,0,c.width,c.height); c.dataset.has=''; } return true; }
     case 'dd-sigsave': ddSigSave(); return true;
+    case 'insp-sign': inspSignDlg(); return true;
+    case 'insp-sigsave': { var cx=document.getElementById('sigInsp'); DD().inspSig=(cx&&cx.dataset.has)?cx.toDataURL('image/png'):''; markDirty(); modalRoot.innerHTML=''; if(S.view==='review') reReview(); return true; }
+    case 'insp-sigdel': DD().inspSig=''; markDirty(); if(S.view==='review') reReview(); return true;
     case 'dd-qssave': { var x=DD(), h=S.rec.header; document.querySelectorAll('[data-qs]').forEach(function(inp){ var q=(S.qsKeys||[])[+inp.dataset.qs], v=(inp.value||'').trim(); if(!q||!v) return; if(q[1]) x.rev[q[0]]=v; else h[q[0]]=v.toUpperCase(); }); markDirty(); modalRoot.innerHTML=''; ddRefresh(); if(S.qsDone){ var r1=S.qsDone; S.qsDone=null; r1(); } return true; }
     case 'dd-qsskip': { modalRoot.innerHTML=''; if(S.qsDone){ var r2=S.qsDone; S.qsDone=null; r2(); } return true; }
     case 'dd-qsedit': { modalRoot.innerHTML=''; if(S.qsDone){ var r3=S.qsDone; S.qsDone=null; r3(); } secScroll('unit'); return true; }
@@ -16210,7 +16228,7 @@ function ddReportPdf(d,rec,y,ens0,cell){
   srows.push({l:'Replaces old serial',v:oldv||'MISSING',vbad:!oldv,p:'-'});
   TK_L.slice().reverse().forEach(function(t){ var k=t[0], sv=ddSerial(rec,k), n=ddPhotos(rec,k).length; srows.unshift({l:t[1],v:sv||'MISSING',vbad:!sv,p:n?n+' photo(s)':'-',pbad:false}); });
   DD_DEVS.forEach(function(dv){ var k=dv[0], na=x.na[k], sv=ddSerial(rec,k), n=ddPhotos(rec,k).length, e=swFor(rec,k);
-    srows.push({l:dv[1],v:na?'N/A':(sv||'MISSING')+(e&&e.nw?' (old: '+e.old+')':''),vbad:!na&&!sv,p:na?'-':(n?n+' photo(s)':'NO PHOTO'),pbad:!na&&!n}); if(k==='serverSerial'){ var wk=String(h.winKey||'').trim(); srows.push({l:'Server Windows activation key',v:wk||'MISSING',vbad:!wk,p:'-'}); } });
+    srows.push({l:dv[1],v:na?'N/A':(sv||'MISSING')+(e&&e.nw?' (old: '+e.old+')':''),vbad:!na&&!sv,p:na?'-':(n?n+' photo(s)':'NO PHOTO'),pbad:!na&&!n}); if(k==='serverSerial'){ var wk=fmtWinKey(h.winKey); srows.push({l:'Server Windows activation key',v:wk||'MISSING',vbad:!wk,p:'-'}); } });
   if(ddUpfit(rec)) srows.push({l:'Client',v:'Removed (upfit)'+(String(h.clientSerial||'').trim()?' (was '+String(h.clientSerial).trim()+')':''),vbad:false,p:'-',gone:true});
   tbl('Serial Numbers',srows);
   y+=8;
@@ -16232,7 +16250,7 @@ function ddPdf(rec,dIn){
   d.setFont('helvetica','bold'); d.setFontSize(14); d.setTextColor(0);
   d.text('RE: DD1149 Attachment',MX,y+8); y+=22;
   var dl=x.delivTbd?'TBD':fmtDate(x.deliv), at=fmtDate(x.retro), sk=fmtDate(x.skid), rc=fmtDate(x.rcvd);
-  var sv=function(k){ if(k==='winKey'){ var wk=String(h.winKey||'').trim(); return {t:wk||'MISSING',bad:!wk}; } var na=x.na[k], v=ddSerial(rec,k), n=ddPhotos(rec,k).length; return na?{t:'N/A'}:{t:v?v:'MISSING',bad:!v||!n||ddShort(k,v),note:(!v?'':(ddShort(k,v)?' (too short - long-form serial needed)':!n?' (no photo)':''))}; };
+  var sv=function(k){ if(k==='winKey'){ var wk=fmtWinKey(h.winKey); return {t:wk||'MISSING',bad:!wk}; } var na=x.na[k], v=ddSerial(rec,k), n=ddPhotos(rec,k).length; return na?{t:'N/A'}:{t:v?v:'MISSING',bad:!v||!n||ddShort(k,v),note:(!v?'':(ddShort(k,v)?' (too short - long-form serial needed)':!n?' (no photo)':''))}; };
   var plat=ddSerial(rec,'newSerial'), oldS=x.oldNa?'':String(h.oldSerial||'').trim();
   var cellx=function(cx,cy,w,hh,lab,v){ if(!v||!String(v.t||'').trim()||v.bad||v.t==='N/A') ddYel(d,cx+.5,cy+.5,w-1,hh-1); d.setDrawColor(120); d.setLineWidth(.7); d.rect(cx,cy,w,hh); d.setFont('helvetica','normal'); d.setFontSize(7.5); d.setTextColor(95); d.text(cl(lab),cx+5,cy+9);
     d.setFont('helvetica','bold'); d.setFontSize(11); if(!v||!String(v.t||'').trim()||v.bad) ddWarn(d); else d.setTextColor(0); d.text(cl(((v&&v.t)||'MISSING')+((v&&v.note)||'')),cx+5,cy+23); };

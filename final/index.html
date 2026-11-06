@@ -13176,7 +13176,7 @@ function dec(o){
   (o.s||[]).forEach(function(p){if(!p)return;var n=norm(p[0]);if(/^(truck )?vin$/.test(n)){if(!C.vin)C.vin=T(p[1]);return;}S_(dk(p[0]),p[1]);});
   var iv=o.i||{};Object.keys(iv).forEach(function(k){R_(k,iv[k]);});
   (o.w||[]).forEach(function(a){if(Array.isArray(a)&&T(a[1]))C.w.push([a[0]||'f',T(a[1]),a[2]||'',T(a[3]),a[4]||'',a[5]||f,a[6]||'',T(a[7]),a[8]||'']);});}
- else if(o.a==='ATP'){C.sn=T(o.sn);C.osn=T(o.os);
+ else if(o.a==='ATP'){C.sn=T(o.sn);C.osn=T(o.os);if(T(o.wy))C.wy=T(o.wy);
   if(Array.isArray(o.sv))o.sv.forEach(function(v,i){S_(SWK[i],v);});
   if(!C.s.camera)S_('camera',o.cs);if(!C.s.radar)S_('radar',o.rs);if(!C.s['laptop control unit'])S_('laptop control unit',o.ls);
   if(Array.isArray(o.rr))o.rr.forEach(function(v,i){R_(RK[i],v);});
@@ -14055,7 +14055,7 @@ async function fromQr(o){
   const snR=(o.a==='LVSS'&&o.up&&!o.nsn)?upSn(o):sn0;const ex0=/\d/.test(snR)?activeFor(snR):null;if(ex0&&await ask('A final inspection for '+recName(ex0)+' is already on this tablet. Open it instead of starting a new one?',{title:'Already started',ok:'Open it',no:'Start a new one'})){await openRec(ex0);return;}
   const sm={};(o.s||[]).forEach(p=>{sm[String((p&&p[0])||'').toLowerCase()]=(p&&p[1])||'';});const r0=newRec(snR,'',o.a==='LVSS'?{vin:o.vin||sm['vin']||'',plate:o.pl||'',kilo:o.kl||'',cam:sm['camera'],radar:sm['radar'],lcu:sm['laptop control unit']}:null);r0.hdr.rma=o.rma||'';r0.hdr.wbs=o.wb||(o.cx&&o.cx.wb)||'';if(o.a==='LVSS'&&o.up)r0.hdr.was=snShow(o.sn);coreFin(r0,o);S.rec=r0;S.step=0;S.dirty=true;await save();S.view='rec';render();return;}
  if(o.a==='ATP'){const ex=activeFor(o.sn);
-  if(ex&&await ask('A final inspection for skid '+recName(ex)+' is already on this tablet. Open it instead of starting a new one?',{title:'Already started',ok:'Open it',no:'Start a new one'})){await openRec(ex);return;}
+  if(ex&&await ask('A final inspection for skid '+recName(ex)+' is already on this tablet. Open it instead of starting a new one?',{title:'Already started',ok:'Open it',no:'Start a new one'})){if(window.coreFill(ex,o)){S.rec=ex;S.dirty=true;await save();}await openRec(ex);return;}
   const r=newRec(o.sn||'','',{vin:o.vin,plate:o.pl,kilo:o.kl,cam:o.cs,radar:o.rs,lcu:o.ls});r.hdr.src='ATP '+fmtD(o.d||'')+(o.ins?', inspector '+o.ins:'');r.hdr.rma=o.rma||'';r.hdr.wbs=o.wb||(o.cx&&o.cx.wb)||'';if(o.os&&!/\d/.test(o.sn||''))r.hdr.was=snShow(o.os);coreFin(r,o);
   S.rec=r;S.step=0;S.dirty=true;await save();S.view='rec';render();return;}
  const ex=S.recs.find(x=>x.id===o.id);if(ex&&!await ask('This final inspection (skid '+(o.sn||'')+') is already on this tablet. Replace it with the version from the QR code?',{title:'Replace?',ok:'Replace',danger:1}))return;
@@ -14067,6 +14067,7 @@ function closeUpd(r){const k=S.upd;if(!k)return;S.upd=null;const c=r&&r.ck[k];if
 function goStep(i){closeUpd(S.rec);S.step=Math.max(0,Math.min(2,i));S.rec.step=S.step;markDirty();render();}
 document.addEventListener('input',e=>{const t=e.target;if(t.dataset&&t.dataset.ph&&S.rec){const p=(S.rec.ph||[]).find(x=>x.id===t.dataset.ph);if(p){p.cap=t.value;markDirty();}return;}if(t.dataset&&t.dataset.b&&S.rec&&S.view==='rec'){let v=t.value;if(t.dataset.b==='hdr.ini'||/^ck\.[^.]+\.i$/.test(t.dataset.b)){v=v.toUpperCase();}setp(S.rec,t.dataset.b,v);markDirty();if(/^(f|hdr\.sn)/.test(t.dataset.b))refreshSum();}});
 document.addEventListener('change',e=>{const t=e.target,r=S.rec;if(!(t.dataset&&t.dataset.b&&r))return;
+ if(t.dataset.b==='f.wkey'){const wf=window.fmtWinKey(t.value);if(wf!==t.value){t.value=wf;setp(r,'f.wkey',wf);markDirty();}}
  if(t.dataset.b==='hdr.tech'){techRemember(t.value);if(!String(r.hdr.ini||'').trim()){r.hdr.ini=initialsOf(t.value);document.querySelectorAll('input[data-b="hdr.ini"]').forEach(x=>x.value=r.hdr.ini);markDirty();}}
  if(t.dataset.b==='hdr.sn'){const x=document.querySelector('.brand small');if(x)x.textContent='Skid '+recName(r);}});
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,r=S.rec,id=b.dataset.id;
@@ -14129,7 +14130,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)save();});
 function curTpl(){return TPL}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/05/2026',site:'79'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/06/2026',site:'83'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14310,8 +14311,12 @@ var NK={starlink:'starlink',server:'server',cisco:'cisco switch',gps:'trimble gp
 function T(v){return String(v==null?'':v).trim();}
 function fields(r){var f=r.f||{},F={sn:T(r.hdr.sn),vin:T(f.vin),pl:T(f.plate),kl:T(f.kilo)};Object.keys(NK).forEach(function(k){F[Core.idOf(NK[k])]=T(f[k]);});return F;}
 Core.use({form:'FIN',rec:function(){return S.view==='rec'?S.rec:null;},fields:fields,dirty:function(){markDirty();}});
+window.fmtWinKey=function(v){var s=String(v==null?'':v).trim().toUpperCase(),c=s.replace(/[^A-Z0-9]/g,'');return c.length===25?c.replace(/(.{5})(?=.)/g,'$1-'):s;};/* Windows product keys: five dashed groups of five */
+window.coreFill=function(r,o){var C=Core.dec(o);if(!C)return false;r.f=r.f||{};var n=0,put=function(k,v){if(v&&!T(r.f[k])){r.f[k]=v;n++;}};
+ Object.keys(NK).forEach(function(k){put(k,C.s[NK[k]]);});put('vin',C.vin);put('plate',C.pl);put('kilo',C.kl);if(C.wy)put('wkey',window.fmtWinKey(C.wy));return n>0;};/* an existing final inspection opened from a scan gets only its blank fields filled */
 window.coreFin=function(r,o){var C=Core.dec(o);if(!C)return;r.f=r.f||{};
  Object.keys(NK).forEach(function(k){var v=C.s[NK[k]];if(v&&!T(r.f[k]))r.f[k]=v;});
+ if(C.wy&&!T(r.f.wkey))r.f.wkey=window.fmtWinKey(C.wy);
  if(C.vin&&!T(r.f.vin))r.f.vin=C.vin;if(C.pl&&!T(r.f.plate))r.f.plate=C.pl;if(C.kl&&!T(r.f.kilo))r.f.kilo=C.kl;if(!T(r.hdr.rma)&&C.rma)r.hdr.rma=C.rma;
  Core.start(r,C);};
 })();</script><script>/* ===== shared: dictation for serial numbers and revisions (Ravi, 2026-10-30) =====
