@@ -1,0 +1,8 @@
+name: Build stamp check
+on: [push, pull_request]
+jobs:
+  stamps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/stamp.py --check
