@@ -14750,7 +14750,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/07/2026',site:'95'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/07/2026',site:'96'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14813,7 +14813,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='524e498c94';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='b7baa1ab42';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -15020,7 +15020,7 @@ var TOWF=[['towerVin','Tower VIN #'],['towerSerial','Tower Serial #'],['genSeria
    To add a manual: add a GENFAM entry and its models to GENLIB. brush:{pn} = brush block, replaced every PM.
    plugs:{pn,qty} = spark plugs (gas). A model that is not listed gets the standard list (plus spark plugs if Gas is picked). */
 var GENFAM={
- onanqd:{brand:'Onan',type:'diesel',src:'manual 0981-0161 (Issue 20, 2024)',chk:'11/04/2026',
+ onanqd:{fimg:1,brand:'Onan',type:'diesel',src:'manual 0981-0161 (Issue 20, 2024)',chk:'11/04/2026',
   oil:'About 3 qt (2.6 L) with filter \u00b7 SAE 15W-40 year round \u00b7 API CF, CF-4, CG-4, CH-4 or CI-4',
   buy:'3 qt SAE 15W-40 diesel engine oil',
   cool:'Cooling system 4.2 qt (4 L): 50/50 ethylene glycol antifreeze and distilled water',
@@ -15028,7 +15028,7 @@ var GENFAM={
    {id:'gpair',t:'Air cleaner element',pn:'140-2897'},
    {id:'gpfuel',t:'Fuel filter',pn:'147-0860 or 149-2513',note:'The manual shows a round and an older square filter; check which one the tower has',q:['147-0860','149-2513']}],
   brush:null,plugs:null},
- onanhgjad:{brand:'Onan',type:'gas',src:'operator manual A035D007 (Issue 17, 2022) and parts manual 0983-0202 (Issue 46)',chk:'',
+ onanhgjad:{fimg:1,brand:'Onan',type:'gas',src:'operator manual A035D007 (Issue 17, 2022) and parts manual 0983-0202 (Issue 46)',chk:'',
   oil:'About 2 qt (1.8 L) with filter \u00b7 API SM, SN or better \u00b7 10W-30 (OnaMax A063E183) above 0 \u00b0F; the manual has a table for colder and hotter weather \u00b7 older Spec A-E manual: API SJ, SH or SG',
   buy:'2 qt 10W-30 engine oil, API SM or SN (OnaMax)',
   cool:'',
@@ -15189,6 +15189,7 @@ function gpnHtml(){var k=GPN.m,E=k&&GENBY[k],F=E&&GENFAM[E.fam],X=E&&GENTS[E.fam
  if(!X)return h+gpnLinks();
  h+='<div class="card"><h3 style="margin-top:0">Service parts</h3><ul class="gpr">'+F.parts.map(function(p){return '<li><b>'+e(p.t)+':</b> '+e(p.pn)+(p.was?' (supersedes '+e(p.was)+')':'')+'</li>';}).join('')+
   (F.brush?'<li><b>Brush block:</b> '+e(F.brush.pn)+'</li>':'')+(F.plugs?'<li><b>Spark plugs:</b> '+e(F.plugs.pn)+' × '+F.plugs.qty+'</li>':'')+'<li><b>Oil:</b> '+e(F.oil)+'</li>'+(F.cool?'<li><b>Coolant:</b> '+e(F.cool)+'</li>':'')+'</ul></div>';
+ if(F.fimg)h+='<div class="card"><h3 style="margin-top:0">Fuel filter: 147-0860 or 149-2513?</h3><p class="muted" style="margin:-4px 0 8px">Early spin-on units (spec A to K) use the 149-2513 primary filter; later units (spec L and up) and the fuel-injected gas units use the 147-0860 inline filter. Tap the picture to enlarge.</p><img src="fuel-filter-guide.jpg" alt="Visual reference guide: fuel filter selection, 147-0860 inline filter versus 149-2513 primary filter" data-fimg="1" style="width:100%;height:auto;border:1px solid var(--line);border-radius:10px;background:#fff;display:block"></div>';
  h+='<div class="card"><h3 style="margin-top:0">Reading the fault code</h3><ul class="gpr">'+X.read.map(function(s){return '<li>'+e(s)+'</li>';}).join('')+'</ul></div>';
  h+='<div class="card"><h3 style="margin-top:0">Fault codes</h3><input id="gpnQ" inputmode="numeric" autocomplete="off" placeholder="Type the code number, e.g. 36" style="margin-bottom:8px"><p class="muted" id="gpnNo" hidden>No code with that number in this manual.</p>'+gpnList(X.codes,'c')+'</div>';
  h+='<div class="card"><h3 style="margin-top:0">Other problems</h3>'+gpnList(X.sym,'s')+'</div>';
@@ -15201,6 +15202,7 @@ function genPanel(){if(GPN.open)return;GPN.open=true;GPN.m=gpnStart();var p=docu
  document.body.appendChild(p);document.documentElement.classList.add('gpn-lock');gpnPaint();
  try{history.pushState({camx:1,gpn:1},'',location.href);}catch(err){}
  window.addEventListener('popstate',gpnPop);document.addEventListener('keydown',gpnKey,true);}
+document.addEventListener('click',function(ev){var t=ev.target;if(!t||!t.getAttribute||!t.getAttribute('data-fimg'))return;var o=document.createElement('div');o.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483002;background:rgba(0,0,0,.92);overflow:auto;-webkit-overflow-scrolling:touch;padding:12px';o.innerHTML='<div style="position:sticky;top:0;text-align:right"><button type="button" style="background:#fff;color:#0b3d6b;border:0;border-radius:8px;padding:10px 18px;font:700 16px system-ui,sans-serif">Close</button></div><img src="fuel-filter-guide.jpg" alt="" style="width:100%;max-width:1400px;display:block;margin:8px auto;background:#fff;border-radius:8px">';o.onclick=function(){o.remove();};document.body.appendChild(o);},true);
 window.__openGenPanel=function(){genPanel();};
 window.__openTechDocs=function(){techPanel();};
 function gpnClose(back){if(!GPN.open)return;GPN.open=false;var p=document.getElementById('genPanel');if(p)p.remove();document.documentElement.classList.remove('gpn-lock');
