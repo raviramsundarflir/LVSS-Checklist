@@ -13293,7 +13293,7 @@ async function renderHome(){S.recs=(await dbAll('recs')).sort((a,b)=>b.updated-a
  ${S.recs.map(r=>{const st=stats(r);return `<div class="card home-c"><div class="gr"><b style="font-size:18px">${esc(title(r))}</b> ${r.signed?'<span class="tag" style="background:#d6f0de">SIGNED</span>':(r.step===0?'<span class="tag" style="background:#fde5c8">🧳 Trip planning</span>':'<span class="tag">In progress – step '+r.step+' of 5</span>')}${(r.audit&&r.audit.done)?`<span class="tag" style="background:${r.audit.verdict==='pass'?'#d6f0de':'#fdecec'}">Audit ${r.audit.verdict==='pass'?'PASSED':'FAILED'}</span>`:''}<br><span class="muted">${esc(r.hdr.customer||'No customer')} · ${esc(fmtD(r.hdr.date))} · updated ${new Date(r.updated).toLocaleString()}</span><br><span class="muted">${st.f} failed · ${st.open} open${st.blk?` · ${st.blk} not tested`:''}${st.dno?` · <b style="color:#c62828">${st.dno} DO NOT OPERATE</b>`:''}</span></div>
  <button class="pri" data-act="open" data-rid="${r.id}">Open</button>${r.signed?`<button data-act="auditrec" data-rid="${r.id}" style="border-color:#6b3fa0;color:#6b3fa0;font-weight:700">🔍 Audit</button>`:''}<button class="dng" data-act="del" data-rid="${r.id}">Delete</button></div>`}).join('')}<div class="card home-more"><div class="muted" style="font-size:13px;margin:0 0 6px">More options</div><div class="row"><button data-pt="blank">🖨 Print blank forms</button><button data-act="backup">Backup file</button><button data-act="restore">Restore from backup file</button><button data-act="admin">Admin</button></div></div><div class="card"><button data-pt="techdocs" style="width:100%">📚 Tech docs – manuals &amp; support guides</button></div></div>`;}
 
-function newDlg(){modal(`<h3>New inspection</h3><label class="f">Tower Serial # (names the saved file)</label><input id="n-ts"><div class="sp"></div><label class="f">Customer</label><input id="n-cu"><div class="sp"></div><label class="f">Teledyne FLIR Technician (name)</label><input id="n-te" value="${esc(S.techDraft||'')}">${techChips()}<button class="pri" data-act="start">Start inspection</button><button data-act="mclose">Cancel</button>`);}
+function newDlg(){modal(`<h3>New inspection</h3><label class="f">Tower Serial # (names the saved file)</label><input id="n-ts"><label class="row" style="gap:10px;margin:8px 0 0"><input type="checkbox" id="n-pre" checked style="width:24px;min-height:24px"><span>Use the MFR-1JTC2-0 prefix <span class="muted">(untick if the serial starts differently)</span></span></label><div class="sp"></div><label class="f">Customer</label><input id="n-cu"><div class="sp"></div><label class="f">Teledyne FLIR Technician (name)</label><input id="n-te" value="${esc(S.techDraft||'')}">${techChips()}<button class="pri" data-act="start">Start inspection</button><button data-act="mclose">Cancel</button>`);}
 
 /* ----- record shell ----- */
 const STEPN=['Info','Inspect','Punch List','Certificate & Sign','E-mail'];
@@ -14549,7 +14549,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/06/2026',site:'88'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/06/2026',site:'89'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14840,6 +14840,7 @@ html.gpn-lock,html.gpn-lock body{overflow:hidden}
 (function(){
 if(window.__pmVisit)return;window.__pmVisit=1;
 var JOBF=[['customer','Customer'],['contact','Site contact name'],['phone','Phone number','tel'],['email','Customer e-mail address(es)','email'],['address','Tower location address'],['po','Customer PO #'],['salesOrder','Teledyne FLIR Sales Order #'],['serviceOrder','Service Order #'],['rma','RMA # (repairs only)']];
+var TRIPJOB=JOBF.filter(function(f){return f[0]!=='email';});
 var TOWF=[['towerVin','Tower VIN #'],['towerSerial','Tower Serial #'],['genSerial','Generator Serial #'],['genModel','Generator Model']];
 /* ---- Generator service-parts library (Rev 59, Ravi 2026-11-04) ----
    One family per service manual; each model the tech can pick points at a family. Part numbers come from the manual;
@@ -15064,10 +15065,8 @@ async function tdShare(i){var D=TDOCS[i];if(!D)return;
  alert('Sharing is not available on this device. Use Download instead.');}
 
 var SECS=[
- {id:'s1',t:'1. Job info',n:'These are the inspection’s own header fields, so they carry straight into the Info step and the certificate.',f:JOBF,svc:1,g:[]},
+ {id:'s1',t:'1. Job info',n:'These are the inspection’s own header fields, so they carry straight into the Info step and the certificate.',f:TRIPJOB,svc:1,g:[]},
  {id:'s2',t:'2. Tower & generator (from the last report, if available)',tow:1,g:[{i:[
-  ['r3','Check the generator hours to see what is due'],
-  ['r4','Oil grade and quarts the generator takes (last report, or the generator label / manual)','oil'],
   ['r6','Equipment on the tower, and whether the broadband router or Cradlepoint subscription is active','eq'],
   ['r7','Open punch-list items from last visit','op'],
   ['r8','Spares left on site last visit (so you don’t buy what is already there)','sp']]}]},
@@ -15091,7 +15090,7 @@ var SECS=[
   {h:'Keys',i:[
    ['j8','SkyWatch keys']]}]},
  {id:'s4',t:'4. Buy on arrival',n:'Techs usually fly to the customer’s city, so these are bought locally. Check section 2 first for spares already left on site.',g:[{i:[
-  ['a1','Engine oil (grade and quarts from section 2)','oilbuy'],
+  ['a1','Engine oil','oilbuy'],
   ['a2','Oil drain pan'],['a3','Oil mat'],['a4','Funnel'],['a5','Roll of shop towels'],['a6','Cleaner spray']]},
   {h:'Generator parts not packed (added automatically)',buyauto:1,i:[]}],
   foot:'Whatever is left over goes in the form’s “Spare consumables left with the tower” section, so the next tech knows.'}
@@ -15133,8 +15132,11 @@ function gpHtml(r){var t=T(r),g=null;SECS.forEach(function(s){s.g.forEach(functi
  return '<p class="muted ptn ptgn">'+e(genNote(r))+'</p><div class="ptl">'+gi(g,r).map(function(x){return gpRow(r,x,!!t.ck[x[0]]);}).join('')+'</div>';}
 function buyAutoHtml(r,g){var a=gi(g,r),t=T(r);if(!a.length)return '';return '<div class="grp">'+e(g.h)+'</div><div class="ptl">'+a.map(function(x){return tick(r,x,'tick',null,!!t.ck[x[0]]);}).join('')+'</div>';}
 function buyRefresh(){var r=S.rec;if(!r||r.step!==0)return;var el=document.getElementById('ptBuyAuto');if(!el)return;var g=null;SECS.forEach(function(s){s.g.forEach(function(q){if(q.buyauto)g=q;});});if(g)el.innerHTML=buyAutoHtml(r,g);}
+var GMG=[['Diesel',['HDKAV','HDKAT','HDKAU','HDKBC','HDKBB']],['Gasoline / LPG',['HGJAD','HGJAE']]],
+ GMS={HDKAV:['Onan QD 6000 (HDKAV)',''],HDKAT:['Onan QD 7500 (HDKAT)',''],HDKAU:['Onan QD 8000 (HDKAU)',''],HDKBC:['Onan HDKBC','5 kW, 60 Hz'],HDKBB:['Onan HDKBB','4.8 kW, 50 Hz'],HGJAD:['Onan HGJAD','5.5 / 7 kW, fuel-injected'],HGJAE:['Onan HGJAE','5.5 / 6.5 / 7 kW, carburetor']};
 function gmBtns(r){var G=genOf(r),cur=r.genLib||(G?G.e.k:'');
- return '<div class="ptgt" id="ptGm">'+GENLIB.map(function(q){return '<button type="button" class="'+(cur===q.k?'pri':'')+'" data-pt="gm" data-v="'+q.k+'">'+e(q.n)+'</button>';}).join('')+'<button type="button" class="'+(cur==='other'?'pri':'')+'" data-pt="gm" data-v="other">Other / not listed</button></div>';}
+ function row(k,t,sb,def){return '<button type="button" class="gmr'+(cur===k?' on':'')+'" data-pt="gm" data-v="'+k+'"><span class="gmd"></span><span class="gmt"><b>'+e(t)+'</b>'+(sb?'<small>'+e(sb)+'</small>':'')+'</span>'+(def?'<em>DEFAULT</em>':'')+'</button>';}
+ return '<div id="ptGm" class="gml">'+GMG.map(function(g){return '<div class="gmg">'+g[0]+'</div>'+g[1].map(function(k){return row(k,GMS[k][0],GMS[k][1],k==='HDKAV');}).join('');}).join('')+row('other','Other / not listed','',false)+'</div>';}
 function itemDef(id){var f=null;SECS.forEach(function(s){s.g.forEach(function(g){g.i.forEach(function(x){if(x[0]===id)f=x;});});});return f;}
 /* refresh only the parts that depend on the generator model, so the screen does not move */
 function genRefresh(){var r=S.rec;if(!r||r.step!==0)return;var t=T(r),g=document.getElementById('ptGm');if(g)g.outerHTML=gmBtns(r);
@@ -15142,12 +15144,11 @@ function genRefresh(){var r=S.rec;if(!r||r.step!==0)return;var t=T(r),g=document
  ['r4','a1'].forEach(function(id){var x=itemDef(id),b=document.querySelector('[data-pt=tick][data-k='+id+']');if(x&&b)b.outerHTML=tick(r,x,'tick',null,!!t.ck[id]);});buyRefresh();}
 function tick(r,x,act,xid,on){var opt=x[3]?'<em>OPTIONAL</em>':'',sb=act==='xtick'?[]:sub(r,x);
  return '<button type="button" class="ptit'+(on?' on':'')+'" data-pt="'+act+'" '+(xid?'data-x="'+xid+'"':'data-k="'+x[0]+'"')+' aria-pressed="'+(on?'true':'false')+'"><span class="ptbx" aria-hidden="true"></span><span class="pttx">'+e(x[1])+opt+(sb.length?'<small>'+sb.map(e).join('<br>')+'</small>':'')+'</span></button>';}
-function lastHtml(r){var L=r.last||{};if(r.fromNv)return '<div class="cnote sk" style="margin-top:10px">Generator hours at the last visit'+(L.d?' ('+fmtD(L.d)+')':'')+': <b style="color:var(--ink)">'+(num(L.h)!=null?fmtN(num(L.h))+' h':'not recorded')+'</b></div>';
- return '<div class="grid" style="margin-top:10px">'+inp('last.h','Generator hours at the last visit (if known)',{ph:'e.g. 2345'})+inp('last.d','Date of the last visit (if known)',{type:'date'})+'</div>';}
+function lastHtml(r){var L=r.last||{};if(r.fromNv)return '<div class="cnote sk" style="margin-top:10px">Generator hours at the last visit'+(L.d?' ('+fmtD(L.d)+')':'')+': <b style="color:var(--ink)">'+(num(L.h)!=null?fmtN(num(L.h))+' h':'not recorded')+'</b></div>'; return '';}
 function secHtml(r,sec){var c=secDone(r,sec),t=T(r),h='<div class="card"><div class="pth"><h3>'+e(sec.t)+'</h3><span class="ptsc'+(c.n===c.tot?' done':'')+'" id="ptsc-'+sec.id+'">'+c.n+' / '+c.tot+'</span></div>'+(sec.n?'<p class="muted ptn">'+e(sec.n)+'</p>':'');
  if(sec.f){h+='<div class="grid">'+sec.f.map(function(f){return inp('hdr.'+f[0],f[1],{type:f[2]})}).join('')+'</div>';}
  if(sec.svc){var sel=r.svc&&r.svc.sel||{};h+='<label class="f" style="margin-top:12px">Service type(s) for the certificate</label><div class="ptgt">'+SVC.map(function(s){return '<button type="button" class="'+(sel[s[0]]?'pri':'')+'" data-pt="svc" data-v="'+s[0]+'">'+e(s[1].replace(' (Preventative Maintenance Service)',' (PM)'))+'</button>';}).join('')+'</div>';}
- if(sec.tow){h+='<div class="grid">'+TOWF.map(function(f){return inp('hdr.'+f[0],f[1])}).join('')+'</div>'+
+ if(sec.tow){h+='<div class="grid">'+TOWF.map(function(f){return inp('hdr.'+f[0],f[1])}).join('')+'</div>'+preBox(r)+
   '<label class="f" style="margin-top:12px">Generator model (fills in the parts to bring and the oil)</label>'+gmBtns(r)+'<button type="button" class="gpb" data-pt="genpanel">🔧 Fault codes &amp; manual for this generator ›</button>'+
   '<label class="f" style="margin-top:12px">Generator type (gas adds the spark plug and ignition coil checks)</label><div class="ptgt" id="ptGt">'+[['diesel','Diesel'],['gas','Gas / spark-ignition'],['other','Other']].map(function(x){return '<button type="button" class="'+(r.genType===x[0]?'pri':'')+'" data-pt="gt" data-v="'+x[0]+'">'+x[1]+'</button>';}).join('')+'</div>'+
   '<label class="row" style="gap:12px;margin-top:12px"><input type="checkbox" data-pt="lg" style="width:26px;min-height:26px" '+(r.legacy?'checked':'')+'><span><b>Legacy DC tower</b><br><span class="muted">Adds Section 7 (Legacy DC Towers only) to the inspection.</span></span></label>'+lastHtml(r);}
@@ -15155,7 +15156,7 @@ function secHtml(r,sec){var c=secDone(r,sec),t=T(r),h='<div class="card"><div cl
  return h+(sec.foot?'<p class="muted" style="margin:10px 0 0">'+e(sec.foot)+'</p>':'')+'</div>';}
 function xlist(r){var t=T(r);if(!t.extra.length)return '<p class="muted" style="margin:4px 0">Nothing added yet.</p>';return t.extra.map(function(x){return '<div class="ptxr">'+tick(r,[x.id,x.t],'xtick',x.id,!!x.on)+'<button type="button" class="ptdel" data-pt="xdel" data-x="'+x.id+'" aria-label="Remove this item">×</button></div>';}).join('');}
 window.tripHtml=function(){var r=S.rec;T(r);var c=allDone(r),pct=c.tot?Math.round(c.n*100/c.tot):0;
- return (r.fromNv?'<div class="ptcarry"><b>Pre-filled from the '+e(fmtD(r.last.d)||'earlier')+' report</b><br><span class="muted">Customer, site, tower, generator and equipment came from the Next visit code. Check them; the serial numbers ask for a fresh photo on site.</span></div>':'')+
+ return (window.DictUI?DictUI.rowHtml():'')+(r.fromNv?'<div class="ptcarry"><b>Pre-filled from the '+e(fmtD(r.last.d)||'earlier')+' report</b><br><span class="muted">Customer, site, tower, generator and equipment came from the Next visit code. Check them; the serial numbers ask for a fresh photo on site.</span></div>':'')+
  '<div class="card"><div class="row"><button class="pri" data-act="step" data-s="1" style="flex:1">Skip to inspection →</button><button data-pt="blank" style="flex:1">🖨 Print blank…</button></div><div class="sp"></div>'+
  '<div class="row" style="justify-content:space-between"><b id="ptCnt" style="font-size:17px">'+c.n+' of '+c.tot+' done</b><span class="muted">Trip prep · not on the inspection report</span></div><div class="ptbar"><i id="ptBar" style="width:'+pct+'%"></i></div></div>'+
  SECS.map(function(s){return secHtml(r,s)}).join('')+
@@ -15166,7 +15167,7 @@ window.tripHtml=function(){var r=S.rec;T(r);var c=allDone(r),pct=c.tot?Math.roun
 
 /* ---------- new visit ---------- */
 function startRec(r,trip){if(trip){T(r);r.step=0;r.svc=r.svc||{extra:[]};r.svc.sel={pmx:true};}S.rec=r;S.photos={};S.view='rec';S.open=-1;S.detail={};S.dirty=true;return save().then(function(){render();});}
-function newTripDlg(){modal('<h3>New PM visit</h3><p class="muted" style="margin-top:-4px">Starts with the trip planner. You can skip to the inspection at any time.</p><label class="f">Tower Serial # (names the saved file)</label><input id="n-ts"><div class="sp"></div><label class="f">Customer</label><input id="n-cu"><div class="sp"></div><label class="f">Teledyne FLIR Technician (name)</label><input id="n-te" value="'+e(S.techDraft||'')+'">'+techChips()+'<button class="pri" data-pt="tripgo">🧳 Start the trip planner</button><button data-act="mclose">Cancel</button><p class="muted" style="margin:10px 0 0">Have the last report? Cancel and use <b>Scan QR</b> on its Next visit code to pre-fill everything.</p>');}
+function newTripDlg(){modal('<h3>New PM visit</h3><p class="muted" style="margin-top:-4px">Starts with the trip planner. You can skip to the inspection at any time.</p><label class="f">Tower Serial # (names the saved file)</label><input id="n-ts"><label class="row" style="gap:10px;margin:8px 0 0"><input type="checkbox" id="n-pre" checked style="width:24px;min-height:24px"><span>Use the MFR-1JTC2-0 prefix <span class="muted">(untick if the serial starts differently)</span></span></label><div class="sp"></div><label class="f">Customer</label><input id="n-cu"><div class="sp"></div><label class="f">Teledyne FLIR Technician (name)</label><input id="n-te" value="'+e(S.techDraft||'')+'">'+techChips()+'<button class="pri" data-pt="tripgo">🧳 Start the trip planner</button><button data-act="mclose">Cancel</button><p class="muted" style="margin:10px 0 0">Have the last report? Cancel and use <b>Scan QR</b> on its Next visit code to pre-fill everything.</p>');}
 
 /* ---------- next-visit QR code ---------- */
 var NVQ_MAX=2600;
@@ -15231,7 +15232,7 @@ function tripPdf(r){var d=pdfBase(),K=kit(d),blank=!r,t=r?T(r):{ck:{},extra:[]},
   if(s.f)K.fields(s.f,get);
   if(s.svc){var sel=r?(r.svc&&r.svc.sel||{}):{};K.ens(22);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(110);d.text('SERVICE TYPE(S)',K.MX,K.y);K.y+=12;var x=K.MX;SVC.forEach(function(q){var lab=q[1].replace(' (Preventative Maintenance Service)',' (PM)');K.box(x,K.y-9,!!sel[q[0]]);d.setFontSize(9.5);d.setTextColor(20);d.text(cl(lab),x+15,K.y);x+=d.getTextWidth(cl(lab))+34;});K.y+=16;}
   if(s.tow){K.fields(TOWF,get);K.ens(22);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(110);d.text('GENERATOR TYPE',K.MX,K.y);K.y+=12;var x2=K.MX;[['diesel','Diesel'],['gas','Gas / spark-ignition'],['other','Other'],['lg','Legacy DC tower']].forEach(function(q){var on=r?(q[0]==='lg'?r.legacy:r.genType===q[0]):false;K.box(x2,K.y-9,on);d.setFontSize(9.5);d.setTextColor(20);d.text(q[1],x2+15,K.y);x2+=d.getTextWidth(q[1])+34;});K.y+=16;
-   K.fields([['lh','Generator hours at the last visit'],['ld','Date of the last visit']],function(q){if(!r)return '';var L=r.last||{};return q==='lh'?(L.h||''):(L.d?fmtD(L.d):'');});}
+  }
   s.g.forEach(function(g){if(g.buyauto&&!gi(g,r).length)return;if(g.h)K.grp(g.h);if(g.gen)K.note(genNote(r));gi(g,r).forEach(function(x){K.item(x[1],r?sub(r,x):(Array.isArray(x[2])?x[2]:null),!!t.ck[x[0]],x[3]);});});
   if(s.foot)K.note(s.foot);});
  if(blank){K.head('Added for this trip');for(var i=0;i<4;i++)K.item('______________________________________________________',null,false);}
@@ -15281,7 +15282,7 @@ function addItem(){var r=S.rec,inp=document.getElementById('ptAdd');if(!r||!inp)
 document.addEventListener('click',function(ev){var b=ev.target.closest('[data-pt]');if(!b)return;var a=b.getAttribute('data-pt'),r=S.rec;
  var run=function(f){try{f();}catch(err){alert(String(err&&err.message||err));}};
  if(a==='tripnew'){newTripDlg();return;}
- if(a==='tripgo'){var ts=$('#n-ts').value.trim(),cu=$('#n-cu').value.trim(),te=$('#n-te').value.trim();closeModal();var nr=newRec({towerSerial:ts,customer:cu,tech:te,techEmail:S.settings.lastTechEmail||''});techRemember(te);S.techDraft='';startRec(nr,true);return;}
+ if(a==='tripgo'){var ts=$('#n-ts').value.trim(),cu=$('#n-cu').value.trim(),te=$('#n-te').value.trim();var npre=!!(($('#n-pre')||{checked:true}).checked);closeModal();var nr=newRec({towerSerial:ts,customer:cu,tech:te,techEmail:S.settings.lastTechEmail||'',genModel:GENBY.HDKAV.n});nr.genLib='HDKAV';nr.genType=GENFAM[GENBY.HDKAV.fam].type||'diesel';nr.serPre=npre;techRemember(te);S.techDraft='';startRec(nr,true);return;}
  if(a==='nvtrip'||a==='nvdirect'){if(!NV)return;closeModal();var q=NV;NV=null;startRec(nvRec(q),a==='nvtrip');return;}
  if(a==='blank'){blankDlg();return;}
  if(a==='blankpt'){closeModal();run(function(){tripPdf(null);});return;}
@@ -15314,6 +15315,25 @@ document.addEventListener('input',function(ev){var t=ev.target,r=S.rec;if(!r||!t
  if(r.step===0&&(p.indexOf('hdr.')===0||p.indexOf('last.')===0))paint();});
 document.addEventListener('keydown',function(ev){if(ev.key==='Enter'&&ev.target&&ev.target.id==='ptAdd'){ev.preventDefault();addItem();}});
 window.__pmApi={tripPdf:tripPdf,blankInspPdf:blankInspPdf,nvRec:nvRec,nvPayload:window.nvPayload};
+/* ---------- Rev 89: capitals, tower-serial prefix, dictation switch ---------- */
+var PFX='MFR-1JTC2-0';
+function pfxOn(){var r=S.rec;if(r&&r.serPre!==undefined)return !!r.serPre;var v=String((r&&r.hdr&&r.hdr.towerSerial)||'').toUpperCase();return !v||v.indexOf(PFX)===0;}
+function preBox(r){return '<label class="row" style="gap:10px;margin:2px 0 6px"><input type="checkbox" data-ser-pre="1" style="width:24px;min-height:24px" '+(pfxOn()?'checked':'')+'><span>Use the MFR-1JTC2-0 prefix <span class="muted">(untick if this serial starts differently)</span></span></label>';}
+function fmtSer(v){if(!v)return '';if(v.length<=PFX.length&&PFX.indexOf(v)===0)return v;var d=v.indexOf(PFX)===0?v.slice(PFX.length):v.replace(/^MFR-?1JTC2-?0?/,'');d=d.replace(/\D/g,'').slice(0,3);return d?PFX+d:'';}
+var CAPSEL='input[data-b^="hdr."]:not([type=email]):not([type=tel]):not([type=date]):not([type=number]),input[data-b^="gear."],textarea[data-b^="hdr."],#modal input[id^="n-"]:not([type=email])';
+function capOK(el){try{return !!(el&&el.matches&&el.matches(CAPSEL)&&!el.readOnly&&!el.disabled);}catch(err){return false;}}
+window.addEventListener('input',function(ev){var el=ev.target;if(!el||!el.tagName||el.tagName!=='INPUT'&&el.tagName!=='TEXTAREA')return;var v=el.value,isSer=el.id==='n-ts'||(el.dataset&&el.dataset.b==='hdr.towerSerial');
+ if(isSer){v=v.toUpperCase();var on=el.id==='n-ts'?!!((document.getElementById('n-pre')||{checked:true}).checked):pfxOn();if(on)v=fmtSer(v);}
+ else if(capOK(el))v=v.toUpperCase();else return;
+ if(v!==el.value){var pos=el.selectionStart,atEnd=pos===el.value.length;el.value=v;try{var q=isSer||atEnd?v.length:pos;el.setSelectionRange(q,q);}catch(err){}}},true);
+document.addEventListener('change',function(ev){var t=ev.target;if(t&&t.getAttribute&&t.getAttribute('data-ser-pre')){var r=S.rec;if(r){r.serPre=!!t.checked;[].forEach.call(document.querySelectorAll('input[data-ser-pre]'),function(z){z.checked=!!t.checked;});dirty();}}});
+(function(){var _ih=infoHtml;infoHtml=function(){var h=_ih.apply(this,arguments);var m=h.match(/<input data-b="hdr\.towerSerial"[^>]*>/);if(m)h=h.replace(m[0],m[0]+preBox(S.rec));return (window.DictUI?DictUI.rowHtml():'')+h;};})();
+(function(){var st=document.createElement('style');st.textContent=CAPSEL.split(',').map(function(q){return q.trim();}).filter(function(q){return q.charAt(0)!=='#';}).join(',')+'{text-transform:uppercase}#modal input[id^="n-"]:not([type=email]){text-transform:uppercase}'+
+ '.gml{display:flex;flex-direction:column;gap:7px}.gmg{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8a3b0a;margin:8px 2px 0}'+
+ '.gmr{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid #d5dbe1;border-radius:11px;padding:11px 13px;background:#fff;min-height:48px}.gmr .gmd{flex:0 0 22px;height:22px;border:2px solid #8a97a3;border-radius:50%}'+
+ '.gmr .gmt{flex:1}.gmr b{display:block;font-size:16px;font-weight:600}.gmr small{display:block;color:#6a7783;font-size:12.5px;margin-top:1px}.gmr em{font-style:normal;font-size:11px;font-weight:700;color:#fff;background:#d1500d;border-radius:99px;padding:2px 9px}'+
+ '.gmr.on{border:2px solid #d1500d;background:#fdf1ea}.gmr.on .gmd{border-color:#d1500d;background:radial-gradient(#d1500d 0 45%,#fff 50%)}';document.head.appendChild(st);})();
+
 })();
 </script>
 <script>Nav.init({name:'SkyWatch',snap:function(){return S.view==='rec'&&S.rec?{v:'rec',id:S.rec.id,s:S.rec.step,a:!!S.audit}:{v:'home'};},
@@ -15322,4 +15342,251 @@ restore:async function(s){try{await save();}catch(e){}
   var x=await dbGet('recs',s.id);if(x){x=migrate(x);S.rec=x;await loadPhotos(x);S.view='rec';S.open=-1;S.detail={};S.dirty=false;S.audit=!!s.a;if(s.s)x.step=s.s;render();return;}}
  S.view='home';S.rec=null;S.audit=false;render();},
 save:function(){return save();}});</script>
+
+<style>.dk-wrap{display:flex;gap:6px;align-items:center}.dk-wrap>input,.dk-wrap>textarea{flex:1;min-width:0}.dk-btns button{background:#fff;border:1px solid #c9d1d8;color:#1d5fc4;display:inline-flex;align-items:center;justify-content:center}.dk-btns button.on{color:#fff}</style><script>/* ===== shared: dictation for serial numbers and revisions (Ravi, 2026-10-30) =====
+   Same code as /dictate-test/. Speech is cleaned into the field's format:
+   serial = no spaces, ALL CAPS, number words -> digits, call-sign words / letter names -> letters, "dash" -> -;
+   version = keeps "point" -> . and lower-case letters; number = digits only ("forty eight thousand..." works). */
+(function(){
+var SR=window.SpeechRecognition||window.webkitSpeechRecognition||null;
+var NATO={alpha:'a',alfa:'a',bravo:'b',charlie:'c',delta:'d',echo:'e',foxtrot:'f',golf:'g',hotel:'h',india:'i',juliet:'j',juliett:'j',kilo:'k',lima:'l',mike:'m',michael:'m',november:'n',oscar:'o',papa:'p',quebec:'q',romeo:'r',sierra:'s',tango:'t',uniform:'u',victor:'v',whiskey:'w',whisky:'w',xray:'x',yankee:'y',zulu:'z'};
+var LET={bee:'b',be:'b',see:'c',sea:'c',cee:'c',dee:'d',eff:'f',gee:'g',aitch:'h',jay:'j',kay:'k',pee:'p',pea:'p',cue:'q',queue:'q',are:'r',tee:'t',tea:'t',you:'u',vee:'v',why:'y',zee:'z',zed:'z'};
+var UNIT={zero:'0',oh:'0',owe:'0',one:'1',won:'1',two:'2',to:'2',too:'2',three:'3',four:'4',for:'4',five:'5',six:'6',seven:'7',eight:'8',ate:'8',nine:'9'};
+var TEEN={ten:'10',eleven:'11',twelve:'12',thirteen:'13',fourteen:'14',fifteen:'15',sixteen:'16',seventeen:'17',eighteen:'18',nineteen:'19'};
+var TENS={twenty:'2',thirty:'3',forty:'4',fifty:'5',sixty:'6',seventy:'7',eighty:'8',ninety:'9'};
+var SYM={dash:'-',hyphen:'-',minus:'-',point:'.',dot:'.',period:'.',decimal:'.',slash:'/'};
+var NV={zero:0,oh:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,forty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90};
+function numWords(toks){/* "sixty six thousand eight hundred nineteen" -> 66819 */
+ var tot=0,cur=0,any=false,out='';
+ toks.forEach(function(w){if(/^\d+$/.test(w)){if(any){out+=String(tot+cur);tot=cur=0;any=false;}out+=w;return;}
+  if(NV[w]!=null){cur+=NV[w];any=true;}else if(w==='hundred'){cur=(cur||1)*100;any=true;}else if(w==='thousand'){tot+=(cur||1)*1000;cur=0;any=true;}});
+ if(any)out+=String(tot+cur);return out;}
+function clean(raw,kind){kind=kind||'serial';
+ if(kind==='text')return String(raw||'').replace(/\s+/g,' ').trim();
+ var t=String(raw||'').toLowerCase().replace(/x[\s-]ray/g,'xray').replace(/double[\s-]you/g,'w').replace(/(\d),(?=\d)/g,'$1').replace(/,/g,' ');
+ var toks=t.split(/\s+/).map(function(w){return w.replace(/[^a-z0-9.\-\/]/g,'');}).filter(Boolean);
+ if(kind==='number'||kind==='digits'){if(toks.some(function(w){return w==='hundred'||w==='thousand';}))return numWords(toks.filter(function(w){return w!=='and';})).replace(kind==='digits'?/[^0-9]/g:/[^0-9.]/g,'');}
+ var out=[],rep=1,tens=null;
+ var push=function(v){for(var i=0;i<rep;i++)out.push(v);rep=1;};
+ toks.forEach(function(w){
+  if(tens!==null){if(UNIT[w]&&UNIT[w]!=='0'){push(tens+UNIT[w]);tens=null;return;}push(tens+'0');tens=null;}
+  if(w==='double'){rep=2;return;}if(w==='triple'){rep=3;return;}
+  if(TENS[w]){tens=TENS[w];return;}
+  var v=NATO[w]!=null?NATO[w]:UNIT[w]!=null?UNIT[w]:TEEN[w]!=null?TEEN[w]:SYM[w]!=null?SYM[w]:(kind!=='number'&&kind!=='digits'&&LET[w]!=null)?LET[w]:w;push(v);});
+ if(tens!==null)push(tens+'0');
+ var s=out.join('');
+ if(kind==='digits')return s.replace(/[^0-9]/g,'');
+ if(kind==='id')return s.toUpperCase().replace(/[^A-Z0-9]/g,'');
+ if(kind==='number')return s.replace(/[^0-9.]/g,'');
+ if(kind==='version')return s.replace(/[^a-z0-9.\-\/]/gi,'');
+ return s.toUpperCase().replace(/[^A-Z0-9\-\/.]/g,'');}
+/* true when text looks spoken ("x-ray two six"), not typed ("X26B140057") */
+function spoken(raw){var t=String(raw||'').toLowerCase().replace(/x[\s-]ray/g,'xray').replace(/(\d),(?=\d)/g,'$1');var toks=t.split(/[\s,]+/).map(function(w){return w.replace(/[^a-z0-9.\-\/]/g,'');}).filter(Boolean);if(toks.length<2)return false;
+ var word=0,code=0;toks.forEach(function(w){var a=w.replace(/[^a-z]/g,'');if(a.length>1&&a===w&&(NATO[a]!=null||UNIT[a]!=null||TEEN[a]!=null||TENS[a]!=null||SYM[a]!=null||a==='double'||a==='triple'||a==='hundred'||a==='thousand')){word++;code++;}else if(/^[a-z]$/.test(w)||/^[0-9.\-\/]+$/.test(w)||LET[w]!=null||/^[a-z]?\d[a-z0-9]*$/.test(w))code++;});
+ return word>=1&&code/toks.length>=0.7;}
+var cur=null;
+function listen(o){o=o||{};if(!SR){o.onError&&o.onError('unsupported','This browser has no speech recognition. Use the keyboard’s microphone key instead.');return null;}
+ stop();var r=new SR(),got=false,heard=false,ended=false;r.lang=o.lang||'en-US';r.interimResults=true;r.maxAlternatives=4;r.continuous=false;
+ var st=function(t,k){o.onState&&o.onState(t,k);};
+ r.onstart=function(){st('Listening… speak now, then pause.','start');};
+ r.onaudiostart=function(){st('Listening… microphone on. Speak now, then pause.','audio');};
+ r.onspeechstart=function(){heard=true;st('Hearing you…','speech');};
+ r.onresult=function(e){var res=e.results[e.results.length-1];var alts=[];for(var i=0;i<res.length;i++)alts.push(res[i].transcript);
+  if(!res.isFinal){st('Heard so far: “'+alts[0]+'”','interim');return;}got=true;o.onResult&&o.onResult(alts[0],alts);};
+ r.onerror=function(e){var c=e.error||'error',m={
+   'not-allowed':'The microphone is blocked for this page. Allow the microphone for this site in the browser settings, then try again.',
+   'service-not-allowed':'This browser does not allow speech recognition here.',
+   'network':'The speech service could not be reached. It needs internet, and some browsers (Brave is a known case) do not provide it.',
+   'no-speech':'Nothing was heard. Tap the field and try again, a little closer to the tablet.',
+   'audio-capture':'No microphone was found.','aborted':'Stopped.'}[c]||('Speech recognition error: '+c);got=true;o.onError&&o.onError(c,m);};
+ r.onend=function(){if(ended)return;ended=true;cur=null;if(!got)o.onError&&o.onError('empty',heard?'Speech was heard but no text came back. This browser may not support dictation (Brave is a known case). Use the keyboard’s microphone key instead.':'Nothing came back from the speech service. Tap the field and try again, or use the keyboard’s microphone key.');o.onEnd&&o.onEnd();};
+ try{r.start();}catch(e){o.onError&&o.onError('start',String(e&&e.message||e));return null;}cur=r;return r;}
+function stop(){if(cur){try{cur.abort();}catch(e){}cur=null;}}
+/* listen until the tech is finished (Ravi, 2026-10-30). Where the browser keeps listening (desktop Chrome) it ends after
+   o.pause ms with nothing new heard (onSilence). Where the browser ends on its own after a pause (Android), it ends there
+   and calls onSilence too, so the form can ask "Is that everything?". o.restart:true restarts instead (beeps on Android). o={lang,pause,firstWait,onText(text),onSilence(text),onError(code,msg,text)}
+   returns {done()->text, abort()} */
+var MSG={'not-allowed':'The microphone is blocked for this page. Allow the microphone for this site in the browser settings, then try again.',
+ 'service-not-allowed':'This browser does not allow speech recognition here.',
+ 'network':'The speech service could not be reached. It needs internet, and some browsers (Brave is a known case) do not provide it.',
+ 'audio-capture':'No microphone was found.'};
+var EMPTY='Nothing came back from the speech service. Tap the field and try again, or use the keyboard and its microphone key.';
+var NOHEAR='Didn\u2019t catch anything. Tap \ud83c\udfa4 Try again and speak right after the beep.';
+function listenLong(o){o=o||{};if(!SR){o.onError&&o.onError('unsupported','This browser has no speech recognition. Use the keyboard’s microphone key instead.','');return null;}
+ stop();
+ var on=true,parts=[],fin=[],intr='',got=false,silT=null,dogT=null,rec=null,starts=0,lastStart=0,PAUSE=o.pause||4000,FIRST=o.firstWait||12000;
+ var RESTART=o.restart===true;
+ function dd(L){var out=[];L.forEach(function(t){t=String(t||'').trim();if(!t)return;var p=out.length?out[out.length-1]:null,a=t.toLowerCase(),b=p&&p.toLowerCase();
+  if(p&&a.indexOf(b)===0){out[out.length-1]=t;return;}if(p&&b.indexOf(a)===0)return;out.push(t);});return out;}
+ function text(){var all=parts.concat(dd(fin));if(intr)all.push(intr);return all.join(' ').replace(/\s+/g,' ').trim();}
+ function commit(){parts=parts.concat(dd(fin));if(intr)parts.push(intr);fin=[];intr='';}
+ function halt(){on=false;clearTimeout(silT);clearTimeout(dogT);var r=rec;rec=null;if(r){try{r.abort();}catch(e){}}if(cur===H)cur=null;}
+ function arm(){clearTimeout(silT);silT=setTimeout(function(){if(!on)return;commit();var t=text();halt();o.onSilence&&o.onSilence(t);},PAUSE);}
+ function fail(c,m){if(!on)return;commit();var t=text();halt();o.onError&&o.onError(c,m,t);}
+ function one(){if(!on)return;var r=new SR();rec=r;starts++;lastStart=Date.now();r.lang=o.lang||'en-US';r.interimResults=true;r.maxAlternatives=1;r.continuous=true;
+  r.onresult=function(e){if(rec!==r||!on)return;var F=[],I='';for(var i=0;i<e.results.length;i++){var x=e.results[i],t=(x[0]&&x[0].transcript)||'';if(x.isFinal)F.push(t);else I+=(I?' ':'')+t;}
+   fin=F;intr=I.trim();if(text()){got=true;clearTimeout(dogT);}o.onText&&o.onText(text());arm();};
+  r.onerror=function(e){if(rec!==r||!on)return;var c=e.error||'error';if(c==='no-speech'||c==='aborted')return;if(c==='network'&&got)return;fail(c,MSG[c]||('Speech recognition error: '+c));};
+  r.onend=function(){if(rec!==r||!on)return;commit();
+   /* no automatic restart (Ravi, 2026-10-30): on Android every restart beeps. When the browser ends after a pause, ask. */
+   if(!RESTART){var t0=text();halt();if(t0)o.onSilence&&o.onSilence(t0);else o.onError&&o.onError('no-speech',NOHEAR,'');return;}
+   if(starts>=2000){if(got){var t=text();halt();o.onSilence&&o.onSilence(t);}else fail('empty',EMPTY);return;}
+   setTimeout(function(){if(on&&rec===r)one();},Date.now()-lastStart<800?600:150);};
+  try{r.start();}catch(e){fail('start',String(e&&e.message||e));}}
+ var H={abort:function(){halt();},done:function(){if(!on)return text();commit();var t=text();halt();return t;},text:text};
+ dogT=setTimeout(function(){if(!got)fail('empty',EMPTY);},FIRST);
+ cur=H;one();return H;}
+window.Dictate={supported:!!SR,clean:clean,spoken:spoken,listen:listen,listenLong:listenLong,stop:stop};
+})();
+
+/* ===== shared: dictation in the forms (Ravi, 2026-10-30) =====
+   Dictate On/Off is chosen when an inspection starts, and again at the top of the serial numbers (switch any time).
+   With it on, tapping a serial-number or version field listens instead of opening the keyboard (one beep). It keeps listening through
+   short pauses where the browser allows it; when it stops it asks "Is that everything?" (Yes, done / Keep going / Start over). "Type instead"
+   opens the keyboard for that field.
+   Text from the keyboard's own microphone key ("x-ray two six…") is cleaned up when the field is left, Dictate on or off.
+   Each form sets window.DICTATE_FIELDS = [{sel, kind}] (kind: serial | version | number | digits | id | text).
+   digits = numbers only (RMA, SVO, sales order); id = capitals and numbers, no spaces or dashes (PO); text = words as spoken (site, technician, issues). */
+(function(){
+if(!window.Dictate)return;
+var KEY=window.DICTATE_KEY||'dictate_on',kbd=typeof WeakSet==='function'?new WeakSet():{has:function(){return false;},add:function(){},delete:function(){}};
+var st={el:null,busy:false,ask:false,rep:false,h:null,raw:'',before:'',last:null,hideT:null};
+function on(){try{return localStorage.getItem(KEY)==='1';}catch(e){return false;}}
+function setOn(v){try{localStorage.setItem(KEY,v?'1':'0');}catch(e){}if(!v){if(st.busy||st.ask)finish(true);stop();hide();}paint();}
+function cfg(){return window.DICTATE_FIELDS||[];}
+function kindOf(el){if(!el||(el.tagName!=='INPUT'&&el.tagName!=='TEXTAREA')||el.type==='date'||el.type==='email'||el.disabled||el.readOnly)return null;var F=cfg();for(var i=0;i<F.length;i++){try{if(el.matches(F[i].sel))return F[i].kind||'serial';}catch(e){}}return null;}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function labelOf(el){var a=el.parentElement;for(var n=0;a&&n<5;n++,a=a.parentElement){var L=a.querySelectorAll('label.f,.lb,b');for(var i=L.length-1;i>=0;i--){if(L[i].compareDocumentPosition(el)&Node.DOCUMENT_POSITION_FOLLOWING){var t=L[i].textContent.replace(/\s+/g,' ').trim();if(t)return t.length>60?t.slice(0,57)+'…':t;}}}return el.placeholder||'this field';}
+/* ---------- look ---------- */
+var css=document.createElement('style');css.textContent=
+ 'input.dk-mic,textarea.dk-mic{background-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%231d5fc4%27 stroke-width=%272%27 stroke-linecap=%27round%27%3E%3Crect x=%279%27 y=%273%27 width=%276%27 height=%2711%27 rx=%273%27/%3E%3Cpath d=%27M5 11a7 7 0 0 0 14 0M12 18v3%27/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-position:right 10px center!important;background-size:20px 20px!important;padding-right:38px!important}'+
+ 'input.dk-kbd,textarea.dk-kbd{background-image:none!important}'+
+ 'input.dk-mic.dk-hasb,textarea.dk-mic.dk-hasb{background-image:none!important;padding-right:10px!important}'+
+ '.dk-btns{display:inline-flex;gap:4px;flex:none}.dk-btns button{min-height:44px;min-width:44px;padding:4px 8px;font-size:20px;line-height:1;border-radius:10px}.dk-btns button.on{background:#1d5fc4;border-color:#1d5fc4;color:#fff}'+
+ 'input.dk-live,textarea.dk-live{border-color:#c2410c!important;background-color:#fff1e6!important;box-shadow:0 0 0 3px rgba(194,65,12,.18)!important}'+
+ '#dkPanel{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom));width:min(680px,calc(100% - 20px));background:#fff;color:#14213d;border:1px solid #d5dce6;border-left:6px solid #1d5fc4;border-radius:14px;box-shadow:0 10px 30px rgba(20,33,61,.25);padding:10px 12px;z-index:900;font-size:15px;display:none}'+
+ '#dkPanel.live{border-left-color:#c2410c}#dkPanel.ask{border-left-color:#e0a000}#dkPanel.err{border-left-color:#c62828}#dkPanel.ok{border-left-color:#1b8a3a}'+
+ '#dkPanel .t{display:flex;align-items:center;gap:8px;min-height:24px}#dkPanel .t b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
+ '#dkPanel .m{color:#4a5568;font-size:14px;min-height:40px;margin-top:2px;line-height:1.4}#dkPanel .m code{font:700 16px/1.2 ui-monospace,Menlo,Consolas,monospace;color:#14213d}'+
+ '#dkPanel .b{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;align-items:center;min-height:44px;margin-top:4px}'+
+ '#dkPanel button{min-height:40px;padding:4px 12px;border-radius:10px;border:1px solid #c7d0dd;background:#fff;font:inherit;font-size:14px;font-weight:700;color:#14213d;white-space:nowrap;flex:none}'+
+ '#dkPanel button.stp{background:#c25a00;border-color:#c25a00;color:#fff;min-width:120px;min-height:48px;font-size:16px}'+
+ '#dkPanel button.p{background:#1d5fc4;border-color:#1d5fc4;color:#fff}#dkPanel button.alt{font-family:ui-monospace,Menlo,Consolas,monospace;background:#eef3fc}'+
+ '#dkPanel .e{display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed #d5dce6}#dkPanel .dk-ed{display:flex;gap:8px}#dkPanel .dk-ed button{min-width:64px;min-height:48px;font-size:20px}#dkPanel button.dk-clr{margin-left:auto;min-width:90px;min-height:48px;color:#b42318;border-color:#e8b4ae}'+
+ '#dkPanel .dk-car{display:inline-block;width:3px;height:1.25em;background:#c2410c;border-radius:2px;vertical-align:-4px;margin:0 2px;animation:dkp 1s infinite}'+
+ '#dkPanel .dot{width:12px;height:12px;border-radius:50%;background:#c2410c;flex:none;animation:dkp 1s infinite}@keyframes dkp{50%{opacity:.25}}'+
+ '.dk-pill{min-height:40px;padding:4px 10px;font-weight:800;white-space:nowrap;flex:none}.dk-pill.on{background:#1d5fc4!important;border-color:#1d5fc4!important;color:#fff!important}'+
+ '.dk-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#eef3fc;border:1px solid #c9d8f0;border-radius:10px;padding:8px 10px;margin:10px 0}.dk-row span{flex:1 1 200px;font-weight:700}.dk-row small{display:block;font-weight:400;color:#5a6478}'+
+ '.dk-seg{display:inline-flex;border:2px solid #1d5fc4;border-radius:10px;overflow:hidden}.dk-seg button{border:0!important;border-radius:0!important;margin:0!important;min-height:42px;min-width:70px;font-weight:800;background:#fff;color:#1d5fc4;width:auto!important}.dk-seg button.on{background:#1d5fc4;color:#fff}';
+document.head.appendChild(css);
+var P=document.createElement('div');P.id='dkPanel';P.setAttribute('role','status');P.setAttribute('aria-live','polite');
+function mount(){if(!P.parentNode)document.body.appendChild(P);}
+function place(){var el=st.el,top=false;try{if(el){var r=el.getBoundingClientRect();top=(r.top+r.bottom)/2>window.innerHeight*0.55;}}catch(e){}P.style.top=top?'calc(70px + env(safe-area-inset-top))':'auto';P.style.bottom=top?'auto':'calc(10px + env(safe-area-inset-bottom))';}
+function show(cls,title,msg,btns,ed){mount();if(P.style.display!=='block')place();P.className=cls||'';P.innerHTML='<div class="t">'+(cls==='live'?'<span class="dot"></span>':'')+'<b>'+title+'</b><button data-dk-x="close" aria-label="Close">✕</button></div><div class="m">'+(msg||'')+'</div><div class="b">'+(btns||'')+'</div>'+(ed?'<div class="e">'+ed+'</div>':'');P.style.display='block';}
+function hide(){P.style.display='none';}
+/* ---------- marks on the fields ---------- */
+function btnsFor(el,o){var nx=el.nextElementSibling,has=!!(nx&&nx.classList&&nx.classList.contains('dk-btns'));
+ if(!o||!el.parentElement||el.type==='hidden'){if(has){var w0=nx.parentNode;w0.removeChild(nx);if(w0.classList.contains('dk-wrap')&&w0.parentNode){w0.parentNode.insertBefore(el,w0);w0.parentNode.removeChild(w0);}}el.classList.remove('dk-hasb');return;}
+ if(!has){var wr=document.createElement('div');wr.className='dk-wrap';el.parentNode.insertBefore(wr,el);wr.appendChild(el);nx=document.createElement('span');nx.className='dk-btns';
+  nx.innerHTML='<button type="button" data-dk-f="mic" aria-label="Speak this field" title="Speak"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button><button type="button" data-dk-f="kbd" aria-label="Type this field" title="Type"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg></button>';wr.appendChild(nx);}
+ el.classList.add('dk-hasb');var kb=nx.querySelector('[data-dk-f=kbd]');if(kb)kb.classList.toggle('on',kbd.has(el));}
+function paint(){var o=on();document.querySelectorAll('input,textarea').forEach(function(el){var k=kindOf(el);if(!k){el.classList.remove('dk-mic','dk-hasb');var nb=el.nextElementSibling;if(nb&&nb.classList&&nb.classList.contains('dk-btns'))nb.parentNode.removeChild(nb);return;}btnsFor(el,o);
+  el.classList.toggle('dk-mic',o);el.classList.toggle('dk-kbd',o&&kbd.has(el));if(o&&!kbd.has(el))el.setAttribute('inputmode','none');else if(el.getAttribute('inputmode')==='none')el.removeAttribute('inputmode');});
+ document.querySelectorAll('.dk-pill').forEach(function(b){b.classList.toggle('on',o);b.textContent=o?'🎤 On':'🎤 Off';b.setAttribute('aria-label','Dictation '+(o?'on':'off')+' - tap to switch');});
+ document.querySelectorAll('.dk-seg button').forEach(function(b){b.classList.toggle('on',(b.getAttribute('data-dk')==='1')===o);});}
+function pill(){var bars=window.DICTATE_PILL?document.querySelectorAll('.bar'):[];bars.forEach(function(bar){if(bar.querySelector('.dk-pill'))return;var h=bar.querySelector('[data-act=home]');if(!h||!document.querySelector('[data-b]'))return;
+ var b=document.createElement('button');b.className='dk-pill';b.type='button';b.setAttribute('data-dk-x','pill');b.title='Turn dictation on or off';bar.insertBefore(b,h);});paint();}
+var mo=new MutationObserver(function(){clearTimeout(mo.t);mo.t=setTimeout(pill,30);});
+function start(){mo.observe(document.body,{childList:true,subtree:true});pill();}
+if(document.body)start();else document.addEventListener('DOMContentLoaded',start);
+/* the On/Off choice shown when an inspection starts */
+window.DictUI={rowHtml:function(){return '<div class="dk-row"><span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d5fc4" stroke-width="2" stroke-linecap="round" style="vertical-align:-3px;margin-right:6px"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Dictate into the fields<small>Tap a field and say it instead of typing. You can switch it here any time.</small></span><div class="dk-seg"><button type="button" data-dk="0">Off</button><button type="button" data-dk="1">On</button></div></div>';},paint:paint,on:on,setOn:setOn};
+/* ---------- putting a value in, the same way typing does ---------- */
+function put(el,v){el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));try{el.blur();}catch(e){}el.dispatchEvent(new Event('change',{bubbles:true}));}
+/* ---------- listening. Speech goes in at the cursor (Ravi, 2026-10-30): tap where it should go, or move the cursor
+   with ◀ ▶; ⌫ deletes the character before the cursor; Clear (set apart on the right) empties the field.
+   When the browser stops listening after a pause it asks "Is that everything?". ---------- */
+var IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),PAUSE=IOS?4000:36e5,CODE='font:800 16px ui-monospace,Menlo,Consolas,monospace';
+function stop(){clearTimeout(st.hideT);if(st.h){try{st.h.abort();}catch(e){}st.h=null;}st.busy=false;if(st.el)st.el.classList.remove('dk-live');}
+function setLive(el,v){el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));}
+function caretTo(el,c){c=Math.max(0,Math.min(c,el.value.length));st.caret=c;try{if(document.activeElement!==el)el.focus();el.setSelectionRange(c,c);}catch(e){}}
+function shown(el){var v=el.value,c=Math.max(0,Math.min(st.caret==null?v.length:st.caret,v.length));
+ return '<code style="'+CODE+';white-space:pre">'+esc(v.slice(0,c))+'<span class="dk-car"></span>'+esc(v.slice(c))+'</code>'+(v?'':' <span style="color:#6b7686">(empty)</span>');}
+var EDIT='<span class="dk-ed"><button data-dk-x="left" aria-label="Move cursor left">◀</button><button data-dk-x="right" aria-label="Move cursor right">▶</button><button data-dk-x="bksp" aria-label="Delete the character before the cursor">⌫</button></span><button class="dk-clr" data-dk-x="clear">Clear</button>';
+function listen(el,more){var k=kindOf(el);if(!k)return;stop();st.el=el;place();st.busy=true;st.ask=false;el.classList.add('dk-live');var lb=esc(labelOf(el));
+ /* first tap on a field that already has a value replaces it (like a selected value); later taps / Speak here insert at the cursor */
+ if(!more){st.before=el.value;st.rep=!!el.value;st.caret=el.value.length;st.start=0;}else st.rep=false;
+ var c0=Math.max(0,Math.min(st.caret,el.value.length)),pre=st.rep?'':el.value.slice(0,c0),post=st.rep?'':el.value.slice(c0),ins='',heard='';
+ var B='<button class="stp" data-dk-x="fin">■ Stop</button><button data-dk-x="kbd">⌨ Type instead</button>';
+ var paint=function(msg){show('live','Listening – '+lb,shown(el)+'<br><span style="color:#6b7686">'+msg+'</span>',B,EDIT);};
+ st.caret=c0;paint(st.rep?'The microphone stays on until you tap ■ Stop. It <b>replaces</b> what is there. To change just part of it, tap ◀ ▶ first.':el.value?'The microphone stays on until you tap ■ Stop. It goes in at the cursor.':IOS?'Speak after the beep. On iPhone it may stop after a pause; if so, use the keyboard’s microphone key.':(k==='text'?'The microphone stays on until you tap ■ Stop. Speak normally.':'The microphone stays on until you tap ■ Stop. Speak one character at a time.'));
+ st.ins=function(t){heard=t;ins=Dictate.clean(t,k);if(k==='text'&&ins){if(pre&&!/\s$/.test(pre))ins=' '+ins;if(post&&!/^\s/.test(post))ins+=' ';}setLive(el,pre+ins+post);caretTo(el,pre.length+ins.length);};
+ st.h=Dictate.listenLong({pause:PAUSE,firstWait:IOS?12000:36e5,restart:!IOS,
+  onText:function(t){st.ins(t);paint('Heard “'+esc(t)+'”');},
+  onSilence:function(t){st.h=null;st.busy=false;st.rep=false;el.classList.remove('dk-live');st.ins(t);st.heard=heard;askDone(el);},
+  onError:function(c,m,t){st.h=null;st.busy=false;st.rep=false;el.classList.remove('dk-live');if(String(t||'').trim()){st.ins(t);st.heard=heard;askDone(el);return;}
+   if(el.value){st.heard='';askDone(el,'Didn’t catch anything that time.');return;}
+   show('err',lb,esc(m),'<button class="p" data-dk-x="again">🎤 Try again</button><button data-dk-x="kbd">⌨ Type instead</button>');}});
+ if(!st.h){st.busy=false;el.classList.remove('dk-live');}}
+/* stop listening but keep what was heard (an edit button was tapped while listening) */
+function pause(){var el=st.el;if(!el||!st.h)return;var t=st.h.done();st.h=null;st.busy=false;el.classList.remove('dk-live');if(t)st.ins(t);st.rep=false;}
+function askDone(el,note){st.ask=true;var lb=esc(labelOf(el));
+ show('ask','Is that everything? '+lb,shown(el)+'<br><span style="color:#6b7686">'+(note||(st.heard?'Heard “'+esc(st.heard)+'”.':'Move the cursor, delete or clear, then speak again.'))+'</span>',
+  '<button class="p" data-dk-x="fin">✓ Yes, done</button><button data-dk-x="more">🎤 Speak here</button><button data-dk-x="again">Start over</button><button data-dk-x="kbd">⌨ Type</button>',EDIT);}
+function edit(x){var el=st.el;if(!el)return;if(st.busy)pause();var v=el.value,c=Math.max(0,Math.min(st.caret==null?v.length:st.caret,v.length));
+ if(x==='left')caretTo(el,c-1);else if(x==='right')caretTo(el,c+1);
+ else if(x==='bksp'){if(c>0){setLive(el,v.slice(0,c-1)+v.slice(c));caretTo(el,c-1);}}
+ else if(x==='clear'){setLive(el,'');caretTo(el,0);}
+ st.heard='';askDone(el,x==='clear'?'Cleared. Tap 🎤 Speak here to say it again.':'');}
+/* finish: tell the form, the same way typing does (input + change after leaving the field) */
+function finish(quiet){var el=st.el;if(!el)return;if(st.h)pause();st.busy=false;st.ask=false;el.classList.remove('dk-live');
+ if(el.value===st.before){try{el.blur();}catch(e){}if(!quiet)hide();return;}
+ st.last={el:el,before:st.before};put(el,el.value);
+ if(quiet){hide();return;}
+ show('ok','✓ '+esc(labelOf(el))+': <code style="'+CODE+'">'+esc(el.value||'(empty)')+'</code>','Saved.','<button data-dk-x="undo">Undo</button><button data-dk-x="edit">✏ Edit</button><button data-dk-x="again">🎤 Again</button><button class="p" data-dk-x="close">Close</button>');
+ clearTimeout(st.hideT);st.hideT=setTimeout(function(){if(P.className==='ok')hide();},5000);}
+/* ---------- taps ---------- */
+document.addEventListener('pointerdown',function(e){var el=e.target;if(!on()||!kindOf(el))return;if(!kbd.has(el))el.setAttribute('inputmode','none');},true);
+document.addEventListener('click',function(e){var el=e.target;
+ if(el.closest&&el.closest('.dk-seg button')){setOn(el.closest('button').getAttribute('data-dk')==='1');return;}
+ if(!on()||!kindOf(el)||kbd.has(el))return;if(st.ask&&st.el===el){try{st.caret=el.selectionStart;}catch(x){}listen(el,true);return;}if(st.busy&&st.el===el){var tc=null;try{tc=el.selectionStart;}catch(x){}pause();if(tc!=null)caretTo(el,tc);st.heard='';askDone(el,'Stopped listening. The cursor is where you tapped.');return;}if((st.busy||st.ask)&&st.el&&st.el!==el)finish(true);listen(el);},true);
+document.addEventListener('visibilitychange',function(){if(document.hidden&&(st.busy||st.ask))finish(true);});window.addEventListener('pagehide',function(){if(st.busy)finish(true);});
+document.addEventListener('pointerdown',function(e){if(!st.busy||!e.target.closest)return;if(e.target.closest('#dkPanel,.dk-btns')||kindOf(e.target))return;finish(true);},true);
+P.addEventListener('pointerdown',function(e){e.preventDefault();});P.addEventListener('mousedown',function(e){e.preventDefault();});
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-dk-x],[data-dk-alt]');if(!b)return;var x=b.getAttribute('data-dk-x'),el=st.el;
+ if(x==='pill'){setOn(!on());return;}
+ e.stopPropagation();
+ if(b.hasAttribute('data-dk-alt')){if(el){put(el,b.getAttribute('data-dk-alt'));show('ok','✓ '+esc(labelOf(el))+': <code style="font:800 16px ui-monospace,Menlo,Consolas,monospace">'+esc(b.getAttribute('data-dk-alt'))+'</code>','Picked from the other matches.','<button data-dk-x="undo">Undo</button><button class="p" data-dk-x="close">Done</button>');}return;}
+ if(x==='left'||x==='right'||x==='bksp'||x==='clear'){edit(x);return;}
+ if(x==='edit'&&el){clearTimeout(st.hideT);st.before=el.value;st.start=el.value.length;el.setAttribute('inputmode','none');caretTo(el,el.value.length);st.heard='';askDone(el,'Move the cursor, delete or clear, then speak again.');return;}
+ if(x==='fin'){finish();return;}
+ if(x==='close'){if(st.busy||st.ask)finish(true);else{stop();hide();}return;}
+ if(x==='more'&&el){listen(el,true);return;}
+ if(x==='again'&&el){stop();var b0=(st.busy||st.ask||P.className==='ok')?(st.last&&st.last.el===el&&P.className==='ok'?st.last.before:st.before):el.value;setLive(el,b0||'');caretTo(el,(b0||'').length);listen(el);return;}
+ if(x==='undo'&&st.last){stop();st.ask=false;put(st.last.el,st.last.before);show('','Undone','The field is back to what it was.','<button class="p" data-dk-x="close">Close</button>');return;}
+ if(x==='kbd'&&el){if(st.busy||st.ask)finish(true);stop();hide();kbd.add(el);el.removeAttribute('inputmode');el.classList.add('dk-kbd');el.blur();el.focus();return;}
+ if(x==='voice'&&el){kbd.delete(el);el.classList.remove('dk-kbd');el.setAttribute('inputmode','none');el.blur();el.focus();listen(el);return;}},true);
+/* the little 🎤 / ⌨ buttons beside a field (Ravi, 2026-11-06) */
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-dk-f]');if(!b)return;var el=b.parentElement&&b.parentElement.previousElementSibling;if(!el||!kindOf(el))return;e.stopPropagation();e.preventDefault();
+ if(b.getAttribute('data-dk-f')==='kbd'){if(st.busy||st.ask)finish(true);stop();hide();kbd.add(el);el.removeAttribute('inputmode');el.classList.add('dk-kbd');paint();el.blur();el.focus();return;}
+ kbd.delete(el);el.classList.remove('dk-kbd');el.setAttribute('inputmode','none');paint();
+ if(st.busy&&st.el===el)return;
+ if((st.busy||st.ask)&&st.el&&st.el!==el)finish(true);
+ if(st.ask&&st.el===el){try{st.caret=el.selectionStart;}catch(x){}listen(el,true);return;}
+ listen(el);},true);
+/* field in keyboard mode: offer to switch back to voice */
+document.addEventListener('focusin',function(e){var el=e.target;if(!on()||!kindOf(el)||!kbd.has(el))return;st.el=el;place();show('','⌨ Typing – '+esc(labelOf(el)),'The keyboard is open for this field.','<button class="p" data-dk-x="voice">🎤 Speak instead</button><button data-dk-x="close">Done</button>');});
+document.addEventListener('focusout',function(e){var el=e.target;if(kindOf(el)&&kbd.has(el)&&!st.busy)setTimeout(function(){if(document.activeElement!==el&&P.className==='')hide();},150);
+ /* leaving a field in keyboard mode puts its microphone back for the next visit (Ravi, 2026-11-03) */
+ if(kindOf(el)&&kbd.has(el))setTimeout(function(){if(document.activeElement!==el){kbd.delete(el);el.classList.remove('dk-kbd');paint();}},400);});
+/* keyboard microphone key: clean "x-ray two six bravo…" when the field is left (only text that looks spoken is changed) */
+document.addEventListener('change',function(e){var el=e.target,k=kindOf(el);if(!k||k==='text'||!e.isTrusted)return;var raw=el.value;if(!Dictate.spoken(raw))return;var v=Dictate.clean(raw,k);if(!v||v===raw)return;
+ st.el=el;st.last={el:el,before:raw};el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));show('ok','✓ '+esc(labelOf(el))+': <code style="font:800 16px ui-monospace,Menlo,Consolas,monospace">'+esc(v)+'</code>','Cleaned up from “'+esc(raw)+'”.','<button data-dk-x="undo">Undo</button><button class="p" data-dk-x="close">Done</button>');},true);
+})();
+
+window.DICTATE_FIELDS=[
+ {sel:'input[data-b="hdr.towerSerial"],input[data-b="hdr.towerVin"],input[data-b="hdr.genSerial"],input#n-ts',kind:'serial'},
+ {sel:'input[data-b="hdr.po"],input[data-b="hdr.salesOrder"],input[data-b="hdr.serviceOrder"],input[data-b="hdr.rma"],input[data-b="hdr.genHours"]',kind:'digits'},
+ {sel:'input[data-b="hdr.customer"],input[data-b="hdr.contact"],input[data-b="hdr.address"],input[data-b="hdr.genModel"],input[data-b="hdr.tech"],input#n-cu,input#n-te',kind:'text'}];
+</script>
 </body></html>
