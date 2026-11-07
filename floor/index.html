@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Floor Test"><meta charset="utf-8">
+<html lang="en"><head><script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('tscTheme')==='light'?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Floor Test"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Floor Test for eMSC-L &amp; M2S2</title>
 <style>
@@ -162,6 +162,181 @@ a.homelnk,a.homelnk:visited,a.homelnk:hover,a.homelnk:active{background:var(--bl
 .fp .sev{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}.fp .sev button,.fp .rt button{flex:1 1 90px;min-height:42px;border:2px solid var(--line);background:#fff;font-weight:700}
 .fp .sev button.on{background:var(--fail);border-color:var(--fail);color:#fff}.fp .rt{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0}.fp .rt button.on{background:var(--blue);border-color:var(--blue);color:#fff}
 .res{font-weight:800}.res.p{color:var(--pass)}.res.f{color:var(--fail)}
+</style><style>/* Rev 94: dark theme (screen only, printing is unchanged) */
+@media screen{html[data-theme=dark]{--blue:#dba35b;--blue2:#3c3224;--ink:#eef1f5;--mut:#a3b0bd;--line:#2b3947;--bg:#0c1218}
+html[data-theme=dark]{color-scheme:dark}html[data-theme=dark] body{background:var(--bg,#0c1218);color:var(--ink,#eef1f5)}html[data-theme=dark] input,html[data-theme=dark] textarea,html[data-theme=dark] select{background:#101820;color:#eef1f5;border-color:#3a4a5a}html[data-theme=dark] ::placeholder{color:#7d8b99}html[data-theme=dark] canvas{background:#fff}html[data-theme=dark] #navBar button,html[data-theme=dark] .gpn-h button.nb{background:#1b2733!important;color:#d6e4f7!important;border-color:#3a4a5a!important}html[data-theme=dark] .top img,html[data-theme=dark] header img{filter:invert(1);mix-blend-mode:screen}
+html[data-theme=dark] .homelnk{background:#121a21!important}
+html[data-theme=dark] button{background:#121a21!important}
+html[data-theme=dark] button.dng{border-color:#4c2e2e!important}
+html[data-theme=dark] input,html[data-theme=dark] textarea,html[data-theme=dark] select{border:1px solid #303b4b!important;background:#121a21!important}
+html[data-theme=dark] .top{background:#121a21!important}
+html[data-theme=dark] .steps button{background:#1e242e!important;border-color:#2e394c!important}
+html[data-theme=dark] .card{background:#121a21!important}
+html[data-theme=dark] .pbar i{background:#121a21!important}
+html[data-theme=dark] .it{background:#121a21!important}
+html[data-theme=dark] .box{border:2px solid #333b48!important;background:#121a21!important}
+html[data-theme=dark] .it.blk{background:#292319!important}
+html[data-theme=dark] .box.fixed{color:#e7a0a0!important}
+html[data-theme=dark] .box .fx{color:#a2ecbb!important}
+html[data-theme=dark] .garrow{color:#65d985!important}
+html[data-theme=dark] .it.fail{background:#261717!important}
+html[data-theme=dark] .tgl{color:#f3bf20!important;border-color:#4c452e!important;background:#121a21!important}
+html[data-theme=dark] .tgl .sw{background:#40454d!important}
+html[data-theme=dark] .chip{background:#121a21!important}
+html[data-theme=dark] .ck{color:#a2ecbb!important}
+html[data-theme=dark] .btw .bigck{color:#a2ecbb!important}
+html[data-theme=dark] .pw{color:#a2ecbb!important}
+html[data-theme=dark] .vd.pass{background:#213628!important;color:#65d985!important}
+html[data-theme=dark] .vd.fail{background:#2c1b1b!important;color:#e7a0a0!important}
+html[data-theme=dark] .ph .t button{background:#121a21!important}
+html[data-theme=dark] .lvl.none{background:#272d37!important;color:#bebebe!important}
+html[data-theme=dark] .tag{background:#1e242e!important}
+html[data-theme=dark] .warn{background:#322c1e!important;border:1px solid #4c422e!important}
+html[data-theme=dark] .err{background:#2c1b1b!important;border:1px solid #4c2e2e!important}
+html[data-theme=dark] .ok{background:#1e3125!important;border:1px solid #2e4c38!important}
+html[data-theme=dark] .modal>div{background:#121a21!important}
+html[data-theme=dark] .warn{background:#3d3825!important}
+html[data-theme=dark] .mapb{background:#121a21!important}
+html[data-theme=dark] .mapfab button{background:#121a21!important}
+html[data-theme=dark] .fmiss{background:#4e4a30!important}
+html[data-theme=dark] .fna{background:#4e4a30!important}
+html[data-theme=dark] .ckr .tag.upd{background:#3d3825!important;color:#f3bf20!important}
+html[data-theme=dark] .updp{background:#28181d!important}
+html[data-theme=dark] .phg figure{background:#121a21!important}
+html[data-theme=dark] .ckr.dn{background:#1c2e1f!important}
+html[data-theme=dark] .ckr.na{background:#1e2229!important}
+html[data-theme=dark] .prog{background:#242c38!important}
+html[data-theme=dark] .ckr .ctl button[data-act=ck]{background:#1f3325!important;border:2px solid #2e4c38!important;color:#46d370!important}
+html[data-theme=dark] .ckr .ctl button[data-act=ckupd]{background:#2b1a1f!important;border:2px solid #4c2e37!important;color:#d96e8d!important}
+html[data-theme=dark] .seg2 button{background:#121a21!important}
+html[data-theme=dark] .fr .opt button{background:#121a21!important}
+html[data-theme=dark] .fr:not(.xp):not(.xf):not(.xn){background:#413d27!important}
+html[data-theme=dark] .fr.xp{background:#121a21!important}
+html[data-theme=dark] .fr.xf{background:#2a191b!important}
+html[data-theme=dark] .fr.xn{background:#1e2229!important}
+html[data-theme=dark] .fp{background:#121a21!important}
+html[data-theme=dark] .fp .sev button,html[data-theme=dark] .fp .rt button{background:#121a21!important}
+html[data-theme=dark] html[data-theme=dark] .tgl{color:#f4de9a!important}
+html[data-theme=dark] html[data-theme=dark] .ckr .tag.upd{color:#f4de9a!important}
+html[data-theme=dark] html[data-theme=dark] .ckr .ctl button[data-act=ck]{color:#a8e6ba!important}
+html[data-theme=dark] html[data-theme=dark] [style*="color:#8a94a3"]{color:#95989b!important}
+html[data-theme=dark] html[data-theme=dark] [style*="color: #8a94a3"]{color:#95989b!important}
+html[data-theme=dark] html[data-theme=dark] [style*="color:#0b3d6b"]{color:#a2c8ec!important}
+html[data-theme=dark] html[data-theme=dark] [style*="color: #0b3d6b"]{color:#a2c8ec!important}
+html[data-theme=dark] html[data-theme=dark] [style*="color:#8a4b00"]{color:#f4cb99!important}
+html[data-theme=dark] html[data-theme=dark] [style*="color: #8a4b00"]{color:#f4cb99!important}
+html[data-theme=dark] [style*="background:#fff"]{background:#121a21!important}
+html[data-theme=dark] [style*="background: #fff"]{background:#121a21!important}
+html[data-theme=dark] [style*="color:#222"]{color:#dadada!important}
+html[data-theme=dark] [style*="color: #222"]{color:#dadada!important}
+html[data-theme=dark] [style*="color:#444"]{color:#c8c8c8!important}
+html[data-theme=dark] [style*="color: #444"]{color:#c8c8c8!important}
+html[data-theme=dark] [style*="color:#c25a00"]{color:#f7a864!important}
+html[data-theme=dark] [style*="color: #c25a00"]{color:#f7a864!important}
+html[data-theme=dark] [style*="background:#ffec99"]{background:#5c5538!important}
+html[data-theme=dark] [style*="background: #ffec99"]{background:#5c5538!important}
+html[data-theme=dark] [style*="color:#000"]{color:#ededed!important}
+html[data-theme=dark] [style*="color: #000"]{color:#ededed!important}
+html[data-theme=dark] [style*="color:#6b7686"]{color:#a6aab0!important}
+html[data-theme=dark] [style*="color: #6b7686"]{color:#a6aab0!important}
+html[data-theme=dark] [style*="border-top:1px solid #eef1f5"]{border-top:1px solid #2e3b4c!important}
+html[data-theme=dark] [style*="border-top: 1px solid #eef1f5"]{border-top:1px solid #2e3b4c!important}
+html[data-theme=dark] [style*="color:#8a94a3"]{color:#9499a0!important}
+html[data-theme=dark] [style*="color: #8a94a3"]{color:#9499a0!important}
+html[data-theme=dark] [style*="color:#0b3d6b"]{color:#308bdf!important}
+html[data-theme=dark] [style*="color: #0b3d6b"]{color:#308bdf!important}
+html[data-theme=dark] [style*="color:#8a4b00"]{color:#f49a2f!important}
+html[data-theme=dark] [style*="color: #8a4b00"]{color:#f49a2f!important}
+html[data-theme=dark] .homelnk{background:#121a21!important}
+html[data-theme=dark] button{background:#121a21!important}
+html[data-theme=dark] button.dng{border-color:#4c2e2e!important}
+html[data-theme=dark] input,html[data-theme=dark] textarea,html[data-theme=dark] select{border:1px solid #303b4b!important;background:#121a21!important}
+html[data-theme=dark] .top{background:#121a21!important}
+html[data-theme=dark] .steps button{background:#1e242e!important;border-color:#2e394c!important}
+html[data-theme=dark] .card{background:#121a21!important}
+html[data-theme=dark] .pbar i{background:#121a21!important}
+html[data-theme=dark] .it{background:#121a21!important}
+html[data-theme=dark] .box{border:2px solid #333b48!important;background:#121a21!important}
+html[data-theme=dark] .it.blk{background:#292319!important}
+html[data-theme=dark] .box.fixed{color:#e7a0a0!important}
+html[data-theme=dark] .box .fx{color:#a2ecbb!important}
+html[data-theme=dark] .garrow{color:#65d985!important}
+html[data-theme=dark] .it.fail{background:#261717!important}
+html[data-theme=dark] .tgl{color:#f3bf20!important;border-color:#4c452e!important;background:#121a21!important}
+html[data-theme=dark] .tgl .sw{background:#40454d!important}
+html[data-theme=dark] .chip{background:#121a21!important}
+html[data-theme=dark] .ck{color:#a2ecbb!important}
+html[data-theme=dark] .btw .bigck{color:#a2ecbb!important}
+html[data-theme=dark] .pw{color:#a2ecbb!important}
+html[data-theme=dark] .vd.pass{background:#213628!important;color:#65d985!important}
+html[data-theme=dark] .vd.fail{background:#2c1b1b!important;color:#e7a0a0!important}
+html[data-theme=dark] .ph .t button{background:#121a21!important}
+html[data-theme=dark] .lvl.none{background:#272d37!important;color:#bebebe!important}
+html[data-theme=dark] .tag{background:#1e242e!important}
+html[data-theme=dark] .warn{background:#322c1e!important;border:1px solid #4c422e!important}
+html[data-theme=dark] .err{background:#2c1b1b!important;border:1px solid #4c2e2e!important}
+html[data-theme=dark] .ok{background:#1e3125!important;border:1px solid #2e4c38!important}
+html[data-theme=dark] .modal>div{background:#121a21!important}
+html[data-theme=dark] .warn{background:#3d3825!important}
+html[data-theme=dark] .mapb{background:#121a21!important}
+html[data-theme=dark] .mapfab button{background:#121a21!important}
+html[data-theme=dark] .fmiss{background:#4e4a30!important}
+html[data-theme=dark] .fna{background:#4e4a30!important}
+html[data-theme=dark] .ckr .tag.upd{background:#3d3825!important;color:#f3bf20!important}
+html[data-theme=dark] .updp{background:#28181d!important}
+html[data-theme=dark] .phg figure{background:#121a21!important}
+html[data-theme=dark] .ckr.dn{background:#1c2e1f!important}
+html[data-theme=dark] .ckr.na{background:#1e2229!important}
+html[data-theme=dark] .prog{background:#242c38!important}
+html[data-theme=dark] .ckr .ctl button[data-act=ck]{background:#1f3325!important;border:2px solid #2e4c38!important;color:#46d370!important}
+html[data-theme=dark] .ckr .ctl button[data-act=ckupd]{background:#2b1a1f!important;border:2px solid #4c2e37!important;color:#d96e8d!important}
+html[data-theme=dark] .seg2 button{background:#121a21!important}
+html[data-theme=dark] .fr .opt button{background:#121a21!important}
+html[data-theme=dark] .fr.xp{background:#121a21!important}
+html[data-theme=dark] .fr.xf{background:#2a191b!important}
+html[data-theme=dark] .fr.xn{background:#1e2229!important}
+html[data-theme=dark] .fp{background:#121a21!important}
+html[data-theme=dark] .fp .sev button,html[data-theme=dark] .fp .rt button{background:#121a21!important}
+html[data-theme=dark] #bgx .bx{background:#121a21!important;color:#d3d8de!important}
+html[data-theme=dark] #bgx p{color:#b0b3b9!important}
+html[data-theme=dark] #bgx .lv{background:#121a21!important;border:2px solid #353c45!important;color:#d3d8de!important}
+html[data-theme=dark] .cuL{color:#bebebe!important}
+html[data-theme=dark] .cuB{background:#121a21!important;color:#dadada!important}
+html[data-theme=dark] .cuChips{color:#b5b5b5!important}
+html[data-theme=dark] .cuChips button{border:1px solid #353b45!important;background:#191f28!important}
+html[data-theme=dark] .cuNote{color:#b5b5b5!important}
+html[data-theme=dark] #corex .bx{background:#121a21!important;color:#d3d8de!important}
+html[data-theme=dark] #corex .cmp{color:#c0c4cb!important}
+html[data-theme=dark] #corex .cmp span{color:#a7abb0!important}
+html[data-theme=dark] #corex .op button{border:2px solid #313b4a!important;background:#121a21!important;color:#d3d8de!important}
+html[data-theme=dark] #corex .lt{border:1px solid #353c45!important;background:#121a21!important;color:#c0c4cb!important}
+html[data-theme=dark] #coreBan .cb-red{background:#2c1b1b!important;color:#e0bdbd!important}
+html[data-theme=dark] #coreBan .cb-red2{background:#261a17!important;color:#e4d3ce!important}
+html[data-theme=dark] #coreBan .cb-blue{background:#1b222c!important;color:#cdd3e1!important}
+html[data-theme=dark] #coreBan .cb-grey{background:#1a1f2a!important;border-color:#353c45!important;color:#cdd1d7!important}
+html[data-theme=dark] #coreBan .cb-amber{background:#383222!important;color:#ece1c6!important}
+html[data-theme=dark] #coreBan .cb-green{background:#1e3124!important;color:#cde2d4!important}
+html[data-theme=dark] #coreBan .cbb{background:#121a21!important;color:#91b4e9!important}
+html[data-theme=dark] #coreBan .tg{background:#242c38!important;color:#cdd1d7!important}
+html[data-theme=dark] #coreBan .tg-c{background:#1c232e!important;color:#4f89e3!important}
+html[data-theme=dark] #coreBan .tg-f{background:#362321!important;color:#de7272!important}
+html[data-theme=dark] #coreBan .tg-b{background:#3e3326!important;color:#f49a2f!important}
+html[data-theme=dark] #coreBan .lv{color:#de7272!important}
+html[data-theme=dark] #coreBan .nt{color:#b9bdc2!important}
+html[data-theme=dark] #coreBan .ws button{border:2px solid #313b4a!important;background:#121a21!important;color:#d3d8de!important}
+html[data-theme=dark] .foldx{background:#121a21!important;border:1px solid #2f3a4c!important;color:#d3d8de!important}
+html[data-theme=dark] #camx .cx-flash{background:#121a21!important}
+html[data-theme=dark] #camx .cx-shut{background:#121a21!important}
+html[data-theme=dark] #sendToCard .sto-m{color:#aeb2b9!important}
+html[data-theme=dark] #sendToCard button{border:1px solid #353b45!important;background:#121a21!important;color:#d3d8de!important}
+html[data-theme=dark] #sendToCard .sto-t small{color:#aeb2b9!important}
+html[data-theme=dark] #sendToCard .sto-box{background:#121a21!important}
+html[data-theme=dark] #sendToCard .sto-lab{color:#aeb2b9!important}
+html[data-theme=dark] #sendToCard input{border:1px solid #303b4b!important;background:#121a21!important;color:#d3d8de!important}
+html[data-theme=dark] #sendToCard .sto-sum{background:#19202a!important;border:1px solid #2e3a4c!important}
+html[data-theme=dark] button[data-act=prevsec]{background:#121a21!important!important;border-color:#353b45!important!important;color:#dadada!important}
+html[data-theme=dark] #cnav button{background:#121a21!important;color:#5783c9!important}
+}
 </style></head><body>
 <div id="app"></div><div id="modalRoot"></div>
 <script id="tpl-data" type="application/json">{"revision":"1","title":"Floor Test for eMSC-L & M2S2","subtitle":"Verify wiring and comms for all subcomponents","items":[{"k":"c01","n":"0.001","t":"LCU: confirm ptz, comms in Cameleon, laser arm, interlock button on HMI, both lasers displayed."},{"k":"c02","n":"0.002","t":"TF380: Confirm comms in Cameleon, can ptz. Confirms camera and Moxa serial to ethernet, Cisco switch and Moxa router."},{"k":"c03","n":"0.003","t":"Radar and Pan/Tilt: With mast partially raised, deploy radar, confirm both green in status/advanced tab. Confirms network cable between control enclosure and network enclosure."},{"k":"c04","n":"0.004","t":"Weatherstation: Confirm temp showing in plugin, green on advanced tab. Set to 4800 baud."},{"k":"c05","n":"0.005","t":"PMU: Confirm green in plugin, confirms USB connection to server."},{"k":"c06","n":"0.006","t":"Inclinometer: Confirm non-zero, changing, in location/platform dialog. Confirms CAN connection."},{"k":"c07","n":"0.007","t":"DGPS: Confirm online in Platform commstatus in device list, confirms CAN connection."},{"k":"c08","n":"0.008","t":"HMI: Confirm all four enclosures have temperature readings. Confirms thermistors, grounding."},{"k":"c09","n":"0.009","t":"HMI: Confirm all four batteries (or two on upfits) have temp and SOC readings. Confirms CAN."},{"k":"c10","n":"0.010","t":"Confirm charging on shore power."},{"k":"c11","n":"0.011","t":"Start truck, confirm charging on truck. Confirms inverter."},{"k":"c12","n":"0.012","t":"PSB: Confirm power on, and perform xp terminal command to confirm comms."},{"k":"c13","n":"0.013","t":"Monitors: Test brightness on advanced tab to confirm serial x 2 work."},{"k":"c14","n":"0.014","t":"USB: Confirm mouse/keyboard work in cab."},{"k":"c15","n":"0.015","t":"Cisco router: ping 10.0.0.41, confirm connection to Cisco (all above tests also confirm Cisco switch)."},{"k":"c16","n":"0.016","t":"All PMU devices \"Operational\" (info tab below firmware)"},{"k":"c17","n":"0.017","t":"PTU powers down @ HMI: Set to scan, then toggle PTU to off via HMI. Scan should stop."},{"k":"c18","n":"0.018","t":"PC shutdown: Reset from HMI - Ensure PC does soft reset."},{"k":"c19","n":"0.019","t":"PC shutdown: Master power off - Ensure PC does soft reset."}]}</script>

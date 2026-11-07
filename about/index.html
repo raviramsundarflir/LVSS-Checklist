@@ -1,7 +1,7 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>About this app</title>
+<!doctype html><html lang="en"><head><script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('tscTheme')==='light'?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>About this app</title>
 <style>
 :root{--bg:#f3f5f8;--surface:#fff;--ink:#14233a;--muted:#51627a;--line:#cfd8e3;--navy:#0b3d6b;--navy-soft:#dbe8f6;--warn:#c25a00;--warn-soft:#fff4e8;--ok:#1b7f5a;--ok-soft:#dff3ea}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c1522;--surface:#142235;--ink:#e6edf6;--muted:#9db0c6;--line:#2b3d55;--navy:#6fb0ee;--navy-soft:#173a5e;--warn:#f0a050;--warn-soft:#3a2810;--ok:#4fd0a0;--ok-soft:#12392c;color-scheme:dark}}
+@media all{:root[data-theme="dark"]{--bg:#0c1522;--surface:#142235;--ink:#e6edf6;--muted:#9db0c6;--line:#2b3d55;--navy:#6fb0ee;--navy-soft:#173a5e;--warn:#f0a050;--warn-soft:#3a2810;--ok:#4fd0a0;--ok-soft:#12392c;color-scheme:dark}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;padding:20px max(16px,env(safe-area-inset-left)) 56px}
 .w{max-width:860px;margin:0 auto}a.back{color:var(--navy);font-weight:700;text-decoration:none}
 h1{font-size:clamp(30px,6vw,44px);text-transform:uppercase;letter-spacing:.01em;margin:10px 0 4px;line-height:1.05}.sub{color:var(--muted);margin:0 0 18px}

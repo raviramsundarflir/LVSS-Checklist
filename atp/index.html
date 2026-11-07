@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="ATP Inspection">
+<head><script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('tscTheme')==='light'?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="ATP Inspection">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1f4e8c">
@@ -359,7 +359,250 @@ h2{font-size:21px}
 .p-none{padding:8pt;border:.5pt solid #888;font-weight:700}
 a.homelnk,a.homelnk:visited,a.homelnk:hover,a.homelnk:active{background:#2b6cb0!important;color:#fff!important;border:2px solid #fff!important;font-weight:800;text-decoration:none!important}
 </style>
-</head>
+<style>/* Rev 94: dark theme (screen only, printing is unchanged) */
+@media screen{html[data-theme=dark]{--ink:#eef1f5;--muted:#a3b0bd;--line:#2b3947;--field:#232932;--paper:#121a21;--navy:#5e94db;--bg:#0c1218;--mut:#a3b0bd}
+html[data-theme=dark]{color-scheme:dark}html[data-theme=dark] body{background:var(--bg,#0c1218);color:var(--ink,#eef1f5)}html[data-theme=dark] input,html[data-theme=dark] textarea,html[data-theme=dark] select{background:#101820;color:#eef1f5;border-color:#3a4a5a}html[data-theme=dark] ::placeholder{color:#7d8b99}html[data-theme=dark] canvas{background:#fff}html[data-theme=dark] #navBar button,html[data-theme=dark] .gpn-h button.nb{background:#1b2733!important;color:#d6e4f7!important;border-color:#3a4a5a!important}html[data-theme=dark] .top img,html[data-theme=dark] header img{filter:invert(1);mix-blend-mode:screen}
+html[data-theme=dark] .bar select{background:#121a21!important}
+html[data-theme=dark] .bar .btn.primary{background:#121a21!important;border-color:#3d3d3d!important}
+html[data-theme=dark] .save-ind.dirty{border-color:#4c412e!important;color:#eee2cc!important}
+html[data-theme=dark] .banner{background:#383022!important}
+html[data-theme=dark] .fld input,html[data-theme=dark] .fld textarea,html[data-theme=dark] .full textarea{background:#121a21!important}
+html[data-theme=dark] .fld input:focus,html[data-theme=dark] textarea:focus,html[data-theme=dark] input:focus{outline:3px solid #2e3a4c!important}
+html[data-theme=dark] .sec-h{background:#252f3c!important}
+html[data-theme=dark] .warn{background:#2c1b1b!important;color:#e15860!important;border-bottom:1px solid #4c2e30!important}
+html[data-theme=dark] .row.st-fail{background:#241616!important}
+html[data-theme=dark] .row.st-awp{background:#292319!important}
+html[data-theme=dark] .note{background:#121a21!important}
+html[data-theme=dark] .spare-text{background:#161c23!important}
+html[data-theme=dark] .spare-text:not(:placeholder-shown){background:#121a21!important}
+html[data-theme=dark] .cam{background:#1b2028!important}
+html[data-theme=dark] .sheet-btns .btn:not(.primary):not(.light){background:#1b2028!important}
+html[data-theme=dark] .box{background:#121a21!important}
+html[data-theme=dark] .lg-blank{background:#121a21!important!important}
+html[data-theme=dark] .a-tools button{background:#1b2028!important}
+html[data-theme=dark] .row.st-blk{background:#2f2c1c!important}
+html[data-theme=dark] .blkpanel{background:#121a21!important}
+html[data-theme=dark] .chip{background:#1b2028!important}
+html[data-theme=dark] .pendbtn{background:#121a21!important}
+html[data-theme=dark] .punch li.inl{background:#272418!important}
+html[data-theme=dark] .punch li.inl button.chip{background:#1b2028!important}
+html[data-theme=dark] .row .tgl{color:#f3bf20!important;border:1px solid #4c452e!important;background:#121a21!important}
+html[data-theme=dark] .row .tgl .sw{background:#40454d!important}
+html[data-theme=dark] .ddmiss,html[data-theme=dark] .ddna{background:#413d27!important}
+html[data-theme=dark] .ddwarn{color:#e7dbb8!important}
+html[data-theme=dark] .ddgone{border-left:4px solid #353b45!important;background:#21252d!important;color:#babdc2!important}
+html[data-theme=dark] .omit-slot .omitbtn{color:#ae9fc1!important}
+html[data-theme=dark] .row.omitted{background:#221a2b!important}
+html[data-theme=dark] .stab{color:#e9989d!important}
+html[data-theme=dark] .arw{color:#e9989d!important}
+html[data-theme=dark] .rx-opts{border:1px solid #313a4a!important;background:#161a24!important}
+html[data-theme=dark] .rx-lab{color:#b7bbc2!important}
+html[data-theme=dark] .rx-chips .chip{border:1px solid #313b49!important;background:#121a21!important}
+html[data-theme=dark] .rx-pt input{border:1px solid #313b49!important}
+html[data-theme=dark] .rx-ov{border:1px solid #2e3c4c!important;background:#1a222b!important}
+html[data-theme=dark] .rx-ovbtn{color:#689bd8!important}
+html[data-theme=dark] .rx-bottom{border-top:1px solid #2e394c!important}
+html[data-theme=dark] .rxi{border-top:1px solid #2e394c!important}
+html[data-theme=dark] .rxi-t small{color:#aeb2b9!important}
+html[data-theme=dark] .arw.ok{color:#54d685!important}
+html[data-theme=dark] .arw.grn{color:#54d685!important}
+html[data-theme=dark] .lnk{color:#6d9bd7!important}
+html[data-theme=dark] .punch li.inl.done{background:#19291d!important}
+html[data-theme=dark] .punch li .ovrb{background:#121a21!important;color:#6d9bd7!important}
+html[data-theme=dark] .row.st-none:not(.spare){background:#413d27!important}
+html[data-theme=dark] .punch li.inl .rx-chips button.chip{border:1px solid #313b49!important;background:#121a21!important}
+html[data-theme=dark] .blkpanel .chipcol button.chip,html[data-theme=dark] .punch li.inl .blkpanel .chipcol button.chip{border:1px solid #313b49!important;background:#121a21!important}
+html[data-theme=dark] .blkpanel button.pendbtn,html[data-theme=dark] .punch li.inl .blkpanel button.pendbtn{border:1px solid #313b49!important;background:#121a21!important}
+html[data-theme=dark] .p-run{color:#bebebe!important}
+html[data-theme=dark] .p-foot{color:#bebebe!important}
+html[data-theme=dark] .p-unit td.k{background:#1c232e!important;color:#d1d1d1!important}
+html[data-theme=dark] .p-sec td{background:#252e3d!important;color:#587fc4!important}
+html[data-theme=dark] .p-warn td{color:#f64d4d!important}
+html[data-theme=dark] .p-bad .p-s{color:#f65d5d!important}
+html[data-theme=dark] .p-find{color:#f53d3d!important}
+html[data-theme=dark] .p-ph{color:#c8c8c8!important}
+html[data-theme=dark] .p-h{color:#587fc4!important}
+html[data-theme=dark] .p-li{color:#c8c8c8!important}
+html[data-theme=dark] .p-grid img{background:#1b2630!important}
+html[data-theme=dark] .p-grid figcaption small{color:#c8c8c8!important}
+html[data-theme=dark] a.homelnk,html[data-theme=dark] a.homelnk:visited,html[data-theme=dark] a.homelnk:hover,html[data-theme=dark] a.homelnk:active{border:2px solid #3d3d3d!important!important}
+html[data-theme=dark] html[data-theme=dark] .warn{color:#eaa4a8!important}
+html[data-theme=dark] html[data-theme=dark] .row .tgl{color:#f4de9a!important}
+html[data-theme=dark] html[data-theme=dark] .arw.ok{color:#a8e6bf!important}
+html[data-theme=dark] html[data-theme=dark] .arw.grn{color:#a8e6bf!important}
+html[data-theme=dark] html[data-theme=dark] .p-sec td{color:#afc0df!important}
+html[data-theme=dark] html[data-theme=dark] .p-find{color:#f49999!important}
+html[data-theme=dark] html[data-theme=dark] .p-h{color:#afc0df!important}
+html[data-theme=dark] html[data-theme=dark] [style*="color:#8a6100"]{color:#f4d999!important}
+html[data-theme=dark] html[data-theme=dark] [style*="color: #8a6100"]{color:#f4d999!important}
+html[data-theme=dark] html[data-theme=dark] [style*="color:#14602a"]{color:#a9e5bb!important}
+html[data-theme=dark] html[data-theme=dark] [style*="color: #14602a"]{color:#a9e5bb!important}
+html[data-theme=dark] html[data-theme=dark] [style*="color:#8a94a3"]{color:#95989b!important}
+html[data-theme=dark] html[data-theme=dark] [style*="color: #8a94a3"]{color:#95989b!important}
+html[data-theme=dark] html[data-theme=dark] [style*="color:#0b3d6b"]{color:#a2c8ec!important}
+html[data-theme=dark] html[data-theme=dark] [style*="color: #0b3d6b"]{color:#a2c8ec!important}
+html[data-theme=dark] html[data-theme=dark] [style*="color:#8a4b00"]{color:#f4cb99!important}
+html[data-theme=dark] html[data-theme=dark] [style*="color: #8a4b00"]{color:#f4cb99!important}
+html[data-theme=dark] [style*="background:#fff"]{background:#121a21!important}
+html[data-theme=dark] [style*="background: #fff"]{background:#121a21!important}
+html[data-theme=dark] [style*="border:1px solid #cfd6e2"]{border:1px solid #2e394c!important}
+html[data-theme=dark] [style*="border: 1px solid #cfd6e2"]{border:1px solid #2e394c!important}
+html[data-theme=dark] [style*="color:#c8202a"]{color:#e9989d!important}
+html[data-theme=dark] [style*="color: #c8202a"]{color:#e9989d!important}
+html[data-theme=dark] [style*="background:#fff3cd"]{background:#3d3825!important}
+html[data-theme=dark] [style*="background: #fff3cd"]{background:#3d3825!important}
+html[data-theme=dark] [style*="color:#8a6100"]{color:#f4b92f!important}
+html[data-theme=dark] [style*="color: #8a6100"]{color:#f4b92f!important}
+html[data-theme=dark] [style*="color:#14602a"]{color:#3fce69!important}
+html[data-theme=dark] [style*="color: #14602a"]{color:#3fce69!important}
+html[data-theme=dark] [style*="border:1px solid #bcc6d4"]{border:1px solid #303b4b!important}
+html[data-theme=dark] [style*="border: 1px solid #bcc6d4"]{border:1px solid #303b4b!important}
+html[data-theme=dark] [style*="border:1px solid #ccd"]{border:1px solid #313149!important}
+html[data-theme=dark] [style*="border: 1px solid #ccd"]{border:1px solid #313149!important}
+html[data-theme=dark] [style*="background:#fff8e0"]{background:#322e1e!important}
+html[data-theme=dark] [style*="background: #fff8e0"]{background:#322e1e!important}
+html[data-theme=dark] [style*="color:#1b8a3a"]{color:#65d985!important}
+html[data-theme=dark] [style*="color: #1b8a3a"]{color:#65d985!important}
+html[data-theme=dark] [style*="border-bottom:1px solid #eef"]{border-bottom:1px solid #2e2e4c!important}
+html[data-theme=dark] [style*="border-bottom: 1px solid #eef"]{border-bottom:1px solid #2e2e4c!important}
+html[data-theme=dark] [style*="color:#6b7686"]{color:#a6aab0!important}
+html[data-theme=dark] [style*="color: #6b7686"]{color:#a6aab0!important}
+html[data-theme=dark] [style*="border-top:1px solid #eef1f5"]{border-top:1px solid #2e3b4c!important}
+html[data-theme=dark] [style*="border-top: 1px solid #eef1f5"]{border-top:1px solid #2e3b4c!important}
+html[data-theme=dark] [style*="color:#8a94a3"]{color:#9499a0!important}
+html[data-theme=dark] [style*="color: #8a94a3"]{color:#9499a0!important}
+html[data-theme=dark] [style*="color:#222"]{color:#dadada!important}
+html[data-theme=dark] [style*="color: #222"]{color:#dadada!important}
+html[data-theme=dark] [style*="color:#444"]{color:#c8c8c8!important}
+html[data-theme=dark] [style*="color: #444"]{color:#c8c8c8!important}
+html[data-theme=dark] [style*="color:#000"]{color:#ededed!important}
+html[data-theme=dark] [style*="color: #000"]{color:#ededed!important}
+html[data-theme=dark] [style*="color:#c25a00"]{color:#f7a864!important}
+html[data-theme=dark] [style*="color: #c25a00"]{color:#f7a864!important}
+html[data-theme=dark] [style*="background:#f6f1fc"]{background:#21192a!important}
+html[data-theme=dark] [style*="background: #f6f1fc"]{background:#21192a!important}
+html[data-theme=dark] [style*="background:#fdecec"]{background:#2c1b1b!important}
+html[data-theme=dark] [style*="background: #fdecec"]{background:#2c1b1b!important}
+html[data-theme=dark] [style*="color:#b00020"]{color:#f65371!important}
+html[data-theme=dark] [style*="color: #b00020"]{color:#f65371!important}
+html[data-theme=dark] [style*="color:#6b3fa0"]{color:#ae9fc1!important}
+html[data-theme=dark] [style*="color: #6b3fa0"]{color:#ae9fc1!important}
+html[data-theme=dark] [style*="background:#f1faf4"]{background:#1a2b20!important}
+html[data-theme=dark] [style*="background: #f1faf4"]{background:#1a2b20!important}
+html[data-theme=dark] [style*="border:1px solid #8fcca3"]{border:1px solid #2e4c38!important}
+html[data-theme=dark] [style*="border: 1px solid #8fcca3"]{border:1px solid #2e4c38!important}
+html[data-theme=dark] [style*="background:#f8fafd"]{background:#161c25!important}
+html[data-theme=dark] [style*="background: #f8fafd"]{background:#161c25!important}
+html[data-theme=dark] [style*="color:#6b4e00"]{color:#e7dbb8!important}
+html[data-theme=dark] [style*="color: #6b4e00"]{color:#e7dbb8!important}
+html[data-theme=dark] [style*="border:1px solid #9cbbe6"]{border:1px solid #2e3b4c!important}
+html[data-theme=dark] [style*="border: 1px solid #9cbbe6"]{border:1px solid #2e3b4c!important}
+html[data-theme=dark] [style*="background:#f1f7fe"]{background:#192029!important}
+html[data-theme=dark] [style*="background: #f1f7fe"]{background:#192029!important}
+html[data-theme=dark] [style*="color:#0b3d6b"]{color:#308bdf!important}
+html[data-theme=dark] [style*="color: #0b3d6b"]{color:#308bdf!important}
+html[data-theme=dark] [style*="color:#8a4b00"]{color:#f49a2f!important}
+html[data-theme=dark] [style*="color: #8a4b00"]{color:#f49a2f!important}
+html[data-theme=dark] .bar select{background:#121a21!important}
+html[data-theme=dark] .bar .btn.primary{background:#121a21!important;border-color:#3d3d3d!important}
+html[data-theme=dark] .save-ind.dirty{border-color:#4c412e!important;color:#eee2cc!important}
+html[data-theme=dark] .banner{background:#383022!important}
+html[data-theme=dark] .fld input,html[data-theme=dark] .fld textarea,html[data-theme=dark] .full textarea{background:#121a21!important}
+html[data-theme=dark] .warn{background:#2c1b1b!important;color:#e15860!important;border-bottom:1px solid #4c2e30!important}
+html[data-theme=dark] .row.st-fail{background:#241616!important}
+html[data-theme=dark] .row.st-awp{background:#292319!important}
+html[data-theme=dark] .note{background:#121a21!important}
+html[data-theme=dark] .spare-text{background:#161c23!important}
+html[data-theme=dark] .cam{background:#1b2028!important}
+html[data-theme=dark] .lg-blank{background:#121a21!important!important}
+html[data-theme=dark] .a-tools button{background:#1b2028!important}
+html[data-theme=dark] .row.st-blk{background:#2f2c1c!important}
+html[data-theme=dark] .blkpanel{background:#121a21!important}
+html[data-theme=dark] .chip{background:#1b2028!important}
+html[data-theme=dark] .pendbtn{background:#121a21!important}
+html[data-theme=dark] .punch li.inl{background:#272418!important}
+html[data-theme=dark] .punch li.inl button.chip{background:#1b2028!important}
+html[data-theme=dark] .row .tgl{color:#f3bf20!important;border:1px solid #4c452e!important;background:#121a21!important}
+html[data-theme=dark] .row .tgl .sw{background:#40454d!important}
+html[data-theme=dark] .ddmiss,html[data-theme=dark] .ddna{background:#413d27!important}
+html[data-theme=dark] .ddwarn{color:#e7dbb8!important}
+html[data-theme=dark] .ddgone{border-left:4px solid #353b45!important;background:#21252d!important;color:#babdc2!important}
+html[data-theme=dark] .omit-slot .omitbtn{color:#ae9fc1!important}
+html[data-theme=dark] .row.omitted{background:#221a2b!important}
+html[data-theme=dark] .stab{color:#e9989d!important}
+html[data-theme=dark] .arw{color:#e9989d!important}
+html[data-theme=dark] .rx-opts{border:1px solid #313a4a!important;background:#161a24!important}
+html[data-theme=dark] .rx-lab{color:#b7bbc2!important}
+html[data-theme=dark] .rx-chips .chip{border:1px solid #313b49!important;background:#121a21!important}
+html[data-theme=dark] .rx-ov{border:1px solid #2e3c4c!important;background:#1a222b!important}
+html[data-theme=dark] .rx-ovbtn{color:#689bd8!important}
+html[data-theme=dark] .rxi-t small{color:#aeb2b9!important}
+html[data-theme=dark] .arw.ok{color:#54d685!important}
+html[data-theme=dark] .arw.grn{color:#54d685!important}
+html[data-theme=dark] .lnk{color:#6d9bd7!important}
+html[data-theme=dark] .punch li.inl.done{background:#19291d!important}
+html[data-theme=dark] .punch li .ovrb{background:#121a21!important;color:#6d9bd7!important}
+html[data-theme=dark] .punch li.inl .rx-chips button.chip{border:1px solid #313b49!important;background:#121a21!important}
+html[data-theme=dark] .blkpanel .chipcol button.chip,html[data-theme=dark] .punch li.inl .blkpanel .chipcol button.chip{border:1px solid #313b49!important;background:#121a21!important}
+html[data-theme=dark] .blkpanel button.pendbtn,html[data-theme=dark] .punch li.inl .blkpanel button.pendbtn{border:1px solid #313b49!important;background:#121a21!important}
+html[data-theme=dark] body{background:#121a21!important}
+html[data-theme=dark] .p-run{color:#bebebe!important}
+html[data-theme=dark] .p-foot{color:#bebebe!important}
+html[data-theme=dark] .p-unit td.k{background:#1c232e!important;color:#d1d1d1!important}
+html[data-theme=dark] .p-sec td{background:#252e3d!important;color:#587fc4!important}
+html[data-theme=dark] .p-warn td{color:#f64d4d!important}
+html[data-theme=dark] .p-bad .p-s{color:#f65d5d!important}
+html[data-theme=dark] .p-find{color:#f53d3d!important}
+html[data-theme=dark] .p-ph{color:#c8c8c8!important}
+html[data-theme=dark] .p-h{color:#587fc4!important}
+html[data-theme=dark] .p-li{color:#c8c8c8!important}
+html[data-theme=dark] .p-grid img{background:#1b2630!important}
+html[data-theme=dark] .p-grid figcaption small{color:#c8c8c8!important}
+html[data-theme=dark] a.homelnk,html[data-theme=dark] a.homelnk:visited,html[data-theme=dark] a.homelnk:hover,html[data-theme=dark] a.homelnk:active{border:2px solid #3d3d3d!important!important}
+html[data-theme=dark] #bgx .bx{background:#121a21!important;color:#d3d8de!important}
+html[data-theme=dark] #bgx p{color:#b0b3b9!important}
+html[data-theme=dark] #bgx .lv{background:#121a21!important;border:2px solid #353c45!important;color:#d3d8de!important}
+html[data-theme=dark] .cuL{color:#bebebe!important}
+html[data-theme=dark] .cuB{background:#121a21!important;color:#dadada!important}
+html[data-theme=dark] .cuChips{color:#b5b5b5!important}
+html[data-theme=dark] .cuChips button{border:1px solid #353b45!important;background:#191f28!important}
+html[data-theme=dark] .cuNote{color:#b5b5b5!important}
+html[data-theme=dark] #corex .bx{background:#121a21!important;color:#d3d8de!important}
+html[data-theme=dark] #corex .cmp{color:#c0c4cb!important}
+html[data-theme=dark] #corex .cmp span{color:#a7abb0!important}
+html[data-theme=dark] #corex .op button{border:2px solid #313b4a!important;background:#121a21!important;color:#d3d8de!important}
+html[data-theme=dark] #corex .lt{border:1px solid #353c45!important;background:#121a21!important;color:#c0c4cb!important}
+html[data-theme=dark] #coreBan .cb-red{background:#2c1b1b!important;color:#e0bdbd!important}
+html[data-theme=dark] #coreBan .cb-red2{background:#261a17!important;color:#e4d3ce!important}
+html[data-theme=dark] #coreBan .cb-blue{background:#1b222c!important;color:#cdd3e1!important}
+html[data-theme=dark] #coreBan .cb-grey{background:#1a1f2a!important;border-color:#353c45!important;color:#cdd1d7!important}
+html[data-theme=dark] #coreBan .cb-amber{background:#383222!important;color:#ece1c6!important}
+html[data-theme=dark] #coreBan .cb-green{background:#1e3124!important;color:#cde2d4!important}
+html[data-theme=dark] #coreBan .cbb{background:#121a21!important;color:#91b4e9!important}
+html[data-theme=dark] #coreBan .tg{background:#242c38!important;color:#cdd1d7!important}
+html[data-theme=dark] #coreBan .tg-c{background:#1c232e!important;color:#4f89e3!important}
+html[data-theme=dark] #coreBan .tg-f{background:#362321!important;color:#de7272!important}
+html[data-theme=dark] #coreBan .tg-b{background:#3e3326!important;color:#f49a2f!important}
+html[data-theme=dark] #coreBan .lv{color:#de7272!important}
+html[data-theme=dark] #coreBan .nt{color:#b9bdc2!important}
+html[data-theme=dark] #coreBan .ws button{border:2px solid #313b4a!important;background:#121a21!important;color:#d3d8de!important}
+html[data-theme=dark] .foldx{background:#121a21!important;border:1px solid #2f3a4c!important;color:#d3d8de!important}
+html[data-theme=dark] #camx .cx-flash{background:#121a21!important}
+html[data-theme=dark] #camx .cx-shut{background:#121a21!important}
+html[data-theme=dark] #sendToCard .sto-m{color:#aeb2b9!important}
+html[data-theme=dark] #sendToCard button{border:1px solid #353b45!important;background:#121a21!important;color:#d3d8de!important}
+html[data-theme=dark] #sendToCard .sto-t small{color:#aeb2b9!important}
+html[data-theme=dark] #sendToCard .sto-box{background:#121a21!important}
+html[data-theme=dark] #sendToCard .sto-lab{color:#aeb2b9!important}
+html[data-theme=dark] #sendToCard input{border:1px solid #303b4b!important;background:#121a21!important;color:#d3d8de!important}
+html[data-theme=dark] #sendToCard .sto-sum{background:#19202a!important;border:1px solid #2e3a4c!important}
+html[data-theme=dark] .dd49q{background:#312d1e!important}
+html[data-theme=dark] .dd49q.ok{background:#1e3125!important}
+html[data-theme=dark] .dd49q.err{background:#2f1c1c!important}
+html[data-theme=dark] button[data-act=prevsec]{background:#121a21!important!important;border-color:#353b45!important!important;color:#dadada!important}
+html[data-theme=dark] #cnav button{background:#121a21!important;color:#5783c9!important}
+}
+</style></head>
 <body>
 <div id="app"></div>
 <div id="modal-root"></div>
