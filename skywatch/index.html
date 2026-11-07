@@ -14549,7 +14549,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/06/2026',site:'89'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/06/2026',site:'90'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14694,7 +14694,7 @@ window.PhotoBox={row:row};
    and reopens a report where the tech left off when the main page links here with #resume=<id>.
    Same-site device storage only (localStorage 'tscRecent'): form key, form name, record id, serial, step, status, last save, position. */
 (function(){
-var KEY='tscRecent',MAX=3;
+var KEY='tscRecent',MAX=30;
 var FK=(location.pathname.replace(/index\.html$/,'').split('/').filter(Boolean).pop()||'');
 var FN=document.title;
 function rd(){try{var L=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(L)?L:[];}catch(e){return [];}}
@@ -14755,35 +14755,6 @@ document.addEventListener('change',function(e){var el=e.target;if(!el||el.tagNam
  if(v!=null&&v!==el.value){el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));}},true);
 document.addEventListener('change',function(e){var el=e.target;if(!el||el.tagName!=='INPUT'||!m(el,NUM))return;
  setTimeout(function(){if(document.activeElement===el)return;var f=sep(el.value);if(f!==el.value)el.value=f;},0);});
-})();
-</script><script>/* ===== core-data Back / Next buttons (Ravi, 2026-11-03) =====
-   While a core-data field is selected (record details, truck details, serial numbers, SW/FW revs) a small Back / Next pair floats at the
-   right edge. It jumps to the previous / next core-data field, scrolls it to the middle and selects it (with dictation on, it starts listening). */
-(function(){
-if(window.__coreNav)return;window.__coreNav=1;
-var SEL='input[data-b^="hdr."],textarea[data-b^="hdr."],input[data-b^="gear."][data-b$=".s"],input[data-b^="gear."][data-b$=".v"],input[data-b^="swap.list."],input[data-tk],input[data-b^="ver."],input[data-b^="sn."]';
-var BAD={checkbox:1,radio:1,button:1,submit:1,file:1,hidden:1,range:1,color:1};
-function ok(el){if(!el||(el.tagName!=='INPUT'&&el.tagName!=='TEXTAREA')||BAD[el.type]||el.disabled||el.readOnly)return false;try{if(el.matches(SEL))return true;}catch(e){}
- var F=window.DICTATE_FIELDS||[];for(var i=0;i<F.length;i++){try{if(el.matches(F[i].sel))return true;}catch(e){}}return false;}
-function vis(el){if(!el.getClientRects().length)return false;for(var n=el;n&&n!==document.body;n=n.parentElement){if(n.hidden)return false;var s=n.style;if(s&&s.display==='none')return false;}return true;}
-function list(){return Array.prototype.filter.call(document.querySelectorAll('input,textarea'),function(e){return ok(e)&&vis(e);});}
-var cur=null,key='',bar=null,hideT=null;
-function keyOf(el){return el.getAttribute('data-b')||el.getAttribute('data-tk')||el.id||'';}
-function find(){if(cur&&document.body.contains(cur))return cur;if(key){var all=list();for(var i=0;i<all.length;i++){if(keyOf(all[i])===key){cur=all[i];return cur;}}}return null;}
-var css=document.createElement('style');css.textContent='#cnav{position:fixed;right:8px;top:50%;transform:translateY(-50%);z-index:899;display:none;flex-direction:column;gap:8px}#cnav button{min-width:76px;min-height:52px;padding:6px 10px;border-radius:14px;border:2px solid #1d3b6a;background:#fff;color:#1d3b6a;font:800 15px/1.1 inherit;font-family:inherit;box-shadow:0 4px 14px rgba(20,33,61,.28);-webkit-tap-highlight-color:transparent}#cnav button.nx{background:#1d3b6a;color:#fff}#cnav button:disabled{opacity:.35}';document.head.appendChild(css);
-function mk(){if(bar)return bar;bar=document.createElement('div');bar.id='cnav';bar.innerHTML='<button type="button" class="nx" data-cn="next" aria-label="Next field">Next ▶</button><button type="button" data-cn="prev" aria-label="Previous field">◀ Back</button>';document.body.appendChild(bar);
- bar.addEventListener('pointerdown',function(e){e.preventDefault();});bar.addEventListener('mousedown',function(e){e.preventDefault();});
- bar.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;e.preventDefault();e.stopPropagation();go(b.getAttribute('data-cn')==='next'?1:-1);});return bar;}
-function paint(){var b=mk(),a=list(),c=find(),i=c?a.indexOf(c):-1;if(!c||i<0){b.style.display='none';return;}b.style.display='flex';b.querySelector('[data-cn=prev]').disabled=i<=0;b.querySelector('[data-cn=next]').disabled=i>=a.length-1;}
-function go(d){var a=list(),c=find(),i=c?a.indexOf(c):-1;if(i<0)return;var n=a[i+d];if(!n)return;
- try{n.scrollIntoView({block:'center',behavior:'smooth'});}catch(e){}
- try{n.focus({preventScroll:true});}catch(e){n.focus();}
- cur=n;key=keyOf(n);if(n.type!=='date'){try{n.click();}catch(e){}}paint();}
-document.addEventListener('focusin',function(e){if(!ok(e.target))return;clearTimeout(hideT);cur=e.target;key=keyOf(cur);paint();},true);
-document.addEventListener('focusout',function(e){if(!ok(e.target))return;clearTimeout(hideT);hideT=setTimeout(function(){var a=document.activeElement;if(a&&ok(a))return;if(bar)bar.style.display='none';cur=null;},25000);},true);
-var mo=new MutationObserver(function(){clearTimeout(mo.t);mo.t=setTimeout(function(){if(bar&&bar.style.display==='flex')paint();},120);});
-function start(){mo.observe(document.body,{childList:true,subtree:true});}
-if(document.body)start();else document.addEventListener('DOMContentLoaded',start);
 })();
 </script>
 <style>/* ===== SkyWatch PM visit: trip prep stage, next-visit code, blank forms (Rev 54) ===== */

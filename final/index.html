@@ -14564,7 +14564,7 @@ if(typeof finalPdf==='function'){const _b=finalPdf;finalPdf=function(r){const a=
    and reopens a report where the tech left off when the main page links here with #resume=<id>.
    Same-site device storage only (localStorage 'tscRecent'): form key, form name, record id, serial, step, status, last save, position. */
 (function(){
-var KEY='tscRecent',MAX=3;
+var KEY='tscRecent',MAX=30;
 var FK=(location.pathname.replace(/index\.html$/,'').split('/').filter(Boolean).pop()||'');
 var FN=document.title;
 function rd(){try{var L=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(L)?L:[];}catch(e){return [];}}
