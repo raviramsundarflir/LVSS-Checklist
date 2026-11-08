@@ -13649,6 +13649,34 @@ function svcCardHtml(){const r=S.rec,g=repGroups(r);return `<div class="card" id
  ${(r.svc.extra||[]).map((x,i)=>`<div class="row" style="flex-wrap:nowrap;margin-bottom:6px"><input data-b="svc.extra.${i}.t" value="${esc(x.t)}" placeholder="Other service performed…" style="flex:1"><button class="dng" data-act="rmsvc" data-i="${i}">✕</button></div>`).join('')}
  <button data-act="addsvc">＋ Add another service line</button></div>`}
 function svcSubHtml(l){return `<ul style="margin:4px 0;padding-left:20px">${l.items.map(x=>{const q=S.rec.items[x.id];const lab=l.key==='war'?'Warranty':(q.courtesy?'Non-warranty – courtesy repair':'Non-warranty');return `<li style="margin-bottom:3px"><span class="tag">${lab}</span> #${x.label} ${esc(x.t)}${(q.res||'').trim()?' – '+esc(q.res.trim()):''}</li>`}).join('')}</ul>`}
+/* Rev 121: summary of everything that was not a pass (failed, advised, to be quoted, could not test) */
+function ncItems(r){const out=[];
+ punch(r).forEach(x=>{const q=r.items[x.id]||{},nw=q.war==='nw',cu=!!q.courtesy,done=!!(q.rep||cu);
+  const status=done?'Repaired':q.adv?'Advised':q.tbd?'TBD':(nw&&!cu)?'Quote pending':'Open';
+  let cov=cu?'Non-warranty (courtesy repair)':nw?'Non-warranty':q.war==='w'?'Warranty':'Coverage not set';
+  if(nw&&!cu&&!done)cov+=' - quote to follow';
+  const note=(q.note||'').trim(),res=(q.res||'').trim(),qn=(q.quote||'').trim(),lines=[note||'No description entered'];
+  if(done)lines.push('Resolved'+(res?': '+res:''));else if(nw&&!cu){if(qn)lines.push('Quote notes: '+qn);}else if(res)lines.push('Notes: '+res);
+  out.push({label:x.label,title:x.t,lvl:q.lvl||'',status,cov,lines});});
+ blockedList(r).forEach(x=>{const q=r.items[x.id]||{};out.push({label:x.label,title:x.t,lvl:'',status:q.badv?'Advised':q.pend?'Pending retest':'Open',cov:'Could not test',lines:[blkTxt(r,q)]});});
+ return out;}
+const NC_COL={'Repaired':'#1b8a3a','Advised':'#1f5fae','Quote pending':'#6a2fb0','TBD':'#5b6470','Pending retest':'#b58900','Open':'#c62828'};
+function nonPassCard(r){const L=ncItems(r);if(!L.length)return '';
+ return `<div class="card" id="ncCard"><h3>Findings: items that were not a pass</h3><p class="muted">What was found, and whether it was resolved. This list is printed on the first page of the report.</p>${L.map(it=>`<div class="ncrow" style="border-top:1px solid #d5dbe1;padding:8px 0"><div style="font-weight:700">#${esc(it.label)} ${esc(it.title)}</div>${it.lines.map(t=>`<div class="muted" style="margin:2px 0">${esc(t)}</div>`).join('')}<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px">${it.lvl?`<span class="lvl ${it.lvl}">${LVK[it.lvl].n}</span>`:''}<span style="font-size:12px;font-weight:700;padding:2px 9px;border-radius:10px;${it.status==='Open'?'border:1.5px solid #c62828;color:#c62828;background:transparent':'background:'+NC_COL[it.status]+';color:#fff'}">${it.status}</span><span class="muted">${esc(it.cov)}</span></div></div>`).join('')}</div>`;}
+function drawNonPass(d,r,y){const L=ncItems(r);if(!L.length)return y;
+ y+=10;if(y+60>700){d.addPage();y=TOP;}
+ hx(d,'setFillColor','#000000');d.rect(MX,y,CW,16,'F');d.setFont('helvetica','bold');d.setFontSize(9.5);d.setTextColor(255);d.text('Findings: items that were not a pass',MX+6,y+11.5);y+=16;
+ L.forEach(it=>{d.setFont('helvetica','bold');d.setFontSize(8.8);const tl=wrap(d,cl('#'+it.label+'  '+it.title),350);d.setFont('helvetica','normal');d.setFontSize(8.2);const ml=[];it.lines.forEach(t=>wrap(d,cl(t),350).forEach(z=>ml.push(z)));
+  d.setFontSize(7.5);const cl2=wrap(d,cl(it.cov),160);const hh=Math.max(6+tl.length*10.5+ml.length*10+4,28+cl2.length*9+4);
+  if(y+hh>700){d.addPage();y=TOP;}
+  d.setDrawColor(190);d.setLineWidth(.5);d.rect(MX,y,CW,hh);d.line(MX+364,y,MX+364,y+hh);
+  d.setFont('helvetica','bold');d.setFontSize(8.8);hx(d,'setTextColor','#000000');d.text(tl,MX+6,y+11);
+  d.setFont('helvetica','normal');d.setFontSize(8.2);d.setTextColor(60);d.text(ml,MX+6,y+11+tl.length*10.5-1);
+  if(it.lvl)levelChip(d,MX+370,y+5,76,it.lvl,false);
+  const sx=MX+452,sw=82;if(it.status==='Open'){d.setDrawColor(198,40,40);d.setLineWidth(1);d.roundedRect(sx,y+5,sw,13,3,3,'S');hx(d,'setTextColor','#c62828');}else{hx(d,'setFillColor',NC_COL[it.status]);d.roundedRect(sx,y+5,sw,13,3,3,'F');d.setTextColor(255);}
+  d.setFont('helvetica','bold');d.setFontSize(7.5);d.text(it.status.toUpperCase(),sx+sw/2,y+14.5,{align:'center'});
+  d.setFont('helvetica','normal');d.setFontSize(7.5);d.setTextColor(60);d.text(cl2,MX+370,y+28);y+=hh;});
+ return y;}
 const DESC_OPTS=SVC.map(q=>q[1]);
 function descSelHtml(r,K){const d=certVal(r,K,'desc'),inO=DESC_OPTS.indexOf(d)>=0,ph=!inO&&K==='pmx'&&d===PMX_OLD,oth=!inO&&!ph;
  return `<select data-cdesc="${K}" style="width:100%">${ph?'<option value="" selected>Select the service…</option>':''}${DESC_OPTS.map(o=>`<option value="${esc(o)}" ${o===d?'selected':''}>${esc(o)}</option>`).join('')}<option value="__other" ${oth?'selected':''}>Other</option></select><textarea data-b="cert.ov.${K}.desc" style="margin-top:6px;${oth?'':'display:none'}">${esc(d)}</textarea>`;}
@@ -13664,6 +13692,7 @@ function certHtml(){const r=S.rec,c=r.cert,h=r.hdr,st=stats(r),L=r.signed;
  <p>This is to certify the following items have been completed in accordance with the contract:</p>
  ${SL.length?'':'<div class="warn">No service selected. Pick the services performed on the Info step, or add a service line below.</div>'}<table class="t" style="table-layout:fixed"><tr><th style="width:17%">Unit S/N</th><th style="width:46%">Description of Service</th><th style="width:13%">Hours on Generator</th><th style="width:19%">Date Completed</th><th style="width:5%"></th></tr>${rows}</table><div class="sp"></div><button data-act="addsvc">＋ Add service line</button>
  <p class="muted">Lines come from the services you selected on the Info step. Repaired items are grouped under Warranty / Non-Warranty Repair and labeled. Edit any cell to override it.</p></div>
+ ${nonPassCard(r)}
  ${openSummary(r)}
  <div class="card"><h3>Authorized signatures</h3><p class="muted">The punch list is complete – this is the last step. Both parties sign below.</p></div>
  ${padCard('cust','Customer',...['cert.custName','cert.custTitle'])}
@@ -14072,7 +14101,7 @@ function drawCert(d,r){const h=r.hdr,c=r.cert,st=stats(r);
    d.setFont('helvetica','normal');d.setFontSize(8.6);const tl=wrap(d,`${lab}: #${x.label} ${x.t}${(q.res||'').trim()?' - '+q.res.trim():''}`,CW-34);const sh=tl.length*10.5+7;
    if(y+sh>700){d.addPage();y=TOP;}
    d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,sh);d.setTextColor(30);d.text('-',MX+14,y+11);d.text(tl,MX+24,y+11);y+=sh;});});
- y+=10;
+ y=drawNonPass(d,r,y);y+=10;
  d.setFontSize(9.5);
  if(r.verdict){d.setFont('helvetica','bold');d.setFontSize(12);hx(d,'setTextColor',r.verdict==='pass'?'#1b8a3a':'#c62828');d.text('Tower inspection result: '+(r.verdict==='pass'?'PASSED':'FAILED'),MX+10,y+6);y+=20;d.setFontSize(9.5);}
  if(r.upd&&r.upd.length){d.setFont('helvetica','normal');d.setFontSize(7.5);d.setTextColor(110);d.text('Updated '+r.upd.slice(-4).map(t=>new Date(t).toLocaleString('en-US',{month:'2-digit',day:'2-digit',year:'numeric',hour:'numeric',minute:'2-digit'})).join('; '),MX+10,y+2);y+=12;d.setFontSize(9.5);d.setTextColor(0);}
@@ -14786,7 +14815,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/07/2026',site:'119'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/08/2026',site:'121'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14849,7 +14878,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='a876e8ecf4';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='79432e9481';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);Promise.resolve().then(function(){return typeof save==='function'?save():0;}).catch(function(){}).then(function(){return fetch(location.pathname,{cache:'reload'});}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
