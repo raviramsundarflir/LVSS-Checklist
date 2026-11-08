@@ -13463,7 +13463,8 @@ const safeName=s=>String(s||'').replace(/[^\w.\-]+/g,'_').replace(/^_+|_+$/g,'')
 const idLine=r=>{const h=r.hdr||{},v=x=>String(x||'').trim()||'-';return cl(`Tower S/N ${v(h.towerSerial)}  |  RMA ${v(h.rma)}  |  SO ${v(h.serviceOrder)}  |  ${v(h.customer)}`);};
 /* ---------- save ---------- */
 let saveTimer=null;
-function markDirty(){S.dirty=true;S.dv=(S.dv||0)+1;paintSave();clearTimeout(saveTimer);saveTimer=setTimeout(()=>save(),900);}
+function logUpd(){const r=S.rec;if(!r||!r.signed||S.audit||S.noUpd)return;const now=Date.now();r.upd=r.upd||[];const l=r.upd[r.upd.length-1];if(!l||now-l>300000)r.upd.push(now);}
+function markDirty(){logUpd();S.noUpd=false;S.dirty=true;S.dv=(S.dv||0)+1;paintSave();clearTimeout(saveTimer);saveTimer=setTimeout(()=>save(),900);}
 async function save(){if(!S.rec||!S.dirty)return;clearTimeout(saveTimer);S.rec.updated=Date.now();const dv0=S.dv||0;try{await dbPut('recs',clone(S.rec));if((S.dv||0)===dv0)S.dirty=false;else{clearTimeout(saveTimer);saveTimer=setTimeout(()=>save(),300);}S.saved=Date.now();}catch(e){alert('Could not save: '+e)}paintSave();}
 function paintSave(){const b=$('#saveInd');if(!b)return;b.textContent=S.dirty?'● Unsaved – tap to save':'✓ Saved '+(S.saved?new Date(S.saved).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'');b.style.color=S.dirty?'#c62828':'#1b8a3a';}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
@@ -13514,7 +13515,7 @@ const STEPN=['Info','Inspect','Punch List','Certificate & Sign','E-mail'];
 function renderRec(){if(S.audit&&S.rec)return renderAudit();const r=S.rec;const st=stats(r);
  app.innerHTML=`<div class="top"><div class="bar"><img src="${LOGO2}" alt="Teledyne FLIR"><div class="brand">${esc(title(r))}<small>${esc(r.hdr.customer||'')} ${r.signed?'· SIGNED':''}</small></div><button id="saveInd" data-act="save" class="save"></button>${r.signed?'':'<button data-act="wip-pause" title="Pause and move this inspection to another tablet">⏸ Pause</button>'}<button data-act="home">Forms list</button></div>
  <div class="steps">${r.trip?`<button data-act="step" data-s="0" class="${r.step===0?'on':'dn'}">🧳 Trip prep</button>`:''}${STEPN.map((n,i)=>`<button data-act="step" data-s="${i+1}" class="${r.step===i+1?'on':''} ${(i+1<r.step)?'dn':''}">${i+1}. ${n}</button>`).join('')}</div></div>
- <div class="wrap ${r.signed&&r.step<4?'locked':''}" id="body"></div>`;
+ <div class="wrap" id="body"></div>`;
  paintSave();const b=$('#body');
  if(r.step===0&&typeof tripHtml==='function')b.innerHTML=tripHtml();else if(r.step===1)b.innerHTML=infoHtml();else if(r.step===2)b.innerHTML=inspectHtml();else if(r.step===3)b.innerHTML=punchHtml();else if(r.step===4){b.innerHTML=certHtml();initPads();}else{b.innerHTML=sendHtml();prepPdfs();}
  wipBanner($('#body'));window.scrollTo(0,0);}
@@ -13653,7 +13654,7 @@ function svcSubHtml(l){return `<ul style="margin:4px 0;padding-left:20px">${l.it
 const DESC_OPTS=SVC.map(q=>q[1]);
 function descSelHtml(r,K){const d=certVal(r,K,'desc'),inO=DESC_OPTS.indexOf(d)>=0,ph=!inO&&K==='pmx'&&d===PMX_OLD,oth=!inO&&!ph;
  return `<select data-cdesc="${K}" style="width:100%">${ph?'<option value="" selected>Select the service…</option>':''}${DESC_OPTS.map(o=>`<option value="${esc(o)}" ${o===d?'selected':''}>${esc(o)}</option>`).join('')}<option value="__other" ${oth?'selected':''}>Other</option></select><textarea data-b="cert.ov.${K}.desc" style="margin-top:6px;${oth?'':'display:none'}">${esc(d)}</textarea>`;}
-document.addEventListener('change',e=>{const t=e.target;if(!t||!t.dataset||!t.dataset.cdesc||!S.rec||(S.rec.signed&&!S.audit))return;const K=t.dataset.cdesc,ta=t.parentNode.querySelector('textarea[data-b]');
+document.addEventListener('change',e=>{const t=e.target;if(!t||!t.dataset||!t.dataset.cdesc||!S.rec)return;const K=t.dataset.cdesc,ta=t.parentNode.querySelector('textarea[data-b]');
  if(t.value==='__other'){if(ta){ta.style.display='';ta.value='';ta.focus();}setp(S.rec,'cert.ov.'+K+'.desc','');}
  else{if(ta)ta.style.display='none';if(t.value){setp(S.rec,'cert.ov.'+K+'.desc',t.value);if(ta)ta.value=t.value;}}
  markDirty();});
@@ -13678,11 +13679,11 @@ function custName(r){return r.cert.custName!=null?r.cert.custName:(r.hdr.contact
 /* ----- signature pads ----- */
 function initPads(){document.querySelectorAll('canvas.sig').forEach(cv=>{const w=cv.dataset.w,r=S.rec,L=r.signed;const dpr=window.devicePixelRatio||1;const W=cv.clientWidth,H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;const g=cv.getContext('2d');g.scale(dpr,dpr);g.lineWidth=2.6;g.lineCap='round';g.lineJoin='round';g.strokeStyle='#0a1f44';
  const sig=r.cert[w+'Sig'];if(sig){const im=new Image();im.onload=()=>{const dw=im.width/dpr,dh=im.height/dpr,k=Math.min(1,W/dw,H/dh);g.drawImage(im,(W-dw*k)/2,(H-dh*k)/2,dw*k,dh*k);};im.src=sig;}
- if(L)return;let on=false,ink=!!sig,lx=0,ly=0;
+ let on=false,ink=!!sig,lx=0,ly=0,cf=false;
  const pos=e=>{const b=cv.getBoundingClientRect();return [e.clientX-b.left,e.clientY-b.top]};
- cv.onpointerdown=e=>{e.preventDefault();cv.setPointerCapture(e.pointerId);on=true;[lx,ly]=pos(e);g.beginPath();g.arc(lx,ly,1.3,0,7);g.fillStyle='#0a1f44';g.fill();};
+ cv.onpointerdown=e=>{e.preventDefault();if(L&&r.cert[w+'Sig']&&!cf){if(!confirm('Are you sure you want to update the signature?'))return;cf=true;ink=false;g.clearRect(0,0,W,H);cv.classList.remove('ok');}cv.setPointerCapture(e.pointerId);on=true;[lx,ly]=pos(e);g.beginPath();g.arc(lx,ly,1.3,0,7);g.fillStyle='#0a1f44';g.fill();};
  cv.onpointermove=e=>{if(!on)return;e.preventDefault();const [x,y]=pos(e);g.beginPath();g.moveTo(lx,ly);g.lineTo(x,y);g.stroke();lx=x;ly=y;ink=true;};
- const end=e=>{if(!on)return;on=false;if(ink){r.cert[w+'Sig']=trimSig(cv);r.cert[w+'Date']=today();cv.classList.add('ok');markDirty();const n=cv.parentElement.querySelector('.muted');if(n)n.textContent='Signed '+fmtD(today());}};
+ const end=e=>{if(!on)return;on=false;if(ink){r.cert[w+'Sig']=trimSig(cv);r.cert[w+'Date']=today();cv.classList.add('ok');S.noUpd=true;markDirty();const n=cv.parentElement.querySelector('.muted');if(n)n.textContent='Signed '+fmtD(today());}};
  cv.onpointerup=end;cv.onpointercancel=end;});}
 function trimSig(cv){ // crop to ink bounds so it scales cleanly in the PDF
  const g=cv.getContext('2d'),W=cv.width,H=cv.height,d=g.getImageData(0,0,W,H).data;let x0=W,y0=H,x1=0,y1=0;
@@ -14075,6 +14076,7 @@ function drawCert(d,r){const h=r.hdr,c=r.cert,st=stats(r);
  y+=10;
  d.setFontSize(9.5);
  if(r.verdict){d.setFont('helvetica','bold');d.setFontSize(12);hx(d,'setTextColor',r.verdict==='pass'?'#1b8a3a':'#c62828');d.text('Tower inspection result: '+(r.verdict==='pass'?'PASSED':'FAILED'),MX+10,y+6);y+=20;d.setFontSize(9.5);}
+ if(r.upd&&r.upd.length){d.setFont('helvetica','normal');d.setFontSize(7.5);d.setTextColor(110);d.text('Updated '+r.upd.slice(-4).map(t=>new Date(t).toLocaleString('en-US',{month:'2-digit',day:'2-digit',year:'numeric',hour:'numeric',minute:'2-digit'})).join('; '),MX+10,y+2);y+=12;d.setFontSize(9.5);d.setTextColor(0);}
  if(st.f){if(st.open){d.setFont('helvetica','bold');d.setTextColor(0);const t=`Open items at sign-off: ${st.open} of ${st.f} punch-list item(s)${st.quote?` (${st.quote} non-warranty repair(s) to be quoted)`:''}${st.openDno?` - INCLUDING ${st.openDno} DO NOT OPERATE`:''}. See the Punch List in this report.`;const l=wrap(d,t,CW-20);d.text(l,MX+10,y+6);y+=l.length*11+6;}
   else{d.setFont('helvetica','normal');d.setTextColor(0);d.text(`All ${st.f} punch-list item(s) found during inspection were repaired.`,MX+10,y+6);y+=17;}}
  y+=8;if(y+16+116>732){d.addPage();y=TOP;}
@@ -14090,7 +14092,7 @@ const LOCKED=['tog','lvl','plvl','rep','verdict','war','courtesy','addx','rmx','
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,id=b.dataset.id,r=S.rec;
  if(a.startsWith('wip-')){await wipAct(a,b);return;}
  if(a==='tech-pick'){techPick(+b.dataset.i);return;}
- if(r&&r.signed&&!S.audit&&LOCKED.includes(a)){alert('This inspection is signed and locked. Use Reopen on the Certificate step (admin PIN) to change it.');return;}
+ 
  switch(a){
  case 'zoomph':if(S.photos[b.dataset.p])photoViewer(b.dataset.p,id);break;
  case 'ocrskip':closeModal();break;
@@ -14225,16 +14227,11 @@ function resec(si){const w=$('#sec-'+si);if(!w)return;const n=S.rec.tpl.sections
 document.addEventListener('input',e=>{const t=e.target;
  if(t.dataset.set){S.settings[t.dataset.set]=t.value.trim();setting(t.dataset.set,t.value.trim());return;}
  if(t.dataset.ad!==undefined){adminInput(t);return;}
- const p=t.dataset.b;if(!p||!S.rec)return;if(S.rec.signed&&!S.audit&&!/^mail\./.test(p)){return;}
+ const p=t.dataset.b;if(!p||!S.rec)return;if(/^mail\./.test(p))S.noUpd=true;
  if(p.startsWith('extraT.')){const id=p.slice(7);Object.values(S.rec.extra).forEach(l=>l.forEach(x=>{if(x.id===id)x.t=t.value}));markDirty();return;}
  if(p.startsWith('items.'))itm(p.split('.')[1]);
  setp(S.rec,p,t.value);markDirty();if(p.startsWith('audit.')&&S.audit){const nb=$('#auNeed');if(nb)nb.outerHTML=auNeedHtml();}});
 document.addEventListener('input',e=>{try{const t=e.target,p=t.dataset&&t.dataset.b;if(p&&p.indexOf('hdr.')===0&&S.rec&&!S.rec.signed)localStorage.setItem('swhdr:'+S.rec.id,JSON.stringify({h:S.rec.hdr,t:Date.now()}));}catch(x){}});
-/* Rev 110: a signed report is locked - show it, instead of silently discarding typing */
-function lockSigned(){try{const r=S.rec;if(!r||!r.signed||S.audit||S.view!=='rec')return;const b=$('#body');if(!b)return;
- b.querySelectorAll('input[data-b],textarea[data-b],select[data-cdesc]').forEach(el=>{const p=el.dataset.b||'';if(/^mail\./.test(p))return;if(el.tagName==='SELECT')el.disabled=true;else el.readOnly=true;el.classList.add('sglock');});
- if(r.step>=1&&r.step<=3&&!$('#sgBan'))b.insertAdjacentHTML('afterbegin','<div class="card" id="sgBan" style="border:2px solid #c25a00;background:#fff4e5;color:#6b3a00"><b>🔒 This report is signed and locked.</b><div style="margin:4px 0 8px">Changes cannot be typed in until it is reopened. Reopening clears both signatures.</div><button class="dng" data-act="reopen">Reopen (admin PIN)</button></div>');}catch(x){}}
-(function(){var _r=renderRec;renderRec=function(){var x=_r.apply(this,arguments);lockSigned();return x;};})();
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset.act==='rcp'){const x=t.dataset.e;if(t.checked)delete S.rec.recipients.off[x];else S.rec.recipients.off[x]=true;markDirty();}});
 // checkbox 'click' also reaches the delegated handler; make sure it doesn't double toggle
 async function doBackup(){await save();const recs=await dbAll('recs'),photos=await dbAll('photos');const o={app:'skywatch-inspection',v:1,when:Date.now(),recs,photos,settings:{tplOverride:S.settings.tplOverride,tscEmail:S.settings.tscEmail}};
@@ -14786,7 +14783,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/07/2026',site:'110'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/07/2026',site:'111'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14849,7 +14846,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='bc0f68bda8';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='af5fb01ee8';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);Promise.resolve().then(function(){return typeof save==='function'?save():0;}).catch(function(){}).then(function(){return fetch(location.pathname,{cache:'reload'});}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
