@@ -13548,8 +13548,8 @@ function infoRepHtml(){const r=S.rec,L=r.cust||[];
  <button class="pri" data-act="addcust">＋ Add customer-reported issue</button>`;}
 function infoHtml(){const r=S.rec;
  return `<div class="card"><h2>Customer & order</h2><p class="muted">Enter once – these values are reused in the checklist report, punch list, Completion Certificate and email.</p><div class="grid">${HDR_CUST.map(f=>inp('hdr.'+f[0],f[1],{type:f[2]})).join('')}</div></div>
- ${svcCardHtml()}
  <div class="card" id="infoRep">${infoRepHtml()}</div>
+ ${svcCardHtml()}
  <div class="card"><label class="row" style="gap:12px"><input type="checkbox" style="width:26px;min-height:26px" data-act="legacy" ${r.legacy?'checked':''}><span><b>Legacy DC tower</b><br><span class="muted">Check this to add Section 7 (Legacy DC Towers only) to the inspection.</span></span></label></div>
  <div class="card" id="infoSer">${serHtml()}</div>
  <button class="gobtn" data-act="step" data-s="2" style="width:100%;font-size:19px;min-height:58px">Start inspection →</button><button class="jumpbtn" data-act="step" data-s="4" style="width:100%;margin-top:8px">⏭ Go to the final page – certificate & sign-off</button>`;}
@@ -14813,7 +14813,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/08/2026',site:'127'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/08/2026',site:'128'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+(+CREDIT.site/100).toFixed(2):creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14876,7 +14876,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='b3ceef2001';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='d77f681c34';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);Promise.resolve().then(function(){return typeof save==='function'?save():0;}).catch(function(){}).then(function(){return fetch(location.pathname,{cache:'reload'});}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -15339,6 +15339,10 @@ var SECS=[
 ];
 var NOTES=['Inspect only, no parts needed: engine V-belt, crankcase breather, coolant hoses, water pump and thermostat. The form says an Onan-authorized mechanic replaces these.','The coolant anti-freeze protection check (form item 89) is not done on PM visits, so no tester is on the list.','This trip checklist stays behind the scenes: it is not part of the inspection report.'];
 function e(s){return esc(s==null?'':String(s));}
+function toolsGrp(){var f=null;SECS.forEach(function(s){s.g.forEach(function(q){if(q.h==='Tools')f=q;});});return f;}
+function toolsBar(r,g){var t=T(r),n=g.i.filter(function(x){return t.ck[x[0]];}).length,all=n===g.i.length;
+ return '<div class="grp grpck" id="ptTg"><span>Tools <small id="ptTgc">'+n+' of '+g.i.length+' checked</small></span><button type="button" class="gca" data-pt="tallck"><span id="ptTgl">'+(all?'Uncheck all':'Check all')+'</span></button></div>';}
+function tgUpd(){var r=S.rec,g=toolsGrp(),c=document.getElementById('ptTgc'),l=document.getElementById('ptTgl');if(!r||!g||!c)return;var t=T(r),n=g.i.filter(function(x){return t.ck[x[0]];}).length;c.textContent=n+' of '+g.i.length+' checked';if(l)l.textContent=n===g.i.length?'Uncheck all':'Check all';}
 function genGroup(){var f=null;SECS.forEach(function(s){s.g.forEach(function(q){if(q.gen)f=q;});});return f;}
 function gi(g,r){if(g.buyauto){if(!r)return [];var tk=T(r).ck;return gi(genGroup(),r).filter(function(x){return !tk[x[0]];}).map(function(x){return ['bb_'+x[0],x[1],x[2],0];});}
  var a=g.gen?genItems(r).concat(g.i):g.i,G=r?genOf(r):null;if(G&&!G.f.cool)a=a.filter(function(x){return x[0]!=='b2';});return a;}
@@ -15355,7 +15359,7 @@ function secDone(r,sec){var t=T(r),n=0,tot=0;its(sec,r).forEach(function(x){tot+
  return {n:n,tot:tot};}
 function allDone(r){var n=0,tot=0;SECS.forEach(function(s){var c=secDone(r,s);n+=c.n;tot+=c.tot;});var t=T(r);t.extra.forEach(function(x){tot++;if(x.on)n++;});return {n:n,tot:tot};}
 function xcount(r){var t=T(r),n=0;t.extra.forEach(function(x){if(x.on)n++});return n+' / '+t.extra.length;}
-function paint(){var r=S.rec;if(!r||r.step!==0)return;var c=allDone(r),el=document.getElementById('ptCnt'),b=document.getElementById('ptBar');
+function paint(){var r=S.rec;if(!r||r.step!==0)return;tgUpd();var c=allDone(r),el=document.getElementById('ptCnt'),b=document.getElementById('ptBar');
  if(el)el.textContent=c.n+' of '+c.tot+' done';if(b)b.style.width=(c.tot?Math.round(c.n*100/c.tot):0)+'%';
  SECS.forEach(function(s){var q=document.getElementById('ptsc-'+s.id);if(!q)return;var k=secDone(r,s);q.textContent=k.n+' / '+k.tot;q.classList.toggle('done',k.n===k.tot);});
  var x=document.getElementById('ptsc-x');if(x)x.textContent=xcount(r);}
@@ -15378,7 +15382,9 @@ var GMG=[['Diesel',['HDKAV','HDKAT','HDKAU','HDKBC','HDKBB']],['Gasoline / LPG',
  GMS={HDKAV:['6HDKAV','QD 6000 \u00b7 6 kW diesel'],HDKAT:['7.5HDKAT','QD 7500 \u00b7 7.5 kW diesel'],HDKAU:['8HDKAU','QD 8000 \u00b7 8 kW diesel'],HDKBC:['5.0HDKBC','5 kW \u00b7 60 Hz diesel'],HDKBB:['HDKBB','5.5HDKBB (60 Hz) or 5.0HDKBB (50 Hz) diesel'],HGJAD:['HGJAD','5.5, 5.8 or 7 kW \u00b7 gas, fuel-injected'],HGJAE:['HGJAE','5.5, 6.5 or 7 kW \u00b7 gas or LPG, carburetor']};
 function gmTile(k,t,sb,on,act,def){return '<button type="button" class="gt1'+(on?' on':'')+'" data-pt="'+act+'" data-v="'+k+'"><b>'+e(t)+'</b>'+(sb?'<small>'+e(sb)+'</small>':'')+(def?'<em>DEFAULT</em>':'')+'</button>';}
 function gmGrid(cur,act,other){return GMG.map(function(g){return '<div class="gmg">'+g[0]+'</div><div class="gtl">'+g[1].map(function(k){return gmTile(k,GMS[k][0],GMS[k][1],cur===k,act,k==='HDKAV');}).join('')+'</div>';}).join('')+(other?'<div class="gmg">Other</div><div class="gtl">'+gmTile('other','Other / not listed','Use the standard parts list',cur==='other',act,false)+'</div>':'');}
+function gmMin(r){return !!(r&&r.step===1&&r.gmTrip&&r.genLib&&!r.gmOpen);}
 function gmBtns(r){var G=genOf(r),cur=r.genLib||(G?G.e.k:'');
+ if(gmMin(r)){var sm=cur==='other'?['Other / not listed','Use the standard parts list']:GMS[cur];if(sm)return '<div id="ptGm" class="gml"><div class="gmsum"><span><b>'+e(sm[0])+'</b> \u00b7 '+e(sm[1])+'</span><button type="button" class="gmchg" data-pt="gmchg">Change</button></div></div>';}
  return '<div id="ptGm" class="gml">'+gmGrid(cur,'gm',true)+'</div>';}
 function itemDef(id){var f=null;SECS.forEach(function(s){s.g.forEach(function(g){g.i.forEach(function(x){if(x[0]===id)f=x;});});});return f;}
 /* refresh only the parts that depend on the generator model, so the screen does not move */
@@ -15395,7 +15401,7 @@ function secHtml(r,sec){var c=secDone(r,sec),t=T(r),h='<div class="card"><div cl
   '<label class="f" style="margin-top:12px">Generator model (fills in the parts to bring and the oil)</label>'+gmBtns(r)+'<button type="button" class="gpb" data-pt="genpanel"><svg class="gic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6.5" width="19" height="11" rx="1.6" fill="#139a78" stroke="#0b6b53"/><path d="M7 6.5v11" stroke="#0b6b53"/><path d="M4.1 9.6h1.4M4.1 12h1.4M4.1 14.4h1.4" stroke="#ffffff"/><path d="M14.6 8.8l-2.7 3.4h2.4l-1.6 3.4 3.9-4.4h-2.5z" fill="#ffffff" stroke="#ffffff" stroke-width="1"/><path d="M17.5 6.5v-2h2.3v2" stroke="#0b6b53"/><path d="M5 17.5V20M19 17.5V20M3.5 20h17" stroke="#6b7782"/></svg>Fault codes &amp; manual for this generator ›</button>'+
   '<label class="f" style="margin-top:12px">Generator type (gas adds the spark plug and ignition coil checks)</label><div class="ptgt" id="ptGt">'+[['diesel','Diesel'],['gas','Gas / spark-ignition'],['other','Other']].map(function(x){return '<button type="button" class="'+(r.genType===x[0]?'pri':'')+'" data-pt="gt" data-v="'+x[0]+'">'+x[1]+'</button>';}).join('')+'</div>'+
   '<label class="row" style="gap:12px;margin-top:12px"><input type="checkbox" data-pt="lg" style="width:26px;min-height:26px" '+(r.legacy?'checked':'')+'><span><b>Legacy DC tower</b><br><span class="muted">Adds Section 7 (Legacy DC Towers only) to the inspection.</span></span></label>'+lastHtml(r);}
- h+=sec.g.map(function(g){if(g.buyauto)return '<div id="ptBuyAuto">'+buyAutoHtml(r,g)+'</div>';return (g.h?'<div class="grp">'+e(g.h)+'</div>':'')+(g.gen?'<div id="ptGp">'+gpHtml(r)+'</div>':'<div class="ptl"'+(sec.f||sec.tow?' style="margin-top:8px"':'')+'>'+g.i.map(function(x){return tick(r,x,'tick',null,!!t.ck[x[0]])}).join('')+'</div>');}).join('');
+ h+=sec.g.map(function(g){if(g.buyauto)return '<div id="ptBuyAuto">'+buyAutoHtml(r,g)+'</div>';return (g.h==='Tools'?toolsBar(r,g):g.h?'<div class="grp">'+e(g.h)+'</div>':'')+(g.gen?'<div id="ptGp">'+gpHtml(r)+'</div>':'<div class="ptl"'+(sec.f||sec.tow?' style="margin-top:8px"':'')+'>'+g.i.map(function(x){return tick(r,x,'tick',null,!!t.ck[x[0]])}).join('')+'</div>');}).join('');
  return h+(sec.foot?'<p class="muted" style="margin:10px 0 0">'+e(sec.foot)+'</p>':'')+'</div>';}
 function xlist(r){var t=T(r);if(!t.extra.length)return '<p class="muted" style="margin:4px 0">Nothing added yet.</p>';return t.extra.map(function(x){return '<div class="ptxr">'+tick(r,[x.id,x.t],'xtick',x.id,!!x.on)+'<button type="button" class="ptdel" data-pt="xdel" data-x="'+x.id+'" aria-label="Remove this item">×</button></div>';}).join('');}
 window.tripHtml=function(){var r=S.rec;T(r);var c=allDone(r),pct=c.tot?Math.round(c.n*100/c.tot):0;
@@ -15538,13 +15544,15 @@ document.addEventListener('click',function(ev){var b=ev.target.closest('[data-pt
  if(a==='gpm'){GPN.m=b.getAttribute('data-v');try{localStorage.setItem('genPanelModel',GPN.m);}catch(err){}gpnPaint();return;}
  if(!r)return;
  if(a==='cskip'){var k=b.getAttribute('data-k');r.carry=r.carry||{};r.carry[k]='skip';dirty();var n=b.closest('.cnote');if(n)n.outerHTML=cnote(k);return;}
- if(r.step!==0&&a!=='gm')return;var t=r.step===0?T(r):null;
+ if(r.step!==0&&a!=='gm'&&a!=='gmchg')return;var t=r.step===0?T(r):null;
+ if(a==='gmchg'){r.gmOpen=true;dirty();genRefresh();return;}
+ if(a==='tallck'){var gT=toolsGrp();if(!gT)return;var allOn=gT.i.every(function(x){return t.ck[x[0]];});gT.i.forEach(function(x){if(allOn)delete t.ck[x[0]];else t.ck[x[0]]=true;var bb=document.querySelector('[data-pt=tick][data-k='+x[0]+']');if(bb){bb.classList.toggle('on',!allOn);bb.setAttribute('aria-pressed',!allOn?'true':'false');}});buyRefresh();dirty();paint();return;}
  if(a==='tick'){var key=b.getAttribute('data-k');t.ck[key]=!t.ck[key];if(!t.ck[key])delete t.ck[key];b.classList.toggle('on',!!t.ck[key]);b.setAttribute('aria-pressed',t.ck[key]?'true':'false');if(key.indexOf('bb_')!==0)buyRefresh();dirty();paint();return;}
  if(a==='xtick'){var x=t.extra.find(function(q){return q.id===b.getAttribute('data-x')});if(!x)return;x.on=!x.on;b.classList.toggle('on',x.on);b.setAttribute('aria-pressed',x.on?'true':'false');dirty();paint();return;}
  if(a==='xdel'){var i=t.extra.findIndex(function(q){return q.id===b.getAttribute('data-x')});if(i<0)return;if(!confirm('Remove “'+t.extra[i].t+'” from this trip?'))return;t.extra.splice(i,1);dirty();document.getElementById('ptXl').innerHTML=xlist(r);paint();return;}
  if(a==='add'){addItem();return;}
  if(a==='gt'){r.genType=b.getAttribute('data-v');dirty();[].forEach.call(document.querySelectorAll('#ptGt button'),function(z){z.classList.toggle('pri',z.getAttribute('data-v')===r.genType);});genRefresh();paint();return;}
- if(a==='gm'){var gv=b.getAttribute('data-v'),E=GENBY[gv];r.genLib=gv;
+ if(a==='gm'){var gv=b.getAttribute('data-v'),E=GENBY[gv];r.genLib=gv;if(r.step===0)r.gmTrip=true;r.gmOpen=false;
   if(E){var cur=String(r.hdr.genModel||'');if(!cur.trim()||cur.toUpperCase().indexOf(E.k)<0){r.hdr.genModel=E.n;var mi=document.querySelector('input[data-b="hdr.genModel"]');if(mi)mi.value=E.n;}
    var ft=GENFAM[E.fam].type;if(ft){r.genType=ft;[].forEach.call(document.querySelectorAll('#ptGt button'),function(z){z.classList.toggle('pri',z.getAttribute('data-v')===r.genType);});}}
   dirty();genRefresh();paint();return;}
@@ -15576,7 +15584,7 @@ document.addEventListener('change',function(ev){var t=ev.target;if(t&&t.getAttri
 /* Tower Serial opens pre-filled with the prefix when the tick box is on; VIN is never prefixed (Ravi, 2026-11-07) */
 document.addEventListener('focusin',function(ev){var el=ev.target;if(!el||el.tagName!=='INPUT')return;var isN=el.id==='n-ts',isS=!!(el.dataset&&el.dataset.b==='hdr.towerSerial');if(!isN&&!isS||el.value)return;var on=isN?!!((document.getElementById('n-pre')||{checked:true}).checked):pfxOn();if(!on)return;el.value=PFX;el.dispatchEvent(new Event('input',{bubbles:true}));setTimeout(function(){try{el.setSelectionRange(el.value.length,el.value.length);}catch(err){}},0);},true);
 document.addEventListener('focusout',function(ev){var el=ev.target;if(el&&el.tagName==='INPUT'&&(el.id==='n-ts'||(el.dataset&&el.dataset.b==='hdr.towerSerial'))&&el.value===PFX){el.value='';el.dispatchEvent(new Event('input',{bubbles:true}));}},true);
-(function(){var _ih=infoHtml;infoHtml=function(){var r0=S.rec;if(r0&&r0.genLib&&r0.genLib!=='other'&&!String(r0.hdr.genModel||'').trim()){var E0=GENBY[r0.genLib];if(E0)r0.hdr.genModel=E0.n;}var h=_ih.apply(this,arguments);{var gi=h.indexOf('<div><label class="f">Generator model</label>');if(gi>=0)h=h.slice(0,gi)+'<div style="grid-column:1/-1"><label class="f">Generator model – tap to select, or type it below</label><div id="ptGm" class="gml">'+gmGrid((r0.genLib||(genOf(r0)?genOf(r0).e.k:'')),'gm',true)+'</div></div>'+h.slice(gi);}var m=h.match(/<input data-b="hdr\.towerSerial"[^>]*><\/div>/);if(m)h=h.replace(m[0],m[0]+preBox(S.rec));return (window.DictUI?DictUI.rowHtml():'')+h;};})();
+(function(){var _ih=infoHtml;infoHtml=function(){var r0=S.rec;if(r0&&r0.genLib&&r0.genLib!=='other'&&!String(r0.hdr.genModel||'').trim()){var E0=GENBY[r0.genLib];if(E0)r0.hdr.genModel=E0.n;}var h=_ih.apply(this,arguments);{var gi=h.indexOf('<div><label class="f">Generator model</label>');if(gi>=0)h=h.slice(0,gi)+'<div style="grid-column:1/-1"><label class="f">Generator model – tap to select, or type it below</label>'+gmBtns(r0)+'</div>'+h.slice(gi);}var m=h.match(/<input data-b="hdr\.towerSerial"[^>]*><\/div>/);if(m)h=h.replace(m[0],m[0]+preBox(S.rec));return (window.DictUI?DictUI.rowHtml():'')+h;};})();
 (function(){var st=document.createElement('style');st.textContent=CAPSEL.split(',').map(function(q){return q.trim();}).filter(function(q){return q.charAt(0)!=='#';}).join(',')+'{text-transform:uppercase}#modal input[id^="n-"]:not([type=email]){text-transform:uppercase}'+
  '.gml{display:flex;flex-direction:column;gap:7px}.gmg{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8a3b0a;margin:8px 2px 0}'+
  '.gmr{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid #d5dbe1;border-radius:11px;padding:11px 13px;background:#fff;min-height:48px}.gmr .gmd{flex:0 0 22px;height:22px;border:2px solid #8a97a3;border-radius:50%}'+
@@ -15863,6 +15871,14 @@ new MutationObserver(function(){document.querySelectorAll('input[data-b]').forEa
 button.pri[data-act=adv],button.pri[data-act=rep],button.pri[data-act=tbd],#ptGt button.pri,button.pri[data-act=svc],html[data-theme=dark] button.pri[data-act=adv],html[data-theme=dark] button.pri[data-act=rep],html[data-theme=dark] button.pri[data-act=tbd],html[data-theme=dark] #ptGt button.pri,html[data-theme=dark] button.pri[data-act=svc]{background:#1d5fc4!important;color:#fff!important;border-color:#1d5fc4!important;font-weight:800!important}
 .gt1.on,.gmr.on,html[data-theme=dark] .gt1.on,html[data-theme=dark] .gmr.on{background:#e8590c!important;color:#fff!important;border:2px solid #b8440a!important;font-weight:800!important}
 .gt1.on small,.gmr.on small,html[data-theme=dark] .gt1.on small,html[data-theme=dark] .gmr.on small{color:#fff!important}
+</style>
+<style id="rev128">
+.gmsum{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #d5dbe1;border-radius:11px;padding:10px 13px;background:#fff;min-height:48px}
+.gmsum .gmchg{flex:none;min-height:40px;padding:6px 16px;font-weight:700}
+.grp.grpck{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.grp.grpck small{font-weight:400;opacity:.85;margin-left:6px}
+.grp.grpck .gca{flex:none;min-height:38px;padding:6px 14px;font-weight:700;background:#e8590c!important;color:#fff!important;border:none!important;border-radius:8px}
+html[data-theme=dark] .gmsum{background:#101a24!important;border-color:#2c3a48!important}
 </style>
 <style id="rev124">.cxh{cursor:pointer;position:relative;padding:4px 36px 4px 0!important;-webkit-tap-highlight-color:transparent}
 .cxh::after{content:"\25BE";position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:22px;opacity:.75}
