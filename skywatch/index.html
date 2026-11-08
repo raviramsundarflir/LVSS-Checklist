@@ -14849,7 +14849,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='7e2334fc4f';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='a876e8ecf4';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);Promise.resolve().then(function(){return typeof save==='function'?save():0;}).catch(function(){}).then(function(){return fetch(location.pathname,{cache:'reload'});}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -15822,6 +15822,23 @@ new MutationObserver(function(){document.querySelectorAll('input[data-b]').forEa
 </script>
 <style id="rev115">button.gobtn.pgo[disabled],html[data-theme=dark] button.gobtn.pgo[disabled]{background:transparent!important;border:2px solid #1b8a3a!important;color:#4cd07a!important;opacity:1!important}
 .vbtn.vp.on,html[data-theme=dark] .vbtn.vp.on{background:#1b8a3a!important;color:#fff!important;border-color:#14702d!important}.vbtn.vf.on,html[data-theme=dark] .vbtn.vf.on{background:#c62828!important;color:#fff!important;border-color:#9b1c1c!important}</style>
+<style id="rev120">
+/* Rev 120: a selected chip / toggle is unmistakable - solid fill, bold text, check mark (light and dark) */
+.chip.on::before,.tgl.on::before,#ptGt button.pri::before,button.pri[data-act=svc]::before{content:"\2713\00a0";font-weight:900}
+.chip.on,html[data-theme=dark] .chip.on{background:#1d5fc4!important;color:#fff!important;border-color:#1d5fc4!important;font-weight:800!important}
+.chip.low.on,html[data-theme=dark] .chip.low.on{background:#f2c200!important;color:#000!important;border-color:#a88700!important}
+.chip.med.on,html[data-theme=dark] .chip.med.on{background:#f08a00!important;color:#000!important;border-color:#a65f00!important}
+.chip.high.on,html[data-theme=dark] .chip.high.on{background:#d32f2f!important;color:#fff!important;border-color:#8f1d1d!important}
+.chip.dno.on,html[data-theme=dark] .chip.dno.on{background:#5b6470!important;color:#fff!important;border-color:#2f353d!important}
+.chip.war.on,html[data-theme=dark] .chip.war.on{background:#1b8a3a!important;color:#fff!important;border-color:#14702d!important}
+.chip.nwr.on,html[data-theme=dark] .chip.nwr.on{background:#6a2fb0!important;color:#fff!important;border-color:#4d2182!important}
+.chip.cour.on,html[data-theme=dark] .chip.cour.on{background:#0b7285!important;color:#fff!important;border-color:#075565!important}
+.tgl .sw{display:none}
+.tgl.on,html[data-theme=dark] .tgl.on{background:#b58900!important;color:#fff!important;border-color:#8a6700!important;font-weight:800!important}
+button.pri[data-act=adv],button.pri[data-act=rep],button.pri[data-act=tbd],#ptGt button.pri,button.pri[data-act=svc],html[data-theme=dark] button.pri[data-act=adv],html[data-theme=dark] button.pri[data-act=rep],html[data-theme=dark] button.pri[data-act=tbd],html[data-theme=dark] #ptGt button.pri,html[data-theme=dark] button.pri[data-act=svc]{background:#1d5fc4!important;color:#fff!important;border-color:#1d5fc4!important;font-weight:800!important}
+.gt1.on,.gmr.on,html[data-theme=dark] .gt1.on,html[data-theme=dark] .gmr.on{background:#e8590c!important;color:#fff!important;border:2px solid #b8440a!important;font-weight:800!important}
+.gt1.on small,.gmr.on small,html[data-theme=dark] .gt1.on small,html[data-theme=dark] .gmr.on small{color:#fff!important}
+</style>
 <script>/* easter egg: tap the Teledyne FLIR logo in a page header for a short thermal-camera view */
 (function(){if(window.__flirEgg)return;window.__flirEgg=1;var busy=0;
  function go(){if(busy)return;busy=1;var NS='http://www.w3.org/2000/svg',h=document.documentElement;
