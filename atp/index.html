@@ -14256,6 +14256,31 @@ function autoReason(c){
   return parts.length ? 'Nonconformances found: '+parts.join(', ')+'. See punch list.' : '';
 }
 
+/* platform editor (admin): platforms live in the checklist template (t.plats) so Save + download updates every tablet */
+function applyPlats(list){if(!Array.isArray(list)||!list.length)return;
+ var esc2=function(s){return String(s).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');};
+ var base={};PLATFORMS.forEach(function(p){base[p.c]=p;});
+ var out=list.map(function(q){var b=base[q.c]||{};var pf=String(q.pfx==null?b.pfx:q.pfx),gen=esc2(pf.replace(/[-\s_]+$/,'')).replace(/\\?[-\s_]/g,'[-\\s_]*')||esc2(q.label||q.c);
+  var rx=b.rx?'(?:'+b.rx+'|'+gen+')':gen;
+  return {c:q.c,pt:b.pt||('P_'+q.c),label:q.label||b.label||q.c,pfx:pf,min:Math.max(1,parseInt(q.min,10)||b.min||3),rx:rx,fam:q.fam||b.fam||'L'};});
+ PLATFORMS.length=0;out.forEach(function(p){PLATFORMS.push(p);});
+ SN_RX=new RegExp('^\\s*(?:'+PLATFORMS.map(function(p){return '('+p.rx+')';}).join('|')+')[-\\s_]*','i');}
+window.applyPlats=applyPlats;
+/* extra header fields (admin): kept in HF so the new-inspection form, review table and PDF header all pick them up */
+function applyCf(t){for(var i=HF.length-1;i>=0;i--)if(String(HF[i][0]).indexOf('cf_')===0)HF.splice(i,1);
+ var at=HF.findIndex(function(f){return f[0]==='auditor';});if(at<0)at=HF.length;
+ ((t&&t.cfields)||[]).forEach(function(f,k){if(f&&String(f.label||'').trim())HF.splice(at+k,0,['cf_'+f.id,String(f.label).trim()]);});}
+function cfKeys(){return HF.filter(function(f){return String(f[0]).indexOf('cf_')===0;}).map(function(f){return f[0];});}
+function adminExtras(){var t=S.draft;if(!t.cfields)t.cfields=[];if(!t.plats)t.plats=PLATFORMS.map(function(q){return {c:q.c,label:q.label,pfx:q.pfx,min:q.min,fam:q.fam,built:'LEM'.indexOf(q.c)>=0?1:0};});
+ var fl=function(l,k,v,x){return '<label class="fld">'+l+'<input data-a="'+k+'" '+x+' value="'+esc(v)+'"></label>';};
+ return '<section class="a-sec"><h3 style="margin:0 0 4px">Platforms and serial prefixes</h3><p class="muted">The prefix goes in front of every serial number for that platform. Pad = minimum digits. Letter = the one-letter code used in QR codes.</p>'+
+  t.plats.map(function(q,pi){return '<div class="a-it" style="border:1px solid #cfd6e2;border-radius:10px;padding:10px;margin:8px 0"><div class="grid">'+fl('Name','plabel',q.label,'data-pi="'+pi+'"')+fl('Serial prefix','ppfx',q.pfx,'data-pi="'+pi+'" autocapitalize="off"')+fl('Pad','pmin',String(q.min),'data-pi="'+pi+'" inputmode="numeric"')+fl('Letter','pc',q.c,'data-pi="'+pi+'" maxlength="1"'+(q.built?' disabled':''))+
+   '<label class="fld">Equipment list<select data-a="pfam" data-pi="'+pi+'"><option value="L"'+(q.fam==='L'?' selected':'')+'>LVSS list</option><option value="E"'+(q.fam==='E'?' selected':'')+'>eMSC-L list</option></select></label></div>'+(q.built?'':'<button class="btn light" data-act="a-delp" data-pi="'+pi+'">Remove platform</button>')+'</div>';}).join('')+
+  '<button class="btn light big" style="color:var(--navy)" data-act="a-addp">Add platform</button></section>'+
+  '<section class="a-sec"><h3 style="margin:0 0 4px">Extra header fields</h3><p class="muted">Fields added here appear on the New inspection form and in the report header on the PDF (only when filled in).</p>'+
+  t.cfields.map(function(f,ci){return '<div class="a-it" style="display:flex;gap:8px;align-items:flex-end;margin:6px 0"><label class="fld" style="flex:1">Field label<input data-a="cflabel" data-ci="'+ci+'" value="'+esc(f.label||'')+'" placeholder="e.g. Customer contract #"></label><button class="btn light" data-act="a-delcf" data-ci="'+ci+'">Remove</button></div>';}).join('')+
+  '<button class="btn light big" style="color:var(--navy)" data-act="a-addcf">Add field</button></section>';}
+
 async function loadTemplate(){
   var t=EMBED;
   try{ var o=await DB.get('settings','tplOverride'); if(o && o.v && (o.v.stamp||'') > (EMBED.stamp||'')) t=o.v; }catch(e){}
@@ -14638,7 +14663,7 @@ function renderAdmin(){
     '<main class="narrow"><p class="lead">Changes apply to new inspections. Inspections already started keep the checklist they began with. Item numbers update automatically when lines are added, removed, or moved. To update other tablets, use \u201cSave and download app file\u201d and send them the new file.</p>'+
     '<div class="grid"><label class="fld">Checklist revision<input data-a="revision" value="'+esc(t.revision||'')+'"></label><label class="fld">Admin PIN<input data-a="pin" value="'+esc(t.pin||'')+'" inputmode="numeric"></label></div>'+
     '<label class="full">Required tools (one per line)<textarea data-a="tools">'+esc((t.requiredTools||[]).join('\n'))+'</textarea></label><div style="height:16px"></div>'+
-    adminRows()+
+    adminExtras()+adminRows()+
     '<button class="btn light big" style="color:var(--navy)" data-act="a-addsec">Add section</button>'+adminOrders()+
     '<footer class="home-foot"><button class="linkish" data-act="a-restore">Restore the checklist built into this file</button></footer></main>';
   measureBar(); window.scrollTo(0,y);
@@ -14650,15 +14675,17 @@ function adminValidate(){
     for(var ii=0;ii<t.sections[si].items.length;ii++) if(!t.sections[si].items[ii].text.trim()){ alert('A line item in \u201c'+t.sections[si].title+'\u201d is empty. Add text or remove it.'); return false; }
   }
   if(!t.sections.length){ alert('The checklist needs at least one section.'); return false; }
+  if(t.plats){ var seen={}; for(var pi=0;pi<t.plats.length;pi++){ var q=t.plats[pi]; q.c=String(q.c||'').trim().toUpperCase().slice(0,1); q.label=String(q.label||'').trim(); q.pfx=String(q.pfx||''); q.min=Math.max(1,parseInt(q.min,10)||3); if(!q.c||!q.label||!q.pfx.trim()){ alert('Every platform needs a name, a serial prefix and a one-letter code.'); return false; } if(seen[q.c]){ alert('Two platforms use the letter '+q.c+'. Each needs its own.'); return false; } seen[q.c]=1; } }
   return true;
 }
 async function adminSave(){
   if(!adminValidate()) return false;
   var t=S.draft; t.sections.forEach(function(s){ s.items.forEach(function(it){ it.text=it.text.trim(); it.timed=(it.timed||'').trim(); if(!it.timed) delete it.timed; }); if(!s.warning) delete s.warning; });
   if(Array.isArray(t.orders)) t.orders=t.orders.filter(function(o){ return (o.po||'').trim()||(o.so||'').trim(); }).map(function(o){ return {po:(o.po||'').trim(),so:(o.so||'').trim(),to:(o.to||'').trim(),ship:(o.ship||'').trim()}; });
+  t.cfields=(t.cfields||[]).filter(function(f){ return String(f.label||'').trim(); }).map(function(f){ return {id:f.id,label:String(f.label).trim()}; });
   t.stamp=new Date().toISOString();
   await DB.put('settings',{k:'tplOverride', v:clone(t)});
-  S.tpl=clone(t); S.draftDirty=false;
+  S.tpl=clone(t); S.draftDirty=false; applyCf(S.tpl); if(S.tpl.plats) applyPlats(S.tpl.plats);
   return true;
 }
 async function adminDownload(){
@@ -14726,7 +14753,7 @@ function atpPdf(mode){
   d.setFont('helvetica','normal'); d.setFontSize(10); d.setTextColor(90); d.text(cl(t.subtitle||''),MX+lw+20,60);
   hx(d,'setFillColor','#5b8dd6'); d.rect(MX,24+lh+8,CW-FQW,7,'F'); y=24+lh+24;
   var cell=function(x,yy,w,hh,lab,val){ d.setDrawColor(170); d.setLineWidth(.6); d.rect(x,yy,w,hh); d.setFont('helvetica','normal'); d.setFontSize(6.8); d.setTextColor(110); d.text(cl(lab),x+4,yy+8); d.setFontSize(9.5); d.setTextColor(0); d.text(wrap(d,val,w-8),x+4,yy+19); };
-  var HFP=HF.filter(function(f){ return ['newSerial','oldSerial','inspector','date','auditor'].indexOf(f[0])>=0; }).concat([['customer','Customer']]).concat(HF.filter(function(f){ var w=String(h.wbs||'').trim(); var ids=w?['wbs']:['rma','so','acct']; return ids.concat(['po','fso']).indexOf(f[0])>=0 && String(h[f[0]]||'').trim(); }));
+  var HFP=HF.filter(function(f){ return ['newSerial','oldSerial','inspector','date','auditor'].indexOf(f[0])>=0; }).concat([['customer','Customer']]).concat(HF.filter(function(f){ var w=String(h.wbs||'').trim(); var ids=w?['wbs']:['rma','so','acct']; return ids.concat(['po','fso']).concat(cfKeys()).indexOf(f[0])>=0 && String(h[f[0]]||'').trim(); }));
   var frontQr=function(){ var n=FQ.getModuleCount(), qz=4, cs=FQS/(n+2*qz); d.setFillColor(255,255,255); d.rect(FQX,FQY,FQS,FQS,'F'); d.setFillColor(0,0,0);
     for(var i3=0;i3<n;i3++) for(var j3=0;j3<n;j3++) if(FQ.isDark(i3,j3)) d.rect(FQX+(j3+qz)*cs,FQY+(i3+qz)*cs,cs+.15,cs+.15,'F');
     d.setFont('helvetica','bold'); d.setFontSize(7.5); d.setTextColor(0); d.text('ATP QR code',FQX+FQS/2,FQY+FQS+8,{align:'center'}); d.setFont('helvetica','normal'); d.setFontSize(6.8); d.setTextColor(90); d.text('Scan in the next form',FQX+FQS/2,FQY+FQS+15,{align:'center'}); };
@@ -15987,7 +16014,7 @@ window.offReadiness=readiness;
 })();
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/06/2026',site:'86'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/07/2026',site:'102'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -16917,6 +16944,10 @@ app.addEventListener('click', async function(e){
         else if(act==='a-secdown') move(t.sections, si, 1);
         else if(act==='a-secdel'){ if(!confirm('Delete the section \u201c'+t.sections[si].title+'\u201d and all its line items?')) return; t.sections.splice(si,1); }
         else if(act==='a-addsec') t.sections.push({title:'New section', items:[{text:''}], spares:3});
+        else if(act==='a-addcf'){ if(!t.cfields) t.cfields=[]; t.cfields.push({id:'f'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),label:''}); }
+        else if(act==='a-delcf'){ t.cfields.splice(+el.dataset.ci,1); }
+        else if(act==='a-addp'){ t.plats.push({c:'',label:'New platform',pfx:'NEW-',min:3,fam:'L',built:0}); }
+        else if(act==='a-delp'){ if(!confirm('Remove this platform?')) return; t.plats.splice(+el.dataset.pi,1); }
         else if(act==='a-ordadd'){ if(!Array.isArray(t.orders)) t.orders=clone(ddOrders()); t.orders.push({po:'',so:'',to:'',ship:''}); }
         else if(act==='a-orddel'){ var oi2=+el.dataset.oi; if(!confirm('Remove this saved order?')) return; t.orders.splice(oi2,1); }
         else return;
@@ -16953,6 +16984,8 @@ app.addEventListener('input', function(e){
     else if(a==='pin') t.pin=el.value;
     else if(a==='tools') t.requiredTools=el.value.split('\n').map(function(x){ return x.trim(); }).filter(Boolean);
     else if(a==='opo'||a==='oso'||a==='oto'||a==='oship'){ var oi=+el.dataset.oi; if(Array.isArray(t.orders)&&t.orders[oi]) t.orders[oi][{opo:'po',oso:'so',oto:'to',oship:'ship'}[a]]=el.value; }
+    else if(a==='cflabel'){ var cc=+el.dataset.ci; if(t.cfields&&t.cfields[cc]) t.cfields[cc].label=el.value; }
+    else if(a==='plabel'||a==='ppfx'||a==='pmin'||a==='pc'||a==='pfam'){ var pp=+el.dataset.pi; if(t.plats&&t.plats[pp]) t.plats[pp][{plabel:'label',ppfx:'pfx',pmin:'min',pc:'c',pfam:'fam'}[a]]=el.value; }
     else if(a==='sspares') return;
     S.draftDirty=true; return;
   }
@@ -17007,14 +17040,14 @@ SendTo.init({rec:function(){ return S.rec; },dirty:function(){ markDirty(); save
 /* ---------------- Boot ---------------- */
 (async function(){
   await DB.open();
-  S.tpl=await loadTemplate(); ensureCredit();
+  S.tpl=await loadTemplate(); ensureCredit(); try{ applyCf(S.tpl); if(S.tpl.plats) applyPlats(S.tpl.plats); }catch(e){}
   try{ var la=await DB.get('settings','lastAuditor'); S.lastAuditor=(la&&la.v)||''; }catch(e){}
   renderHome();
 })();
 })();
 
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='25fe3704b6';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='e4b8a01edf';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -17159,5 +17192,21 @@ var mo=new MutationObserver(function(){clearTimeout(mo.t);mo.t=setTimeout(functi
 function start(){mo.observe(document.body,{childList:true,subtree:true});}
 if(document.body)start();else document.addEventListener('DOMContentLoaded',start);
 })();
-</script></body>
+</script><script>/* easter egg: tap the Teledyne FLIR logo in a page header for a short thermal-camera view */
+(function(){if(window.__flirEgg)return;window.__flirEgg=1;var busy=0;
+ function go(){if(busy)return;busy=1;var NS='http://www.w3.org/2000/svg',h=document.documentElement;
+  var sv=document.createElementNS(NS,'svg');sv.setAttribute('width','0');sv.setAttribute('height','0');sv.style.cssText='position:absolute;pointer-events:none';
+  sv.innerHTML='<filter id="flirIron" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0 0 0 1 0"/><feComponentTransfer><feFuncR type="table" tableValues="0 0.2 0.5 0.85 1 1 1"/><feFuncG type="table" tableValues="0 0 0.05 0.25 0.6 0.9 1"/><feFuncB type="table" tableValues="0.05 0.45 0.55 0.2 0 0.15 0.85"/></feComponentTransfer></filter>';
+  h.appendChild(sv);document.body.style.transition='filter .25s';document.body.style.filter='url(#flirIron)';
+  var o=document.createElement('div');o.setAttribute('role','status');
+  o.style.cssText='position:fixed;left:0;right:0;top:0;bottom:0;z-index:2147483000;pointer-events:none;font:700 13px ui-monospace,Menlo,Consolas,monospace;color:#fff;text-shadow:0 0 4px #000';
+  o.innerHTML='<div style="position:absolute;left:50%;top:50%;width:84px;height:84px;margin:-42px 0 0 -42px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 6px #000"></div><div style="position:absolute;left:50%;top:50%;width:120px;height:2px;margin:-1px 0 0 -60px;background:#fff"></div><div style="position:absolute;left:50%;top:50%;width:2px;height:120px;margin:-60px 0 0 -1px;background:#fff"></div>'+
+   '<div style="position:absolute;left:14px;top:84px;line-height:1.5">● REC &nbsp;THERMAL · IRON<br>FLIR VISION</div><div id="flirT" style="position:absolute;left:50%;top:50%;margin:52px 0 0 -40px;width:80px;text-align:center;font-size:15px">36.9 °C</div><div style="position:absolute;left:0;right:0;bottom:16px;text-align:center;font-size:12px;letter-spacing:.06em">SEEING WHAT OTHERS CAN’T &nbsp;•&nbsp; TAP TO EXIT</div>';
+  h.appendChild(o);var t=o.querySelector('#flirT'),n=0,iv=setInterval(function(){n++;t.textContent=(36.4+Math.random()*1.1).toFixed(1)+' °C';},180);
+  function done(){clearInterval(iv);document.removeEventListener('click',done,true);document.body.style.filter='';setTimeout(function(){document.body.style.transition='';if(o.parentNode)o.parentNode.removeChild(o);if(sv.parentNode)sv.parentNode.removeChild(sv);busy=0;},300);}
+  setTimeout(function(){document.addEventListener('click',done,true);},350);setTimeout(done,4500);}
+ document.addEventListener('click',function(e){var i=e.target;if(!i||i.tagName!=='IMG')return;if(i.classList.contains('p-logo')||i.closest('.p-cover'))return;
+  var logo=i.alt==='Teledyne FLIR'||(i.alt===''&&i.closest('.bar,.top,header'));if(!logo)return;e.preventDefault();go();},false);
+})();</script>
+</body>
 </html>

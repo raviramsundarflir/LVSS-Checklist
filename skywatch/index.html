@@ -13908,6 +13908,9 @@ function banner(d,y,txt,sub,res,pass){hx(d,'setFillColor','#000000');hx(d,'setDr
 function levelChip(d,x,y,w,lv,rep){const L=LVK[lv];hx(d,'setFillColor',L.c);d.roundedRect(x,y,w,13,3,3,'F');if(lv==='dno'){hx(d,'setDrawColor','#ff4d4d');d.roundedRect(x,y,w,13,3,3,'S');}d.setFont('helvetica','bold');d.setFontSize(w<90?(lv==='dno'?5.8:7):8);hx(d,'setTextColor',L.t);d.text(L.n.toUpperCase(),x+(rep?(w-14)/2:w/2),y+9.5,{align:'center'});if(rep){hx(d,'setFillColor','#ffffff');d.circle(x+w-9,y+6.5,5.6,'F');ckMark(d,x+w-9,y+7,.3,1.8);}}
 function rmaLines(r){const RM=[];r.swap.list.forEach(e=>{if(rmaOk(e.rma))RM.push(`${e.t||'Device'}${e.old?' S/N '+e.old:''} (removed): RMA ${rmaOk(e.rma)}`);(e.mid||[]).forEach(m=>{if(rmaOk(m.rma))RM.push(`${e.t||'Device'} S/N ${m.s} (removed, failed): RMA ${rmaOk(m.rma)}`);});});return RM.length?'\n\nRMA numbers:\n'+RM.map(x=>'- '+x).join('\n'):'';}
 function sparesLine(r){const L=sparesLeft(r);if(!L.length)return '';return '\n\nSpare consumables left on tower: '+L.map(x=>x.n+(x.det?' ('+x.det+')':'')).join('; ')+'. '+(r.spares.sec==='yes'?'Secured.':r.spares.sec==='no'?'NOT SECURED.':'')+((r.spares.where||'').trim()?' Stored: '+r.spares.where.trim()+'.':'');}
+/* extra header fields added in Admin (t.cfields): kept in HDR_CUST so the info card and blank forms pick them up */
+function applyCf(t){for(var i=HDR_CUST.length-1;i>=0;i--)if(String(HDR_CUST[i][0]).indexOf('cf_')===0)HDR_CUST.splice(i,1);((t&&t.cfields)||[]).forEach(function(f){if(f&&String(f.label||'').trim())HDR_CUST.push(['cf_'+f.id,String(f.label).trim()]);});}
+function cfPdf(d,y,h){var L=HDR_CUST.filter(function(f){return String(f[0]).indexOf('cf_')===0&&String(h[f[0]]||'').trim();}).map(function(f){return f[1]+': '+String(h[f[0]]).trim();});if(!L.length)return y;d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(40);var ls=d.splitTextToSize(cl(L.join('   |   ')),CW);d.text(ls,MX,y+6);return y+4+ls.length*11;}
 function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;const ens=n=>{if(y+n>BOT){d.addPage();y=TOP}};
  drawCert(d,r);
  // punch list report
@@ -13916,6 +13919,7 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
  d.setFont('helvetica','bold');d.setFontSize(15);d.setTextColor(0);d.text(cl(`Punch List Items - SN: ${h.towerSerial||'________'}`),MX,y+12);
  if(r.verdict){d.setFontSize(14);hx(d,'setTextColor',r.verdict==='pass'?'#1b8a3a':'#c62828');d.text(r.verdict==='pass'?'PASSED':'FAILED',PW-MX,y+12,{align:'right'});}y+=18;
  d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(80);d.text(cl(`${h.customer||''}   |   ${P.length} failed   |   ${P.filter(x=>r.items[x.id].rep).length} repaired   |   ${st.open} open${st.quote?`   |   ${st.quote} to be quoted`:''}   |   Sorted: Do Not Operate, High, Medium, Low`),MX,y+6);y+=16;
+ y=cfPdf(d,y,h);
  {const cu=(r.cust||[]).filter(c=>(c.t||'').trim());if(cu.length){ens(24);d.setFont('helvetica','bold');d.setFontSize(9);d.setTextColor(30);d.text('Customer-reported issues',MX,y+6);y+=12;d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(0);cu.forEach((c,i)=>{const dt=fmtD(c.d||h.repDate);const ls=wrap(d,(i+1)+'. '+c.t.trim()+(dt?'  (reported '+dt+')':'')+swCuRef(r,c),CW);ens(ls.length*10.5+2);d.text(ls,MX,y+6);y+=ls.length*10.5;});y+=8;}}
  const G=[['PUNCH LIST - WARRANTY ITEMS',P.filter(x=>r.items[x.id].war!=='nw'),'#1f5fae','Resolution'],['REPAIRS TO BE QUOTED - NON-WARRANTY',P.filter(x=>{const q=r.items[x.id];return q.war==='nw'&&!q.courtesy}),'#b35c00','Quote notes'],['COURTESY REPAIRS PERFORMED - NON-WARRANTY',P.filter(x=>{const q=r.items[x.id];return q.war==='nw'&&q.courtesy}),'#0b7285','Resolution'],['NOT TESTED - BLOCKED BY OTHER ISSUES',blockedList(r),'#8a6d00','Blocked by / notes']];
  const pc=[[0,40],[40,194],[234,84],[318,76],[394,146]];
@@ -14195,7 +14199,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
   catch(err){if(err&&err.name!=='AbortError')alert('Share failed: '+err.message)}break;}
  case 'backup':doBackup();break;
  case 'restore':doRestore();break;
- case 'admin':{const p=prompt('Admin PIN:');if(p!==ADMIN_PIN){if(p!==null)alert('Wrong PIN');break;}S.adm=clone(curTpl());S.view='admin';render();break;}
+ case 'admin':{const p=prompt('Admin PIN:');if(p!==ADMIN_PIN){if(p!==null)alert('Wrong PIN');break;}S.adm=clone(curTpl());if(!S.adm.cfields)S.adm.cfields=[];S.view='admin';render();break;}
  default:adminClick(a,b);}
 });
 function firstVis(){const l=[...document.querySelectorAll('#body .pl')].find(e=>e.getBoundingClientRect().bottom>60);return l?l.id.slice(3):null}
@@ -14223,6 +14227,9 @@ function doRestore(){const i=document.createElement('input');i.type='file';i.acc
 function renderAdmin(){const t=S.adm;
  app.innerHTML=`<div class="top"><div class="bar"><img src="${LOGO2}" alt="Teledyne FLIR"><div class="brand">Admin – edit checklist<small>Applies to NEW inspections. In-progress ones keep their own copy.</small></div><button data-act="ad-exit">Exit</button></div></div>
  <div class="wrap ad"><div class="card"><label class="f">Revision label</label><input data-ad="revision" value="${esc(t.revision||'')}"><div class="sp"></div><div class="row"><button class="pri" data-act="ad-save">Save on this tablet</button><button class="pri" data-act="ad-dl">Save + download updated app file</button></div><p class="muted">Item numbers are automatic (1, 2, 3 … in order), so inserting or deleting renumbers everything after it. “Readings” = optional entry boxes on an item, separated by ; (e.g. At Ground Level; Fully Raised).</p></div>
+ <div class="card"><h3 style="margin:0 0 4px">Extra header fields</h3><p class="muted">Fields added here appear in Customer &amp; order on every new inspection and print on the punch list page of the PDF (only when filled in).</p>
+ ${(t.cfields||[]).map((f,fi)=>`<div class="grp"><div class="row" style="flex-wrap:nowrap;align-items:flex-end"><div style="flex:1"><label class="f">Field label</label><input data-ad="cfields.${fi}.label" value="${esc(f.label||'')}" placeholder="e.g. Customer contract #"></div><button class="dng" data-act="ad-delcf" data-fi="${fi}">✕</button></div></div>`).join('')}
+ <div style="margin:6px 0 4px"><button data-act="ad-addcf">＋ Add field</button></div></div>
  ${t.sections.map((s,si)=>`<div class="card"><div class="row"><b>Section ${si+1}</b><input data-ad="sections.${si}.title" value="${esc(s.title)}" style="flex:1;min-width:180px"><button data-act="ad-mv" data-k="s" data-si="${si}" data-d="-1">↑</button><button data-act="ad-mv" data-k="s" data-si="${si}" data-d="1">↓</button><button class="dng" data-act="ad-del" data-k="s" data-si="${si}">✕</button></div>
   ${s.groups.map((g,gi)=>`<div class="grp"><div class="row"><span>Group</span><input data-ad="sections.${si}.groups.${gi}.title" value="${esc(g.title)}" style="flex:1;min-width:160px"><button data-act="ad-mv" data-k="g" data-si="${si}" data-gi="${gi}" data-d="-1">↑</button><button data-act="ad-mv" data-k="g" data-si="${si}" data-gi="${gi}" data-d="1">↓</button><button class="dng" data-act="ad-del" data-k="g" data-si="${si}" data-gi="${gi}">✕</button></div></div>
   ${g.items.map((it,ii)=>`<div class="it"><div class="tx"><input data-ad="sections.${si}.groups.${gi}.items.${ii}.t" value="${esc(it.t)}"><input data-adf="sections.${si}.groups.${gi}.items.${ii}.f" value="${esc((it.f||[]).join('; '))}" placeholder="Readings (optional), separated by ;" style="margin-top:4px;min-height:34px"></div><button data-act="ad-mv" data-k="i" data-si="${si}" data-gi="${gi}" data-ii="${ii}" data-d="-1">↑</button><button data-act="ad-mv" data-k="i" data-si="${si}" data-gi="${gi}" data-ii="${ii}" data-d="1">↓</button><button class="dng" data-act="ad-del" data-k="i" data-si="${si}" data-gi="${gi}" data-ii="${ii}">✕</button></div>`).join('')}
@@ -14238,14 +14245,17 @@ function adminClick(a,b){if(!a.startsWith('ad-'))return;const t=S.adm,d=b.datase
  if(a==='ad-save'||a==='ad-dl'){adminSave(a==='ad-dl');return;}
  if(a==='ad-mv'){const l=arr(),j=idx+ +d.d;if(j<0||j>=l.length)return;[l[idx],l[j]]=[l[j],l[idx]];renderAdmin();return;}
  if(a==='ad-del'){if(!confirm('Delete this '+(d.k==='s'?'section and everything in it':d.k==='g'?'group and its items':'item')+'?'))return;arr().splice(idx,1);renderAdmin();return;}
+ if(a==='ad-addcf'){t.cfields.push({id:'f'+uid(),label:''});renderAdmin();return;}
+ if(a==='ad-delcf'){t.cfields.splice(+d.fi,1);renderAdmin();return;}
  if(a==='ad-add'){if(d.k==='s')t.sections.push({id:'s'+uid(),title:'New section',groups:[{title:'New group',items:[]}]});else if(d.k==='g')t.sections[si].groups.push({title:'New group',items:[]});else t.sections[si].groups[gi].items.push({id:'a'+uid(),t:'New item'});renderAdmin();}}
-async function adminSave(download){const t=clone(S.adm);t.stamp=Math.max(Date.now(),(curTpl().stamp||0)+1);S.settings.tplOverride=t;await setting('tplOverride',t);S.adm=clone(t);
+async function adminSave(download){const t=clone(S.adm);t.cfields=(t.cfields||[]).filter(function(f){return String(f.label||'').trim();}).map(function(f){return {id:f.id||('f'+uid()),label:String(f.label).trim()};});t.stamp=Math.max(Date.now(),(curTpl().stamp||0)+1);S.settings.tplOverride=t;await setting('tplOverride',t);S.adm=clone(t);applyCf(t);
  if(download){const mk='<script id="tpl-data" type="application/json">',i=SOURCE.indexOf(mk),j=SOURCE.indexOf('<'+'/script>',i);const html=SOURCE.slice(0,i+mk.length)+JSON.stringify(t).replace(/</g,'\\u003c')+SOURCE.slice(j);
   dlBlob(new Blob([html],{type:'text/html'}),`SkyWatch_Inspection_App_${today()}.html`);}
  alert('Saved. New inspections will use this checklist.'+(download?' The updated app file was downloaded – use it to update other tablets.':''));}
 
 /* ---------- start ---------- */
 (async()=>{await openDB();try{for(const k of ['tplOverride','tscEmail','lastTech','techNames','lastTechEmail','lastAuditor']){const v=await setting(k);if(v!==undefined)S.settings[k]=v;}}catch(e){}
+ try{applyCf(curTpl());}catch(e){}
  try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
  render();})();
 /* ===== swap chain / correction-vs-swap prompt / last check / failed-unit RMA / could-not-test dialog (SkyWatch) ===== */
@@ -14754,7 +14764,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/07/2026',site:'101'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/07/2026',site:'102'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14817,7 +14827,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='8c8d8ca320';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='c6009f2585';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -15777,4 +15787,20 @@ window.DICTATE_FIELDS=[
  {sel:'input[data-b="hdr.po"],input[data-b="hdr.salesOrder"],input[data-b="hdr.serviceOrder"],input[data-b="hdr.rma"],input[data-b="hdr.genHours"]',kind:'digits'},
  {sel:'input[data-b="hdr.customer"],input[data-b="hdr.contact"],input[data-b="hdr.address"],input[data-b="hdr.genModel"],input[data-b="hdr.tech"],input#n-cu,input#n-te',kind:'text'}];
 </script>
+<script>/* easter egg: tap the Teledyne FLIR logo in a page header for a short thermal-camera view */
+(function(){if(window.__flirEgg)return;window.__flirEgg=1;var busy=0;
+ function go(){if(busy)return;busy=1;var NS='http://www.w3.org/2000/svg',h=document.documentElement;
+  var sv=document.createElementNS(NS,'svg');sv.setAttribute('width','0');sv.setAttribute('height','0');sv.style.cssText='position:absolute;pointer-events:none';
+  sv.innerHTML='<filter id="flirIron" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0 0 0 1 0"/><feComponentTransfer><feFuncR type="table" tableValues="0 0.2 0.5 0.85 1 1 1"/><feFuncG type="table" tableValues="0 0 0.05 0.25 0.6 0.9 1"/><feFuncB type="table" tableValues="0.05 0.45 0.55 0.2 0 0.15 0.85"/></feComponentTransfer></filter>';
+  h.appendChild(sv);document.body.style.transition='filter .25s';document.body.style.filter='url(#flirIron)';
+  var o=document.createElement('div');o.setAttribute('role','status');
+  o.style.cssText='position:fixed;left:0;right:0;top:0;bottom:0;z-index:2147483000;pointer-events:none;font:700 13px ui-monospace,Menlo,Consolas,monospace;color:#fff;text-shadow:0 0 4px #000';
+  o.innerHTML='<div style="position:absolute;left:50%;top:50%;width:84px;height:84px;margin:-42px 0 0 -42px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 6px #000"></div><div style="position:absolute;left:50%;top:50%;width:120px;height:2px;margin:-1px 0 0 -60px;background:#fff"></div><div style="position:absolute;left:50%;top:50%;width:2px;height:120px;margin:-60px 0 0 -1px;background:#fff"></div>'+
+   '<div style="position:absolute;left:14px;top:84px;line-height:1.5">● REC &nbsp;THERMAL · IRON<br>FLIR VISION</div><div id="flirT" style="position:absolute;left:50%;top:50%;margin:52px 0 0 -40px;width:80px;text-align:center;font-size:15px">36.9 °C</div><div style="position:absolute;left:0;right:0;bottom:16px;text-align:center;font-size:12px;letter-spacing:.06em">SEEING WHAT OTHERS CAN’T &nbsp;•&nbsp; TAP TO EXIT</div>';
+  h.appendChild(o);var t=o.querySelector('#flirT'),n=0,iv=setInterval(function(){n++;t.textContent=(36.4+Math.random()*1.1).toFixed(1)+' °C';},180);
+  function done(){clearInterval(iv);document.removeEventListener('click',done,true);document.body.style.filter='';setTimeout(function(){document.body.style.transition='';if(o.parentNode)o.parentNode.removeChild(o);if(sv.parentNode)sv.parentNode.removeChild(sv);busy=0;},300);}
+  setTimeout(function(){document.addEventListener('click',done,true);},350);setTimeout(done,4500);}
+ document.addEventListener('click',function(e){var i=e.target;if(!i||i.tagName!=='IMG')return;if(i.classList.contains('p-logo')||i.closest('.p-cover'))return;
+  var logo=i.alt==='Teledyne FLIR'||(i.alt===''&&i.closest('.bar,.top,header'));if(!logo)return;e.preventDefault();go();},false);
+})();</script>
 </body></html>
