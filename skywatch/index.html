@@ -13542,11 +13542,9 @@ function serHtml(){const r=S.rec;const cnt={};
  <div class="row"><button class="pri" data-act="addeq" data-t="Camera">＋ Add camera</button><button class="pri" data-act="addeq" data-t="NVR / DVR / MER">＋ Add NVR / DVR / MER</button><button class="pri" data-act="addeq" data-t="${WL}">＋ Add wireless device</button></div>
  ${r.swap.list.length?`<div class="card" style="border:2px solid #7b4fb5;margin-top:14px"><h3>Serialized devices swapped</h3><p class="muted" style="margin:0">Recorded automatically when a serial number was changed and confirmed as an actual swap.</p>${r.swap.list.map((e,i)=>swEntryHtml(e,i)).join('')}</div>`:''}`;}
 function infoRepHtml(){const r=S.rec,L=r.cust||[];
- return `<h2>Customer-reported issues</h2><p class="muted">Enter the date and issues exactly as they appear in the RMA folder or the customer's email. Findings from the inspection are recorded on the Inspect step.</p>
- <label class="f">Date the customer reported these concerns to FLIR</label><input type="date" data-b="hdr.repDate" value="${esc(r.hdr.repDate||'')}" style="max-width:260px">
+ return `<h2>Customer-reported issues</h2><p class="muted">Enter the issues exactly as they appear in the RMA folder or the customer's email. Findings from the inspection are recorded on the Inspect step.</p>
  <h3 style="margin:14px 0 4px">Issues the customer reported (${L.length})</h3>
- ${L.map((c,i)=>`<div class="card" style="background:#f8fafd;margin-bottom:8px"><div class="row" style="flex-wrap:nowrap"><input data-b="cust.${i}.t" value="${esc(c.t||'')}" placeholder="Customer-reported issue" style="flex:1"><button class="dng" data-act="rmcust" data-i="${i}" style="min-height:40px;padding:4px 10px">✕</button></div>
-  <div class="row" style="margin-top:6px"><span class="muted" style="font-size:13px">Reported on</span><input type="date" data-b="cust.${i}.d" value="${esc(c.d||'')}" style="max-width:190px;min-height:38px;padding:4px 8px"><span class="muted" style="font-size:13px">(blank = the date above)</span></div></div>`).join('')}
+ ${L.map((c,i)=>`<div class="card" style="background:#f8fafd;margin-bottom:8px"><div class="row" style="flex-wrap:nowrap"><input data-b="cust.${i}.t" value="${esc(c.t||'')}" placeholder="Customer-reported issue" style="flex:1"><button class="dng" data-act="rmcust" data-i="${i}" style="min-height:40px;padding:4px 10px">✕</button></div></div>`).join('')}
  <button class="pri" data-act="addcust">＋ Add customer-reported issue</button>`;}
 function infoHtml(){const r=S.rec;
  return `<div class="card"><h2>Customer & order</h2><p class="muted">Enter once – these values are reused in the checklist report, punch list, Completion Certificate and email.</p><div class="grid">${HDR_CUST.map(f=>inp('hdr.'+f[0],f[1],{type:f[2]})).join('')}</div></div>
@@ -13965,7 +13963,7 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
  if(r.verdict){d.setFontSize(14);hx(d,'setTextColor',r.verdict==='pass'?'#1b8a3a':'#c62828');d.text(r.verdict==='pass'?'PASSED':'FAILED',PW-MX,y+12,{align:'right'});}y+=18;
  d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(80);d.text(cl(`${h.customer||''}   |   ${P.length} failed   |   ${P.filter(x=>r.items[x.id].rep).length} repaired   |   ${st.open} open${st.quote?`   |   ${st.quote} to be quoted`:''}   |   Sorted: Do Not Operate, High, Medium, Low`),MX,y+6);y+=16;
  y=cfPdf(d,y,h);
- {const cu=(r.cust||[]).filter(c=>(c.t||'').trim());if(cu.length){ens(24);d.setFont('helvetica','bold');d.setFontSize(9);d.setTextColor(30);d.text('Customer-reported issues',MX,y+6);y+=12;d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(0);cu.forEach((c,i)=>{const dt=fmtD(c.d||h.repDate);const ls=wrap(d,(i+1)+'. '+c.t.trim()+(dt?'  (reported '+dt+')':'')+swCuRef(r,c),CW);ens(ls.length*10.5+2);d.text(ls,MX,y+6);y+=ls.length*10.5;});y+=8;}}
+ {const cu=(r.cust||[]).filter(c=>(c.t||'').trim());if(cu.length){ens(24);d.setFont('helvetica','bold');d.setFontSize(9);d.setTextColor(30);d.text('Customer-reported issues',MX,y+6);y+=12;d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(0);cu.forEach((c,i)=>{const ls=wrap(d,(i+1)+'. '+c.t.trim()+swCuRef(r,c),CW);ens(ls.length*10.5+2);d.text(ls,MX,y+6);y+=ls.length*10.5;});y+=8;}}
  const G=[['PUNCH LIST - WARRANTY ITEMS',P.filter(x=>r.items[x.id].war!=='nw'),'#1f5fae','Resolution'],['REPAIRS TO BE QUOTED - NON-WARRANTY',P.filter(x=>{const q=r.items[x.id];return q.war==='nw'&&!q.courtesy}),'#b35c00','Quote notes'],['COURTESY REPAIRS PERFORMED - NON-WARRANTY',P.filter(x=>{const q=r.items[x.id];return q.war==='nw'&&q.courtesy}),'#0b7285','Resolution'],['NOT TESTED - BLOCKED BY OTHER ISSUES',blockedList(r),'#8a6d00','Blocked by / notes']];
  const pc=[[0,40],[40,194],[234,84],[318,76],[394,146]];
  const drawG=gi=>{const g=G[gi];if(gi>0&&!g[1].length)return;if(gi===1){d.addPage();y=TOP;}ens(60);
@@ -14815,7 +14813,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/08/2026',site:'125'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/08/2026',site:'126'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14878,7 +14876,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='34bec7f9ef';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='5ee87d939a';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);Promise.resolve().then(function(){return typeof save==='function'?save():0;}).catch(function(){}).then(function(){return fetch(location.pathname,{cache:'reload'});}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -15315,8 +15313,7 @@ var SECS=[
   ['r7','Open punch-list items from last visit','op'],
   ['r8','Spares left on site last visit (so you don’t buy what is already there)','sp']]}]},
  {id:'s3',t:'3. Bring',n:'Pack these before you fly; everything else is bought on arrival (section 4).',g:[
-  {h:'Generator parts',gen:1,i:[
-   ['b2','Coolant','cool']]},
+  {h:'Generator parts',gen:1,i:[]},
   {h:'Grease',i:[
    ['b3','Grease gun and grease',['The form lists 35 grease points: 18 left side, 17 right side (count varies by model)']],
    ['b9','Spare Zerk: straight, 3/8"-24 UNF male, 5/8" tall (McMaster 1095K96)',['Two different Zerk sizes are used on the tower'],1],
@@ -15332,8 +15329,7 @@ var SECS=[
    ['b14','USB hub',['Optional but very highly recommended']],
    ['b16','RJ45 patch cable',['Optional but very highly recommended']],
    ['b19','CCTV tester',['For troubleshooting cameras']],
-   ['b17','Disposable nitrile gloves']]},
-  {h:'Keys',i:[
+   ['b17','Disposable nitrile gloves'],
    ['j8','SkyWatch keys']]}]},
  {id:'s4',t:'4. Buy on arrival',n:'Techs usually fly to the customer’s city, so these are bought locally. Check section 2 first for spares already left on site.',g:[{i:[
   ['a1','Engine oil','oilbuy'],
@@ -15884,7 +15880,7 @@ button.pri[data-act=adv],button.pri[data-act=rep],button.pri[data-act=tbd],#ptGt
   if(r.step===0){var p=c&&c.querySelector('.ptsc');var q=p&&(p.textContent||'').match(/(\d+)\s*\/\s*(\d+)/);if(!q)return '';return (+q[1]===+q[2]&&+q[2]>0)?'All done':q[1]+' of '+q[2]+' checked';}
   if(k==='Customer & order'){if(h.customer)a.push(h.customer);if(h.salesOrder)a.push('Sales order '+h.salesOrder);if(h.serviceOrder)a.push('Service order '+h.serviceOrder);return a.join(' · ');}
   if(k==='svcCard'){SVC.forEach(function(q){if((r.svc.sel||{})[q[0]])a.push(q[1]);});(r.svc.extra||[]).forEach(function(x){if((x.t||'').trim())a.push(x.t.trim());});return a.join(' · ')||'No service selected';}
-  if(k==='infoRep'){var n=(r.cust||[]).filter(function(c){return (c.t||'').trim();}).length;return n+' customer-reported issue'+(n===1?'':'s')+(h.repDate?' · reported '+fmtD(h.repDate):'');}
+  if(k==='infoRep'){var n=(r.cust||[]).filter(function(c){return (c.t||'').trim();}).length;return n+' customer-reported issue'+(n===1?'':'s')+'';}
   if(k==='infoSer'){var c=HDR_SER.filter(function(f){return (h[f[0]]||'').toString().trim();}).length;return c+' of '+HDR_SER.length+' serial numbers entered';}
   return '';}
  function apply(){if(S.view!=='rec'||!S.rec||(S.rec.step!==1&&S.rec.step!==0)||S.audit)return;var b=document.getElementById('body');if(!b)return;var m=load();if(obs)obs.disconnect();
