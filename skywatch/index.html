@@ -13513,7 +13513,7 @@ function newDlg(){modal(`<h3>New inspection</h3><label class="f">Tower serial nu
 /* ----- record shell ----- */
 const STEPN=['Info','Inspect','Punch list','Certificate & sign','Email'];
 function renderRec(){if(S.audit&&S.rec)return renderAudit();const r=S.rec;const st=stats(r);
- app.innerHTML=`<div class="top"><div class="bar"><img src="${LOGO2}" alt="Teledyne FLIR"><div class="brand">${esc(title(r))}<small>${esc(r.hdr.customer||'')} ${r.signed?'· SIGNED':''}</small></div><button id="saveInd" data-act="save" class="save"></button>${r.signed?'':'<button data-act="wip-pause" title="Pause and move this inspection to another tablet">⏸ Pause</button>'}<button data-act="home">Forms list</button></div>
+ app.innerHTML=`<div class="top"><div class="bar"><img src="${LOGO2}" alt="Teledyne FLIR"><div class="brand">${esc(title(r))}<small>${esc(r.hdr.customer||'')} ${r.signed?'· SIGNED':''}</small></div><button data-theme-tog aria-label="Day or night mode" title="Day / night mode">☀/☾</button><button id="saveInd" data-act="save" class="save"></button><button data-act="home">Forms list</button></div>
  <div class="steps">${r.trip?`<button data-act="step" data-s="0" class="${r.step===0?'on':'dn'}">🧳 Trip prep</button>`:''}${STEPN.map((n,i)=>`<button data-act="step" data-s="${i+1}" class="${r.step===i+1?'on':''} ${(i+1<r.step)?'dn':''}">${i+1}. ${n}</button>`).join('')}</div></div>
  <div class="wrap" id="body"></div>`;
  paintSave();const b=$('#body');
@@ -13576,8 +13576,8 @@ function secBodyHtml(si){const r=S.rec,sec=r.tpl.sections[si];const all=flat(r).
  all.forEach(x=>{if(x.g!==g){g=x.g;h+=`<div class="grp">${esc(g)}</div>`}h+=rowHtml(x);});
  if(isLegacy(sec))h+=`<div style="margin-top:10px"><button data-act="legacy-off">Not a legacy tower – hide this section</button></div>`;
  return h+`<div class="row" style="margin:12px 0"><button data-act="addx" data-si="${si}">＋ Add line item to this section</button><span style="flex:1"></span><button data-act="markp" data-si="${si}">Mark all unmarked items Pass</button></div><div class="row secnavrow" style="margin:0 0 12px;flex-wrap:nowrap;gap:8px"><button data-act="prevsec" data-si="${si}" style="flex:1">← Previous section</button><button class="pri" data-act="nextsec" data-si="${si}" style="flex:1">Section done → next</button></div>`;}
-function secHeadHtml(si,title,s){return `<div class="hd-sec" data-act="sec" data-si="${si}"><h3>${si+1<=S.rec.tpl.sections.length?'Section '+(si+1)+': ':''}${esc(title)}</h3>${s?`<span class="pg">${s.m}/${s.t}${s.f?` · <b>${s.f} fail</b>`:''}</span><div class="pbar"><i style="width:${s.t?100*s.m/s.t:0}%"></i></div>`:''}<span>${S.open===si?'▾':'▸'}</span></div>`;}
-function inspectHtml(){const r=S.rec,n=r.tpl.sections.length;if(S.open===-1&&S.aoRid!==r.id){S.aoRid=r.id;if(n>0&&!hidden(r,r.tpl.sections[0]))S.open=0;}let h='<div class="row" style="justify-content:flex-end;margin:0 0 8px"><button type="button" class="gpb" data-pt="genpanel"><svg class="gic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6.5" width="19" height="11" rx="1.6" fill="#139a78" stroke="#0b6b53"/><path d="M7 6.5v11" stroke="#0b6b53"/><path d="M4.1 9.6h1.4M4.1 12h1.4M4.1 14.4h1.4" stroke="#ffffff"/><path d="M14.6 8.8l-2.7 3.4h2.4l-1.6 3.4 3.9-4.4h-2.5z" fill="#ffffff" stroke="#ffffff" stroke-width="1"/><path d="M17.5 6.5v-2h2.3v2" stroke="#0b6b53"/><path d="M5 17.5V20M19 17.5V20M3.5 20h17" stroke="#6b7782"/></svg>Generator manual &amp; fault codes</button></div><p class="muted" style="margin:0 0 8px">Tap the box: 1 = Pass ✓, 2 = Fail ✗, 3 = N/A, 4 = blank. Tap again any time to change (override). Failed items ask for a concern level.</p>';
+function secHeadHtml(si,title,s){return `<div class="hd-sec" data-act="sec" data-si="${si}"><h3>${si+1<=S.rec.tpl.sections.length?'Section '+(si+1)+': ':''}${esc(title)}</h3>${s?`<span class="pg${s.m<s.t?' miss':''}">${s.m}/${s.t}${s.m<s.t?`<span class="mn">${s.t-s.m} missing</span>`:''}${s.f?` · <b>${s.f} fail</b>`:''}</span><div class="pbar"><i style="width:${s.t?100*s.m/s.t:0}%"></i></div>`:''}<span>${S.open===si?'▾':'▸'}</span></div>`;}
+function inspectHtml(){const r=S.rec,n=r.tpl.sections.length;if(S.open===-1&&S.aoRid!==r.id){S.aoRid=r.id;}let h='<div class="row" style="justify-content:flex-end;margin:0 0 8px"><button type="button" class="gpb" data-pt="genpanel"><svg class="gic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6.5" width="19" height="11" rx="1.6" fill="#139a78" stroke="#0b6b53"/><path d="M7 6.5v11" stroke="#0b6b53"/><path d="M4.1 9.6h1.4M4.1 12h1.4M4.1 14.4h1.4" stroke="#ffffff"/><path d="M14.6 8.8l-2.7 3.4h2.4l-1.6 3.4 3.9-4.4h-2.5z" fill="#ffffff" stroke="#ffffff" stroke-width="1"/><path d="M17.5 6.5v-2h2.3v2" stroke="#0b6b53"/><path d="M5 17.5V20M19 17.5V20M3.5 20h17" stroke="#6b7782"/></svg>Generator manual &amp; fault codes</button></div><p class="muted" style="margin:0 0 8px">Tap the box: 1 = Pass ✓, 2 = Fail ✗, 3 = N/A, 4 = blank. Tap again any time to change (override). Failed items ask for a concern level.</p>';
  let mini='';r.tpl.sections.forEach((s,si)=>{if(hidden(r,s)){mini+=`<div id="sec-${si}" style="flex:1;max-width:280px"><div class="muted" style="font-size:11px">Section ${si+1}: ${esc(s.title)} – not included</div><button data-act="legacy-on" style="min-height:28px;padding:2px 12px;font-size:11px;margin-top:4px">Include</button></div>`;return;}h+=`<div id="sec-${si}">`+secHeadHtml(si,s.title,secStats(si))+(S.open===si?secBodyHtml(si):'')+'</div>';});
  if(S.open!==n)mini+=`<div style="flex:1;max-width:280px"><div class="muted" style="font-size:11px">Additional comments, parts &amp; equipment</div><button data-act="sec" data-si="${n}" style="min-height:28px;padding:2px 12px;font-size:11px;margin-top:4px">Open</button></div>`;
  if(mini)h+=`<div style="display:flex;justify-content:center;gap:28px;margin:14px 0;text-align:center">${mini}</div>`;
@@ -13840,7 +13840,7 @@ function auditHtml(){const r=S.rec,au=auEns(r),P=auF(r),st=stats(r);
  ${auNeedHtml()}</div>
  <div class="row"><button data-act="auback">← Back to the report</button></div>`;}
 function renderAudit(){const r=S.rec;auEns(r);if(!r.audit.date&&!r.audit.done){r.audit.date=today();}if(!r.audit.name&&!r.audit.done&&S.settings.lastAuditor)r.audit.name=S.settings.lastAuditor;
- app.innerHTML=`<div class="top"><div class="bar"><img src="${LOGO2}" alt="Teledyne FLIR"><div class="brand">${esc(snD(r)||title(r))}<small>Auditor review</small></div><button id="saveInd" data-act="save" class="save"></button><button data-act="home">Forms list</button></div></div><div class="wrap" id="body">${auditHtml()}</div>`;
+ app.innerHTML=`<div class="top"><div class="bar"><img src="${LOGO2}" alt="Teledyne FLIR"><div class="brand">${esc(snD(r)||title(r))}<small>Auditor review</small></div><button data-theme-tog aria-label="Day or night mode" title="Day / night mode">☀/☾</button><button id="saveInd" data-act="save" class="save"></button><button data-act="home">Forms list</button></div></div><div class="wrap" id="body">${auditHtml()}</div>`;
  paintSave();if(r.audit.done)prepPdfs();window.scrollTo(0,0);}
 function auRefresh(){const y=window.scrollY;const b=$('#body');if(b)b.innerHTML=auditHtml();window.scrollTo(0,y);}const repName=r=>((r.hdr.customer||'').trim()?r.hdr.customer.trim()+' - ':'')+'Tower S/N '+(r.hdr.towerSerial||'');
 /* ---- serial confirmation popup (shown before the certificate step) ---- */
@@ -14815,7 +14815,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/09/2026',site:'131'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/09/2026',site:'132'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+(+CREDIT.site/100).toFixed(2):creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14878,7 +14878,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='abc2ecd329';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='2acb56fc75';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);Promise.resolve().then(function(){return typeof save==='function'?save():0;}).catch(function(){}).then(function(){return fetch(location.pathname,{cache:'reload'});}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -15883,7 +15883,9 @@ button.pri[data-act=adv],button.pri[data-act=rep],button.pri[data-act=tbd],#ptGt
 .grp.grpck .gca{flex:none;min-height:38px;padding:6px 14px;font-weight:700;background:#e8590c!important;color:#fff!important;border:none!important;border-radius:8px}
 html[data-theme=dark] .gmsum{background:#101a24!important;border-color:#2c3a48!important}
 </style>
-<style id="rev124">.cxh{cursor:pointer;position:relative;padding:4px 36px 4px 0!important;-webkit-tap-highlight-color:transparent}
+<style id="rev124">.cxn{font-weight:700}.cxn.bad{color:#ff6b6b}html:not([data-theme=dark]) .cxn.bad{color:#c62828}
+.pg.miss{background:#fff;color:#b00020!important;padding:1px 9px;border-radius:99px;font-weight:800}.pg .mn{font-size:11px;margin-left:6px}
+.cxh{cursor:pointer;position:relative;padding:4px 36px 4px 0!important;-webkit-tap-highlight-color:transparent}
 .cxh::after{content:"\25BE";position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:22px;opacity:.75}
 .card.cxc>.cxh::after{content:"\25B8"}
 .cxs{display:none;margin:2px 0 4px;font-size:14px}
@@ -15897,18 +15899,18 @@ html[data-theme=dark] .gmsum{background:#101a24!important;border-color:#2c3a48!i
  function save(m){try{localStorage.setItem('cx:'+S.rec.id,JSON.stringify(m));}catch(e){}}
  function sum(k,r,c){var h=r.hdr||{},a=[];
   if(r.step===0){var p=c&&c.querySelector('.ptsc');var q=p&&(p.textContent||'').match(/(\d+)\s*\/\s*(\d+)/);if(!q)return '';return (+q[1]===+q[2]&&+q[2]>0)?'All done':q[1]+' of '+q[2]+' checked';}
-  if(k==='Customer & order'){if(h.customer)a.push(h.customer);if(h.salesOrder)a.push('Sales order '+h.salesOrder);if(h.serviceOrder)a.push('Service order '+h.serviceOrder);return a.join(' · ');}
+  if(k==='Customer & order'){var cf=HDR_CUST.filter(function(f){return (h[f[0]]||'').toString().trim();}).length,ct=HDR_CUST.length;if(h.customer)a.push(esc(h.customer));if(h.salesOrder)a.push('Sales order '+esc(h.salesOrder));if(h.serviceOrder)a.push('Service order '+esc(h.serviceOrder));return '<b class="cxn'+(cf<ct?' bad':'')+'">'+cf+'/'+ct+' filled</b>'+(a.length?' · '+a.join(' · '):'');}
   if(k==='svcCard'){SVC.forEach(function(q){if((r.svc.sel||{})[q[0]])a.push(q[1]);});(r.svc.extra||[]).forEach(function(x){if((x.t||'').trim())a.push(x.t.trim());});return a.join(' · ')||'No service selected';}
-  if(k==='infoRep'){var n=(r.cust||[]).filter(function(c){return (c.t||'').trim();}).length;return n+' customer-reported issue'+(n===1?'':'s')+'';}
-  if(k==='infoSer'){var c=HDR_SER.filter(function(f){return (h[f[0]]||'').toString().trim();}).length;return c+' of '+HDR_SER.length+' serial numbers entered';}
+  if(k==='infoRep'){var n=(r.cust||[]).filter(function(c){return (c.t||'').trim();}).length;return '<b class="cxn">'+n+' customer-reported issue'+(n===1?'':'s')+'</b>';}
+  if(k==='infoSer'){var c=HDR_SER.filter(function(f){return (h[f[0]]||'').toString().trim();}).length,ph=['towerSerial','towerWhole'].filter(function(x){try{return phOwner('sp:'+x).ph.length>0;}catch(e){return false;}}).length,tt=HDR_SER.length+2,cc=c+ph;return '<b class="cxn'+(cc<tt?' bad':'')+'">'+cc+'/'+tt+' entered</b> · serial numbers and photos';}
   return '';}
  function apply(){if(S.view!=='rec'||!S.rec||(S.rec.step!==1&&S.rec.step!==0)||S.audit)return;var b=document.getElementById('body');if(!b)return;var m=load();if(obs)obs.disconnect();
   [].forEach.call(b.children,function(c){if(!c.classList.contains('card'))return;var h=c.querySelector('h2,h3');if(!h)return;var hd=h;while(hd.parentElement&&hd.parentElement!==c)hd=hd.parentElement;if(hd.parentElement!==c)return;
    hd.classList.add('cxh');var k=key(c),s=c.querySelector(':scope > .cxs');if(!s){s=document.createElement('div');s.className='muted cxs';hd.after(s);}
-   var closed=!!m[k];c.classList.toggle('cxc',closed);if(closed)s.textContent=sum(k,S.rec,c);});
+   var closed=m[k]===undefined?S.rec.step===1:m[k]===1;c.classList.toggle('cxc',closed);if(closed)s.innerHTML=sum(k,S.rec,c);});
   if(obs)obs.observe(document.body,{childList:true,subtree:true});}
  obs=new MutationObserver(function(){if(raf)return;raf=requestAnimationFrame(function(){raf=0;try{apply();}catch(e){}});});obs.observe(document.body,{childList:true,subtree:true});
- document.addEventListener('click',function(e){var h=e.target.closest&&e.target.closest('.cxh');if(!h||e.target.closest('button,input,textarea,select,label,a'))return;var c=h.parentElement;if(!c||!c.classList.contains('card')||!S.rec)return;var m=load(),k=key(c);if(m[k])delete m[k];else m[k]=1;save(m);apply();},false);})();
+ document.addEventListener('click',function(e){var h=e.target.closest&&e.target.closest('.cxh');if(!h||e.target.closest('button,input,textarea,select,label,a'))return;var c=h.parentElement;if(!c||!c.classList.contains('card')||!S.rec)return;var m=load(),k=key(c),was=m[k]===undefined?S.rec.step===1:m[k]===1;m[k]=was?2:1;save(m);apply();},false);})();
 </script>
 <script>/* Rev 123: a flick that coasts past the main next-page buttons stops with them on screen; the next scroll carries on. A slow drag with a finger on the screen is never stopped. */
 (function(){var last=0,stopped=false,tgt=null,touching=false;
@@ -15940,4 +15942,4 @@ html[data-theme=dark] .gmsum{background:#101a24!important;border-color:#2c3a48!i
  document.addEventListener('click',function(e){var i=e.target;if(!i||i.tagName!=='IMG')return;if(i.classList.contains('p-logo')||i.closest('.p-cover'))return;
   var logo=i.alt==='Teledyne FLIR'||(i.alt===''&&i.closest('.bar,.top,header'));if(!logo)return;e.preventDefault();go();},false);
 })();</script>
-</body></html>
+<script>/* Rev 132: day / night toggle in the form header, remembered on this device */document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-theme-tog]');if(!b)return;var h=document.documentElement,d=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',d);try{localStorage.setItem('tscTheme',d);}catch(x){}});</script></body></html>

@@ -14104,7 +14104,7 @@ function doneActions(r){const n=incList(r).length;return SendTo.card(r)+`<div cl
 function mailCard(r){return `<div class="card"><h3>Email template</h3><p class="muted"><b>Copy message (plain text)</b> pastes cleanly into any email app. <b>Copy as table</b> pastes the quote as tables into apps that accept formatted text.</p><div class="row"><button data-act="copytxt" style="flex:1 1 180px">Copy message (plain text)</button><button data-act="copyhtml" style="flex:1 1 180px">Copy as table</button></div><pre class="qmail">${esc(mailText(r))}</pre></div>`;}
 function optHtml(r){return `<div class="card"><h3>Pause</h3><div class="row optb"><button data-act="pause">⏸ Pause – QR code to continue later</button></div></div>`;}
 function recHtml(r){fx(r);const bdy=[serHtml,issHtml,doneHtml][S.step](r);
- return bar(recName(r),`<button id="saveInd" class="save" data-act="save"></button><button data-act="home">Forms list</button>`)+stepsBar(r)+`<div class="wrap">${(S.step===0||S.step===2)?Core.bannerHtml(r,{noIssues:true,noChain:S.step===2}):''}${bdy}<div class="row" style="margin-bottom:12px"><button data-act="prev" ${S.step===0?'disabled':''} style="flex:1">‹ Back</button><button class="pri" data-act="next" ${S.step===2?'disabled':''} style="flex:1">Next ›</button></div>${r.done.complete?'':optHtml(r)}</div>`;}
+ return bar(recName(r),`<button data-theme-tog aria-label="Day or night mode" title="Day / night mode">☀/☾</button><button id="saveInd" class="save" data-act="save"></button><button data-act="home">Forms list</button>`)+stepsBar(r)+`<div class="wrap">${(S.step===0||S.step===2)?Core.bannerHtml(r,{noIssues:true,noChain:S.step===2}):''}${bdy}<div class="row" style="margin-bottom:12px"><button data-act="prev" ${S.step===0?'disabled':''} style="flex:1">‹ Back</button><button class="pri" data-act="next" ${S.step===2?'disabled':''} style="flex:1">Next ›</button></div>${r.done.complete?'':optHtml(r)}</div>`;}
 function render(){const app=$('#app');if(S.view==='home')app.innerHTML=homeHtml();else app.innerHTML=recHtml(S.rec);paintSave();window.scrollTo(0,0);}
 function refreshSum(){const s=$('#sumBox');if(s&&S.rec)s.innerHTML=sumHtml(S.rec);const b=$('#rollBox');if(b&&S.rec)b.innerHTML=rollHtml(S.rec);}
 function refreshIss(i){const r=S.rec;if(!r||!i)return;const t=$('#qtot');if(t)t.innerHTML=totHtml(r);const m=document.getElementById('qm-'+i.id),c=document.getElementById('qi-'+i.id),mt=missTxt(i);if(m)m.textContent=mt;if(c)c.classList.toggle('qmiss',!!mt);}
@@ -14348,7 +14348,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)save();});
 function curTpl(){return TPL}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/07/2026',site:'105'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/09/2026',site:'132'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14471,7 +14471,7 @@ document.addEventListener('focusout',e=>{histCommit(e.target);setTimeout(()=>{if
 document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='f2877291d1';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='92e6bee689';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -14665,4 +14665,4 @@ save:function(){return save();}});</script>
  document.addEventListener('click',function(e){var i=e.target;if(!i||i.tagName!=='IMG')return;if(i.classList.contains('p-logo')||i.closest('.p-cover'))return;
   var logo=i.alt==='Teledyne FLIR'||(i.alt===''&&i.closest('.bar,.top,header'));if(!logo)return;e.preventDefault();go();},false);
 })();</script>
-</body></html>
+<script>/* Rev 132: day / night toggle in the form header, remembered on this device */document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-theme-tog]');if(!b)return;var h=document.documentElement,d=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',d);try{localStorage.setItem('tscTheme',d);}catch(x){}});</script></body></html>

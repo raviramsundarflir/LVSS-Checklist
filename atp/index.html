@@ -14429,7 +14429,7 @@ function renderInspection(){
     '<div class="brand"><strong>S/N <span id="barSerial">'+esc(snD(h)||h.newSerial)+'</span></strong><span id="barProg"></span></div>'+
     '<div class="bar-actions"><select id="jump" aria-label="Jump to section"><option value="">Jump to section\u2026</option><option value="unit">Unit information</option>'+
       tpl.sections.map(function(s,si){ return '<option value="'+si+'">'+esc(s.title)+'</option>'; }).join('')+'<option value="notes">General notes</option></select>'+
-    '<button class="btn light" data-act="wip-pause" title="Pause and move this inspection to another tablet">\u23f8 Pause</button><button class="save-ind" id="saveInd" data-act="save"></button>'+(started?'<button class="btn primary" data-act="review">Review</button><button class="btn primary" data-act="complete" style="background:#177a3c;border-color:#177a3c;color:#fff">✔ Complete report</button>':'')+'</div></header>'+
+    '<button class="btn light" data-theme-tog aria-label="Day or night mode" title="Day / night mode">☀/☾</button><button class="save-ind" id="saveInd" data-act="save"></button>'+(started?'<button class="btn primary" data-act="review">Review</button><button class="btn primary" data-act="complete" style="background:#177a3c;border-color:#177a3c;color:#fff">✔ Complete report</button>':'')+'</div></header>'+
     storageBanner()+
     '<main>'+Core.bannerHtml(rec)+'<details class="card" id="sec-unit"'+(rec.lastSec==null?' open':'')+'><summary>Unit information</summary><div id="ddBox" style="margin-top:12px">'+ddHTML()+'</div><div id="swapUnit">'+swEntriesHTML()+'</div><div id="custInfo">'+custHTML()+'</div><p class="tools"><b>Required tools:</b> '+esc((tpl.requiredTools||[]).join(', '))+'</p></details>'+
     '<div class="legend"><span>Tap the box to cycle:</span><span><b class="lg-blank"></b>Blank</span><span><b class="lg-pass">1</b>Pass</span><span><b class="lg-fail">2</b>Fail</span><span><b class="lg-na">3</b>N/A</span><span><b class="lg-awp">4</b>AWP</span><span>5th tap clears it.</span><span>On a failed item, use \u201cCan\u2019t test yet\u201d if another issue blocks it.</span></div>'+
@@ -14512,7 +14512,7 @@ async function renderReview(){
   var reason = rec.kpiReason!=null ? rec.kpiReason : autoReason(c);
   app.innerHTML=
     '<header class="bar"><button class="btn light" data-act="back">\u2039 Back to checklist</button><div class="brand"><strong>Review: S/N '+esc(snD(h)||h.newSerial)+'</strong><span>'+esc(h.inspector||'')+(h.date?', '+esc(fmtDate(h.date)):'')+'</span></div>'+
-    '<div class="bar-actions"><button class="save-ind" id="saveInd" data-act="save"></button><button class="btn primary" data-act="complete" style="background:#177a3c;border-color:#177a3c;color:#fff">✔ Complete report</button></div></header>'+
+    '<div class="bar-actions"><button class="btn light" data-theme-tog aria-label="Day or night mode" title="Day / night mode">☀/☾</button><button class="save-ind" id="saveInd" data-act="save"></button><button class="btn primary" data-act="complete" style="background:#177a3c;border-color:#177a3c;color:#fff">✔ Complete report</button></div></header>'+
     storageBanner()+
     '<main class="pgDone">'+Core.bannerHtml(rec,{noChain:1,noIssues:1})+'<section class="kpi '+(pass?'pass':'fail')+'"><div class="stamp">KPI '+(pass?'PASS':'FAIL')+'</div><p>'+(pass?'No nonconformances found during unit inspection.':revKpiLine(a)+' You can still complete the report.')+'</p></section>'+
     '<ul class="tally"><li class="t-pass"><b>'+c.pass+'</b>Pass</li><li class="t-fail"'+revJmpA('FAIL',c.fail)+'><b>'+c.fail+'</b>Fail</li><li class="t-awp"'+revJmpA('AWP',c.awp)+'><b>'+c.awp+'</b>AWP</li><li class="t-blk"'+revJmpA('NOT TESTED',c.blk)+'><b>'+c.blk+'</b>Not tested</li><li class="t-na"><b>'+c.na+'</b>N/A</li><li class="t-ni"'+revJmpA('NOT INSPECTED',c.ni)+'><b>'+c.ni+'</b>Not inspected</li></ul>'+
@@ -15525,7 +15525,7 @@ function renderAudit(){
   var rec=S.rec; auEns(rec); S.view='audit'; var au=rec.audit;
   if(!au.date&&!au.done) au.date=today(); if(!au.name&&!au.done&&S.lastAuditor) au.name=S.lastAuditor;
   document.title=snFile(rec.header.newSerial)+'_AUDIT';
-  app.innerHTML='<header class="bar"><button class="btn light" data-act="au-back">‹ Back</button><div class="brand"><strong>S/N '+esc(snD(rec.header)||rec.header.newSerial||'')+'</strong><span>Auditor review</span></div><div class="bar-actions"><button class="save-ind" id="saveInd" data-act="save"></button><button class="btn light" data-act="home">Forms list</button></div></header>'+storageBanner()+'<main id="auBody">'+auditHTML()+'</main>';
+  app.innerHTML='<header class="bar"><button class="btn light" data-act="au-back">‹ Back</button><div class="brand"><strong>S/N '+esc(snD(rec.header)||rec.header.newSerial||'')+'</strong><span>Auditor review</span></div><div class="bar-actions"><button class="btn light" data-theme-tog aria-label="Day or night mode" title="Day / night mode">☀/☾</button><button class="save-ind" id="saveInd" data-act="save"></button><button class="btn light" data-act="home">Forms list</button></div></header>'+storageBanner()+'<main id="auBody">'+auditHTML()+'</main>';
   if(auTech(rec)){ var hs=app.querySelector('.brand span'); if(hs) hs.textContent='Technician repair record'; }
   setSaveInd(); measureBar(); window.scrollTo(0,0);
 }
@@ -16014,7 +16014,7 @@ window.offReadiness=readiness;
 })();
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/07/2026',site:'105'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/09/2026',site:'132'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -17047,7 +17047,7 @@ SendTo.init({rec:function(){ return S.rec; },dirty:function(){ markDirty(); save
 })();
 
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='ae6e92bddd';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='56ef31b35a';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -17208,5 +17208,5 @@ if(document.body)start();else document.addEventListener('DOMContentLoaded',start
  document.addEventListener('click',function(e){var i=e.target;if(!i||i.tagName!=='IMG')return;if(i.classList.contains('p-logo')||i.closest('.p-cover'))return;
   var logo=i.alt==='Teledyne FLIR'||(i.alt===''&&i.closest('.bar,.top,header'));if(!logo)return;e.preventDefault();go();},false);
 })();</script>
-</body>
+<script>/* Rev 132: day / night toggle in the form header, remembered on this device */document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-theme-tog]');if(!b)return;var h=document.documentElement,d=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',d);try{localStorage.setItem('tscTheme',d);}catch(x){}});</script></body>
 </html>
