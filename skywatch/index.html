@@ -13596,10 +13596,7 @@ function sparesHtml(){const r=S.rec,s=r.spares;const yn=(act,cur,y,n)=>`<button 
  <label class="f">Are the items secured?</label>${s.sec?'':'<p class="need" style="margin:0 0 6px">Please answer:</p>'}<div class="row">${yn('spsec',s.sec,'Yes – secured','No – not secured')}</div>${s.sec==='no'?'<div class="err" style="margin-top:8px">Not secured – secure them before leaving site, or say why in the field below. This prints on the report.</div>':''}<div class="sp"></div>${inp('spares.where','Where are they stored / secured? (e.g. generator compartment, toolbox)')}<div class="sp"></div>
  <div class="row" style="flex-wrap:nowrap"><button data-act="cam" data-id="sp:spares" style="flex:1">📷 Photo of the items (optional)</button></div>${thumbs('sp:spares')}`:''}</div>`}
 function commentsHtml(){const r=S.rec;
- return `<div class="card"><h3>Items left with tower for next service</h3><table class="t"><tr><th>Line item #</th><th>Description</th><th>Part #</th><th>Qty used</th><th></th></tr>
- ${r.parts.map((p,i)=>`<tr><td><input data-b="parts.${i}.li" value="${esc(p.li)}"></td><td><input data-b="parts.${i}.desc" value="${esc(p.desc)}"></td><td><input data-b="parts.${i}.part" value="${esc(p.part)}"></td><td><input data-b="parts.${i}.qty" value="${esc(p.qty)}"></td><td><button class="dng" data-act="rmpart" data-i="${i}">✕</button></td></tr>`).join('')}</table>
- <div class="sp"></div><button data-act="addpart">＋ Add part line</button><div class="sp"></div>${inp('comments','General comments',{ta:1})}<div class="sp"></div>${inp('equip','Additional and / or altered equipment found on tower',{ta:1})}
- </div>${sparesHtml()}<div class="row" style="margin-top:12px"><span style="flex:1"></span><button data-act="prevsec" data-si="${r.tpl.sections.length}">← Previous section</button><button class="gobtn" data-act="step" data-s="3">Finish inspection → Punch list</button></div>`;}
+ return `${sparesHtml()}<div class="row" style="margin-top:12px"><span style="flex:1"></span><button data-act="prevsec" data-si="${r.tpl.sections.length}">← Previous section</button><button class="gobtn" data-act="step" data-s="3">Finish inspection → Punch list</button></div>`;}
 function rerenderRow(id){if($('#finalQ')){repunch();return;}const x=flat(S.rec).find(y=>y.id===id);const el=$('#r-'+id);if(!x||!el)return;const t=document.createElement('div');t.innerHTML=rowHtml(x);el.replaceWith(t.firstElementChild);updSecHead(x.si);}
 function updSecHead(si){const w=$('#sec-'+si);if(!w)return;const h=w.querySelector('.hd-sec');const t=document.createElement('div');t.innerHTML=secHeadHtml(si,S.rec.tpl.sections[si].title,secStats(si));h.replaceWith(t.firstElementChild);}
 function enterSec(si){if(si<S.rec.tpl.sections.length&&hidden(S.rec,S.rec.tpl.sections[si]))return;save();const was=S.open;S.open=(was===si)?-1:si;const keep=window.scrollY;
@@ -14863,7 +14860,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/10/2026',site:'141'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/10/2026',site:'142'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+(+CREDIT.site/100).toFixed(2):creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -16007,4 +16004,15 @@ label.gneed::before,.tag.gneed::before,.cxh.gneed::before{content:"\279c";displa
  document.addEventListener('click',function(e){var i=e.target;if(!i||i.tagName!=='IMG')return;if(i.classList.contains('p-logo')||i.closest('.p-cover'))return;
   var logo=i.alt==='Teledyne FLIR'||(i.alt===''&&i.closest('.bar,.top,header'));if(!logo)return;e.preventDefault();go();},false);
 })();</script>
-<script>/* Rev 132: day / night toggle in the form header, remembered on this device */document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-theme-tog]');if(!b)return;var h=document.documentElement,d=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',d);try{localStorage.setItem('tscTheme',d);}catch(x){}});</script></body></html>
+<script>/* Rev 132: day / night toggle in the form header, remembered on this device */document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-theme-tog]');if(!b)return;var h=document.documentElement,d=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',d);try{localStorage.setItem('tscTheme',d);}catch(x){}});</script><style id="rev142">
+@keyframes garrBounce{0%,100%{transform:translateX(0)}50%{transform:translateX(16px)}}
+#finalQ.target,#finalQ.card.target{outline:4px solid #8b3fd9!important;outline-offset:2px}
+#finalQ .garrow{color:#a66cf0!important;animation:garrBounce .8s ease-in-out infinite!important}
+#finalQ .garrow svg path{fill:#8b3fd9;stroke:#c9a2ff;stroke-width:2.5;stroke-linejoin:round}
+html:not([data-theme=dark]) #finalQ .garrow{color:#6d28d9!important}
+html:not([data-theme=dark]) #finalQ .garrow svg path{stroke:#4c1d95}
+#finalQ .vbtn.vp{border:3px solid #8b3fd9!important;color:#a66cf0!important;background:transparent!important}
+html:not([data-theme=dark]) #finalQ .vbtn.vp{color:#6d28d9!important}
+#finalQ .vbtn.vp.on{background:#8b3fd9!important;color:#fff!important;border-color:#8b3fd9!important}
+@media (prefers-reduced-motion:reduce){#finalQ .garrow{animation:none!important}}
+</style></body></html>
