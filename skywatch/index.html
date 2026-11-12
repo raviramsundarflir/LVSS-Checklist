@@ -13461,10 +13461,10 @@ function punch(rec){return fails(rec).sort((a,b)=>lvRank((rec.items[a.id]||{}).l
 function stats(rec){const all=flat(rec);let blk=0,p=0,f=0,na=0,bl=0,dno=0,open=0,nolv=0,nowar=0,quote=0,nwun=0,undis=0;
  all.forEach(x=>{const d=rec.items[x.id]||{};if(d.st==='pass')p++;else if(d.st==='fail'){f++;if(d.lvl==='dno')dno++;if(!d.rep)open++;if(!d.lvl&&!(d.rep||d.adv||d.courtesy||d.tbd))nolv++;if(!d.war&&!(d.rep||d.adv||d.courtesy||d.tbd))nowar++;if((d.lvl==='high'||d.lvl==='dno')&&!(d.rep||d.adv||d.courtesy||d.tbd))undis++;if(d.war==='nw'&&!d.courtesy){quote++;if(!d.rep&&!d.adv)nwun++}}else if(d.st==='blk')blk++;else if(d.st==='na')na++;else if(!x.extra)bl++;});
  return {blk,total:all.filter(x=>!x.extra).length,p,f,na,bl,dno,open,nolv,nowar,quote,nwun,undis,openDno:all.filter(x=>{const d=rec.items[x.id]||{};return d.st==='fail'&&d.lvl==='dno'&&!d.rep}).length};}
-const title=rec=>rec.hdr.towerSerial||rec.hdr.customer||'Untitled';
+const title=rec=>rec.vc?('Certificate - '+(rec.hdr.customer||'site visit')):(rec.hdr.towerSerial||rec.hdr.customer||'Untitled');
 const safeName=s=>String(s||'').replace(/[^\w.\-]+/g,'_').replace(/^_+|_+$/g,'')||'unit';
 
-const idLine=r=>{const h=r.hdr||{},v=x=>String(x||'').trim()||'-';return cl(`Tower S/N ${v(h.towerSerial)}  |  RMA ${v(h.rma)}  |  SO ${v(h.serviceOrder)}  |  ${v(h.customer)}`);};
+const idLine=r=>{const h=r.hdr||{},v=x=>String(x||'').trim()||'-';if(r.vc)return cl(`Site visit certificate  |  RMA ${v(h.rma)}  |  SO ${v(h.serviceOrder)}  |  ${v(h.customer)}`);return cl(`Tower S/N ${v(h.towerSerial)}  |  RMA ${v(h.rma)}  |  SO ${v(h.serviceOrder)}  |  ${v(h.customer)}`);};
 /* ---------- save ---------- */
 let saveTimer=null;
 function logUpd(){const r=S.rec;if(!r||!r.signed||S.audit||S.noUpd)return;const now=Date.now();r.upd=r.upd||[];const l=r.upd[r.upd.length-1];if(!l||now-l>300000)r.upd.push(now);}
@@ -13524,7 +13524,7 @@ function newDlg(){modal(`<h3>New inspection</h3><label class="f">Tower serial nu
 const STEPN=['Info','Inspect','Punch list','Certificate & sign','Email'];
 function renderRec(){if(S.audit&&S.rec)return renderAudit();const r=S.rec;const st=stats(r);
  app.innerHTML=`<div class="top"><div class="bar"><img src="${LOGO2}" alt="Teledyne FLIR"><div class="brand">${esc(title(r))}<small>${esc(r.hdr.customer||'')} ${r.signed?'· SIGNED':''}</small></div><button data-theme-tog aria-label="Day or night mode" title="Day / night mode">☀/☾</button><button id="saveInd" data-act="save" class="save"></button><button data-act="home">Forms list</button></div>
- <div class="steps">${r.trip?`<button data-act="step" data-s="0" class="${r.step===0?'on':'dn'}">🧳 Trip prep</button>`:''}${STEPN.map((n,i)=>`<button data-act="step" data-s="${i+1}" class="${r.step===i+1?'on':''} ${(i+1<r.step)?'dn':''}">${i+1}. ${n}</button>`).join('')}</div></div>
+ <div class="steps">${r.trip?`<button data-act="step" data-s="0" class="${r.step===0?'on':'dn'}">🧳 Trip prep</button>`:''}${STEPN.map((n,i)=>`<button data-act="step" data-s="${i+1}" class="${r.step===i+1?'on':''} ${(i+1<r.step)?'dn':''}">${i+1}. ${(r.visit&&i===3)?'Service line':(r.visit&&i===4)?'Email report':n}</button>`).join('')}</div></div>
  <div class="wrap" id="body"></div>`;
  paintSave();const b=$('#body');
  if(r.step===0&&typeof tripHtml==='function')b.innerHTML=tripHtml();else if(r.step===1)b.innerHTML=infoHtml();else if(r.step===2)b.innerHTML=inspectHtml();else if(r.step===3)b.innerHTML=punchHtml();else if(r.step===4){b.innerHTML=certHtml();initPads();}else{b.innerHTML=sendHtml();prepPdfs();}
@@ -13647,7 +13647,7 @@ function punchHtml(){const r=S.rec,P=punch(r),st=stats(r);if(S.pin&&!r.items[S.p
  {const BL=blockedList(r);if(BL.length)h+=`<div class="pgh" style="background:#8a6d00">⏸ Not tested – blocked by other issues <span style="opacity:.8">(${BL.length})</span></div>`+BL.map(blkCard).join('');}
  {const FU=failedUnits(r);if(FU.length)h+=`<div class="pgh" style="background:#c62828">🔁 RMA required – failed units removed <span style="opacity:.8">(${FU.length})</span></div>`+FU.map(rmaCard).join('');}
  h+=finalCardHtml();
- h+=`<div class="row" style="margin-top:12px"><button data-act="step" data-s="2">← Back to inspection</button><span style="flex:1"></span>${S.need?'<button data-act="gotoneed" style="border-color:#1b8a3a;color:#1b8a3a;font-weight:700">➜ Show me what\'s missing</button>':''}<button class="gobtn pgo" data-act="topunchnext" ${(st.nolv||st.nowar||st.undis||st.bl||!r.verdict)?'disabled':''}>Punch list complete → Certificate & sign-off</button></div>`;
+ h+=`<div class="row" style="margin-top:12px"><button data-act="step" data-s="2">← Back to inspection</button><span style="flex:1"></span>${S.need?'<button data-act="gotoneed" style="border-color:#1b8a3a;color:#1b8a3a;font-weight:700">➜ Show me what\'s missing</button>':''}<button class="gobtn pgo" data-act="topunchnext" ${(st.nolv||st.nowar||st.undis||st.bl||!r.verdict)?'disabled':''}>Punch list complete → ${r.visit?'Service line &amp; finish this tower':'Certificate &amp; sign-off'}</button></div>`;
  return h;}
 
 /* ----- step 4: certificate ----- */
@@ -13942,7 +13942,7 @@ function sendHtml(){const r=S.rec,md=mailDefaults(r),m=r.mail;const st=stats(r);
 async function prepPdfs(){const r=S.rec;S.pdf=null;const el=()=>$('#pdfst');
  try{await new Promise(z=>setTimeout(z,30));await prepZoom(r);const d=isAud(r)?buildAuditPdf(r):buildPdf(r);const sn=safeName(r.hdr.towerSerial||r.hdr.customer);
   S.pdf={blob:d.output('blob'),name:stdName(r.hdr.rma,r.hdr.towerSerial||r.hdr.customer||'',isAud(r)?'SKYWATCH-AUDIT':'SKYWATCH',r.hdr.date)+'.pdf'};
-  if(el())el().innerHTML=`📄 <b>${esc(S.pdf.name)}</b> (${Math.round(S.pdf.blob.size/1024)} KB) – ${isAud(r)?'one-page audit results':'certificate, punch list, items to quote, full checklist'}`;}
+  if(el())el().innerHTML=`📄 <b>${esc(S.pdf.name)}</b> (${Math.round(S.pdf.blob.size/1024)} KB) – ${isAud(r)?'one-page audit results':(r.visit?'punch list, items to quote, full checklist (the certificate is made for the whole visit)':'certificate, punch list, items to quote, full checklist')}`;}
  catch(e){if(el())el().innerHTML='<span style="color:#c62828">Could not create the PDF: '+esc(e.message||e)+'</span>';console.error(e)}
  try{await prepLeft();}catch(e){console.error(e)}}
 function pdfFiles(){return [new File([S.pdf.blob],S.pdf.name,{type:'application/pdf'})];}
@@ -14011,9 +14011,9 @@ function sparesLine(r){const L=sparesLeft(r);if(!L.length)return '';return '\n\n
 function applyCf(t){for(var i=HDR_CUST.length-1;i>=0;i--)if(String(HDR_CUST[i][0]).indexOf('cf_')===0)HDR_CUST.splice(i,1);((t&&t.cfields)||[]).forEach(function(f){if(f&&String(f.label||'').trim())HDR_CUST.push(['cf_'+f.id,String(f.label).trim()]);});}
 function cfPdf(d,y,h){var L=HDR_CUST.filter(function(f){return String(f[0]).indexOf('cf_')===0&&String(h[f[0]]||'').trim();}).map(function(f){return f[1]+': '+String(h[f[0]]).trim();});if(!L.length)return y;d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(40);var ls=d.splitTextToSize(cl(L.join('   |   ')),CW);d.text(ls,MX,y+6);return y+4+ls.length*11;}
 function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;const ens=n=>{if(y+n>BOT){d.addPage();y=TOP}};
- drawCert(d,r);
+ const noCert=!!(r.visit&&!r.vc);if(!noCert)drawCert(d,r);
  // punch list report
- d.addPage();skip.add(d.getNumberOfPages());d.addImage(LOGO2,'JPEG',MX,28,120,27);y=70;const P=punch(r);const dn=P.filter(x=>r.items[x.id].lvl==='dno');
+ if(!noCert)d.addPage();skip.add(d.getNumberOfPages());d.addImage(LOGO2,'JPEG',MX,28,120,27);y=70;const P=punch(r);const dn=P.filter(x=>r.items[x.id].lvl==='dno');
  if(dn.length)y=banner(d,y,'DO NOT OPERATE',`${dn.length} item(s) flagged - ${dn.filter(x=>!r.items[x.id].rep).length} still open`,dn.every(x=>r.items[x.id].rep),r.verdict==='pass');
  d.setFont('helvetica','bold');d.setFontSize(15);d.setTextColor(0);d.text(cl(`Punch List Items - S/N: ${h.towerSerial||'________'}`),MX,y+12);
  if(r.verdict){d.setFontSize(14);hx(d,'setTextColor',r.verdict==='pass'?'#1b8a3a':'#c62828');d.text(r.verdict==='pass'?'PASSED':'FAILED',PW-MX,y+12,{align:'right'});}y+=18;
@@ -14223,7 +14223,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'del':if(confirm('Delete this inspection from the tablet? This cannot be undone. (Use Backup file first if unsure.)')){const x=await dbGet('recs',b.dataset.rid);if(x){for(const d of Object.values(x.items))for(const p of d.ph||[])await dbDel('photos',p);for(const e of x.gear||[])for(const p of (e.ph||[]).concat(e.mph||[]))await dbDel('photos',p);for(const l of Object.values(x.serPh||{}))for(const p of l)await dbDel('photos',p);}await dbDel('recs',b.dataset.rid);window.tscDrop&&tscDrop(b.dataset.rid);render();}break;
  case 'home':await save();S.view='home';S.rec=null;S.audit=false;render();break;
  case 'save':save();break;
- case 'step':{const n=+b.dataset.s;if(n>=4&&r.step<4&&!(n===5&&!r.signed)){{const m=swGate(r);if(m.length){swGateDlg(m);break;}}if(!S.serBypass&&n<=4&&!(await proceedCheck()))break;S.serBypass=false;}if(n===5&&!r.signed){alert('Complete the sign-off on step 4 first.');break;}
+ case 'step':{const n=+b.dataset.s;if(n>=4&&r.step<4&&!(n===5&&!(r.signed||(r.visit&&r.done)))){{const m=swGate(r);if(m.length){swGateDlg(m);break;}}if(!S.serBypass&&n<=4&&!(await proceedCheck()))break;S.serBypass=false;}if(n===5&&!(r.signed||(r.visit&&r.done))){alert(r.visit?'Finish this tower on step 4 first.':'Complete the sign-off on step 4 first.');break;}
   if(r.step===1&&n>=2&&(!(r.serPh.towerSerial||[]).length||!(r.serPh.towerWhole||[]).length)&&!r.noPhotoOk){const m=[];if(!(r.serPh.towerSerial||[]).length)m.push('the tower serial number plate');if(!(r.serPh.towerWhole||[]).length)m.push('the whole tower');if(false)break;r.noPhotoOk=true;}
   if(r.step===2&&n>=3&&(!r.spares.a||(r.spares.a==='yes'&&!r.spares.sec))&&!r.noSpOk){if(false)break;r.noSpOk=true;}
   if(r.step===1&&n>=2&&!svcLines(r).length&&!r.noSvcOk){if(false)break;r.noSvcOk=true;}
@@ -14866,7 +14866,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/11/2026',site:'145'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/12/2026',site:'146'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+(+CREDIT.site/100).toFixed(2):creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14929,7 +14929,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='f831519163';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='fde6d678b1';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);Promise.resolve().then(function(){return typeof save==='function'?save():0;}).catch(function(){}).then(function(){return fetch(location.pathname,{cache:'reload'});}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -16024,4 +16024,284 @@ html:not([data-theme=dark]) #finalQ .garrow svg path{stroke:#4c1d95}
 html:not([data-theme=dark]) #finalQ .vbtn.vp{color:#6d28d9!important}
 #finalQ .vbtn.vp.on{background:#8b3fd9!important;color:#fff!important;border-color:#8b3fd9!important}
 @media (prefers-reduced-motion:reduce){#finalQ .garrow{animation:none!important}}
-</style></body></html>
+</style><style id="rev146">
+.vtq{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+.vtq.ask{border:2px solid #d1500d}
+.vtq h2{margin:0 0 6px}
+.vtq input[type=number]{width:96px;font-size:20px;text-align:center}
+.vtstrip{padding:6px 14px 8px;border-top:1px solid var(--line);background:#fff7ef;pointer-events:auto}
+.vthd{font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#8a3b0a;margin:0 0 4px}
+.vtrow{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.vtc{flex:0 0 auto;min-width:130px;text-align:left;padding:6px 10px;min-height:44px;border:2px solid var(--line);border-radius:10px;background:#fff;line-height:1.2}
+.vtc b{display:block;font-size:14px}
+.vtc small{display:block;font-size:11.5px;color:var(--mut);font-weight:500}
+.vtc.on{border-color:var(--blue);background:var(--blue2)}
+.vtc.dn small::before{content:"\2713  "}
+.vtc.ns{border-style:dashed}
+.vtc.cert{border-color:#8b3fd9}
+html[data-theme=dark] .vtq{background:#121a21;border-color:#2b3947}
+html[data-theme=dark] .vtq.ask{border-color:#d1500d}
+html[data-theme=dark] .vtstrip{background:#1d1712;border-color:#2b3947}
+html[data-theme=dark] .vtc{background:#121a21;border-color:#2b3947;color:#e6edf3}
+html[data-theme=dark] .vtc.on{background:#3a2418;border-color:#d1500d}
+html[data-theme=dark] .vtc small{color:#9fb0c0}
+</style>
+<script>/* ===== Rev 1.46: several towers at one site (Ravi, 2026-11-12) =====
+ Each tower is still its own report with its own PDF and e-mail. A visit links them (r.visit = {id,i,n}).
+ The Completion Certificate for a visit is its own record (r.vc = {id,towers:[ids]}) with one row per tower. */
+(function(){
+var MAXT=5;
+var q=function(s,r){return (r||document).querySelector(s);};
+var isVc=function(r){return !!(r&&r.vc);};
+var inVisit=function(r){return !!(r&&r.visit&&!r.vc);};
+var serOf=function(t){return String((t.hdr&&t.hdr.towerSerial)||'').trim();};
+var lab=function(t){return serOf(t)||'no serial yet';};
+var byI=function(a,b){return (a.visit?a.visit.i:0)-(b.visit?b.visit.i:0);};
+var plural=function(n,w){return n+' '+w+(n===1?'':'s');};
+async function allRecs(){return ((await dbAll('recs'))||[]).filter(function(x){return x&&x.hdr;});}
+
+/* ---------- the visit this tower belongs to (cached for the progress strip) ---------- */
+async function vmLoad(){var r=S.rec;if(!inVisit(r)){S.vm=null;return;}
+ var a=await allRecs(),vid=r.visit.id;
+ var tw=a.filter(function(x){return !x.vc&&x.visit&&x.visit.id===vid&&x.id!==r.id;});tw.push(r);tw.sort(byI);
+ S.vm={vid:vid,towers:tw,certs:a.filter(function(x){return x.vc&&x.vc.id===vid;})};}
+function freeSlot(){var r=S.rec,m=S.vm,used={};((m&&m.towers)||[r]).forEach(function(t){used[t.visit.i]=1;});for(var k=1;k<=r.visit.n;k++)if(!used[k])return k;return 0;}
+function stripHtml(){var r=S.rec,m=S.vm;if(!inVisit(r))return '';
+ var ready=!!(m&&m.vid===r.visit.id);if(!ready)m={vid:r.visit.id,towers:[],certs:[]};
+ var n=r.visit.n,by={},chips='';m.towers.forEach(function(t){by[t.visit.i]=t;});by[r.visit.i]=r;
+ for(var k=1;k<=n;k++){var t=by[k];
+  if(t){var st=t.done?'Done':(t.paused?'Paused':'In progress');
+   chips+='<button type="button" class="vtc'+(t.id===r.id?' on':'')+(t.done?' dn':'')+'" data-vt="goto" data-id="'+t.id+'"><b>Tower '+k+'</b><small>'+esc(lab(t))+' · '+st+'</small></button>';}
+  else if(!ready)chips+='<button type="button" class="vtc ns" disabled><b>Tower '+k+'</b><small>…</small></button>';
+  else chips+='<button type="button" class="vtc ns" data-vt="startn" data-i="'+k+'"><b>Tower '+k+'</b><small>Not started – tap to start</small></button>';}
+ chips+='<button type="button" class="vtc cert" data-vt="cert"><b>📜 Certificate</b><small>'+(m.certs.length?plural(m.certs.length,'certificate')+' made':'for the finished towers')+'</small></button>';
+ return '<div class="vtstrip" id="vtStrip"><div class="vthd">Site visit · Tower '+r.visit.i+' of '+n+'</div><div class="vtrow">'+chips+'</div></div>';}
+function paintStrip(){var top=q('.top');if(!top)return;var o=q('#vtStrip');if(o)o.remove();var h=stripHtml();if(h)top.insertAdjacentHTML('beforeend',h);}
+
+/* ---------- render hooks ---------- */
+var _renderRec=renderRec;
+renderRec=function(){_renderRec();
+ try{var r=S.rec;if(!r||S.audit||S.view!=='rec')return;
+  if(isVc(r)){document.querySelectorAll('.steps button').forEach(function(b){var s=+b.dataset.s;if(s<4)b.remove();else if(s===4)b.textContent='1. Certificate & sign';else if(s===5)b.textContent='2. Email';});return;}
+  if(inVisit(r)){paintStrip();vmLoad().then(function(){if(S.rec===r)paintStrip();});}
+ }catch(e){console.error('multi-tower render',e);}};
+
+var _infoHtml=infoHtml;
+infoHtml=function(){var o=_infoHtml();if(inVisit(S.rec))o=o.replace('⏭ Go to the final page – certificate & sign-off','⏭ Go to the last page – service line & finish tower');return infoCard()+o;};
+
+function infoCard(){var r=S.rec;if(!r||isVc(r))return '';var v=r.visit,yes=!!v;
+ var h='<div class="vtq'+((yes||r.multi==='no')?'':' ask')+'" id="vtCard"><h2>Multiple towers at this site?</h2>';
+ h+='<div class="row"><button class="'+(yes?'pri':'')+'" data-vt="multi" data-v="yes">Yes</button><button class="'+(r.multi==='no'?'pri':'')+'" data-vt="multi" data-v="no">No – just this tower</button></div>';
+ if(yes){h+='<div class="sp"></div><label class="f">How many towers are at this site? (2 to '+MAXT+')</label><input id="vtN" type="number" inputmode="numeric" min="2" max="'+MAXT+'" value="'+v.n+'"><p class="muted" style="margin:8px 0 0">This is <b>Tower '+v.i+' of '+v.n+'</b>. At the end of each tower you can start the next one – the customer and site details carry over and only the serial number and service line change. Each tower gets its own PDF and e-mail; one Completion Certificate can cover them all.</p>';}
+ else h+='<p class="muted" style="margin:8px 0 0">If there is more than one tower at this location, answer Yes so the customer and site details only have to be typed once.</p>';
+ return h+'</div>';}
+function refreshCard(){var c=q('#vtCard');if(c)c.outerHTML=infoCard();}
+
+/* ---------- Service line & finish (step 4 of a tower in a visit) ---------- */
+function techPad(){var r=S.rec,c=r.cert;
+ return '<div class="card"><h3>Technician signature for this tower\'s report</h3><div class="grid">'+inp('hdr.tech','Print name')+inp('cert.techTitle','Title')+'</div><div class="sp"></div><label class="f">Signature – sign with finger or stylus</label><canvas class="sig '+(c.techSig?'ok':'')+'" id="pad-tech" data-w="tech"></canvas><div class="row" style="margin-top:6px"><span class="muted" style="flex:1">'+(c.techSig?'Signed '+fmtD(c.techDate):'Not signed yet')+'</span><button data-act="clrsig" data-w="tech">Clear</button></div></div>';}
+function towerWrapHtml(){var r=S.rec,v=r.visit,st=stats(r),SL=svcLines(r),m=S.vm;
+ var rows=SL.map(function(l){var K=l.key;return '<tr><td><input data-b="cert.ov.'+K+'.serial" value="'+esc(certVal(r,K,'serial'))+'"></td><td>'+(l.extra?'<textarea data-b="svc.extra.'+l.i+'.t">'+esc(l.name)+'</textarea>':descSelHtml(r,K))+'</td><td><input data-b="cert.ov.'+K+'.hours" value="'+esc(certVal(r,K,'hours'))+'"></td><td><input type="date" data-b="cert.ov.'+K+'.date" value="'+esc(certVal(r,K,'date'))+'"></td><td>'+(l.extra?'<button class="dng" data-act="rmsvc" data-i="'+l.i+'">✕</button>':'')+'</td></tr>'+(l.items.length?'<tr><td colspan="5" style="background:#f8fafd">'+svcSubHtml(l)+'</td></tr>':'');}).join('');
+ var started=m&&m.vid===v.id?m.towers.length:v.i,more=v.n>started;
+ var h=(st.openDno?'<div class="dno-banner">⛔ DO NOT OPERATE – '+st.openDno+' open<small>Still unresolved at sign-off</small></div>':'');
+ h+='<div class="card"><div class="row"><h2 style="flex:1;margin:0 0 10px">Tower '+v.i+' of '+v.n+' – service line</h2>'+vdStamp(r)+'</div>'
+  +'<p class="muted">Pick the contract line item(s) for this tower. They become this tower\'s row on the Completion Certificate for the visit.</p>'+svcCardHtml(true)
+  +'<p>Service for Tower S/N '+esc(lab(r))+':</p>'
+  +(SL.length?'':'<div class="warn">No service line picked yet. This is only a reminder – you can finish the tower and add it later, before you make the certificate.</div>')
+  +'<table class="t" style="table-layout:fixed"><tr><th style="width:17%">Unit S/N</th><th style="width:46%">Description of Service</th><th style="width:13%">Hours on Generator</th><th style="width:19%">Date Completed</th><th style="width:5%"></th></tr>'+rows+'</table></div>'
+  +nonPassCard(r)+openSummary(r)+techPad();
+ if(!r.done)h+='<div class="row"><button data-act="step" data-s="3">← Back to punch list</button><span style="flex:1"></span><button class="gobtn" data-vt="done">✓ Finish this tower</button></div>';
+ else h+='<div class="ok"><b>Tower '+v.i+' of '+v.n+' finished.</b> What next?</div><div class="row">'+(more?'<button class="gobtn" data-vt="startn" data-i="next">＋ Start next tower</button>':'')+'<button class="gobtn" data-vt="cert">📜 Completion certificate</button><button class="gobtn" data-act="step" data-s="5">✉ Email this tower\'s report</button></div><div class="row" style="margin-top:8px"><button data-act="step" data-s="3">← Back to punch list</button><span style="flex:1"></span><button data-vt="undone">Reopen this tower</button></div>';
+ return h;}
+
+/* ---------- Completion Certificate for the visit (its own record) ---------- */
+async function vcLoad(V){var a=await allRecs(),tw=(V.vc.towers||[]).map(function(id){return a.find(function(x){return x.id===id;});}).filter(Boolean).map(function(x){return migrate(x);});tw.sort(byI);S.vct={vid:V.id,towers:tw};}
+function padCardV(w,label,nameP,titleP){var r=S.rec,c=r.cert,L=r.signed;
+ return '<div class="card"><h3>'+label+'</h3><div class="grid">'+inp(nameP,'Print name')+inp(titleP,'Title')+'</div><div class="sp"></div><label class="f">Signature – sign with finger or stylus</label><canvas class="sig '+(c[w+'Sig']?'ok':'')+'" id="pad-'+w+'" data-w="'+w+'" '+(L&&c[w+'Sig']&&!(S.sigUnl||{})[w]?'style="pointer-events:none"':'')+'></canvas><div class="row" style="margin-top:6px"><span class="muted" style="flex:1">'+(c[w+'Sig']?'Signed '+fmtD(c[w+'Date']):'Not signed yet')+'</span>'+(L?(c[w+'Sig']?((S.sigUnl||{})[w]?'<button data-act="chgsig" data-w="'+w+'">Done – lock signature</button>':'<button data-act="chgsig" data-w="'+w+'">Change signature</button>'):''):'<button data-act="clrsig" data-w="'+w+'">Clear</button>')+'</div>'+(L&&(S.sigUnl||{})[w]?'<div class="muted" style="color:#c25a00">Draw the new signature above, then tap Done. The old one stays until you start drawing.</div>':'')+'</div>';}
+function vcertHtml(){var V=S.rec,L=V.signed,h=V.hdr;
+ if(!S.vct||S.vct.vid!==V.id){vcLoad(V).then(function(){if(S.rec===V&&V.step===4){var b=q('#body');if(b){b.innerHTML=certHtml();initPads();}}});return '<div class="card muted">Loading the towers…</div>';}
+ var T=S.vct.towers,rows='',dno=0,unf=0;
+ T.forEach(function(t){var SL=svcLines(t),st=stats(t);dno+=st.openDno;if(!t.done)unf++;
+  if(!SL.length)rows+='<tr><td>'+esc(serOf(t))+'</td><td colspan="3"><span class="need" style="margin:0">⚠ No service line yet for this tower</span></td><td><button data-vt="goto" data-id="'+t.id+'" data-s="4">＋</button></td></tr>';
+  SL.forEach(function(l){var K=l.key;
+   rows+='<tr><td>'+esc(certVal(t,K,'serial'))+'</td><td><b>'+esc(certVal(t,K,'desc'))+'</b></td><td>'+esc(certVal(t,K,'hours'))+'</td><td>'+esc(fmtD(certVal(t,K,'date')))+'</td><td><button data-vt="goto" data-id="'+t.id+'" data-s="4" title="Edit this line">✎</button></td></tr>';
+   if(l.items.length)rows+='<tr><td colspan="5" style="background:#f8fafd"><ul style="margin:4px 0;padding-left:20px">'+l.items.map(function(x){var qq=t.items[x.id],lb=l.key==='war'?'Warranty':(qq.courtesy?'Non-warranty – courtesy repair':'Non-warranty');return '<li style="margin-bottom:3px"><span class="tag">'+lb+'</span> #'+x.label+' '+esc(x.t)+((qq.res||'').trim()?' – '+esc(qq.res.trim()):'')+'</li>';}).join('')+'</ul></td></tr>';});});
+ var res=T.map(function(t){var st=stats(t);return '<tr><td>'+esc(lab(t))+'</td><td>'+(t.verdict==='pass'?'<b style="color:#1b8a3a">PASSED</b>':t.verdict==='fail'?'<b style="color:#c62828">FAILED</b>':'not recorded')+'</td><td>'+(st.f?(st.open?st.open+' of '+st.f+' open':'all '+st.f+' repaired'):'no faults')+'</td><td>'+(t.done?'':'<span class="tag" style="background:#fde5c8">not finished</span>')+'</td></tr>';}).join('');
+ var first=T[0];
+ return (dno?'<div class="dno-banner">⛔ DO NOT OPERATE – '+dno+' open<small>Still unresolved at sign-off</small></div>':'')
+ +'<div class="card"><div class="row"><h2 style="flex:1;margin:0 0 10px">Service Certificate of Completion</h2><span class="tag">'+plural(T.length,'tower')+'</span></div><div class="grid">'+inp('hdr.customer','Customer')+inp('hdr.po','Customer PO #')+inp('hdr.salesOrder','Teledyne FLIR Sales Order #')+inp('hdr.serviceOrder','Service Order #')+inp('hdr.rma','RMA #')+'</div>'
+ +(unf?'<div class="warn">'+plural(unf,'tower')+' on this certificate '+(unf===1?'is':'are')+' not finished yet.</div>':'')
+ +'<p>This is to certify the following items have been completed in accordance with the contract:</p><table class="t" style="table-layout:fixed"><tr><th style="width:17%">Unit S/N</th><th style="width:46%">Description of Service</th><th style="width:13%">Hours on Generator</th><th style="width:19%">Date Completed</th><th style="width:5%"></th></tr>'+rows+'</table><p class="muted">One group of lines per tower. Tap ✎ to change a tower\'s service line on its own page.</p></div>'
+ +'<div class="card"><h3>Tower results</h3><table class="t"><tr><th>Tower S/N</th><th>Result</th><th>Punch list</th><th></th></tr>'+res+'</table></div>'
+ +'<div class="card"><h3>Authorized signatures</h3><p class="muted">One signature from each party covers every tower on this certificate.</p></div>'
+ +padCardV('cust','Customer','cert.custName','cert.custTitle')+padCardV('tech','Teledyne FLIR Representative (Technician)','hdr.tech','cert.techTitle')
+ +'<div class="card"><h3>Email the signed certificate</h3><p class="muted">The customer chooses where their copy is sent – several addresses can be separated with commas. The technician is copied (Cc), and the Tucson Service Center receives it too.</p>'+inp('hdr.email','Customer email address(es)',{type:'email',ph:'name@company.com'})
+ +'<div class="sp"></div><label class="f">Technician email (Cc)</label><div class="row" style="flex-wrap:nowrap"><input id="techEmail" data-b="hdr.techEmail" type="email" value="'+esc(h.techEmail||'')+'" placeholder="first.last" style="flex:1"><button data-act="suffix" style="white-space:nowrap">＋ @teledyne.com</button></div></div>'
+ +'<div class="row">'+(L?'<button class="dng" data-act="reopen">Reopen (admin PIN)</button><span style="flex:1"></span><button class="gobtn" data-act="step" data-s="5">Save / Send / Print Cert</button>':(first?'<button data-vt="goto" data-id="'+first.id+'">← Back to the towers</button>':'')+'<span style="flex:1"></span><button class="gobtn" id="finishBtn" data-vt="vfinish">Complete sign-off</button>')+'</div>';}
+
+var _certHtml=certHtml;
+certHtml=function(){var r=S.rec;if(isVc(r))return vcertHtml();if(inVisit(r))return towerWrapHtml();return _certHtml();};
+
+/* ---------- certificate PDF (one row group per tower) ---------- */
+function drawVcert(d,V,T){var h=V.hdr,c=V.cert,y;
+ d.addImage(LOGO2,'JPEG',MX,28,150,34);d.setFont('helvetica','bold');d.setFontSize(15);d.setTextColor(0);d.text('Service Certificate of Completion',PW/2,84,{align:'center'});d.setDrawColor(0);d.setLineWidth(.6);
+ d.setFontSize(10);d.text('Customer:',MX+8,108);d.setFont('helvetica','normal');d.text(cl(h.customer||''),MX+70,108);
+ [['Customer PO #:',h.po],['Teledyne FLIR Sales Order #:',h.salesOrder],['Service Order #:',h.serviceOrder],['RMA #:',h.rma]].forEach(function(z,i){d.setFont('helvetica','bold');d.text(z[0],200,130+i*15,{align:'right'});d.setFont('helvetica','normal');d.text(cl(z[1]||''),208,130+i*15);});
+ d.setFont('helvetica','bold');d.setFontSize(10);d.text(plural(T.length,'tower')+' on this certificate',PW-MX-8,130,{align:'right'});
+ d.setDrawColor(0);d.setLineWidth(.8);d.line(MX+10,194,PW-MX-10,194);
+ d.setFont('helvetica','normal');d.setFontSize(9.5);d.text('This is to certify the following items have been completed in accordance with the contract:',MX+10,211);
+ y=222;var cc=[[0,95,'Unit S/N'],[95,300,'Description of Service'],[395,60,['Hours on','Generator']],[455,85,'Date Completed']];
+ hx(d,'setFillColor','#000000');d.rect(MX,y,CW,24,'F');d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(255);cc.forEach(function(z){if(Array.isArray(z[2]))z[2].forEach(function(t,i){d.text(t,MX+z[0]+5,y+10+i*10);});else d.text(z[2],MX+z[0]+5,y+15);});y+=24;
+ d.setTextColor(0);d.setDrawColor(0);d.setLineWidth(.6);
+ var box=function(ser,desc,hrs,dt){d.setFont('helvetica','bold');d.setFontSize(9);var dl=wrap(d,desc,288),hh=Math.max(28,dl.length*11+10);
+  if(y+hh>700){d.addPage();y=TOP;}
+  d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,hh);cc.slice(1).forEach(function(z){d.line(MX+z[0],y,MX+z[0],y+hh);});
+  d.setTextColor(0);d.setFont('helvetica','normal');d.text(wrap(d,ser,86),MX+5,y+14);d.text(wrap(d,hrs,52),MX+400,y+14);d.text(dt,MX+460,y+14);d.setFont('helvetica','bold');d.text(dl,MX+100,y+14);y+=hh;};
+ T.forEach(function(t){var SL=svcLines(t);
+  if(!SL.length)box(serOf(t),'(no service line recorded)','','');
+  SL.forEach(function(l){var K=l.key,v=function(k){return cl(k==='date'?fmtD(certVal(t,K,k)):certVal(t,K,k));};box(v('serial'),v('desc'),v('hours'),v('date'));
+   l.items.forEach(function(x){var qq=t.items[x.id],lb=l.key==='war'?'Warranty':(qq.courtesy?'Non-warranty (courtesy repair)':'Non-warranty');
+    d.setFont('helvetica','normal');d.setFontSize(8.6);var tl=wrap(d,lb+': #'+x.label+' '+x.t+((qq.res||'').trim()?' - '+qq.res.trim():''),CW-34),sh=tl.length*10.5+7;
+    if(y+sh>700){d.addPage();y=TOP;}
+    d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,sh);d.setTextColor(30);d.text('-',MX+14,y+11);d.text(tl,MX+24,y+11);y+=sh;});});});
+ y+=14;if(y+50>700){d.addPage();y=TOP;}
+ d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(0);d.text('Tower inspection results',MX+10,y+6);y+=18;d.setFontSize(9.5);
+ T.forEach(function(t){var st=stats(t),res=t.verdict==='pass'?'PASSED':t.verdict==='fail'?'FAILED':'result not recorded';
+  var pl;if(!st.f)pl='no punch-list items';else if(st.open)pl='open items at sign-off: '+st.open+' of '+st.f+' punch-list item(s)'+(st.openDno?' - INCLUDING '+st.openDno+' DO NOT OPERATE':'');else pl='all '+st.f+' punch-list item(s) repaired';
+  var ln='Tower S/N '+(serOf(t)||'-')+': '+res+' - '+pl+(st.quote?'; '+st.quote+' non-warranty repair(s) to be quoted':'')+'.';
+  var ls=wrap(d,ln,CW-20);if(y+ls.length*11+8>700){d.addPage();y=TOP;}
+  d.setFont('helvetica','bold');hx(d,'setTextColor',t.verdict==='pass'?'#1b8a3a':t.verdict==='fail'?'#c62828':'#000000');d.text(ls,MX+10,y+6);y+=ls.length*11+6;});
+ d.setTextColor(0);
+ T.forEach(function(t){if(!ncItems(t).length)return;if(y+90>700){d.addPage();y=TOP;}d.setFont('helvetica','bold');d.setFontSize(9.5);d.setTextColor(0);d.text('Tower S/N '+cl(serOf(t)||'-'),MX+10,y+16);y=drawNonPass(d,t,y+18);});
+ if(V.upd&&V.upd.length){y+=6;d.setFont('helvetica','normal');d.setFontSize(7.5);d.setTextColor(110);d.text('Updated '+V.upd.slice(-4).map(function(t){return new Date(t).toLocaleString('en-US',{month:'2-digit',day:'2-digit',year:'numeric',hour:'numeric',minute:'2-digit'});}).join('; '),MX+10,y+2);y+=12;d.setTextColor(0);}
+ y+=8;if(y+16+116>732){d.addPage();y=TOP;}
+ hx(d,'setFillColor','#000000');d.rect(MX,y,CW,16,'F');d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(255);d.text('Authorized Signatures',PW/2,y+11.5,{align:'center'});y+=16;
+ [['Print Customer Name and Title',custName(V),c.custTitle,c.custSig,c.custDate],['Print Teledyne FLIR Representative Name and Title',h.tech||'',c.techTitle,c.techSig,c.techDate]].forEach(function(z){
+  d.setDrawColor(0);d.rect(MX,y,CW,58);d.line(MX+265,y,MX+265,y+58);d.line(MX+465,y,MX+465,y+58);d.setFont('helvetica','normal');d.setFontSize(8);d.setTextColor(60);
+  d.text(z[0],MX+4,y+10);d.text('Signature',MX+269,y+10);d.text('Date',MX+469,y+10);d.setFontSize(10);d.setTextColor(0);d.text(wrap(d,z[1],255),MX+6,y+28);d.setFontSize(9);d.text(wrap(d,z[2]||'',255),MX+6,y+41);
+  if(z[3]){var im=sigDims(z[3],185,38);d.addImage(z[3],'PNG',MX+272,y+15,im[0],im[1]);}d.setFontSize(9.5);d.text(cl(fmtD(z[4])),MX+470,y+28);y+=58;});
+ var fy=Math.max(y+16,738);d.setFont('helvetica','bold');d.setFontSize(8.5);d.setTextColor(0);d.text('SkyWatch: Tucson Service Center (TSC)',PW/2,fy,{align:'center'});d.setFont('helvetica','normal');d.text('8165 S Camino De Cafe, Tucson, AZ 85747',PW/2,fy+11,{align:'center'});d.text('Customer Support: 520.262.6910 | '+TSC_EMAIL,PW/2,fy+22,{align:'center'});}
+function buildVcertPdf(V,T){var d=pdfNew();drawVcert(d,V,T);footers(d,V,true,new Set([1]));return d;}
+function vcName(V,T){var sn=T.map(serOf).filter(Boolean).join('_')||V.hdr.customer||'visit';return stdName(V.hdr.rma,sn,'SKYWATCH-CERT',V.hdr.date)+'.pdf';}
+
+var _prepPdfs=prepPdfs;
+prepPdfs=async function(){var r=S.rec;if(!isVc(r))return _prepPdfs();
+ S.pdf=null;S.left=null;var el=function(){return q('#pdfst');};
+ try{await new Promise(function(z){setTimeout(z,30);});if(!S.vct||S.vct.vid!==r.id)await vcLoad(r);var T=S.vct.towers,d=buildVcertPdf(r,T);
+  S.pdf={blob:d.output('blob'),name:vcName(r,T)};
+  if(el())el().innerHTML='📄 <b>'+esc(S.pdf.name)+'</b> ('+Math.round(S.pdf.blob.size/1024)+' KB) – completion certificate for '+plural(T.length,'tower');}
+ catch(e){if(el())el().innerHTML='<span style="color:#c62828">Could not create the PDF: '+esc(e.message||e)+'</span>';console.error(e);}};
+
+/* ---------- e-mail text and the Email step ---------- */
+var _mailDefaults=mailDefaults;
+mailDefaults=function(r){
+ if(isVc(r)){var T=(S.vct&&S.vct.vid===r.id)?S.vct.towers:[],h=r.hdr;
+  var subj='Teledyne FLIR SkyWatch Completion Certificate - '+(h.customer||'')+' - '+(T.length===1?'Tower S/N ':'Towers S/N ')+T.map(function(t){return serOf(t)||'-';}).join(', ');
+  var body='Attached is the signed Service Certificate of Completion for the SkyWatch service visit ('+plural(T.length,'tower')+'). The inspection report for each tower is sent separately.\n\nCustomer: '+(h.customer||'')+'\nCustomer PO #: '+(h.po||'')+'\nTeledyne FLIR Sales Order #: '+(h.salesOrder||'')+'\nRMA #: '+(h.rma||'')+'\nService Order #: '+(h.serviceOrder||'')+'\n\nTowers:\n'+T.map(function(t){var st=stats(t);return '- S/N '+(serOf(t)||'-')+': '+(t.verdict==='pass'?'PASSED':t.verdict==='fail'?'FAILED':'result not recorded')+(st.open?' ('+st.open+' open item(s))':'');}).join('\n')+'\n\nDate: '+fmtD(h.date)+'\n\nTeledyne FLIR\nTucson Service Center (TSC)\n8165 S Camino de Cafe\nTucson, Arizona, 85747\n\n'+TSC_EMAIL+'\n520-262-6910';
+  return {subject:subj.replace(/ - +$/,''),body:body};}
+ var o=_mailDefaults(r);
+ if(inVisit(r)){o.subject=o.subject.replace('Service Inspection & Completion Certificate','Service Inspection Report')+' (Tower '+r.visit.i+' of '+r.visit.n+')';
+  o.body=o.body.replace(/^Attached is one PDF[^\n]*/,'Attached is the SkyWatch inspection report for Tower '+r.visit.i+' of '+r.visit.n+' at this site: the punch list report, any items to be quoted, and the complete inspection checklist. The Service Certificate of Completion for the visit is sent separately.');}
+ return o;};
+function vcSendHtml(){var r=S.rec,md=mailDefaults(r),m=r.mail;
+ return '<div class="card"><div class="row"><button class="emailbig" data-act="share">✉ Email Completion Certificate<small>Recommended – opens your email app with the PDF attached</small></button><button class="gobtn purplebtn" data-act="dl" style="flex:1">⬇ Save Certificate to Device</button></div>'
+ +'<div class="row" style="margin-top:8px"><button data-act="mailto" style="flex:1">✉ Open email draft (no attachments)</button><button data-act="copy" style="flex:1">Copy addresses</button></div>'
+ +'<p class="muted">Needs a connection (shop Wi-Fi or your phone hotspot). <b>Share</b> opens the Android share sheet with the PDF attached – pick Gmail/Outlook, then paste the addresses (the list is copied for you first; the technician is the Cc line). If the share sheet isn\'t offered, <b>Save</b> the PDF, then <b>Open email draft</b> and attach it from Downloads.</p><div class="row"><button data-act="step" data-s="4">← Certificate</button></div></div>'
+ +'<div class="ok"><b>Signed '+new Date(r.signedAt||Date.now()).toLocaleString()+'.</b> The PDF is created on this tablet.</div>'
+ +'<div class="card"><h3>File</h3><div id="pdfst" class="muted">Preparing PDF…</div></div>'
+ +'<div class="card"><h3>Recipients</h3><p class="muted" style="margin:0 0 6px">Customer and SkyWatch support are addressed To; the technician is Cc, and TSC@teledyne.com is always copied.</p>'+rcpList(r).map(function(x){return '<label class="row" style="padding:6px 0"><input type="checkbox" style="width:24px;min-height:24px" data-act="rcp" data-e="'+esc(x.e)+'" '+(x.lock?'checked disabled':r.recipients.off[x.e]?'':'checked')+'> <span><b>'+esc(x.e)+'</b> <span class="tag">'+x.l+'</span></span></label>';}).join('')
+ +'<div class="row" style="margin-top:8px"><input id="newRcp" type="email" placeholder="Add another email address" style="flex:1;min-width:200px"><button data-act="addrcp">Add</button></div></div>'
+ +'<div class="card"><h3>Message</h3><label class="f">Subject</label><input data-b="mail.subject" value="'+esc(m.subject!=null?m.subject:md.subject)+'"><div class="sp"></div><label class="f">Text</label><textarea data-b="mail.body" style="min-height:190px">'+esc(m.body!=null?m.body:md.body)+'</textarea></div>';}
+var _sendHtml=sendHtml;
+sendHtml=function(){var r=S.rec;if(isVc(r)){if(!S.vct||S.vct.vid!==r.id)vcLoad(r).then(function(){if(S.rec===r&&r.step===5){var b=q('#body');if(b){b.innerHTML=sendHtml();prepPdfs();}}});return vcSendHtml();}
+ var o=_sendHtml();
+ if(inVisit(r)){o=o.replace(/<div class="ok"><b>Signed [^<]*<\/b> The PDF is created on this tablet\.<\/div>/,'<div class="ok"><b>Tower '+r.visit.i+' of '+r.visit.n+' finished.</b> This tower\'s report PDF is created on this tablet. The certificate is made separately for the whole visit.</div>').replace('← Certificate</button>','← Service line</button>')
+  +'<div class="card"><h3>Site visit</h3><div class="row"><button data-vt="startn" data-i="next">＋ Start next tower</button><button data-vt="cert">📜 Completion certificate</button></div></div>';}
+ return o;};
+
+/* ---------- home list ---------- */
+var _renderHome=renderHome;
+renderHome=async function(){await _renderHome();
+ try{var recs=S.recs||[],by={};recs.forEach(function(r){by[r.id]=r;});
+  recs.forEach(function(r){var b=app.querySelector('button[data-act="open"][data-rid="'+r.id+'"]'),card=b&&b.closest('.home-c'),gr=card&&card.querySelector('.gr');if(!gr)return;
+   if(r.vc){var sers=(r.vc.towers||[]).map(function(id){return by[id]?(serOf(by[id])||'no serial'):'removed';});
+    gr.innerHTML='<b style="font-size:18px">'+esc(title(r))+'</b> '+(r.signed?'<span class="tag" style="background:#d6f0de">SIGNED</span>':'<span class="tag" style="background:#fde5c8">Certificate – not signed</span>')+'<br><span class="muted">'+plural((r.vc.towers||[]).length,'tower')+': '+esc(sers.join(', '))+' · updated '+new Date(r.updated).toLocaleString()+'</span>';}
+   else if(r.visit){var t=gr.querySelector('b');if(t)t.insertAdjacentHTML('afterend',' <span class="tag" style="background:#e3ecff">Tower '+r.visit.i+' of '+r.visit.n+(r.done?' · finished':'')+'</span>');}});
+ }catch(e){console.error('multi-tower home',e);}};
+
+/* ---------- actions ---------- */
+async function gotoRec(id,step){await save();var x=await dbGet('recs',id);if(!x)return;x=migrate(x);await loadPhotos(x);S.rec=x;S.vct=null;S.view='rec';S.open=-1;S.detail={};S.dirty=false;if(step&&step!==x.step){x.step=step;S.dirty=true;}render();}
+async function startDlg(i){var r=S.rec;if(!inVisit(r))return;await save();await vmLoad();
+ if(i==='next')i=freeSlot();else i=+i;
+ if(!i){alert('All '+r.visit.n+' towers have been started. If there is another tower at this site, raise the tower count on the Info page (up to '+MAXT+').');return;}
+ var pre=(r.serPre===undefined)?true:!!r.serPre;
+ modal('<h3>Tower '+i+' of '+r.visit.n+'</h3><p class="muted">Add or verify the serial number for this tower. The customer, site, technician, date and order numbers carry over from the first tower.</p><label class="f">Tower serial number</label><input id="n-ts"><label class="row" style="gap:10px;margin:8px 0 0"><input type="checkbox" id="n-pre" '+(pre?'checked':'')+' style="width:24px;min-height:24px"><span>Use the MFR-1JTC2-0 prefix <span class="muted">(untick if the serial starts differently)</span></span></label><div class="sp"></div><button class="pri" data-vt="startgo" data-i="'+i+'">Start Tower '+i+'</button><button data-act="mclose">Cancel</button>');}
+async function startGo(i){var src=S.rec,ts=(q('#n-ts')||{value:''}).value.trim(),pre=!!((q('#n-pre')||{checked:true}).checked);
+ if(ts&&S.vm&&S.vm.towers.some(function(t){return serOf(t).toLowerCase()===ts.toLowerCase();})){if(!(await ask('Another tower in this visit already has the serial number '+ts+'. Use it anyway?',{title:'Same serial number',ok:'Use it anyway',no:'Go back'})))return;}
+ closeModal();await save();
+ var h={};HDR_CUST.forEach(function(f){h[f[0]]=src.hdr[f[0]]||'';});h.email=src.hdr.email||'';h.techEmail=src.hdr.techEmail||'';h.towerSerial=ts;
+ var nr=newRec(h);nr.visit={id:src.visit.id,i:+i,n:src.visit.n};nr.multi='yes';nr.serPre=pre;
+ techRemember(h.tech);S.photos={};S.rec=nr;S.vct=null;S.view='rec';S.open=-1;S.detail={};S.dirty=true;await save();render();}
+async function setMulti(v){var r=S.rec;if(!r||isVc(r))return;
+ if(v==='yes'){if(!r.visit)r.visit={id:uid(),i:1,n:2};r.multi='yes';}
+ else{if(r.visit){var a=await allRecs();if(a.some(function(x){return !x.vc&&x.visit&&x.visit.id===r.visit.id&&x.id!==r.id;})){alert('Other towers of this visit have already been started, so this can\'t be changed to just one tower.');return;}delete r.visit;S.vm=null;}r.multi='no';}
+ markDirty();refreshCard();if(inVisit(r)){paintStrip();vmLoad().then(function(){if(S.rec===r)paintStrip();});}else{var s=q('#vtStrip');if(s)s.remove();}}
+async function setCount(el){var r=S.rec;if(!inVisit(r))return;var a=await allRecs(),mem=a.filter(function(x){return !x.vc&&x.visit&&x.visit.id===r.visit.id&&x.id!==r.id;});
+ var hi=r.visit.i;mem.forEach(function(x){hi=Math.max(hi,x.visit.i);});var raw=Math.round(+el.value)||2,v=Math.min(MAXT,Math.max(2,hi,raw));
+ if(raw>MAXT)alert('Five towers is the most for one site visit.');else if(raw<hi&&hi>1)alert('Tower '+hi+' has already been started, so the count can\'t go below '+hi+'.');
+ r.visit.n=v;el.value=v;for(var k=0;k<mem.length;k++){mem[k].visit.n=v;await dbPut('recs',mem[k]);}
+ markDirty();refreshCard();await vmLoad();paintStrip();}
+async function towerDone(){var r=S.rec;if(!inVisit(r))return;var st=stats(r),miss=[];
+ if(st.nolv)miss.push(st.nolv+' failed item(s) without a concern level');if(!r.verdict)miss.push('final answer: did the tower pass');if(st.nwun)miss.push(st.nwun+' non-warranty item(s) not marked Repaired or Advised');
+ if(!serOf(r))miss.push('tower serial number');{var bad=mails(r.hdr.email).filter(function(e){return !emailOk(e);});if(bad.length)miss.push('a valid customer email ('+bad[0]+')');}
+ if(st.nowar)miss.push(st.nowar+' failed item(s) without Warranty / Non-warranty');
+ if(!svcLines(r).length)miss.push('service line (contract line item) for this tower – add it before you make the certificate');
+ if(miss.length&&!(await ask('Not filled in yet:\n\n• '+miss.join('\n• ')+'\n\nThe tower can still be finished. Blank items will show as blank lines on the PDF.',{title:'Some details are missing',ok:'Finish anyway',no:'Go fix it'})))return;
+ S.settings.lastTechEmail=(r.hdr.techEmail||'').trim();if(S.settings.lastTechEmail)setting('lastTechEmail',S.settings.lastTechEmail);
+ r.done=true;r.paused=false;r.doneAt=Date.now();S.dirty=true;await save();await vmLoad();
+ var b=q('#body');if(b){b.innerHTML=certHtml();initPads();}paintStrip();window.scrollTo(0,0);}
+async function certDlg(){var r=S.rec;if(!inVisit(r))return;await save();await vmLoad();var m=S.vm,n=r.visit.n,T=m.towers,done=T.filter(function(t){return t.done;}),cov={};
+ m.certs.forEach(function(c){(c.vc.towers||[]).forEach(function(id){cov[id]=1;});});
+ var pend=(n-T.length)+T.filter(function(t){return !t.done;}).length,newDone=done.filter(function(t){return !cov[t.id];});
+ var nm=function(a){return a.map(function(t){return 'Tower '+t.visit.i;}).join(', ');},ids=function(a){return a.map(function(t){return t.id;}).join(',');};
+ var h='<h3>Completion certificate</h3>';
+ if(m.certs.length){h+='<p class="muted" style="margin:0 0 6px">Already made for this visit:</p>';m.certs.slice().sort(function(a,b){return (a.vc.at||0)-(b.vc.at||0);}).forEach(function(c){var tw=(c.vc.towers||[]).map(function(id){var t=T.find(function(x){return x.id===id;});return t?'Tower '+t.visit.i:'?';}).join(', ');h+='<button data-vt="opencert" data-id="'+c.id+'" style="width:100%;text-align:left;margin-bottom:6px">'+(c.signed?'✓ Signed':'Draft')+' · '+esc(tw)+' – open</button>';});h+='<div class="sp"></div>';}
+ if(!done.length)h+='<p class="muted">Finish at least one tower to make a certificate.</p>';
+ else{var A=pend===0&&!m.certs.length?'One certificate for all '+n+' towers':pend>0?'Certificate for the '+plural(done.length,'finished tower')+' now – pause the rest':'Combined certificate for all '+done.length+' towers';
+  h+='<button class="pri" style="width:100%;margin-bottom:6px" data-vt="mkcert" data-ids="'+ids(done)+'" data-pause="'+(pend>0?1:0)+'">'+A+'<br><small>'+esc(nm(done))+'</small></button>';
+  if(m.certs.length&&newDone.length&&newDone.length<done.length)h+='<button style="width:100%;margin-bottom:6px" data-vt="mkcert" data-ids="'+ids(newDone)+'" data-pause="'+(pend>0?1:0)+'">Certificate for just '+esc(nm(newDone))+'<br><small>not on a certificate yet</small></button>';
+  if(pend>0)h+='<p class="muted">Or finish the remaining '+plural(pend,'tower')+' first and make one certificate that covers all '+n+'.</p>';}
+ modal(h+'<button data-act="mclose">Close</button>');}
+async function mkCert(idl,pause){closeModal();await save();var a=await allRecs(),ids=idl.split(',').filter(Boolean),tw=ids.map(function(id){return a.find(function(x){return x.id===id;});}).filter(Boolean).sort(byI);if(!tw.length)return;
+ var key=ids.slice().sort().join(','),ex=a.find(function(x){return x.vc&&x.vc.id===tw[0].visit.id&&(x.vc.towers||[]).slice().sort().join(',')===key;});
+ if(pause){var cur=S.rec;for(var k=0;k<a.length;k++){var x=a[k];if(x.visit&&!x.vc&&x.visit.id===tw[0].visit.id&&!x.done&&!x.paused){if(cur&&x.id===cur.id){cur.paused=true;S.dirty=true;await save();}else{x.paused=true;await dbPut('recs',x);}}}}
+ if(ex){await gotoRec(ex.id,4);return;}
+ var lead=tw[0],h={};HDR_CUST.forEach(function(f){h[f[0]]=lead.hdr[f[0]]||'';});h.email=lead.hdr.email||'';h.techEmail=lead.hdr.techEmail||'';
+ var V=newRec(h);V.vc={id:lead.visit.id,towers:ids.slice(),at:Date.now()};V.step=4;V.hdr.towerSerial='';V.cert.techTitle=(lead.cert&&lead.cert.techTitle)||'Teledyne FLIR Technician';V.cert.custName=lead.hdr.contact||'';
+ var sg=tw.slice().reverse().find(function(t){return t.cert&&t.cert.techSig;});if(sg){V.cert.techSig=sg.cert.techSig;V.cert.techDate=sg.cert.techDate||today();}
+ S.rec=V;S.vct=null;S.view='rec';S.open=-1;S.detail={};S.dirty=true;await save();render();}
+async function vFinish(){var V=S.rec;if(!isVc(V))return;var c=V.cert,miss=[];
+ if(!c.custSig)miss.push('customer signature');if(!c.techSig)miss.push('Teledyne FLIR technician signature');if(!custName(V).trim())miss.push('customer printed name');if(!(V.hdr.tech||'').trim())miss.push('technician printed name');
+ ((S.vct&&S.vct.towers)||[]).forEach(function(t){if(!serOf(t))miss.push('tower serial number (Tower '+t.visit.i+')');if(!svcLines(t).length)miss.push('service line for Tower S/N '+lab(t));if(!t.done)miss.push('Tower S/N '+lab(t)+' is not finished');});
+ {var bad=mails(V.hdr.email).filter(function(e){return !emailOk(e);});if(bad.length)miss.push('a valid customer email ('+bad[0]+')');}
+ if(miss.length&&!(await ask('Not filled in yet:\n\n• '+miss.join('\n• ')+'\n\nThe certificate can still be completed. Blank items will show as blank lines on the PDF.',{title:'Some details are missing',ok:'Continue anyway',no:'Go fix it'})))return;
+ S.settings.lastTechEmail=(V.hdr.techEmail||'').trim();if(S.settings.lastTechEmail)setting('lastTechEmail',S.settings.lastTechEmail);
+ if(V.cert.custName==null)V.cert.custName=custName(V);
+ V.signed=true;V.signedAt=Date.now();S.dirty=true;await save();go(5);}
+
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-vt]');if(!b)return;var a=b.dataset.vt;
+ var run=function(p){Promise.resolve(p).catch(function(err){console.error(err);alert('Something went wrong: '+(err&&err.message||err));});};
+ if(a==='multi')run(setMulti(b.dataset.v));
+ else if(a==='startn')run(startDlg(b.dataset.i));
+ else if(a==='startgo')run(startGo(b.dataset.i));
+ else if(a==='goto')run(gotoRec(b.dataset.id,b.dataset.s?+b.dataset.s:0));
+ else if(a==='done')run(towerDone());
+ else if(a==='undone'){var r=S.rec;if(inVisit(r)){r.done=false;markDirty();run(save().then(vmLoad).then(function(){var bd=q('#body');if(bd){bd.innerHTML=certHtml();initPads();}paintStrip();}));}}
+ else if(a==='cert')run(certDlg());
+ else if(a==='mkcert')run(mkCert(b.dataset.ids,b.dataset.pause==='1'));
+ else if(a==='opencert'){closeModal();run(gotoRec(b.dataset.id,4));}
+ else if(a==='vfinish')run(vFinish());});
+document.addEventListener('change',function(e){var t=e.target;if(t&&t.id==='vtN')Promise.resolve(setCount(t)).catch(function(err){console.error(err);});});
+})();
+</script>
+</body></html>
