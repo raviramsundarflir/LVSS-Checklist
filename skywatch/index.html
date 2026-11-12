@@ -13441,7 +13441,7 @@ function syncCust(rec,force){if(!rec||(rec.signed&&!force)||!rec.tpl||!rec.tpl.s
 function flat(rec){ // ordered list of every item incl. added line items, with numbers
  syncCust(rec);const out=[];let n=0;
  rec.tpl.sections.forEach((sec,si)=>{if(hidden(rec,sec))return;let xn=0;
-  sec.groups.forEach(g=>g.items.forEach(it=>{if(it.gt&&!(rec.genType==='gas'||rec.genType==='other'))return;if(it.alt!=='b'&&!it.lbl)n++;out.push({id:it.id,sec:sec,si,g:g.title,t:it.t,f:(it.id==='i1'?['Reading']:(it.f||[])),label:it.lbl||n+(it.alt||''),extra:false});}));
+  sec.groups.forEach(g=>g.items.forEach(it=>{if(it.gt&&!(rec.genType==='gas'||rec.genType==='other'))return;if(it.alt!=='b'&&!it.lbl)n++;out.push({id:it.id,sec:sec,si,g:g.title,t:fuelIntT(rec,it),f:(it.id==='i1'?['Reading']:(it.f||[])),label:it.lbl||n+(it.alt||''),extra:false});}));
   (rec.extra[sec.id]||[]).forEach(x=>{xn++;out.push({id:x.id,sec:sec,si,g:'Added line items',t:x.t,f:[],label:(si+1)+'-X'+xn,extra:true});});});
  return out;}
 const blockedList=rec=>flat(rec).filter(x=>(rec.items[x.id]||{}).st==='blk');
@@ -14892,7 +14892,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/12/2026',site:'150'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/12/2026',site:'151'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+(+CREDIT.site/100).toFixed(2):creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14955,7 +14955,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='18e07beade';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='109915d0d5';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);Promise.resolve().then(function(){return typeof save==='function'?save():0;}).catch(function(){}).then(function(){return fetch(location.pathname,{cache:'reload'});}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -15162,7 +15162,7 @@ var TOWF=[['towerVin','Tower VIN'],['towerSerial','Tower serial number'],['genSe
    To add a manual: add a GENFAM entry and its models to GENLIB. brush:{pn} = brush block, replaced every PM.
    plugs:{pn,qty} = spark plugs (gas). A model that is not listed gets the standard list (plus spark plugs if Gas is picked). */
 var GENFAM={
- onanqd:{fimg:1,brand:'Onan',type:'diesel',src:'manual 0981-0161 (Issue 20, 2024)',chk:'11/04/2026',
+ onanqd:{fimg:1,fint:'every 500 h or 3 years',brand:'Onan',type:'diesel',src:'manual 0981-0161 (Issue 20, 2024)',chk:'11/04/2026',
   oil:'About 3 qt (2.6 L) with filter \u00b7 SAE 15W-40 year round \u00b7 API CF, CF-4, CG-4, CH-4 or CI-4',
   buy:'3 qt SAE 15W-40 diesel engine oil',
   cool:'Cooling system 4.2 qt (4 L): 50/50 ethylene glycol antifreeze and distilled water',
@@ -15170,7 +15170,7 @@ var GENFAM={
    {id:'gpair',t:'Air cleaner element',pn:'140-2897'},
    {id:'gpfuel',t:'Fuel filter',pn:'147-0860 or 149-2513',note:'The manual shows a round and an older square filter; check which one the tower has',q:['147-0860','149-2513']}],
   brush:null,plugs:null},
- onanhgjad:{fimg:1,brand:'Onan',type:'gas',src:'operator manual A035D007 (Issue 17, 2022) and parts manual 0983-0202 (Issue 46)',chk:'',
+ onanhgjad:{fimg:1,fint:'every 500 h or 3 years',brand:'Onan',type:'gas',src:'operator manual A035D007 (Issue 17, 2022) and parts manual 0983-0202 (Issue 46)',chk:'',
   oil:'About 2 qt (1.8 L) with filter \u00b7 API SM, SN or better \u00b7 10W-30 (OnaMax A063E183) above 0 \u00b0F; the manual has a table for colder and hotter weather \u00b7 older Spec A-E manual: API SJ, SH or SG',
   buy:'2 qt 10W-30 engine oil, API SM or SN (OnaMax)',
   cool:'',
@@ -15186,7 +15186,7 @@ var GENFAM={
    {id:'gpair',t:'Air cleaner element',pn:'140-3116'},
    {id:'gpfuel',t:'Fuel filter (gasoline carburetor)',pn:'149-2341',note:'Gasoline models only. LPG models have no fuel filter, so skip this one. The parts manual lists it as 149-2341-01 on the early (Spec A-E) carburetor units',q:['149-2341','149-2341-01']}],
   brush:{pn:'212-1303'},plugs:{pn:'167-1638',qty:2}},
- onanz484:{brand:'Onan',type:'diesel',src:'operator manual 0981-0183 (Issue 13, 2018), parts manual 0981-0273 (Issue 26) and spares list A043T640',chk:'',
+ onanz484:{fint:'every 500 h or 3 years',brand:'Onan',type:'diesel',src:'operator manual 0981-0183 (Issue 13, 2018), parts manual 0981-0273 (Issue 26) and spares list A043T640',chk:'',
   oil:'About 2 qt (1.9 L) with filter \u00b7 SAE 15W-40 (OnaMax) year round \u00b7 API CF, CF-4, CG-4, CH-4 or CI-4',
   buy:'2 qt SAE 15W-40 diesel engine oil',
   cool:'Cooling system 3 qt (2.8 L): 50/50 ethylene glycol antifreeze and distilled water',
@@ -15208,9 +15208,14 @@ var GENBY={};GENLIB.forEach(function(q){GENBY[q.k]=q;});
 function genOf(r){if(!r)return null;var k=r.genLib;if(k==='other')return null;var E=k&&GENBY[k];
  if(!E){var m=String((r.hdr&&r.hdr.genModel)||'').toUpperCase();E=GENLIB.find(function(q){return m.indexOf(q.k)>=0||(q.alt||[]).some(function(a){return m.indexOf(a)>=0;});})||null;}
  return E?{e:E,f:GENFAM[E.fam]}:null;}
+/* Fuel filter replacement interval (Rev 1.51, Ravi 2026-11-12): 500 h or 3 years for diesel and fuel-injected units.
+   fint on a GENFAM entry sets it per family (not set on the gasoline carburetor family); a diesel unit with no library model gets the default. */
+var FUELINT='every 500 h or 3 years';
+function genFint(r){var G=genOf(r);if(G)return G.f.fint||'';return r&&r.genType==='diesel'?FUELINT:'';}
+function fuelIntT(r,it){var t=it.t;if(it.id==='g3'&&r){var v=genFint(r);if(v)t+=' (Replace '+v+'.)';}return t;}
 /* items: [id, text, sub lines, optional, Check online part numbers, brand] */
 function genItems(r){var G=genOf(r);
- if(G){var f=G.f,L=f.parts.map(function(p){return [p.id,p.t,['P/N '+p.pn+(p.was?' \u00b7 supersedes '+p.was:'')].concat(p.note?[p.note]:[]),0,p.q||[p.pn].concat(p.was?[p.was]:[]),f.brand];});
+ if(G){var f=G.f,L=f.parts.map(function(p){return [p.id,p.t,['P/N '+p.pn+(p.was?' \u00b7 supersedes '+p.was:'')].concat(p.note?[p.note]:[]).concat(p.id==='gpfuel'&&f.fint?['Replace '+f.fint]:[]),0,p.q||[p.pn].concat(p.was?[p.was]:[]),f.brand];});
   if(f.brush)L.push(['gpbrush','Brush block (replace every PM)',['P/N '+f.brush.pn],0,[f.brush.pn],f.brand]);
   if(f.plugs)L.push(['gpplug','Spark plugs \u00d7 '+f.plugs.qty,['P/N '+f.plugs.pn],0,[f.plugs.pn],f.brand]);
   return L;}
@@ -15329,7 +15334,7 @@ function gpnHtml(){var k=GPN.m,E=k&&GENBY[k],F=E&&GENFAM[E.fam],X=E&&GENTS[E.fam
  h+='<div class="card"><label class="f" style="margin-top:0">Generator model</label><div class="gml">'+gmGrid(k,'gpm',false)+'</div>'+
   '<p class="muted" style="margin:8px 0 0;font-size:13px">Only models with a manual in the library are listed. For any other model, use QSOL under Full manual.</p></div>';
  if(!X)return h+gpnLinks();
- h+='<div class="card"><h3 style="margin-top:0">Service parts</h3><ul class="gpr">'+F.parts.map(function(p){return '<li><b>'+e(p.t)+':</b> '+e(p.pn)+(p.was?' (supersedes '+e(p.was)+')':'')+'</li>';}).join('')+
+ h+='<div class="card"><h3 style="margin-top:0">Service parts</h3><ul class="gpr">'+F.parts.map(function(p){return '<li><b>'+e(p.t)+':</b> '+e(p.pn)+(p.was?' (supersedes '+e(p.was)+')':'')+(p.id==='gpfuel'&&F.fint?' \u00b7 replace '+e(F.fint):'')+'</li>';}).join('')+
   (F.brush?'<li><b>Brush block:</b> '+e(F.brush.pn)+'</li>':'')+(F.plugs?'<li><b>Spark plugs:</b> '+e(F.plugs.pn)+' × '+F.plugs.qty+'</li>':'')+'<li><b>Oil:</b> '+e(F.oil)+'</li>'+(F.cool?'<li><b>Coolant:</b> '+e(F.cool)+'</li>':'')+'</ul></div>';
  if(F.fimg)h+='<div class="card"><h3 style="margin-top:0">Fuel filter: 147-0860 or 149-2513?</h3><p class="muted" style="margin:-4px 0 8px">Early spin-on units (spec A to K) use the 149-2513 primary filter; later units (spec L and up) and the fuel-injected gas units use the 147-0860 inline filter. Tap the picture to enlarge.</p><img src="fuel-filter-guide.jpg" alt="Visual reference guide: fuel filter selection, 147-0860 inline filter versus 149-2513 primary filter" data-fimg="1" style="width:100%;height:auto;border:1px solid var(--line);border-radius:10px;background:#fff;display:block"></div>';
  h+='<div class="card"><h3 style="margin-top:0">Reading the fault code</h3><ul class="gpr">'+X.read.map(function(s){return '<li>'+e(s)+'</li>';}).join('')+'</ul></div>';
