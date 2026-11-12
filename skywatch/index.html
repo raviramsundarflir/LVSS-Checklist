@@ -14892,7 +14892,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/12/2026',site:'151'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/12/2026',site:'152'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+(+CREDIT.site/100).toFixed(2):creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14955,7 +14955,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='109915d0d5';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='2a8ad82392';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);Promise.resolve().then(function(){return typeof save==='function'?save():0;}).catch(function(){}).then(function(){return fetch(location.pathname,{cache:'reload'});}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -15195,10 +15195,14 @@ var GENFAM={
    {id:'gpfuel',t:'Fuel filter',pn:'149-2513'}],
   brush:{pn:'212-1303'},plugs:null}
 };
+/* verify:1 = model is covered by operator manual 981-0161C (2006), which gives specs, intervals and fault codes but no part numbers; the part numbers shown are the QD family's, so the tech must confirm them on the unit (Rev 1.52, Ravi 2026-11-12) */
 var GENLIB=[
  {k:'HDKAV',n:'Onan QD 6000 (HDKAV)',alt:['QD 6000','QD6000'],fam:'onanqd'},
  {k:'HDKAT',n:'Onan QD 7500 (HDKAT)',alt:['QD 7500','QD7500'],fam:'onanqd'},
  {k:'HDKAU',n:'Onan QD 8000 (HDKAU)',alt:['QD 8000','QD8000'],fam:'onanqd'},
+ {k:'HDKAH',n:'Onan QD 6000 (HDKAH)',alt:[],fam:'onanqd',verify:1},
+ {k:'HDKAJ',n:'Onan QD 7500 (HDKAJ)',alt:[],fam:'onanqd',verify:1},
+ {k:'HDKAK',n:'Onan QD 8000 (HDKAK)',alt:[],fam:'onanqd',verify:1},
  {k:'HDKBC',n:'Onan HDKBC 5 kW diesel, 60 Hz',alt:[],fam:'onanz484'},
  {k:'HDKBB',n:'Onan HDKBB 4.8 kW diesel, 50 Hz',alt:[],fam:'onanz484'},
  {k:'HGJAD',n:'Onan HGJAD 5.5 / 7 kW gasoline, fuel-injected',alt:[],fam:'onanhgjad'},
@@ -15215,7 +15219,7 @@ function genFint(r){var G=genOf(r);if(G)return G.f.fint||'';return r&&r.genType=
 function fuelIntT(r,it){var t=it.t;if(it.id==='g3'&&r){var v=genFint(r);if(v)t+=' (Replace '+v+'.)';}return t;}
 /* items: [id, text, sub lines, optional, Check online part numbers, brand] */
 function genItems(r){var G=genOf(r);
- if(G){var f=G.f,L=f.parts.map(function(p){return [p.id,p.t,['P/N '+p.pn+(p.was?' \u00b7 supersedes '+p.was:'')].concat(p.note?[p.note]:[]).concat(p.id==='gpfuel'&&f.fint?['Replace '+f.fint]:[]),0,p.q||[p.pn].concat(p.was?[p.was]:[]),f.brand];});
+ if(G){var f=G.f,L=f.parts.map(function(p){return [p.id,p.t,['P/N '+p.pn+(p.was?' \u00b7 supersedes '+p.was:'')].concat(p.note?[p.note]:[]).concat(p.id==='gpfuel'&&f.fint?['Replace '+f.fint]:[]).concat(G.e.verify?['Verify on the unit: not confirmed for this model']:[]),0,p.q||[p.pn].concat(p.was?[p.was]:[]),f.brand];});
   if(f.brush)L.push(['gpbrush','Brush block (replace every PM)',['P/N '+f.brush.pn],0,[f.brush.pn],f.brand]);
   if(f.plugs)L.push(['gpplug','Spark plugs \u00d7 '+f.plugs.qty,['P/N '+f.plugs.pn],0,[f.plugs.pn],f.brand]);
   return L;}
@@ -15224,7 +15228,7 @@ function genItems(r){var G=genOf(r);
  else if(r.genType==='gas')S2.push(['gpplug','Spark plugs']);
  return S2;}
 function genNote(r){if(!r)return 'Write in the part numbers from the generator\u2019s service manual.';var G=genOf(r);
- return G?G.e.n+': part numbers from '+G.f.src+', '+(G.f.chk?'checked online '+G.f.chk:'not checked online yet (superseded numbers unverified)')+'.':'Pick the generator model in section 2 to fill in its part numbers (and brush block or spark plugs where it has them). Standard list until then.';}
+ return G?G.e.n+': part numbers from '+G.f.src+', '+(G.f.chk?'checked online '+G.f.chk:'not checked online yet (superseded numbers unverified)')+'.'+(G.e.verify?' This model\u2019s own manual (981-0161C, 2006) gives no part numbers, so verify every part number on the unit before you buy.':''):'Pick the generator model in section 2 to fill in its part numbers (and brush block or spark plugs where it has them). Standard list until then.';}
 /* ---- Generator manual & fault codes panel (Rev 60, Ravi 2026-11-04) ----
    Opens over the app (home screen, trip planner section 2, Inspect step) so the tech never loses their place;
    Close, Escape or the tablet's Back button return to the same spot. Steps are summarized from the model's manual
@@ -15335,7 +15339,7 @@ function gpnHtml(){var k=GPN.m,E=k&&GENBY[k],F=E&&GENFAM[E.fam],X=E&&GENTS[E.fam
   '<p class="muted" style="margin:8px 0 0;font-size:13px">Only models with a manual in the library are listed. For any other model, use QSOL under Full manual.</p></div>';
  if(!X)return h+gpnLinks();
  h+='<div class="card"><h3 style="margin-top:0">Service parts</h3><ul class="gpr">'+F.parts.map(function(p){return '<li><b>'+e(p.t)+':</b> '+e(p.pn)+(p.was?' (supersedes '+e(p.was)+')':'')+(p.id==='gpfuel'&&F.fint?' \u00b7 replace '+e(F.fint):'')+'</li>';}).join('')+
-  (F.brush?'<li><b>Brush block:</b> '+e(F.brush.pn)+'</li>':'')+(F.plugs?'<li><b>Spark plugs:</b> '+e(F.plugs.pn)+' × '+F.plugs.qty+'</li>':'')+'<li><b>Oil:</b> '+e(F.oil)+'</li>'+(F.cool?'<li><b>Coolant:</b> '+e(F.cool)+'</li>':'')+'</ul></div>';
+  (F.brush?'<li><b>Brush block:</b> '+e(F.brush.pn)+'</li>':'')+(F.plugs?'<li><b>Spark plugs:</b> '+e(F.plugs.pn)+' × '+F.plugs.qty+'</li>':'')+'<li><b>Oil:</b> '+e(F.oil)+'</li>'+(F.cool?'<li><b>Coolant:</b> '+e(F.cool)+'</li>':'')+'</ul>'+(E.verify?'<p class="muted" style="margin:8px 0 0;font-size:13px">Part numbers are the Onan QD family\u2019s. This model\u2019s manual (981-0161C, 2006) lists none, so verify each one on the unit.</p>':'')+'</div>';
  if(F.fimg)h+='<div class="card"><h3 style="margin-top:0">Fuel filter: 147-0860 or 149-2513?</h3><p class="muted" style="margin:-4px 0 8px">Early spin-on units (spec A to K) use the 149-2513 primary filter; later units (spec L and up) and the fuel-injected gas units use the 147-0860 inline filter. Tap the picture to enlarge.</p><img src="fuel-filter-guide.jpg" alt="Visual reference guide: fuel filter selection, 147-0860 inline filter versus 149-2513 primary filter" data-fimg="1" style="width:100%;height:auto;border:1px solid var(--line);border-radius:10px;background:#fff;display:block"></div>';
  h+='<div class="card"><h3 style="margin-top:0">Reading the fault code</h3><ul class="gpr">'+X.read.map(function(s){return '<li>'+e(s)+'</li>';}).join('')+'</ul></div>';
  h+='<div class="card"><h3 style="margin-top:0">Fault codes</h3><input id="gpnQ" inputmode="numeric" autocomplete="off" placeholder="Type the code number, e.g. 36" style="margin-bottom:8px"><p class="muted" id="gpnNo" hidden>No code with that number in this manual.</p>'+gpnList(X.codes,'c')+'</div>';
@@ -15464,8 +15468,8 @@ function gpHtml(r){var t=T(r),g=null;SECS.forEach(function(s){s.g.forEach(functi
  return '<p class="muted ptn ptgn">'+e(genNote(r))+'</p><div class="ptl">'+gi(g,r).map(function(x){return gpRow(r,x,!!t.ck[x[0]]);}).join('')+'</div>';}
 function buyAutoHtml(r,g){var a=gi(g,r),t=T(r);if(!a.length)return '';return '<div class="grp">'+e(g.h)+'</div><div class="ptl">'+a.map(function(x){return tick(r,x,'tick',null,!!t.ck[x[0]]);}).join('')+'</div>';}
 function buyRefresh(){var r=S.rec;if(!r||r.step!==0)return;var el=document.getElementById('ptBuyAuto');if(!el)return;var g=null;SECS.forEach(function(s){s.g.forEach(function(q){if(q.buyauto)g=q;});});if(g)el.innerHTML=buyAutoHtml(r,g);}
-var GMG=[['Diesel',['HDKAV','HDKAT','HDKAU','HDKBC','HDKBB']],['Gasoline / LPG',['HGJAD','HGJAE']]],
- GMS={HDKAV:['6HDKAV','QD 6000 \u00b7 6 kW diesel','x'],HDKAT:['7.5HDKAT','QD 7500 \u00b7 7.5 kW diesel','x'],HDKAU:['8HDKAU','QD 8000 \u00b7 8 kW diesel','x'],HDKBC:['5.0HDKBC','5 kW \u00b7 60 Hz diesel','b'],HDKBB:['HDKBB','5.5HDKBB (60 Hz) or 5.0HDKBB (50 Hz) diesel','b'],HGJAD:['HGJAD','5.5, 5.8 or 7 kW \u00b7 gas, fuel-injected','b'],HGJAE:['HGJAE','5.5, 6.5 or 7 kW \u00b7 gas or LPG, carburetor']};
+var GMG=[['Diesel',['HDKAV','HDKAT','HDKAU','HDKAH','HDKAJ','HDKAK','HDKBC','HDKBB']],['Gasoline / LPG',['HGJAD','HGJAE']]],
+ GMS={HDKAV:['6HDKAV','QD 6000 \u00b7 6 kW diesel','x'],HDKAT:['7.5HDKAT','QD 7500 \u00b7 7.5 kW diesel','x'],HDKAU:['8HDKAU','QD 8000 \u00b7 8 kW diesel','x'],HDKAH:['6HDKAH','QD 6000 \u00b7 6 kW diesel (nameplate says HDKAH)','x'],HDKAJ:['7.5HDKAJ','QD 7500 \u00b7 7.5 kW diesel (nameplate says HDKAJ)','x'],HDKAK:['8HDKAK','QD 8000 \u00b7 8 kW diesel (nameplate says HDKAK)','x'],HDKBC:['5.0HDKBC','5 kW \u00b7 60 Hz diesel','b'],HDKBB:['HDKBB','5.5HDKBB (60 Hz) or 5.0HDKBB (50 Hz) diesel','b'],HGJAD:['HGJAD','5.5, 5.8 or 7 kW \u00b7 gas, fuel-injected','b'],HGJAE:['HGJAE','5.5, 6.5 or 7 kW \u00b7 gas or LPG, carburetor']};
 function brushIc(x){return '<svg class="gbi" viewBox="0 0 40 40" aria-hidden="true"><g transform="translate(40 0) scale(-1 1)" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="12" width="14" height="5" rx="2.5"/><rect x="16" y="9" width="21" height="8" rx="2"/><path d="M19 17v14M23 17v14M27 17v14M31 17v14M35 17v14"/></g>'+(x?'<line x1="5" y1="36" x2="36" y2="5" style="stroke:var(--gtbg)" stroke-width="8" stroke-linecap="round"/><line x1="5" y1="36" x2="36" y2="5" style="stroke:var(--gtsl)" stroke-width="3.4" stroke-linecap="round"/>':'')+'</svg>';}
 function gmTile(k,t,sb,on,act,def,br){return '<button type="button" class="gt1'+(on?' on':'')+'" data-pt="'+act+'" data-v="'+k+'"><b>'+e(t)+'</b>'+(sb?'<small>'+e(sb)+'</small>':'')+(br?'<span class="gbr">'+brushIc(br==='x')+(br==='x'?'Brushless':'Brushed')+'</span>':'')+(def?'<em>DEFAULT</em>':'')+'</button>';}
 function gmGrid(cur,act,other){return GMG.map(function(g){return '<div class="gmg">'+g[0]+'</div><div class="gtl">'+g[1].map(function(k){return gmTile(k,GMS[k][0],GMS[k][1],cur===k,act,k==='HDKAV',GMS[k][2]);}).join('')+'</div>';}).join('')+(other?'<div class="gmg">Other</div><div class="gtl">'+gmTile('other','Other / not listed','Use the standard parts list',cur==='other',act,false)+'</div>':'');}
