@@ -1013,7 +1013,7 @@ async function init(){
 init();
 
 </script>
-<script>(function(){var B='6f0b5690ef';function chk(){fetch('version.json?'+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(v){if(v&&v.build&&v.build!==B){if(navigator.serviceWorker)navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister()});});if(window.caches)caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k)});});var t=document.createElement('div');t.className='toast';t.textContent='A newer version is available - reload to update';document.body.appendChild(t);}}).catch(function(){});}setTimeout(chk,4000);setInterval(function(){if(!document.hidden)chk();},300000);document.addEventListener('visibilitychange',function(){if(!document.hidden)chk();});})();</script>
+<script>(function(){var B='dc69ec6ed1';function chk(){fetch('version.json?'+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(v){if(v&&v.build&&v.build!==B){if(navigator.serviceWorker)navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister()});});if(window.caches)caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k)});});var t=document.createElement('div');t.className='toast';t.textContent='A newer version is available - reload to update';document.body.appendChild(t);}}).catch(function(){});}setTimeout(chk,4000);setInterval(function(){if(!document.hidden)chk();},300000);document.addEventListener('visibilitychange',function(){if(!document.hidden)chk();});})();</script>
 <script>/* ===== shared: on-screen Back / Home bar (Ravi, 2026-11-04) =====
    Back = the previous screen you were on (kept per app, not the browser history). Home = the main launcher.
    Each app gives Nav.init() a snap() (where am I) and restore() (go back there). Pages without one use the browser's Back. */
@@ -1097,10 +1097,10 @@ restore:function(s){if((s.v==='form'||s.v==='done')&&RECS[s.id]){S.rec=RECS[s.id
 })();
 </script>
 <style id="darkFix2">/* Rev 1.55: dark-mode contrast + selected state + header toggle (Ravi) */
-.tg2f{position:fixed;top:8px;right:8px;z-index:60;min-height:36px;padding:0 12px;border-radius:8px;border:1px solid #8a94a3;background:#fff;color:#0b3d6b;font:700 14px system-ui,-apple-system,"Segoe UI",sans-serif;cursor:pointer}
+.tg2bar{display:flex;justify-content:flex-end;padding:6px 10px}.tg2f{min-height:36px;padding:0 12px;border-radius:8px;border:1px solid #8a94a3;background:#fff;color:#0b3d6b;font:700 14px system-ui,-apple-system,"Segoe UI",sans-serif;cursor:pointer}
 body:has([data-theme-tog]) .tg2n{display:none}
 @media screen and (min-width:761px){body:not(:has([data-theme-tog])):has(.tg2n) .top .bar{padding-right:196px!important}}
-@media print{.tg2f,.tg2n{display:none!important}}
+@media print{.tg2f,.tg2n,.tg2bar{display:none!important}}
 @media screen{
 html[data-theme=dark]{--mut:#b4c0cc;--muted:#b4c0cc}
 html[data-theme=dark] button{border-color:#5a6c82!important;color:#eef1f5}
@@ -1133,9 +1133,9 @@ html[data-theme=dark] #camx button.on{background:#f2c200!important;color:#000!im
 function cur(){return document.documentElement.getAttribute('data-theme')==='light'?'light':'dark';}
 function lab(){var n=document.querySelectorAll('[data-theme-tog2]');for(var i=0;i<n.length;i++)n[i].textContent=cur()==='dark'?'☀ Light':'☾ Dark';}
 function ensure(){if(!document.body)return;var nb=document.getElementById('navBar'),ex=document.querySelector('[data-theme-tog2]');
- if(ex){if(nb&&ex.classList.contains('tg2f')){ex.className='tg2n';nb.insertBefore(ex,nb.querySelector('[data-nav=home]'));}return;}
- var b=document.createElement('button');b.type='button';b.setAttribute('data-theme-tog2','');b.setAttribute('aria-label','Switch between light and dark mode');
- if(nb){b.className='tg2n';nb.insertBefore(b,nb.querySelector('[data-nav=home]'));}else{b.className='tg2f';document.body.appendChild(b);}lab();}
+ if(ex){if(nb&&ex.classList.contains('tg2f')){var w0=ex.parentNode;ex.className='tg2n';nb.insertBefore(ex,nb.querySelector('[data-nav=home]'));if(w0&&w0.className==='tg2bar')w0.remove();}return;}
+ if(document.getElementById('themeBtn'))return;var b=document.createElement('button');b.type='button';b.setAttribute('data-theme-tog2','');b.setAttribute('aria-label','Switch between light and dark mode');
+ if(nb){b.className='tg2n';nb.insertBefore(b,nb.querySelector('[data-nav=home]'));}else{b.className='tg2f';var w=document.createElement('div');w.className='tg2bar';w.appendChild(b);document.body.insertBefore(w,document.body.firstChild);}lab();}
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-theme-tog2]');if(!b)return;e.preventDefault();e.stopPropagation();
  var d=cur()==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',d);try{localStorage.setItem('tscTheme',d);}catch(x){}lab();},true);
 try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
