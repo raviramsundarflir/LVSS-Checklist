@@ -254,4 +254,23 @@ document.addEventListener('pointerdown',function(){note();},true);
 document.addEventListener('click',function(ev){var b=ev.target.closest&&ev.target.closest('[data-nav]');if(!b)return;ev.preventDefault();ev.stopPropagation();if(b.getAttribute('data-nav')==='home')home();else back();},true);
 window.Nav={dbg:function(){return {stack:stack.slice(),cur:cur};},init:function(o){A=o||{};NAME=A.name||'';mount();},back:back,home:home};
 })();</script><script>Nav.init({name:document.title});</script>
+<style id="darkFix2">/* Rev 1.55: dark-mode contrast + selected state + header toggle (Ravi) */
+.tg2f{position:fixed;top:8px;right:8px;z-index:60;min-height:36px;padding:0 12px;border-radius:8px;border:1px solid #8a94a3;background:#fff;color:#0b3d6b;font:700 14px system-ui,-apple-system,"Segoe UI",sans-serif;cursor:pointer}
+body:has([data-theme-tog]) .tg2n{display:none}
+@media screen and (min-width:761px){body:not(:has([data-theme-tog])):has(.tg2n) .top .bar{padding-right:196px!important}}
+@media print{.tg2f,.tg2n{display:none!important}}
+</style>
+<script>/* Rev 1.55: light/dark toggle in the page header (Ravi) */
+(function(){if(window.__darkFix2)return;window.__darkFix2=1;
+function cur(){return document.documentElement.getAttribute('data-theme')==='light'?'light':'dark';}
+function lab(){var n=document.querySelectorAll('[data-theme-tog2]');for(var i=0;i<n.length;i++)n[i].textContent=cur()==='dark'?'☀ Light':'☾ Dark';}
+function ensure(){if(!document.body)return;var nb=document.getElementById('navBar'),ex=document.querySelector('[data-theme-tog2]');
+ if(ex){if(nb&&ex.classList.contains('tg2f')){ex.className='tg2n';nb.insertBefore(ex,nb.querySelector('[data-nav=home]'));}return;}
+ var b=document.createElement('button');b.type='button';b.setAttribute('data-theme-tog2','');b.setAttribute('aria-label','Switch between light and dark mode');
+ if(nb){b.className='tg2n';nb.insertBefore(b,nb.querySelector('[data-nav=home]'));}else{b.className='tg2f';document.body.appendChild(b);}lab();}
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-theme-tog2]');if(!b)return;e.preventDefault();e.stopPropagation();
+ var d=cur()==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',d);try{localStorage.setItem('tscTheme',d);}catch(x){}lab();},true);
+try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
+ensure();setTimeout(ensure,500);
+})();</script>
 </body></html>

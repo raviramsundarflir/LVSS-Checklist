@@ -14294,7 +14294,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)save();});
 function curTpl(){return TPL}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/13/2026',site:'133'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/13/2026',site:'134'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+CREDIT.site:creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14417,7 +14417,7 @@ document.addEventListener('focusout',e=>{histCommit(e.target);setTimeout(()=>{if
 document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='683919e602';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='4c152722d2';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -14656,4 +14656,49 @@ save:function(){return save();}});</script>
  window.addEventListener('load',function(){setTimeout(function(){setInterval(function(){if(blank())showOv();else hideOv();},3000);},8000);});
 })();
 </script>
+<style id="darkFix2">/* Rev 1.55: dark-mode contrast + selected state + header toggle (Ravi) */
+.tg2f{position:fixed;top:8px;right:8px;z-index:60;min-height:36px;padding:0 12px;border-radius:8px;border:1px solid #8a94a3;background:#fff;color:#0b3d6b;font:700 14px system-ui,-apple-system,"Segoe UI",sans-serif;cursor:pointer}
+body:has([data-theme-tog]) .tg2n{display:none}
+@media screen and (min-width:761px){body:not(:has([data-theme-tog])):has(.tg2n) .top .bar{padding-right:196px!important}}
+@media print{.tg2f,.tg2n{display:none!important}}
+@media screen{
+html[data-theme=dark]{--mut:#b4c0cc;--muted:#b4c0cc}
+html[data-theme=dark] button{border-color:#5a6c82!important;color:#eef1f5}
+html[data-theme=dark] .steps button{border-color:#4a5b70!important;color:#eef1f5!important}
+html[data-theme=dark] input,html[data-theme=dark] textarea,html[data-theme=dark] select{border:1px solid #6b7d92!important;color:#f4f7fa!important}
+html[data-theme=dark] ::placeholder{color:#9aa8b6!important}
+html[data-theme=dark] .muted,html[data-theme=dark] small,html[data-theme=dark] label.f{color:#b4c0cc!important}
+html[data-theme=dark] [style*="color:#8a94a3"],html[data-theme=dark] [style*="color: #8a94a3"]{color:#b4c0cc!important}
+html[data-theme=dark] a:not([class]){color:#7db4ff!important}
+html[data-theme=dark] button.dng,html[data-theme=dark] button.danger{color:#ff9a93!important;border-color:#7a3b3b!important}
+html[data-theme=dark] #navBar button,html[data-theme=dark] .tg2f{background:#1b2733!important;color:#d6e4f7!important;border-color:#5a6c82!important}
+html[data-theme=dark] button.on,html[data-theme=dark] button.pri,html[data-theme=dark] button[aria-pressed=true],html[data-theme=dark] .btn.primary{background:#2563eb!important;color:#fff!important;border-color:#93b8ff!important;box-shadow:inset 0 0 0 1px #93b8ff;font-weight:700}
+html[data-theme=dark] :is(button[data-v],button[data-k],button.chip,button.vbtn,button.btn,button.pendbtn).on::before,html[data-theme=dark] button.pri[data-v]::before{content:"\2713\00a0";font-weight:900}
+html[data-theme=dark] button.vbtn.vp.on,html[data-theme=dark] button.btn.au-ok.on,html[data-theme=dark] button.chip.war.on,html[data-theme=dark] button.on.pass,html[data-theme=dark] button.on.fx{background:#1b8a3a!important;border-color:#8fe0a8!important;box-shadow:inset 0 0 0 1px #8fe0a8}
+html[data-theme=dark] button.vbtn.vf.on,html[data-theme=dark] button.btn.au-no.on,html[data-theme=dark] button.on.fail,html[data-theme=dark] button.on.op{background:#c62828!important;border-color:#ffb3ad!important;box-shadow:inset 0 0 0 1px #ffb3ad}
+html[data-theme=dark] button.chip.low.on{background:var(--low)!important;color:#000!important}
+html[data-theme=dark] button.chip.med.on{background:var(--med)!important;color:#000!important}
+html[data-theme=dark] button.chip.high.on{background:var(--high)!important;color:#fff!important}
+html[data-theme=dark] button.chip.dno.on,html[data-theme=dark] button.chip.lv-dno.on{background:#000!important;color:#ff7a7a!important;border-color:#ff7a7a!important;box-shadow:none}
+html[data-theme=dark] #navBar{background:#121a21!important;border-bottom:1px solid #2b3947}
+@media(min-width:761px){html[data-theme=dark] body:has(#navBar) .top{background:transparent!important}}
+html[data-theme=dark] .secl{color:#8fb8ff!important}
+html[data-theme=dark] #saveInd[style*="27, 138, 58"]{color:#7be39a!important}
+html[data-theme=dark] #saveInd[style*="198, 40, 40"]{color:#ff9a93!important}
+html[data-theme=dark] button.tgl.on{background:#b58900!important;border-color:#f3cf5a!important;color:#fff!important;box-shadow:none}
+html[data-theme=dark] #camx button.on{background:#f2c200!important;color:#000!important}
+}</style>
+<script>/* Rev 1.55: light/dark toggle in the page header (Ravi) */
+(function(){if(window.__darkFix2)return;window.__darkFix2=1;
+function cur(){return document.documentElement.getAttribute('data-theme')==='light'?'light':'dark';}
+function lab(){var n=document.querySelectorAll('[data-theme-tog2]');for(var i=0;i<n.length;i++)n[i].textContent=cur()==='dark'?'☀ Light':'☾ Dark';}
+function ensure(){if(!document.body)return;var nb=document.getElementById('navBar'),ex=document.querySelector('[data-theme-tog2]');
+ if(ex){if(nb&&ex.classList.contains('tg2f')){ex.className='tg2n';nb.insertBefore(ex,nb.querySelector('[data-nav=home]'));}return;}
+ var b=document.createElement('button');b.type='button';b.setAttribute('data-theme-tog2','');b.setAttribute('aria-label','Switch between light and dark mode');
+ if(nb){b.className='tg2n';nb.insertBefore(b,nb.querySelector('[data-nav=home]'));}else{b.className='tg2f';document.body.appendChild(b);}lab();}
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-theme-tog2]');if(!b)return;e.preventDefault();e.stopPropagation();
+ var d=cur()==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',d);try{localStorage.setItem('tscTheme',d);}catch(x){}lab();},true);
+try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
+ensure();setTimeout(ensure,500);
+})();</script>
 </body></html>
