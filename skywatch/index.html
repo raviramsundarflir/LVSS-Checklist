@@ -13723,10 +13723,34 @@ function certHtml(){const r=S.rec,c=r.cert,h=r.hdr,st=stats(r),L=r.signed;
  <div class="card"><h3>Authorized signatures</h3><p class="muted">The punch list is complete – this is the last step. Both parties sign below.</p></div>
  ${padCard('cust','Customer',...['cert.custName','cert.custTitle'])}
  ${padCard('tech','Teledyne FLIR Representative (Technician)',...['hdr.tech','cert.techTitle'])}
+ ${warrHtml(r)}
  <div class="card"><h3>Email the signed certificate</h3><p class="muted">The customer chooses where their copy is sent – several addresses can be separated with commas. The technician is copied (Cc), and the Tucson Service Center receives it too.</p>
  ${inp('hdr.email','Customer email address(es)',{type:'email',ph:'name@company.com'})}
  <div class="sp"></div><label class="f">Technician email (Cc)</label><div class="row" style="flex-wrap:nowrap"><input id="techEmail" data-b="hdr.techEmail" type="email" value="${esc(h.techEmail||'')}" placeholder="first.last" style="flex:1"><button data-act="suffix" style="white-space:nowrap">＋ @teledyne.com</button></div></div>
  <div class="row">${L?`<button class="dng" data-act="reopen">Reopen (admin PIN)</button><span style="flex:1"></span><button class="gobtn" data-act="step" data-s="5">Save / Send / Print Cert</button>`:`<button data-act="step" data-s="3">← Back to punch list</button><span style="flex:1"></span><button class="gobtn" id="finishBtn" data-act="finish">Complete sign-off</button>`}</div>`;}
+/* ===== Rev 1.57: Warranty period of performance certificate (step 4 card + PDF page) ===== */
+function warrOf(r){if(!r.warr)r.warr={on:false,rows:[{desc:'SkyWatch Tower',term:''}],start:'',end:''};if(!r.warr.rows||!r.warr.rows.length)r.warr.rows=[{desc:'SkyWatch Tower',term:''}];return r.warr;}
+function warrV(r,k){const w=warrOf(r),h=r.hdr;if(w[k]!=null)return w[k];return k==='customer'?(h.customer||''):k==='so'?(h.salesOrder||''):k==='po'?(h.po||''):k==='date'?today():'';}
+function warrRow(r,i,k){const x=warrOf(r).rows[i]||{};if(x[k]!=null)return x[k];return k==='serial'?(i===0?(r.hdr.towerSerial||''):''):'';}
+function warrApplied(r){return !!(r.cert.warrSig&&r.cert.warrSig===r.cert.custSig);}
+function warrHtml(r){const w=warrOf(r),c=r.cert,L=r.signed;
+ if(!w.on)return `<div class="card" id="warrCard"><div class="row"><h3 style="flex:1;margin:0">Warranty certificate</h3><button data-act="warrtog">＋ Add warranty certificate</button></div><p class="muted" style="margin:6px 0 0">Adds a Certificate of Warranty page to the report, just before the punch list.</p></div>`;
+ const fld=(k,lab,t)=>`<div><label class="f">${lab}</label><input data-b="warr.${k}" ${t?'type="'+t+'" ':''}value="${esc(warrV(r,k))}"></div>`;
+ const rows=w.rows.map((x,i)=>`<tr><td style="text-align:center">${i+1}</td><td><input data-b="warr.rows.${i}.desc" value="${esc(warrRow(r,i,'desc'))}"></td><td><input data-b="warr.rows.${i}.term" value="${esc(warrRow(r,i,'term'))}" placeholder="Extended Warranty Year 1"></td><td><input data-b="warr.rows.${i}.serial" value="${esc(warrRow(r,i,'serial'))}"></td><td>${w.rows.length>1?`<button class="dng" data-act="warrrm" data-i="${i}">✕</button>`:''}</td></tr>`).join('');
+ const can=!!c.custSig,ap=warrApplied(r),sg=c.warrSig,unl=(S.sigUnl||{}).warr;
+ const tile=`<button type="button" data-act="warrapply" data-warr-tile="${ap?'on':'off'}" aria-label="Apply customer signature, printed name, and title" style="height:180px;width:100%;border:3px solid #7F77DD !important;border-radius:10px;background:${ap?'rgba(127,119,221,.16)':'transparent'} !important;color:inherit !important;font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:0 10px;text-align:center;box-shadow:none;${can?'':'opacity:.6'}">${ap?`<img src="${c.warrSig}" alt="Applied signature" style="max-width:90%;max-height:80px;background:#fff !important;border-radius:6px;padding:4px"><b style="font-size:14px">Applied</b><span class="muted">Tap to undo</span>`:`<span style="font-size:26px;color:#7F77DD" aria-hidden="true">✍</span><b style="font-size:15px">Tap to apply signature, printed name, and title</b><span class="muted">${can?esc(custName(r)||'Customer')+' · '+esc(fmtD(c.custDate)):'The customer signs the certificate above first'}</span>`}</button>`;
+ return `<div class="card" id="warrCard"><div class="row"><h2 style="flex:1;margin:0 0 10px">Certificate of Warranty</h2><button class="dng" data-act="warrtog">Remove from report</button></div>
+ <p class="muted" style="margin-top:0">Goes in the PDF just before the punch list. Customer, SO and PO come from the report and can be edited here.</p>
+ <div class="grid">${fld('customer','Customer')}${fld('so','Teledyne FLIR Sales Order #')}${fld('po','Customer PO #')}${fld('date','Certificate date','date')}</div>
+ <div class="sp"></div><table class="t" style="table-layout:fixed"><tr><th style="width:7%">No.</th><th style="width:30%">Description</th><th style="width:33%">Warranty term</th><th style="width:24%">Serial number</th><th style="width:6%"></th></tr>${rows}</table>
+ <div style="margin-top:8px"><button data-act="warradd">＋ Add unit</button></div>
+ <div class="sp"></div><h3>Period of performance</h3><div class="grid"><div><label class="f">Start date</label><input data-b="warr.start" type="date" value="${esc(w.start||'')}"></div><div><label class="f">End date</label><input data-b="warr.end" type="date" value="${esc(w.end||'')}"></div></div>
+ <p class="muted">Dates can be added after the customer signs. Blank dates print as blank lines.</p>
+ <div class="sp"></div><label class="f">Customer signature</label>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">${tile}<div><canvas class="sig ${sg?'ok':''}" id="pad-warr" data-w="warr" ${L&&sg&&!unl?'style="pointer-events:none"':''}></canvas><div class="row" style="margin-top:6px"><span class="muted" style="flex:1">${sg?'Signed '+fmtD(c.warrDate):'Not signed yet'}</span>${L?(sg?(unl?'<button data-act="chgsig" data-w="warr">Done – lock signature</button>':'<button data-act="chgsig" data-w="warr">Change signature</button>'):''):'<button data-act="clrsig" data-w="warr">Clear</button>'}</div></div></div>
+ <div class="grid" style="margin-top:8px"><div><label class="f">Print name</label><input data-b="warr.name" value="${esc(w.name||'')}"></div><div><label class="f">Title</label><input data-b="warr.title" value="${esc(w.title||'')}"></div></div>
+ <p class="muted">The Teledyne FLIR representative signature carries over from the technician signature below.</p></div>`;}
+function warrRedraw(){const y=window.scrollY;$('#body').innerHTML=certHtml();initPads();window.scrollTo(0,y);}
 function custName(r){return r.cert.custName!=null?r.cert.custName:(r.hdr.contact||'')}
 
 /* ----- signature pads ----- */
@@ -14028,7 +14052,7 @@ function sparesLine(r){const L=sparesLeft(r);if(!L.length)return '';return '\n\n
 function applyCf(t){for(var i=HDR_CUST.length-1;i>=0;i--)if(String(HDR_CUST[i][0]).indexOf('cf_')===0)HDR_CUST.splice(i,1);((t&&t.cfields)||[]).forEach(function(f){if(f&&String(f.label||'').trim())HDR_CUST.push(['cf_'+f.id,String(f.label).trim()]);});}
 function cfPdf(d,y,h){var L=HDR_CUST.filter(function(f){return String(f[0]).indexOf('cf_')===0&&String(h[f[0]]||'').trim();}).map(function(f){return f[1]+': '+String(h[f[0]]).trim();});if(!L.length)return y;d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(40);var ls=d.splitTextToSize(cl(L.join('   |   ')),CW);d.text(ls,MX,y+6);return y+4+ls.length*11;}
 function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;const ens=n=>{if(y+n>BOT){d.addPage();y=TOP}};
- const noCert=!!(r.visit&&!r.vc);if(!noCert)drawCert(d,r);
+ const noCert=!!(r.visit&&!r.vc);if(!noCert)drawCert(d,r);if(!noCert&&r.warr&&r.warr.on){d.addPage();skip.add(d.getNumberOfPages());drawWarr(d,r,skip);}
  // punch list report
  if(!noCert)d.addPage();const punchPg=d.getNumberOfPages();skip.add(punchPg);d.addImage(LOGO2,'JPEG',MX,28,120,27);y=70;const P=punch(r);const dn=P.filter(x=>r.items[x.id].lvl==='dno');
  if(dn.length)y=banner(d,y,'DO NOT OPERATE',`${dn.length} item(s) flagged - ${dn.filter(x=>!r.items[x.id].rep).length} still open`,dn.every(x=>r.items[x.id].rep),r.verdict==='pass');
@@ -14152,6 +14176,31 @@ function statusIcon(d,x,y,w,h,r,st){const nd=flat(r).filter(q=>{const i=r.items[
  else{hx(d,'setFillColor',pass?'#1b8a3a':'#c62828');d.roundedRect(x,y,w,h,6,6,'F');d.setDrawColor(255);d.setLineCap('round');d.setLineWidth(4);const cx=x+26,cy=y+h/2;
   if(pass)d.lines([[8,9],[17,-20]],cx-13,cy+1,[1,1],'S');else{d.lines([[18,18]],cx-9,cy-9,[1,1],'S');d.lines([[18,-18]],cx-9,cy+9,[1,1],'S');}
   d.setLineCap('butt');d.setLineWidth(1);d.setFont('helvetica','bold');d.setFontSize(30);d.setTextColor(255);d.text(pass?'PASSED':'FAILED',x+w/2+14,y+h/2+10,{align:'center'});}}
+function drawWarr(d,r,skip){const w=warrOf(r),h=r.hdr,c=r.cert;
+ d.addImage(LOGO2,'JPEG',MX,28,150,34);d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(0);d.text('DATE: '+cl(fmtD(warrV(r,'date'))),PW-MX,48,{align:'right'});
+ d.setFontSize(15);d.text('Certificate of Warranty',PW/2,92,{align:'center'});d.setFont('helvetica','normal');d.setFontSize(10);d.setTextColor(70);d.text('Warranty Period of Performance',PW/2,107,{align:'center'});
+ d.setTextColor(0);d.setFontSize(10);let y=136;
+ [['Customer:',warrV(r,'customer')],['Teledyne FLIR Sales Order #:',warrV(r,'so')],['Customer PO #:',warrV(r,'po')]].forEach(q=>{const ls=wrap(d,q[1]||'',320);d.setFont('helvetica','bold');d.text(q[0],210,y,{align:'right'});d.setFont('helvetica','normal');d.text(ls.length?ls:[''],218,y);y+=Math.max(1,ls.length)*13+4;});
+ y+=4;d.setDrawColor(0);d.setLineWidth(.8);d.line(MX+10,y,PW-MX-10,y);y+=14;
+ const cc=[[0,40,'No.'],[40,200,'Description'],[240,170,'Warranty Term'],[410,130,'Serial Number']];
+ const head=()=>{hx(d,'setFillColor','#000000');d.rect(MX,y,CW,22,'F');d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(255);cc.forEach(q=>d.text(q[2],MX+q[0]+5,y+14.5));y+=22;d.setTextColor(0);};
+ const newPg=()=>{d.addPage();skip.add(d.getNumberOfPages());y=TOP;};
+ head();d.setLineWidth(.6);
+ w.rows.forEach((x,i)=>{d.setFont('helvetica','bold');d.setFontSize(9);const ls=[wrap(d,warrRow(r,i,'desc'),190),wrap(d,warrRow(r,i,'term'),160),wrap(d,warrRow(r,i,'serial'),120)];const hh=Math.max(26,Math.max(ls[0].length,ls[1].length,ls[2].length)*11+10);
+  if(y+hh>600){newPg();head();}
+  d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,hh);cc.slice(1).forEach(q=>d.line(MX+q[0],y,MX+q[0],y+hh));
+  d.setFont('helvetica','normal');d.text(String(i+1),MX+5,y+14);d.setFont('helvetica','bold');d.text(ls[0],MX+45,y+14);d.setFont('helvetica','normal');d.text(ls[1],MX+245,y+14);d.text(ls[2],MX+415,y+14);y+=hh;});
+ y+=18;if(y+24+170>732)newPg();
+ d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(0);d.text('Warranty Period of Performance',MX+10,y);y+=20;
+ const dl=(lab,v,x)=>{d.setFont('helvetica','bold');d.setFontSize(10);d.text(lab,x,y);const lx=x+d.getTextWidth(lab)+6;d.setFont('helvetica','normal');if(v){d.text(cl(fmtD(v)),lx,y);}else{d.setDrawColor(0);d.setLineWidth(.6);d.line(lx,y+2,lx+110,y+2);}};
+ dl('Start date:',w.start,MX+10);dl('End date:',w.end,MX+270);y+=30;
+ d.setFont('helvetica','normal');d.setFontSize(9.5);d.text('Signed for and on behalf of Teledyne FLIR Detection, Inc.',MX+10,y);y+=8;
+ hx(d,'setFillColor','#000000');d.rect(MX,y,CW,16,'F');d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(255);d.text('Authorized Signatures',PW/2,y+11.5,{align:'center'});y+=16;
+ [['Print Teledyne FLIR Representative Name and Title',h.tech||'',c.techTitle,c.techSig,c.techDate],['Print Customer Name and Title',w.name||'',w.title,c.warrSig,c.warrDate]].forEach(q=>{
+  d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,58);d.line(MX+265,y,MX+265,y+58);d.line(MX+465,y,MX+465,y+58);d.setFont('helvetica','normal');d.setFontSize(8);d.setTextColor(60);
+  d.text(q[0],MX+4,y+10);d.text('Signature',MX+269,y+10);d.text('Date',MX+469,y+10);d.setFontSize(10);d.setTextColor(0);d.text(wrap(d,q[1],255),MX+6,y+28);d.setFontSize(9);d.text(wrap(d,q[2]||'',255),MX+6,y+41);
+  if(q[3]){const im=sigDims(q[3],185,38);d.addImage(q[3],'PNG',MX+272,y+15,im[0],im[1]);}d.setFontSize(9.5);d.text(cl(fmtD(q[4])),MX+470,y+28);y+=58;});
+ const fy=Math.min(y+34,700);d.setFont('helvetica','bold');d.setFontSize(8.5);d.setTextColor(0);d.text('SkyWatch: Tucson Service Center (TSC)',PW/2,fy,{align:'center'});d.setFont('helvetica','normal');d.text('8165 S Camino De Cafe, Tucson, AZ 85747',PW/2,fy+11,{align:'center'});d.text('Customer Support: 520.262.6910 | '+TSC_EMAIL,PW/2,fy+22,{align:'center'});}
 function drawCert(d,r){const h=r.hdr,c=r.cert,st=stats(r);
  d.addImage(LOGO2,'JPEG',MX,28,150,34);d.setFont('helvetica','bold');d.setFontSize(15);d.setTextColor(0);d.text('Service Certificate of Completion',PW/2,84,{align:'center'});statusIcon(d,PW-MX-215,116,215,72,r,st);d.setTextColor(0);d.setDrawColor(0);d.setLineWidth(.6);
  d.setFontSize(10);d.text('Customer:',MX+8,108);d.setFont('helvetica','normal');d.text(cl(h.customer||''),MX+70,108);
@@ -14301,8 +14350,14 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'addsvc':{r.svc.extra.push({id:'x'+uid(),t:''});markDirty();svcRefresh();const ins=document.querySelectorAll(`[data-b="svc.extra.${r.svc.extra.length-1}.t"]`);ins.length&&ins[ins.length-1].focus();break;}
  case 'rmsvc':{r.svc.extra.splice(+b.dataset.i,1);markDirty();svcRefresh();break;}
  case 'chgsig':{const w=b.dataset.w;S.sigUnl=S.sigUnl||{};if(S.sigUnl[w]){S.sigUnl[w]=false;}else{if(!confirm('Are you sure you want to update the signature?'))break;S.sigUnl[w]=true;}$('#body').innerHTML=certHtml();initPads();break;}
- case 'clrsig':{const w=b.dataset.w;r.cert[w+'Sig']=null;r.cert[w+'Date']='';markDirty();$('#body').innerHTML=certHtml();initPads();break;}
- case 'finish':{const c=r.cert,st=stats(r);const miss=[];if(!c.custSig)miss.push('customer signature');if(!c.techSig)miss.push('Teledyne FLIR technician signature');if(!custName(r).trim())miss.push('customer printed name');if(!(r.hdr.tech||'').trim())miss.push('technician printed name');
+ case 'warrtog':{const w=warrOf(r);w.on=!w.on;if(w.on&&w.date==null)w.date=today();markDirty();warrRedraw();break;}
+ case 'warradd':{warrOf(r).rows.push({desc:'SkyWatch Tower',term:''});markDirty();warrRedraw();break;}
+ case 'warrrm':{const w=warrOf(r);if(w.rows.length>1)w.rows.splice(+b.dataset.i,1);markDirty();warrRedraw();break;}
+ case 'warrapply':{const w=warrOf(r);if(!r.cert.custSig){alert('Have the customer sign the certificate above first, then tap here.');break;}
+  if(warrApplied(r)){r.cert.warrSig=null;r.cert.warrDate='';w.name='';w.title='';}else{r.cert.warrSig=r.cert.custSig;r.cert.warrDate=r.cert.custDate||today();w.name=custName(r);w.title=r.cert.custTitle||'';}
+  markDirty();warrRedraw();break;}
+ case 'clrsig':{const w=b.dataset.w;if(w==='cust'&&warrApplied(r)){r.cert.warrSig=null;r.cert.warrDate='';}r.cert[w+'Sig']=null;r.cert[w+'Date']='';markDirty();$('#body').innerHTML=certHtml();initPads();break;}
+ case 'finish':{const c=r.cert,st=stats(r);const miss=[];if(!c.custSig)miss.push('customer signature');if(r.warr&&r.warr.on&&!c.warrSig)miss.push('warranty certificate customer signature');if(!c.techSig)miss.push('Teledyne FLIR technician signature');if(!custName(r).trim())miss.push('customer printed name');if(!(r.hdr.tech||'').trim())miss.push('technician printed name');
   if(st.nolv)miss.push(st.nolv+' failed item(s) without a concern level');if(!r.verdict)miss.push('final answer: did the tower pass');if(st.nwun)miss.push(st.nwun+' non-warranty item(s) not marked Repaired or Advised');if(!(r.hdr.towerSerial||'').trim())miss.push('tower serial number');{const bad=mails(r.hdr.email).filter(e=>!emailOk(e));if(bad.length)miss.push('a valid customer email ('+bad[0]+')');}if(st.nowar)miss.push(st.nowar+' failed item(s) without Warranty / Non-warranty');
   if(miss.length&&!(await ask('Not filled in yet:\n\n• '+miss.join('\n• ')+'\n\nThe report can still be completed. Blank items will show as blank lines on the PDF.',{title:'Some details are missing',ok:'Continue anyway',no:'Go fix it'})))break;
   r.linesOk=true;
@@ -14312,7 +14367,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
   if(r.cert.custName==null)r.cert.custName=custName(r);
   if(false)break;
   r.signed=true;r.signedAt=Date.now();S.dirty=true;await save();go(5);break;}
- case 'reopen':{const p=prompt('Admin PIN to reopen (this clears both signatures):');if(p!==ADMIN_PIN){if(p!==null)alert('Wrong PIN');break;}r.signed=false;r.cert.custSig=r.cert.techSig=null;r.cert.custDate=r.cert.techDate='';S.dirty=true;await save();renderRec();break;}
+ case 'reopen':{const p=prompt('Admin PIN to reopen (this clears both signatures):');if(p!==ADMIN_PIN){if(p!==null)alert('Wrong PIN');break;}r.signed=false;if(warrApplied(r)){r.cert.warrSig=null;r.cert.warrDate='';}r.cert.custSig=r.cert.techSig=null;r.cert.custDate=r.cert.techDate='';S.dirty=true;await save();renderRec();break;}
  case 'rcp':{const x=b.dataset.e;if(b.checked)delete r.recipients.off[x];else r.recipients.off[x]=true;markDirty();break;}
  case 'addrcp':{const v=$('#newRcp').value.trim();if(!/^\S+@\S+\.\S+$/.test(v)){alert('Enter a valid email address');break;}r.recipients.extra.push(v);markDirty();await save();$('#body').innerHTML=sendHtml();prepPdfs();break;}
  case 'dl':if(!S.pdf){alert('The PDF is still being prepared');break;}dlBlob(S.pdf.blob,S.pdf.name);break;
@@ -14892,7 +14947,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/13/2026',site:'156'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/13/2026',site:'157'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
 function creditText(rev){const r=CREDIT.site?'Rev '+(+CREDIT.site/100).toFixed(2):creditRev(rev);return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
@@ -14955,7 +15010,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='c976acd2bf';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='9cb37dbd07';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);Promise.resolve().then(function(){return typeof save==='function'?save():0;}).catch(function(){}).then(function(){return fetch(location.pathname,{cache:'reload'});}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
