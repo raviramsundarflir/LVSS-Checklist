@@ -13395,7 +13395,7 @@ const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth
 const fmtD=s=>{if(!s)return'';const m=/^(\d{4})-(\d\d)-(\d\d)/.exec(s);return m?`${m[2]}/${m[3]}/${m[1]}`:s};
 
 const TSC_EMAIL='skywatch.support@teledyne.com';
-const HDR_CUST=[['customer','Customer'],['date','Date','date'],['contact','Contact Name'],['address','Tower Location Address'],['phone','Phone Number','tel'],['po','Customer PO #'],['salesOrder','Teledyne FLIR Sales Order #'],['rma','RMA #'],['serviceOrder','Service Order #'],['tech','Teledyne FLIR Technician (name)']];
+const HDR_CUST=[['customer','Customer'],['date','Date','date'],['contact','Contact Name'],['address','Tower Location Address'],['phone','Phone Number','tel'],['po','Customer PO #'],['markPo','Mark delivery PO #'],['salesOrder','Teledyne FLIR Sales Order #'],['rma','RMA #'],['serviceOrder','Service Order #'],['tech','Teledyne FLIR Technician (name)']];
 const HDR_SER=[['towerVin','Tower VIN'],['towerSerial','Tower serial number'],['genSerial','Generator serial number'],['genModel','Generator model'],['genHours','Generator hours']];
 
 /* ---------- record helpers ---------- */
@@ -14093,7 +14093,7 @@ function buildPdf(r){const d=pdfNew(),h=r.hdr,st=stats(r),skip=new Set();let y;c
  const cell=(x,yy,w,hh,lab,val)=>{d.setDrawColor(170);d.setLineWidth(.6);d.rect(x,yy,w,hh);d.setFont('helvetica','normal');d.setFontSize(6.8);d.setTextColor(110);d.text(cl(lab),x+4,yy+8);d.setFontSize(9.5);d.setTextColor(0);d.text(wrap(d,val,w-8),x+4,yy+19);};
  const pair=(l1,v1,l2,v2)=>{d.setFontSize(9.5);const a=wrap(d,v1,262).length,b=wrap(d,v2,262).length;const hh=Math.max(26,14+Math.max(a,b)*11);ens(hh);cell(MX,y,CW/2,hh,l1,v1);cell(MX+CW/2,y,CW/2,hh,l2,v2);y+=hh;};
  pair('Customer',h.customer,'Date',fmtD(h.date));pair('Contact Name',h.contact,'Tower Location Address',h.address);pair('Phone Number',h.phone,'Email Address',h.email);
- pair('Customer PO #',h.po,'Teledyne FLIR Sales Order #',h.salesOrder);pair('RMA #',h.rma,'Service Order #',h.serviceOrder);pair('Teledyne FLIR Technician',h.tech,'Tower Type',r.legacy?'Legacy DC tower':'Standard');
+ pair('Customer PO #',h.po,'Teledyne FLIR Sales Order #',h.salesOrder);if(String(h.markPo||'').trim())pair('Mark delivery PO #',h.markPo,'Quote #',(r.so&&r.so.o&&r.so.o.quote)||'');pair('RMA #',h.rma,'Service Order #',h.serviceOrder);pair('Teledyne FLIR Technician',h.tech,'Tower Type',r.legacy?'Legacy DC tower':'Standard');
  y+=8;hx(d,'setFillColor','#5b8dd6');d.rect(MX,y,CW,15,'F');d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(255);d.text('Serial Numbers',PW/2,y+11,{align:'center'});y+=15;
  const SL=HDR_SER.map(f=>{const e=r.swap.list.find(z=>z.dev==='hdr:'+f[0]);const nv=e&&(e.nw||'').trim();return [f[1].replace(/\b[a-z]/g,c=>c.toUpperCase())+((r.serPh[f[0]]||[]).length?' (photo in appendix)':'')+(typeof carryPdfTag==='function'?carryPdfTag(r,f[0]):''),nv?`${e.nw} (Old: ${e.old||h[f[0]]||''})`:(h[f[0]]||'')+(f[0]==='genHours'&&typeof hoursPdf==='function'?hoursPdf(r):'')]});
  for(let i=0;i<SL.length;i+=3){for(let j=0;j<3;j++){const q=SL[i+j]||['',''];cell(MX+j*CW/3,y,CW/3,26,q[0],q[1]);}y+=26;}
@@ -15010,7 +15010,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='9cb37dbd07';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='0443a94d76';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);Promise.resolve().then(function(){return typeof save==='function'?save():0;}).catch(function(){}).then(function(){return fetch(location.pathname,{cache:'reload'});}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -16470,4 +16470,340 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
 ensure();setTimeout(ensure,500);
 })();</script>
+<script>/* Rev 1.71: Import sales order (PDF or photo) on the Info step. Reads the Teledyne order acknowledgement, shows a review screen, then fills Customer & order. Sold-to is the customer and the header PO is Customer PO #; the ship-to PO is the Mark delivery PO #. Nothing is filled until the tech confirms. */
+(function(){
+if(window.__soImport)return;window.__soImport=1;
+var SOParser=(function(){
+function median(a){a=a.slice().sort(function(x,y){return x-y});return a.length?a[Math.floor(a.length/2)]:8}
+function norm(s){return String(s).toUpperCase().replace(/[^A-Z0-9 ]/g,' ').replace(/\s+/g,' ').trim()}
+function clean(s){return String(s==null?'':s).replace(/\s+/g,' ').trim()}
+var LABELS=['SALES ORDER NO','ORDER DATE','PURCHASE ORDER NO','TERMS OF DELIVERY','SHIP VIA','PAYMENT TERMS','EXPORT','CURRENT DATE'];
+function isLabel(s){var n=norm(s);return LABELS.some(function(l){return n===l||n.indexOf(l)===0})||n.indexOf('ORDER TYPE')===0}
+
+function buildLines(items){
+  items=items.filter(function(i){return i.s&&i.s.trim()});
+  if(!items.length)return{lines:[],mh:8};
+  var mh=median(items.map(function(i){return i.h||8}));
+  var tol=mh*0.55;
+  items.sort(function(a,b){return a.y-b.y||a.x-b.x});
+  var lines=[],cur=null;
+  items.forEach(function(it){
+    if(cur&&Math.abs(it.y-cur.y)<=tol){cur.items.push(it)}else{cur={y:it.y,items:[it]};lines.push(cur)}
+  });
+  lines.forEach(function(l){
+    l.items.sort(function(a,b){return a.x-b.x});
+    var cells=[],c=null;
+    l.items.forEach(function(it){
+      var gap=c?it.x-(c.x+c.w):0;
+      if(c&&gap<=Math.max(mh*1.6,4)){c.s+=(gap>mh*0.15?' ':'')+it.s;c.w=it.x+it.w-c.x}
+      else{c={s:it.s,x:it.x,w:it.w};cells.push(c)}
+    });
+    cells.forEach(function(c){c.s=clean(c.s)});
+    l.cells=cells.filter(function(c){return c.s});
+    l.text=l.cells.map(function(c){return c.s}).join('  ');
+  });
+  return{lines:lines,mh:mh};
+}
+
+function below(lines,li,cell,maxN){
+  for(var k=li+1;k<=Math.min(lines.length-1,li+maxN);k++){
+    var cands=lines[k].cells.filter(function(c){
+      return !isLabel(c.s)&&c.x<cell.x+cell.w+8&&c.x+c.w>cell.x-8});
+    if(cands.length){
+      var cx=cell.x+cell.w/2;
+      cands.sort(function(a,b){return Math.abs(a.x+a.w/2-cx)-Math.abs(b.x+b.w/2-cx)});
+      return cands[0].s;
+    }
+  }
+  return null;
+}
+function headerVal(lines,label){
+  for(var i=0;i<lines.length;i++){
+    for(var j=0;j<lines[i].cells.length;j++){
+      if(norm(lines[i].cells[j].s).indexOf(label)===0){
+        var v=below(lines,i,lines[i].cells[j],3);if(v)return v;
+      }
+    }
+  }
+  return null;
+}
+
+function parseBlock(lines){
+  var out={sold:[],ship:[]};
+  var start=-1,end=lines.length;
+  for(var i=0;i<lines.length;i++){
+    var n=norm(lines[i].text);
+    if(start<0&&n.indexOf('ORDER TYPE')>=0){start=i+1}
+    else if(start>=0&&/^ITEM PART/.test(n)){end=i;break}
+  }
+  if(start<0)return out;
+  var hx=null,hdr=-1;
+  for(var k=start;k<end;k++){
+    var nums=lines[k].cells.filter(function(c){return /^\d{4,8}$/.test(c.s)});
+    if(nums.length>=2){hx=nums[1].x;hdr=k;out.soldNo=nums[0].s;out.shipNo=nums[1].s;break}
+  }
+  if(hx==null)return out;
+  for(var m=hdr+1;m<end;m++){
+    var sold=[],ship=[];
+    lines[m].items.forEach(function(it){
+      var t=clean(it.s);if(!t||/^(SOLD|SHIP|TO)$/.test(t))return;
+      (it.x>=hx-6?ship:sold).push(t);
+    });
+    if(sold.length)out.sold.push(clean(sold.join(' ')));
+    if(ship.length)out.ship.push(clean(ship.join(' ')));
+  }
+  return out;
+}
+
+function splitAddr(arr){
+  var r={name:arr[0]||'',contact:'',phone:'',po:'',street:'',city:''};
+  var rest=[];
+  arr.slice(1).forEach(function(t){
+    var po=t.match(/^PO#?\s*(\S+)/i);
+    if(po){r.po=po[1];return}
+    var cp=t.match(/^(.+?)\s*\/\s*([\d\-\.\(\) ]{7,})$/);
+    if(cp){r.contact=cp[1];r.phone=clean(cp[2]);return}
+    rest.push(t);
+  });
+  rest.forEach(function(t){
+    if(/[A-Z]{2}\s+\d{5}(-\d{4})?$/.test(t))r.city=t;
+    else if(/^\d/.test(t))r.street=t;
+    else if(!r.contact)r.contact=t;
+    else r.street=r.street?r.street+', '+t:t;
+  });
+  r.addr=[r.street,r.city].filter(Boolean).join(', ');
+  return r;
+}
+
+function parseRows(lines,mh){
+  var rows=[],last=null,since=99;
+  var re=/^(\d{1,3}) (\S+) (.+?) (?:(\d{2}\/\d{2}\/\d{4}) )?(?:(\d{2}\/\d{2}\/\d{4}) )?(\d+) ?EA ([\d,]+\.\d{2}) ([\d,]+\.\d{2})$/;
+  for(var i=0;i<lines.length;i++){
+    var t=clean(lines[i].text),m=re.exec(t);
+    if(m){
+      last={item:m[1],part:m[2],desc:m[3],planned:m[4]||'',request:m[5]||'',qty:parseInt(m[6],10),price:m[7],amount:m[8],cust:''};
+      rows.push(last);since=0;continue;
+    }
+    var cm=t.match(/^Customer material:\s*(.+)$/i);
+    if(cm&&last){last.cust=cm[1];since=0;continue}
+    if(last&&since<2&&i>0&&lines[i].y-lines[i-1].y<=mh*2.6&&t.length<45&&!/\d{2}\/\d{2}\/\d{4}|\bEA\b|:/.test(t)&&!/^ORDER ACK/i.test(t)){
+      last.desc+=' '+t;since++;continue;
+    }
+    since=99;
+  }
+  return rows;
+}
+
+function categorize(r){
+  var p=r.part.toUpperCase();
+  if(/EXTWARR/.test(p))return'warranty';
+  if(/GOLD/.test(p))return'gold';
+  if(/FREIGHT|TRAINING/.test(p))return'other';
+  if(/^ISPROJ|^IS-/.test(p))return'other';
+  return'equip';
+}
+
+function parse(pages,source){
+  var all=[],texts=[],lines1=null,mh1=8,rows=[];
+  pages.forEach(function(items,pi){
+    var b=buildLines(items);
+    if(pi===0){lines1=b.lines;mh1=b.mh}
+    texts.push(b.lines.map(function(l){return l.text}).join('\n'));
+    rows=rows.concat(parseRows(b.lines,b.mh));
+  });
+  var text=texts.join('\n\f\n'),f={},ocr=source==='ocr';
+  function put(k,label,v,conf){v=clean(v);f[k]={label:label,value:v,conf:v?(ocr&&conf==='ok'?'chk':conf):'miss'}}
+  function rx(re,g){var m=re.exec(text);return m?m[g||1]:''}
+
+  var firstText=texts[0]||'';
+  function hdr(lbl,fallbackRe){
+    var v=lines1?headerVal(lines1,lbl):null;
+    if(v)return{v:v,c:'ok'};
+    var m=fallbackRe&&fallbackRe.exec(firstText);
+    return m?{v:m[1],c:'chk'}:{v:'',c:'miss'};
+  }
+  var a;
+  a=hdr('SALES ORDER NO',/SALES ORDER NO\.?[\s\S]{0,80}?(\d{7,9})/);put('so','Teledyne SO no.',a.v,a.c);
+  a=hdr('ORDER DATE',/ORDER DATE[\s\S]{0,80}?(\d{1,2}\/\d{1,2}\/\d{4})/);put('order_date','Order date',a.v,a.c);
+  a=hdr('PURCHASE ORDER NO',/PURCHASE ORDER NO\.?[\s\S]{0,80}?(\d{4,})/);put('hdr_po','PO no. on SO header',a.v,a.c);
+  a=hdr('TERMS OF DELIVERY',/(FOB \w+)/);put('terms','Terms of delivery',a.v,a.c);
+  a=hdr('SHIP VIA',/(Standard Delivery)/i);put('ship_via','Ship via',a.v,a.c);
+  a=hdr('PAYMENT TERMS',/(Within \d+ days[^\n]*?net)/i);put('pay','Payment terms',a.v,a.c);
+
+  var blk=lines1?parseBlock(lines1):{sold:[],ship:[]};
+  var rs=splitAddr(blk.sold),eu=splitAddr(blk.ship);
+  var haveBlk=blk.sold.length>0;
+  var bc=haveBlk?'ok':'miss';
+  put('rs_name','Reseller name',rs.name,rs.name.length>=34?'chk':bc);
+  put('rs_contact','Reseller contact',rs.contact,bc);
+  put('rs_addr','Reseller address',rs.addr,bc);
+  put('eu_name','End user name',eu.name,bc);
+  put('eu_addr','End user address',eu.addr,bc);
+
+  var cpo=rx(/CUSTOMER PO NUMBER:\s*(\S+)/i);
+  put('cust_po','Customer PO no.',cpo||eu.po,cpo?'ok':'chk');
+  var mk=rx(/MARK(?:ED)?[ \-]*(?:FOR|DELIVERY)[^\n]{0,30}?PO\s*(?:NO|NUMBER)?\.?\s*#?\s*:?\s*([A-Z0-9\-]{4,})/i);
+  put('mark_po','Mark delivery PO no.',mk||eu.po,mk?'ok':(eu.po?'ok':'miss'));
+  put('cust_po_date','Customer PO date',rx(/Customer purchase order date:\s*(\S+)/i),'ok');
+  put('quote','Quote no.',rx(/QUOTE\s*#:\s*(\S+)/i),'ok');
+  put('ref','Reference A',rx(/Reference A:\s*\n\s*([^\n]+)/i),'ok');
+  put('total','Total order amount (USD)',rx(/TOTAL ORDER AMOUNT \(USD\)\s*([\d,]+\.\d{2})/i),'ok');
+
+  var poc=/EU POC:\s*\n\s*([^\n]+)\n\s*([\d\-\.\(\) ]{7,})\n\s*(\S+@\S+)/i.exec(text);
+  put('eu_poc','End user POC',poc?poc[1]:eu.contact,poc?'ok':'chk');
+  put('eu_phone','End user POC phone',poc?poc[2]:eu.phone,poc?'ok':'chk');
+  put('eu_email','End user POC email',poc?poc[3]:'','ok');
+  put('rs_office','Reseller office phone',rx(/Office:\s*([\d\.\-\(\) ]{7,})/i),'ok');
+  put('rs_email','Reseller buyer email',rx(/Fax:[^\n]*\n\s*(\S+@\S+)/i),'ok');
+  put('sales_rep','Sales rep (reseller)',rx(/Sales Rep:\s*\n\s*([^\n]+)/i),'ok');
+  put('sales_emp','Teledyne sales employee',rx(/Sales Employee 1:\s*([^\n]+)/i),'ok');
+  put('sales_ops','Teledyne sales ops contact',rx(/Sales Ops\. Contact:\s*([^\n]+)/i),'ok');
+
+  var clinG=rx(/\bCLIN[\s:#\-]*([0-9]{4}[A-Z]{0,2})\b/i);
+  put('clin','CLIN (order level)',clinG,'ok');
+
+  var equip={},svc=[],gold={},warnings=[];
+  rows.forEach(function(r){
+    var cat=categorize(r),cl=(r.desc+' '+r.cust).match(/\bCLIN[\s:#\-]*([0-9]{4}[A-Z]{0,2})\b/i);
+    r.clin=cl?cl[1]:'';
+    if(cat==='equip'){
+      var e=equip[r.part];
+      if(!e){e=equip[r.part]={part:r.part,desc:r.desc,qty:0,cust:r.cust,items:[],conf:'ok'};}
+      e.qty+=r.qty;e.items.push(r.item);
+    }else if(cat==='gold'){
+      var g=r.desc.match(/Unit\s*(\d+)\s*Gold\s*Yr\s*(\d+)/i),key=g?'U'+g[1]+'-Y'+g[2]:r.desc;
+      var o=gold[key];
+      if(!o){o=gold[key]={unit:g?g[1]:'',yr:g?g[2]:'',n:0,items:[],planned:r.planned};}
+      o.n+=r.qty;o.items.push(r.item);
+    }else if(cat==='warranty'){
+      var um=r.cust.match(/UNIT\s*(\d+)\s*-?\s*YEAR\s*(\d+)/i);
+      svc.push({clin:r.clin,desc:'Extended warranty'+(um?' - Unit '+um[1]+', Year '+um[2]:(r.cust?' - '+r.cust:'')),qty:r.qty,items:[r.item],date:r.planned,conf:'ok'});
+    }else{
+      svc.push({clin:r.clin,desc:r.desc+(r.cust?' ('+r.cust+')':''),qty:r.qty,items:[r.item],date:r.planned,conf:'ok'});
+    }
+  });
+  Object.keys(gold).forEach(function(k){
+    var o=gold[k],c='ok';
+    if(o.n>3){c='chk';warnings.push('Gold visits Unit '+o.unit+' Yr '+o.yr+' appear '+o.n+' times (items '+o.items.join(', ')+'). The SO may reuse a year label, so check unit and year.')}
+    svc.push({clin:'',desc:'Gold visits - Unit '+o.unit+', Year '+o.yr+' ('+o.n+' visits)',qty:o.n,items:o.items,date:o.planned,conf:c});
+  });
+  var equipList=Object.keys(equip).map(function(k){return equip[k]});
+  if(ocr){equipList.forEach(function(e){e.conf='chk'});svc.forEach(function(s){s.conf='chk'})}
+  return{fields:f,equip:equipList,services:svc,rows:rows,warnings:warnings,text:text,source:source};
+}
+return{parse:parse,buildLines:buildLines};
+})();
+var $q=function(s){return document.querySelector(s)};
+function E(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+var PDFJS='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/',TESS='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+var libP={};
+function loadScript(u){if(!libP[u])libP[u]=new Promise(function(res,rej){var s=document.createElement('script');s.src=u;s.onload=res;s.onerror=function(){delete libP[u];rej(new Error('Could not load the reading library. Connect to the internet and try again.'))};document.head.appendChild(s);});return libP[u];}
+function ensurePdf(){if(window.pdfjsLib)return Promise.resolve();return loadScript(PDFJS+'pdf.min.js').then(function(){pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS+'pdf.worker.min.js';});}
+function ensureTess(){return window.Tesseract?Promise.resolve():loadScript(TESS);}
+function status(t,err){var s=$q('#soStatus');if(!s)return;s.textContent=t||'';s.style.color=err?'#c62828':'';}
+function pdfItems(tc,vp){return tc.items.map(function(it){var h=it.height||Math.abs(it.transform[3])||8;return{s:it.str,x:it.transform[4],y:vp.height-it.transform[5]-h,w:it.width,h:h};});}
+function ocrItems(ws){return ws.map(function(w){return{s:w.text,x:w.bbox.x0,y:w.bbox.y0,w:w.bbox.x1-w.bbox.x0,h:w.bbox.y1-w.bbox.y0};});}
+async function ocr(src,label){
+  status('Loading the photo reader (first photo takes longer)...');
+  await ensureTess();
+  var w=await Tesseract.createWorker('eng',1,{logger:function(m){if(m.status==='recognizing text')status('Reading '+label+': '+Math.round(m.progress*100)+'%');}});
+  var r=await w.recognize(src);await w.terminate();
+  return ocrItems((r.data&&r.data.words)||[]);
+}
+async function importFile(file){
+  var r=S.rec;
+  if(!r){return;}
+  if(r.signed){status('This report is already signed. Import is off.',true);return;}
+  try{
+    var pages=[],source='pdf';
+    var isPdf=/pdf$/i.test(file.type)||/\.pdf$/i.test(file.name||'');
+    if(isPdf){
+      status('Reading PDF...');await ensurePdf();
+      var pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+      for(var p=1;p<=pdf.numPages;p++){
+        var pg=await pdf.getPage(p),vp=pg.getViewport({scale:1}),tc=await pg.getTextContent(),it=pdfItems(tc,vp);
+        if(it.length<15){source='ocr';var cv=document.createElement('canvas'),v2=pg.getViewport({scale:2.5});cv.width=v2.width;cv.height=v2.height;await pg.render({canvasContext:cv.getContext('2d'),viewport:v2}).promise;it=await ocr(cv,'page '+p);}
+        pages.push(it);
+      }
+    }else{source='ocr';pages.push(await ocr(file,'photo'));}
+    var res=SOParser.parse(pages,source);
+    var n=Object.keys(res.fields).filter(function(k){return res.fields[k].value;}).length;
+    if(n<3&&!res.equip.length)throw new Error('Could not find order data in this file. Try a clearer photo or the PDF.');
+    status('');review(res,file);
+  }catch(e){console.error(e);status(e.message||String(e),true);}
+}
+
+/* what fills Customer & order: [hdr key, label, parsed key] */
+var MAP=[['customer','Customer (sold to)','rs_name'],['po','Customer PO # (SO header)','hdr_po'],['markPo','Mark delivery PO # (ship-to)','mark_po'],['salesOrder','Teledyne FLIR Sales Order #','so'],['address','Tower Location Address (ship-to)','eu_addr'],['contact','Contact Name (ship-to POC)','eu_poc'],['phone','Phone Number','eu_phone'],['email','Email Address','eu_email']];
+var REF=[['order_date','Order date'],['quote','Quote #'],['cust_po_date','Customer PO date'],['terms','Terms of delivery'],['pay','Payment terms'],['ship_via','Ship via'],['total','Total order amount (USD)'],['ref','Reference A'],['eu_name','Ship-to name'],['rs_contact','Customer buyer'],['rs_office','Buyer phone'],['rs_email','Buyer email'],['sales_rep','Sales rep (reseller)'],['sales_emp','Teledyne sales employee'],['sales_ops','Teledyne sales ops contact']];
+function tag(c){var m={ok:['High','#e1f3d8','#27500a'],chk:['Check','#faeeda','#633806'],miss:['Not found','#fcebeb','#791f1f']}[c]||['', '#eee','#333'];return '<span style="font-size:11px;padding:1px 6px;border-radius:6px;margin-left:6px;background:'+m[1]+';color:'+m[2]+'">'+m[0]+'</span>';}
+var cur=null;
+function review(res,file){
+  cur=res;var h0=(S.rec&&S.rec.hdr)||{};
+  var h='<h3 style="margin:0 0 4px">Review sales order</h3><p class="muted" style="margin:0 0 8px">'+E(file.name||'photo')+' · '+(res.source==='pdf'?'PDF text read on this device':'Photo reading: check every value')+'. Untick anything you do not want. You can edit values before filling.</p><div style="max-height:62vh;overflow:auto;padding-right:4px">';
+  res.warnings.forEach(function(w){h+='<div style="background:#faeeda;color:#633806;border-radius:8px;padding:6px 8px;margin:0 0 6px;font-size:13px">'+E(w)+'</div>';});
+  h+='<b>Fills Customer &amp; order</b>';
+  MAP.forEach(function(m){
+    var d=res.fields[m[2]]||{value:'',conf:'miss'},old=String(h0[m[0]]||'').trim();
+    h+='<div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-top:1px solid rgba(128,128,128,.25)"><input type="checkbox" id="soc_'+m[0]+'" '+(d.value?'checked':'')+' style="width:24px;min-height:24px;margin-top:8px;flex:none" aria-label="Use '+E(m[1])+'"><div style="flex:1;min-width:0"><label class="f">'+E(m[1])+tag(d.conf)+'</label><input id="sov_'+m[0]+'" value="'+E(d.value)+'">'+(old&&old!==d.value?'<div class="muted" style="font-size:12px">Replaces: '+E(old)+'</div>':'')+'</div></div>';
+  });
+  h+='<div style="display:flex;gap:8px;align-items:center;padding:8px 0;border-top:1px solid rgba(128,128,128,.25)"><input type="checkbox" id="soc_save" checked style="width:24px;min-height:24px;flex:none"><div><b>Save sales order details with this report</b><div class="muted" style="font-size:12px">Order date, quote #, terms, buyer and sales contacts, equipment and services.</div></div></div>';
+  h+='<b style="display:block;margin-top:6px">Equipment</b>';
+  if(!res.equip.length)h+='<div class="muted">No equipment lines found.</div>';
+  res.equip.forEach(function(e,i){h+='<div style="padding:6px 0;border-top:1px solid rgba(128,128,128,.25)"><label class="f">Items '+E(e.items.join(', '))+tag(e.conf)+'</label><div style="display:flex;gap:6px"><input id="soep_'+i+'" value="'+E(e.part)+'" style="flex:2"><input id="soeq_'+i+'" value="'+E(e.qty)+'" style="flex:1"></div><input id="soed_'+i+'" value="'+E(e.desc)+'" style="margin-top:6px"></div>';});
+  h+='<b style="display:block;margin-top:6px">Services (CLIN and description)</b>';
+  if(!res.services.length)h+='<div class="muted">No service lines found.</div>';
+  res.services.forEach(function(s,i){h+='<div style="padding:6px 0;border-top:1px solid rgba(128,128,128,.25)"><label class="f">Items '+E(s.items.join(', '))+(s.date?' · '+E(s.date):'')+tag(s.conf)+(s.clin?'':'<span style="font-size:11px;padding:1px 6px;border-radius:6px;margin-left:6px;background:#fcebeb;color:#791f1f">No CLIN on SO</span>')+'</label><div style="display:flex;gap:6px"><input id="sosc_'+i+'" value="'+E(s.clin)+'" placeholder="CLIN" style="flex:1"><input id="sosq_'+i+'" value="'+E(s.qty)+'" style="flex:1"></div><input id="sosd_'+i+'" value="'+E(s.desc)+'" style="margin-top:6px"></div>';});
+  h+='</div><button class="pri" data-so="fill">Fill form</button><button data-so="close">Cancel</button>';
+  modal(h);var m=$q('#modal>div');if(m)m.style.maxWidth='560px';
+}
+function fillForm(){
+  var r=S.rec,res=cur;if(!r||!res)return;
+  if(r.signed){closeModal();status('This report is already signed. Import is off.',true);return;}
+  r.hdr=r.hdr||{};
+  MAP.forEach(function(m){var c=$q('#soc_'+m[0]),v=$q('#sov_'+m[0]);if(c&&c.checked&&v&&v.value.trim())r.hdr[m[0]]=v.value.trim();});
+  var sv=$q('#soc_save');
+  if(sv&&sv.checked){
+    var f=function(k){return(res.fields[k]&&res.fields[k].value)||'';},o={};
+    REF.forEach(function(x){o[x[0]]=f(x[0]);});
+    o.rs_name=f('rs_name');
+    o.eu_poc=f('eu_poc');o.eu_phone=f('eu_phone');o.eu_email=f('eu_email');o.eu_addr=f('eu_addr');
+    o.hdr_po=f('hdr_po');o.mark_po=f('mark_po');o.so=f('so');
+    var eq=[],svc=[];
+    res.equip.forEach(function(e,i){eq.push({part:$q('#soep_'+i).value,qty:$q('#soeq_'+i).value,desc:$q('#soed_'+i).value,cust:e.cust||''});});
+    res.services.forEach(function(s,i){svc.push({clin:$q('#sosc_'+i).value.trim(),qty:$q('#sosq_'+i).value,desc:$q('#sosd_'+i).value,items:s.items.join(', '),date:s.date||''});});
+    r.so={v:1,src:(cur.source==='pdf'?'PDF':'Photo'),at:Date.now(),o:o,eq:eq,svc:svc};
+  }
+  markDirty();closeModal();render();
+  setTimeout(function(){status('Form filled from the sales order. Check the Customer & order fields below.');},50);
+}
+
+function soSummary(r){
+  var s=r.so;if(!s)return '';
+  var o=s.o||{},h='<div style="margin-top:10px;border-top:1px solid rgba(128,128,128,.3);padding-top:8px"><b>Imported sales order</b><div class="muted" style="font-size:12px;margin-bottom:6px">SO '+E(o.so||'')+' · quote '+E(o.quote||'-')+' · order date '+E(o.order_date||'-')+' · buyer '+E(o.rs_contact||'-')+(o.eu_name?' · ship to '+E(o.eu_name):'')+(o.eu_poc?' · site POC '+E(o.eu_poc):'')+'</div>';
+  if((s.eq||[]).length){h+='<label class="f">Equipment</label>';s.eq.forEach(function(e){h+='<div style="font-size:13px;margin:0 0 3px">'+E(e.qty)+' × '+E(e.part)+' – '+E(e.desc)+'</div>';});}
+  if((s.svc||[]).length){h+='<label class="f" style="margin-top:6px">Services (CLIN and description)</label>';s.svc.forEach(function(x,i){h+='<div style="display:flex;gap:6px;margin:0 0 4px"><input data-b="so.svc.'+i+'.clin" value="'+E(x.clin)+'" placeholder="CLIN" style="flex:1;min-height:38px"><input data-b="so.svc.'+i+'.desc" value="'+E(x.desc)+'" style="flex:4;min-height:38px"></div>';});}
+  return h+'</div>';
+}
+function soCard(){
+  var r=S.rec;if(!r||(typeof isVc==='function'&&isVc(r)))return '';
+  return '<div class="card" id="soCard"><h2 style="margin:0 0 4px">Import sales order</h2><p class="muted" style="margin:0 0 8px">Upload the Teledyne order acknowledgement (PDF) or take a photo. You review everything before it fills the form.</p><div class="row" style="gap:8px;flex-wrap:nowrap"><button class="pri" data-so="pick" style="flex:1">Import SO (PDF or photo)</button><button data-so="cam" style="flex:1">Take photo</button></div><input type="file" id="soFile" accept=".pdf,application/pdf,image/*" hidden data-nativecam="1"><input type="file" id="soCam" accept="image/*" capture="environment" hidden data-nativecam="1"><div id="soStatus" class="muted" style="margin-top:6px" role="status"></div>'+soSummary(r)+'</div>';
+}
+var _ih=infoHtml;
+infoHtml=function(){return soCard()+_ih.apply(this,arguments);};
+
+document.addEventListener('click',function(e){
+  var b=e.target.closest&&e.target.closest('[data-so]');if(!b)return;
+  var a=b.getAttribute('data-so');
+  if(a==='pick'){var f=$q('#soFile');if(f)f.click();}
+  else if(a==='cam'){var c=$q('#soCam');if(c)c.click();}
+  else if(a==='fill')fillForm();
+  else if(a==='close')closeModal();
+});
+document.addEventListener('change',function(e){
+  var t=e.target;if(!t||(t.id!=='soFile'&&t.id!=='soCam'))return;
+  var f=t.files&&t.files[0];t.value='';if(f)importFile(f);
+});
+})();
+</script>
 </body></html>
