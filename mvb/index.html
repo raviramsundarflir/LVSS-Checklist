@@ -1013,7 +1013,7 @@ async function init(){
 init();
 
 </script>
-<script>(function(){var B='f640279e52';function chk(){fetch('version.json?'+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(v){if(v&&v.build&&v.build!==B){if(navigator.serviceWorker)navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister()});});if(window.caches)caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k)});});var t=document.createElement('div');t.className='toast';t.textContent='A newer version is available - reload to update';document.body.appendChild(t);}}).catch(function(){});}setTimeout(chk,4000);setInterval(function(){if(!document.hidden)chk();},300000);document.addEventListener('visibilitychange',function(){if(!document.hidden)chk();});})();</script>
+<script>(function(){var B='546290eaa1';function chk(){fetch('version.json?'+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(v){if(v&&v.build&&v.build!==B){if(navigator.serviceWorker)navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister()});});if(window.caches)caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k)});});var t=document.createElement('div');t.className='toast';t.textContent='A newer version is available - reload to update';document.body.appendChild(t);}}).catch(function(){});}setTimeout(chk,4000);setInterval(function(){if(!document.hidden)chk();},300000);document.addEventListener('visibilitychange',function(){if(!document.hidden)chk();});})();</script>
 <script>/* ===== shared: on-screen Back / Home bar (Ravi, 2026-11-04) =====
    Back = the previous screen you were on (kept per app, not the browser history). Home = the main launcher.
    Each app gives Nav.init() a snap() (where am I) and restore() (go back there). Pages without one use the browser's Back. */
@@ -1141,5 +1141,5 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
 ensure();setTimeout(ensure,500);
 })();</script>
-<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.76 · 11/16/2026</div>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.77 · 11/16/2026</div>
 </body></html>

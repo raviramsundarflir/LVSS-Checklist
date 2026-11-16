@@ -14949,7 +14949,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
 const CREDIT={by:'Ravi Ramsundar',built:'11/16/2026',site:'157'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
-function creditText(rev){const r='Rev 1.76';return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
+function creditText(rev){const r='Rev 1.77';return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
 function creditLine(d,rev){d.setFont('helvetica','normal');d.setFontSize(6.5);d.setTextColor(150);d.text(creditText(rev).replace(/[^\x20-\x7E]/g,'-'),d.internal.pageSize.getWidth()/2,d.internal.pageSize.getHeight()-8,{align:'center'});}
 function ensureCredit(){
@@ -15010,7 +15010,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='e50fef40c2';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='5d4ec6c8ce';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);Promise.resolve().then(function(){return typeof save==='function'?save():0;}).catch(function(){}).then(function(){return fetch(location.pathname,{cache:'reload'});}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -16470,7 +16470,7 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
 ensure();setTimeout(ensure,500);
 })();</script>
-<script>/* Rev 1.76: Import review popup has a Prev / SO / Blank toggle per field (applied on Done); tapping a field that differs from the SO opens a Current / Sales order / Blank window; form toggles removed. Earlier: Rev 1.75: per-field Prev / SO / Blank toggle on the same line as each field (replaces the Import sales order details buttons); visible Rev and date bumped. Earlier: Rev 1.74: Import sales order keeps existing values and adds an Import sales order details button on each field that differs. Earlier: Rev 1.73 Import sales order (keep or replace existing values; ask whether tower location and site contact need updating). Earlier: Rev 1.72 Import sales order (PDF or photo) from Trip prep and the Info step. Reads the Teledyne order acknowledgement, shows a review screen, then fills Customer & order. Sold-to is the customer and the header PO is Customer PO #; the ship-to PO is the Mark delivery PO #. Nothing is filled until the tech confirms. */
+<script>/* Rev 1.77: toggles on every row of the import popup (values editable), tapping any imported field reopens the popup. Earlier: Rev 1.76: Import review popup has a Prev / SO / Blank toggle per field (applied on Done); tapping a field that differs from the SO opens a Current / Sales order / Blank window; form toggles removed. Earlier: Rev 1.75: per-field Prev / SO / Blank toggle on the same line as each field (replaces the Import sales order details buttons); visible Rev and date bumped. Earlier: Rev 1.74: Import sales order keeps existing values and adds an Import sales order details button on each field that differs. Earlier: Rev 1.73 Import sales order (keep or replace existing values; ask whether tower location and site contact need updating). Earlier: Rev 1.72 Import sales order (PDF or photo) from Trip prep and the Info step. Reads the Teledyne order acknowledgement, shows a review screen, then fills Customer & order. Sold-to is the customer and the header PO is Customer PO #; the ship-to PO is the Mark delivery PO #. Nothing is filled until the tech confirms. */
 (function(){
 if(window.__soImport)return;window.__soImport=1;
 var SOParser=(function(){
@@ -16738,23 +16738,29 @@ var MAP=[['customer','Customer (sold to)','rs_name'],['po','Customer PO # (SO he
 function tag(c){var m={ok:['High','#e1f3d8','#27500a'],chk:['Check','#faeeda','#633806'],miss:['Not found','#fcebeb','#791f1f']}[c]||['', '#eee','#333'];return '<span style="font-size:11px;padding:1px 6px;border-radius:6px;margin-left:6px;background:'+m[1]+';color:'+m[2]+'">'+m[0]+'</span>';}
 function same(a,b){return String(a).trim().toLowerCase()===String(b).trim().toLowerCase();}
 function tg(t,bg,fg){return '<span style="font-size:11px;padding:1px 6px;border-radius:6px;margin-left:6px;background:'+bg+';color:'+fg+'">'+t+'</span>';}
-var SOP=null; /* pending import: {res,file,rows:[{k,label,cur,so,conf,same,m}]} */
-function soVal(x){return x.m==='prev'?x.cur:(x.m==='so'?x.so:'');}
+var SOP=null; /* open popup: {name,source,rows:[{k,label,cur,so,conf,same,val,fresh}],hi} */
 var BTN='min-height:34px;height:34px;padding:0 8px;margin:0;font-size:12px;border:0;border-radius:0;border-right:1px solid rgba(128,128,128,.4);';
+function modeOf2(x){return x.val===''?'blank':(x.cur&&same(x.val,x.cur)?'prev':(same(x.val,x.so)?'so':''));}
+function togBtns(i,x){
+  var m=modeOf2(x);
+  function bt(id,t,dis){return '<button type="button" data-so="pm" data-i="'+i+'" data-m="'+id+'"'+(dis?' disabled':'')+' aria-pressed="'+(m===id)+'" style="'+BTN+(m===id?'background:#1f5fae;color:#fff;font-weight:600':'background:transparent')+(dis?';opacity:.4':'')+'">'+t+'</button>';}
+  return bt('prev','Prev',!x.cur)+bt('so','SO',false)+bt('blank','Blank',false);
+}
 function popRows(){
   var h='';
   SOP.rows.forEach(function(x,i){
-    var v=soVal(x);
-    h+='<div style="padding:8px 0;border-top:1px solid rgba(128,128,128,.25)"><div class="muted" style="font-size:12px;margin-bottom:3px">'+E(x.label)+(x.same?tg('Matches SO','#e1f3d8','#27500a'):(x.cur?'':tg('Was empty','#e1ecfa','#0c447c')))+(x.conf==='ok'||x.same?'':tg('Check','#faeeda','#633806'))+'</div><div style="display:flex;align-items:center;gap:6px"><div style="flex:1 1 0;min-width:0;height:34px;line-height:34px;padding:0 8px;border:1px solid rgba(128,128,128,.5);border-radius:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'+(v?'':'opacity:.55')+'">'+(v?E(v):'Blank')+'</div>';
-    if(!x.same){
-      function bt(id,t,dis){return '<button type="button" data-so="pm" data-i="'+i+'" data-m="'+id+'"'+(dis?' disabled':'')+' aria-pressed="'+(x.m===id)+'" style="'+BTN+(x.m===id?'background:#1f5fae;color:#fff;font-weight:600':'background:transparent')+(dis?';opacity:.4':'')+'">'+t+'</button>';}
-      h+='<div role="group" aria-label="'+E(x.label)+'" style="display:inline-flex;flex:none;overflow:hidden;border:1px solid rgba(128,128,128,.6);border-radius:8px">'+bt('prev','Prev',!x.cur)+bt('so','SO',false)+bt('blank','Blank',false)+'</div>';
-    }
-    h+='</div>';
+    h+='<div data-row="'+i+'" style="padding:8px 6px;border-top:1px solid rgba(128,128,128,.25);'+(SOP.hi===i?'background:rgba(31,95,174,.18);border-radius:8px':'')+'"><div class="muted" style="font-size:12px;margin-bottom:3px">'+E(x.label)+(x.same?tg('Matches SO','#e1f3d8','#27500a'):(x.fresh&&!x.cur?tg('Was empty','#e1ecfa','#0c447c'):''))+(x.conf==='ok'||x.same||!x.fresh?'':tg('Check','#faeeda','#633806'))+'</div><div style="display:flex;align-items:center;gap:6px"><input type="text" data-so="pv" data-i="'+i+'" value="'+E(x.val)+'" placeholder="Blank" aria-label="'+E(x.label)+'" style="flex:1 1 0;min-width:0;width:auto;height:34px;font-size:14px;padding:0 8px;text-overflow:ellipsis"><div role="group" aria-label="'+E(x.label)+' source" style="display:inline-flex;flex:none;overflow:hidden;border:1px solid rgba(128,128,128,.6);border-radius:8px">'+togBtns(i,x)+'</div></div>';
     if(!x.same)h+='<div class="muted" style="font-size:11px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Prev: '+(x.cur?E(x.cur):'none')+' · SO: '+E(x.so)+'</div>';
     h+='</div>';
   });
   return h;
+}
+function showPop(){
+  var h='<h3 style="margin:0 0 2px">Sales order imported</h3><p class="muted" style="margin:0 0 4px">'+E(SOP.name||'Sales order')+(SOP.source?' · '+(SOP.source==='pdf'?'PDF text read on this device':'Photo reading: check every value'):'')+'</p>';
+  if(!SOP.rows.length)h+='<div style="margin:8px 0">No order details were found.</div><button class="pri" data-so="pc">Close</button>';
+  else h+='<p class="muted" style="margin:0 0 4px;font-size:13px">Pick what each field should use, or type over a value. Nothing changes until you tap Done.</p><div id="soRows" style="max-height:56vh;overflow:auto;padding-right:4px">'+popRows()+'</div><div class="row" style="gap:8px;margin-top:10px;flex-wrap:nowrap"><button data-so="pc" style="flex:1">Cancel</button><button class="pri" data-so="pd" style="flex:2">Done</button></div>';
+  modal(h);var m=$q('#modal>div');if(m)m.style.maxWidth='560px';
+  if(SOP.hi>=0){var t=document.querySelector('#soRows [data-row="'+SOP.hi+'"]'),c=$q('#soRows');if(t&&c)c.scrollTop=Math.max(0,t.offsetTop-c.offsetTop-6);}
 }
 function applyImport(res,file){
   var r=S.rec;if(!r)return;
@@ -16763,25 +16769,36 @@ function applyImport(res,file){
   var rows=[];
   MAP.forEach(function(m){
     var k=m[0],d=res.fields[m[2]]||{value:'',conf:'miss'},nw=String(d.value||'').trim();if(!nw)return;
-    var cur=String(r.hdr[k]||'').trim(),sm=!!cur&&same(cur,nw);
-    rows.push({k:k,label:m[1],cur:cur,so:nw,conf:d.conf,same:sm,m:sm?'so':(cur?'prev':'so')});
+    var cur=String(r.hdr[k]||'').trim();
+    rows.push({k:k,label:m[1],cur:cur,so:nw,conf:d.conf,same:!!cur&&same(cur,nw),val:cur?cur:nw,fresh:true});
   });
-  SOP={res:res,file:file,rows:rows};
-  var h='<h3 style="margin:0 0 2px">Sales order imported</h3><p class="muted" style="margin:0 0 4px">'+E(file.name||'photo')+' · '+(res.source==='pdf'?'PDF text read on this device':'Photo reading: check every value')+'</p>';
-  if(!rows.length)h+='<div style="margin:8px 0">No order details were found.</div><button class="pri" data-so="pc">Close</button>';
-  else h+='<p class="muted" style="margin:0 0 4px;font-size:13px">Pick what each field should use. Nothing changes until you tap Done.</p><div id="soRows" style="max-height:56vh;overflow:auto;padding-right:4px">'+popRows()+'</div><div class="row" style="gap:8px;margin-top:10px;flex-wrap:nowrap"><button data-so="pc" style="flex:1">Cancel</button><button class="pri" data-so="pd" style="flex:2">Done</button></div>';
-  modal(h);var m=$q('#modal>div');if(m)m.style.maxWidth='560px';
+  r.sovMeta={name:file.name||'photo',source:res.source};
+  SOP={name:file.name||'photo',source:res.source,rows:rows,hi:-1};
+  showPop();
+}
+/* reopen the same window from a field on the form */
+function reopenPop(k){
+  var r=S.rec;if(!r||r.signed||!r.sov)return;
+  var rows=[],hi=-1;
+  MAP.forEach(function(m){
+    var o=r.sov[m[0]];if(!o)return;
+    var cur=String(r.hdr[m[0]]||'').trim();
+    if(m[0]===k)hi=rows.length;
+    rows.push({k:m[0],label:m[1],cur:cur,so:o.so,conf:'ok',same:!!cur&&same(cur,o.so),val:cur,fresh:false});
+  });
+  var mt=r.sovMeta||{};
+  SOP={name:mt.name,source:mt.source,rows:rows,hi:hi};
+  showPop();
 }
 function popDone(){
   var r=S.rec;if(!r||!SOP||r.signed){closeModal();SOP=null;return;}
   r.hdr=r.hdr||{};r.sov=r.sov||{};
-  SOP.rows.forEach(function(x){r.hdr[x.k]=soVal(x);r.sov[x.k]={so:x.so,prev:x.cur};});
+  SOP.rows.forEach(function(x){r.hdr[x.k]=x.val;r.sov[x.k]={so:x.so,prev:x.fresh?x.cur:(r.sov[x.k]&&r.sov[x.k].prev)||x.cur};});
   SOP=null;markDirty();closeModal();render();
 }
-/* tap-a-field window: fields whose value differs from the sales order are read-only until a choice is made */
-var FREE=null;
-function findLab(inp){var n=inp.parentNode;for(var i=0;i<3&&n;i++,n=n.parentNode){var l=n.querySelector&&n.querySelector('label');if(l)return l;}return null;}
+/* every imported field opens the window when tapped */
 function differs(r,k,cur){var o=r.sov&&r.sov[k];return !!o&&!same(cur,o.so);}
+function findLab(inp){var n=inp.parentNode;for(var i=0;i<3&&n;i++,n=n.parentNode){var l=n.querySelector&&n.querySelector('label');if(l)return l;}return null;}
 function decorate(){
   var r=(typeof S!=='undefined')?S.rec:null;
   if(!r||!r.sov||r.signed||S.view!=='rec')return;
@@ -16791,35 +16808,17 @@ function decorate(){
     var d=differs(r,k,inp.value),lab=findLab(inp),t=lab&&lab.querySelector('[data-sotag]');
     if(d&&lab&&!t){t=document.createElement('span');t.setAttribute('data-sotag','1');t.textContent='SO differs';t.style.cssText='font-size:11px;padding:1px 6px;border-radius:6px;margin-left:6px;background:#faeeda;color:#633806';lab.appendChild(t);}
     if(!d&&t)t.remove();
-    var ro=d&&FREE!==k;if(inp.readOnly!==ro)inp.readOnly=ro;
-    if(ro&&inp.getAttribute('data-sofc')!=='1')inp.setAttribute('data-sofc','1');
-    if(!ro&&inp.getAttribute('data-sofc')==='1')inp.removeAttribute('data-sofc');
+    if(!inp.readOnly)inp.readOnly=true;
+    if(inp.getAttribute('data-sofc')!=='1')inp.setAttribute('data-sofc','1');
   }
 }
 var decT=null;
 function schedDec(){clearTimeout(decT);decT=setTimeout(decorate,80);}
 try{new MutationObserver(schedDec).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
-document.addEventListener('input',schedDec,true);
-document.addEventListener('focusout',function(e){if(FREE&&e.target&&e.target.getAttribute&&e.target.getAttribute('data-b')==='hdr.'+FREE){FREE=null;schedDec();}},true);
-function chooser(k){
-  var r=S.rec,o=r&&r.sov&&r.sov[k];if(!o||r.signed)return;
-  var cur=String(r.hdr[k]||'').trim(),lab='';
-  var l=document.querySelector('input[data-b="hdr.'+k+'"]');if(l){var lb=findLab(l);if(lb)lab=(lb.childNodes[0]&&lb.childNodes[0].textContent)||lb.textContent;}
-  lab=String(lab).replace('SO differs','').trim()||k;
-  function op(m,t,v,dis,on){return '<button type="button" data-so="pk" data-k="'+k+'" data-m="'+m+'"'+(dis?' disabled':'')+' style="display:block;width:100%;text-align:left;margin:0 0 8px;padding:8px 12px;min-height:52px;border-radius:10px;'+(on?'border:2px solid #1f5fae':'border:1px solid rgba(128,128,128,.5)')+(dis?';opacity:.4':'')+'"><b class="muted" style="display:block;font-size:12px;font-weight:600">'+t+'</b><span style="display:block;font-size:15px;white-space:normal;word-break:break-word">'+v+'</span></button>';}
-  modal('<h3 style="margin:0 0 2px">'+E(lab)+'</h3><p class="muted" style="margin:0 0 10px;font-size:13px">This field differs from the sales order. Pick one.</p>'+op('cur','Current (what is in the field)',cur?E(cur):'Nothing entered',!cur,false)+op('so','Sales order',E(o.so),false,same(cur,o.so))+op('blank','Blank','Clear this field',false,!cur)+'<div class="row" style="gap:8px;flex-wrap:nowrap"><button data-so="pc" style="flex:1">Cancel</button><button data-so="ty" data-k="'+k+'" style="flex:1">Type it myself</button></div>');
-  var m=$q('#modal>div');if(m)m.style.maxWidth='420px';
-}
 document.addEventListener('click',function(e){
   var t=e.target;if(!t||!t.getAttribute)return;
-  if(t.getAttribute('data-sofc')==='1'){e.preventDefault();e.stopPropagation();t.blur();chooser(t.getAttribute('data-b').slice(4));}
+  if(t.getAttribute('data-sofc')==='1'){e.preventDefault();e.stopPropagation();t.blur();reopenPop(t.getAttribute('data-b').slice(4));}
 },true);
-function pickField(k,m){
-  var r=S.rec,o=r&&r.sov&&r.sov[k];if(!o||r.signed)return;
-  var cur=String(r.hdr[k]||'').trim();
-  r.hdr[k]=m==='cur'?cur:(m==='so'?o.so:'');
-  markDirty();closeModal();render();
-}
 function soCard(){
   var r=S.rec;if(!r||(typeof isVc==='function'&&isVc(r)))return '';
   return '<div class="card" id="soCard"><h2 style="margin:0 0 4px">Import sales order</h2><p class="muted" style="margin:0 0 8px">Upload the Teledyne order acknowledgement (PDF) or take a photo. A review screen lets you pick Prev, SO or Blank for each field before anything changes.</p><div class="row" style="gap:8px;flex-wrap:nowrap"><button class="pri" data-so="pick" style="flex:1">Import SO (PDF or photo)</button><button data-so="cam" style="flex:1">Take photo</button></div><input type="file" id="soFile" accept=".pdf,application/pdf,image/*" hidden data-nativecam="1"><input type="file" id="soCam" accept="image/*" capture="environment" hidden data-nativecam="1"><div id="soStatus" class="muted" style="margin-top:6px" role="status"></div></div>';
@@ -16833,12 +16832,15 @@ document.addEventListener('click',function(e){
   if(a==='trip'){var t=document.createElement('input');t.type='file';t.id='soFile';t.accept='.pdf,application/pdf,image/*';t.hidden=true;t.setAttribute('data-nativecam','1');document.body.appendChild(t);t.addEventListener('change',function(){var f=t.files&&t.files[0];if(f)importFile(f);setTimeout(function(){t.remove();},0);},{once:true});t.click();}
   else if(a==='pick'){var f=$q('#soFile');if(f)f.click();}
   else if(a==='cam'){var c=$q('#soCam');if(c)c.click();}
-  else if(a==='pm'){if(SOP&&!b.disabled){var x=SOP.rows[+b.getAttribute('data-i')];if(x){x.m=b.getAttribute('data-m');var c=$q('#soRows');if(c)c.innerHTML=popRows();}}}
+  else if(a==='pm'){if(SOP&&!b.disabled){var x=SOP.rows[+b.getAttribute('data-i')];if(x){var m2=b.getAttribute('data-m');x.val=m2==='prev'?x.cur:(m2==='so'?x.so:'');var c=$q('#soRows'),sc=c?c.scrollTop:0;if(c){c.innerHTML=popRows();c.scrollTop=sc;}}}}
   else if(a==='pd')popDone();
   else if(a==='pc'){SOP=null;closeModal();}
-  else if(a==='pk'){if(!b.disabled)pickField(b.getAttribute('data-k'),b.getAttribute('data-m'));}
-  else if(a==='ty'){var k2=b.getAttribute('data-k');FREE=k2;closeModal();render();setTimeout(function(){var i2=document.querySelector('input[data-b="hdr.'+k2+'"]');if(i2){i2.readOnly=false;i2.focus();}},150);}
   else if(a==='close')closeModal();
+});
+document.addEventListener('input',function(e){
+  var t=e.target;if(!t||!t.getAttribute||t.getAttribute('data-so')!=='pv'||!SOP)return;
+  var i=+t.getAttribute('data-i'),x=SOP.rows[i];if(!x)return;x.val=t.value;
+  var bs=t.parentNode.querySelectorAll('[data-so="pm"]'),m=modeOf2(x);for(var q=0;q<bs.length;q++){var on=bs[q].getAttribute('data-m')===m;bs[q].setAttribute('aria-pressed',on);bs[q].style.background=on?'#1f5fae':'transparent';bs[q].style.color=on?'#fff':'';bs[q].style.fontWeight=on?'600':'';}
 });
 document.addEventListener('change',function(e){
   var t=e.target;if(!t||(t.id!=='soFile'&&t.id!=='soCam')||t.parentNode===document.body)return;
@@ -16846,5 +16848,5 @@ document.addEventListener('change',function(e){
 });
 })();
 </script>
-<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.76 · 11/16/2026</div>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.77 · 11/16/2026</div>
 </body></html>
