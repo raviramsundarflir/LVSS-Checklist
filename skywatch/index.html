@@ -14949,7 +14949,7 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
 const CREDIT={by:'Ravi Ramsundar',built:'11/16/2026',site:'157'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
-function creditText(rev){const r='Rev 1.75';return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
+function creditText(rev){const r='Rev 1.76';return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
 function creditLine(d,rev){d.setFont('helvetica','normal');d.setFontSize(6.5);d.setTextColor(150);d.text(creditText(rev).replace(/[^\x20-\x7E]/g,'-'),d.internal.pageSize.getWidth()/2,d.internal.pageSize.getHeight()-8,{align:'center'});}
 function ensureCredit(){
@@ -15010,7 +15010,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='f0c27ca7da';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='e50fef40c2';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);Promise.resolve().then(function(){return typeof save==='function'?save():0;}).catch(function(){}).then(function(){return fetch(location.pathname,{cache:'reload'});}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -16470,7 +16470,7 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
 ensure();setTimeout(ensure,500);
 })();</script>
-<script>/* Rev 1.75: per-field Prev / SO / Blank toggle on the same line as each field (replaces the Import sales order details buttons); visible Rev and date bumped. Earlier: Rev 1.74: Import sales order keeps existing values and adds an Import sales order details button on each field that differs. Earlier: Rev 1.73 Import sales order (keep or replace existing values; ask whether tower location and site contact need updating). Earlier: Rev 1.72 Import sales order (PDF or photo) from Trip prep and the Info step. Reads the Teledyne order acknowledgement, shows a review screen, then fills Customer & order. Sold-to is the customer and the header PO is Customer PO #; the ship-to PO is the Mark delivery PO #. Nothing is filled until the tech confirms. */
+<script>/* Rev 1.76: Import review popup has a Prev / SO / Blank toggle per field (applied on Done); tapping a field that differs from the SO opens a Current / Sales order / Blank window; form toggles removed. Earlier: Rev 1.75: per-field Prev / SO / Blank toggle on the same line as each field (replaces the Import sales order details buttons); visible Rev and date bumped. Earlier: Rev 1.74: Import sales order keeps existing values and adds an Import sales order details button on each field that differs. Earlier: Rev 1.73 Import sales order (keep or replace existing values; ask whether tower location and site contact need updating). Earlier: Rev 1.72 Import sales order (PDF or photo) from Trip prep and the Info step. Reads the Teledyne order acknowledgement, shows a review screen, then fills Customer & order. Sold-to is the customer and the header PO is Customer PO #; the ship-to PO is the Mark delivery PO #. Nothing is filled until the tech confirms. */
 (function(){
 if(window.__soImport)return;window.__soImport=1;
 var SOParser=(function(){
@@ -16738,78 +16738,91 @@ var MAP=[['customer','Customer (sold to)','rs_name'],['po','Customer PO # (SO he
 function tag(c){var m={ok:['High','#e1f3d8','#27500a'],chk:['Check','#faeeda','#633806'],miss:['Not found','#fcebeb','#791f1f']}[c]||['', '#eee','#333'];return '<span style="font-size:11px;padding:1px 6px;border-radius:6px;margin-left:6px;background:'+m[1]+';color:'+m[2]+'">'+m[0]+'</span>';}
 function same(a,b){return String(a).trim().toLowerCase()===String(b).trim().toLowerCase();}
 function tg(t,bg,fg){return '<span style="font-size:11px;padding:1px 6px;border-radius:6px;margin-left:6px;background:'+bg+';color:'+fg+'">'+t+'</span>';}
+var SOP=null; /* pending import: {res,file,rows:[{k,label,cur,so,conf,same,m}]} */
+function soVal(x){return x.m==='prev'?x.cur:(x.m==='so'?x.so:'');}
+var BTN='min-height:34px;height:34px;padding:0 8px;margin:0;font-size:12px;border:0;border-radius:0;border-right:1px solid rgba(128,128,128,.4);';
+function popRows(){
+  var h='';
+  SOP.rows.forEach(function(x,i){
+    var v=soVal(x);
+    h+='<div style="padding:8px 0;border-top:1px solid rgba(128,128,128,.25)"><div class="muted" style="font-size:12px;margin-bottom:3px">'+E(x.label)+(x.same?tg('Matches SO','#e1f3d8','#27500a'):(x.cur?'':tg('Was empty','#e1ecfa','#0c447c')))+(x.conf==='ok'||x.same?'':tg('Check','#faeeda','#633806'))+'</div><div style="display:flex;align-items:center;gap:6px"><div style="flex:1 1 0;min-width:0;height:34px;line-height:34px;padding:0 8px;border:1px solid rgba(128,128,128,.5);border-radius:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'+(v?'':'opacity:.55')+'">'+(v?E(v):'Blank')+'</div>';
+    if(!x.same){
+      function bt(id,t,dis){return '<button type="button" data-so="pm" data-i="'+i+'" data-m="'+id+'"'+(dis?' disabled':'')+' aria-pressed="'+(x.m===id)+'" style="'+BTN+(x.m===id?'background:#1f5fae;color:#fff;font-weight:600':'background:transparent')+(dis?';opacity:.4':'')+'">'+t+'</button>';}
+      h+='<div role="group" aria-label="'+E(x.label)+'" style="display:inline-flex;flex:none;overflow:hidden;border:1px solid rgba(128,128,128,.6);border-radius:8px">'+bt('prev','Prev',!x.cur)+bt('so','SO',false)+bt('blank','Blank',false)+'</div>';
+    }
+    h+='</div>';
+    if(!x.same)h+='<div class="muted" style="font-size:11px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Prev: '+(x.cur?E(x.cur):'none')+' · SO: '+E(x.so)+'</div>';
+    h+='</div>';
+  });
+  return h;
+}
 function applyImport(res,file){
   var r=S.rec;if(!r)return;
   if(r.signed){status('This report is already signed. Import is off.',true);return;}
-  r.hdr=r.hdr||{};r.sov=r.sov||{};
-  var fill=[],keep=[],same2=0;
+  r.hdr=r.hdr||{};
+  var rows=[];
   MAP.forEach(function(m){
     var k=m[0],d=res.fields[m[2]]||{value:'',conf:'miss'},nw=String(d.value||'').trim();if(!nw)return;
-    var cur=String(r.hdr[k]||'').trim();
-    if(!cur){r.hdr[k]=nw;r.sov[k]={so:nw,prev:''};fill.push([m[1],nw,d.conf]);}
-    else if(same(cur,nw)){delete r.sov[k];same2++;}
-    else{r.sov[k]={so:nw,prev:cur};keep.push([m[1],cur,nw]);}
+    var cur=String(r.hdr[k]||'').trim(),sm=!!cur&&same(cur,nw);
+    rows.push({k:k,label:m[1],cur:cur,so:nw,conf:d.conf,same:sm,m:sm?'so':(cur?'prev':'so')});
   });
-  if(fill.length||keep.length)markDirty();
-  render();
-  var h='<h3 style="margin:0 0 2px">Sales order imported</h3><p class="muted" style="margin:0 0 8px">'+E(file.name||'photo')+' · '+(res.source==='pdf'?'PDF text read on this device':'Photo reading: check every value')+'</p><div style="max-height:62vh;overflow:auto;padding-right:4px">';
-  if(fill.length){h+='<b>Filled in</b>'+tg('Were empty','#e1ecfa','#0c447c');fill.forEach(function(f){h+='<div style="padding:6px 0;border-top:1px solid rgba(128,128,128,.25)"><div class="muted" style="font-size:12px">'+E(f[0])+(f[2]==='ok'?'':tg('Check','#faeeda','#633806'))+'</div><div>'+E(f[1])+'</div></div>';});}
-  if(keep.length){h+='<div style="margin-top:10px"><b>Kept as is</b>'+tg('SO differs','#faeeda','#633806')+'</div>';keep.forEach(function(f){h+='<div style="padding:6px 0;border-top:1px solid rgba(128,128,128,.25)"><div class="muted" style="font-size:12px">'+E(f[0])+'</div><div>'+E(f[1])+'</div><div class="muted" style="font-size:13px">SO has: '+E(f[2])+'</div></div>';});h+='<div class="muted" style="font-size:12px;margin-top:4px">Each of these fields has a small Prev / SO / Blank toggle on the form to switch between your entry, the sales order, or blank.</div>';}
-  if(!fill.length&&!keep.length)h+='<div>Nothing to change. The form already matched the sales order, or no details were found.</div>';
-  if(same2)h+='<div class="muted" style="font-size:13px;margin-top:8px">'+same2+' field'+(same2===1?'':'s')+' already matched the SO.</div>';
-  h+='</div><button class="pri" data-so="close">Done</button>';
+  SOP={res:res,file:file,rows:rows};
+  var h='<h3 style="margin:0 0 2px">Sales order imported</h3><p class="muted" style="margin:0 0 4px">'+E(file.name||'photo')+' · '+(res.source==='pdf'?'PDF text read on this device':'Photo reading: check every value')+'</p>';
+  if(!rows.length)h+='<div style="margin:8px 0">No order details were found.</div><button class="pri" data-so="pc">Close</button>';
+  else h+='<p class="muted" style="margin:0 0 4px;font-size:13px">Pick what each field should use. Nothing changes until you tap Done.</p><div id="soRows" style="max-height:56vh;overflow:auto;padding-right:4px">'+popRows()+'</div><div class="row" style="gap:8px;margin-top:10px;flex-wrap:nowrap"><button data-so="pc" style="flex:1">Cancel</button><button class="pri" data-so="pd" style="flex:2">Done</button></div>';
   modal(h);var m=$q('#modal>div');if(m)m.style.maxWidth='560px';
 }
-function esc2(t){return E(t);}
-function modeOf(o,cur){cur=String(cur||'').trim();if(!cur)return 'blank';if(o.prev&&same(cur,o.prev))return 'prev';if(same(cur,o.so))return 'so';return '';}
-function noteHtml(k,o,cur){
-  var m=modeOf(o,cur);
-  function bt(id,t,dis){return '<button type="button" data-so="tg" data-k="'+k+'" data-m="'+id+'"'+(dis?' disabled':'')+' aria-pressed="'+(m===id)+'" style="min-height:34px;height:34px;padding:0 8px;margin:0;font-size:12px;border:0;border-radius:0;border-right:1px solid rgba(128,128,128,.4);'+(m===id?'background:#1f5fae;color:#fff;font-weight:600':'background:transparent')+(dis?';opacity:.4':'')+'">'+t+'</button>';}
-  return '<div data-sotg style="position:absolute;display:inline-flex;overflow:hidden;border:1px solid rgba(128,128,128,.6);border-radius:8px;background:var(--card,#fff);z-index:2" role="group" aria-label="Value source">'+bt('prev','Prev',!o.prev)+bt('so','SO',false)+bt('blank','Blank',false)+'</div>';
+function popDone(){
+  var r=S.rec;if(!r||!SOP||r.signed){closeModal();SOP=null;return;}
+  r.hdr=r.hdr||{};r.sov=r.sov||{};
+  SOP.rows.forEach(function(x){r.hdr[x.k]=soVal(x);r.sov[x.k]={so:x.so,prev:x.cur};});
+  SOP=null;markDirty();closeModal();render();
 }
-function infoLine(o){return '<div class="muted" data-soln style="font-size:11px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Prev: '+(o.prev?E(o.prev):'none')+' · SO: '+E(o.so)+'</div>';}
-var decT=null;
+/* tap-a-field window: fields whose value differs from the sales order are read-only until a choice is made */
+var FREE=null;
+function findLab(inp){var n=inp.parentNode;for(var i=0;i<3&&n;i++,n=n.parentNode){var l=n.querySelector&&n.querySelector('label');if(l)return l;}return null;}
+function differs(r,k,cur){var o=r.sov&&r.sov[k];return !!o&&!same(cur,o.so);}
 function decorate(){
   var r=(typeof S!=='undefined')?S.rec:null;
-  var olds=document.querySelectorAll('[data-sonote]');for(var q=0;q<olds.length;q++)olds[q].setAttribute('data-stale','1');
-  if(r&&r.sov&&!r.signed&&S.view==='rec'){
-    var ins=document.querySelectorAll('input[data-b^="hdr."]');
-    for(var n=0;n<ins.length;n++){
-      var inp=ins[n],k=inp.getAttribute('data-b').slice(4),o=r.sov[k];if(!o)continue;
-      if(o.prev===undefined)o.prev='';
-      var cur=String(inp.value||'').trim();
-      var par=inp.parentNode;if(getComputedStyle(par).position==='static')par.style.position='relative';
-      var html=noteHtml(k,o,cur)+infoLine(o)+'|'+inp.offsetLeft+'|'+inp.offsetTop+'|'+inp.offsetWidth+'|'+inp.offsetHeight;
-      var ex=par.querySelector('[data-sonote][data-k="'+k+'"]');
-      if(ex&&ex.getAttribute('data-sig')===html){ex.removeAttribute('data-stale');continue;}
-      if(ex)ex.remove();
-      var d=document.createElement('div');d.setAttribute('data-sonote','1');d.setAttribute('data-k',k);d.setAttribute('data-sig',html);
-      d.innerHTML=noteHtml(k,o,cur);
-      var tgb=d.firstChild;
-      var top=inp.offsetTop+Math.max(0,(inp.offsetHeight-34)/2);
-      tgb.style.top=top+'px';tgb.style.right=Math.max(0,par.clientWidth-(inp.offsetLeft+inp.offsetWidth)+4)+'px';
-      par.appendChild(d);
-      inp.style.paddingRight='132px';inp.style.textOverflow='ellipsis';
-      var ln=document.createElement('div');ln.innerHTML=infoLine(o);d.appendChild(ln.firstChild);
-      /* info line sits under the input, in the normal flow */
-      var il=d.lastChild;il.style.position='absolute';il.style.left=inp.offsetLeft+'px';il.style.top=(inp.offsetTop+inp.offsetHeight)+'px';il.style.width=inp.offsetWidth+'px';
-      if(!par.getAttribute('data-sopad')){par.setAttribute('data-sopad','1');par.style.paddingBottom=(parseFloat(getComputedStyle(par).paddingBottom)||0)+16+'px';}
-    }
+  if(!r||!r.sov||r.signed||S.view!=='rec')return;
+  var ins=document.querySelectorAll('input[data-b^="hdr."]');
+  for(var n=0;n<ins.length;n++){
+    var inp=ins[n],k=inp.getAttribute('data-b').slice(4);if(!r.sov[k])continue;
+    var d=differs(r,k,inp.value),lab=findLab(inp),t=lab&&lab.querySelector('[data-sotag]');
+    if(d&&lab&&!t){t=document.createElement('span');t.setAttribute('data-sotag','1');t.textContent='SO differs';t.style.cssText='font-size:11px;padding:1px 6px;border-radius:6px;margin-left:6px;background:#faeeda;color:#633806';lab.appendChild(t);}
+    if(!d&&t)t.remove();
+    var ro=d&&FREE!==k;if(inp.readOnly!==ro)inp.readOnly=ro;
+    if(ro&&inp.getAttribute('data-sofc')!=='1')inp.setAttribute('data-sofc','1');
+    if(!ro&&inp.getAttribute('data-sofc')==='1')inp.removeAttribute('data-sofc');
   }
-  var st=document.querySelectorAll('[data-sonote][data-stale]');for(var z=0;z<st.length;z++)st[z].remove();
 }
+var decT=null;
 function schedDec(){clearTimeout(decT);decT=setTimeout(decorate,80);}
 try{new MutationObserver(schedDec).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
 document.addEventListener('input',schedDec,true);
-function pickMode(k,m){
+document.addEventListener('focusout',function(e){if(FREE&&e.target&&e.target.getAttribute&&e.target.getAttribute('data-b')==='hdr.'+FREE){FREE=null;schedDec();}},true);
+function chooser(k){
   var r=S.rec,o=r&&r.sov&&r.sov[k];if(!o||r.signed)return;
-  r.hdr=r.hdr||{};
-  r.hdr[k]=m==='prev'?(o.prev||''):(m==='so'?o.so:'');
-  markDirty();render();
+  var cur=String(r.hdr[k]||'').trim(),lab='';
+  var l=document.querySelector('input[data-b="hdr.'+k+'"]');if(l){var lb=findLab(l);if(lb)lab=(lb.childNodes[0]&&lb.childNodes[0].textContent)||lb.textContent;}
+  lab=String(lab).replace('SO differs','').trim()||k;
+  function op(m,t,v,dis,on){return '<button type="button" data-so="pk" data-k="'+k+'" data-m="'+m+'"'+(dis?' disabled':'')+' style="display:block;width:100%;text-align:left;margin:0 0 8px;padding:8px 12px;min-height:52px;border-radius:10px;'+(on?'border:2px solid #1f5fae':'border:1px solid rgba(128,128,128,.5)')+(dis?';opacity:.4':'')+'"><b class="muted" style="display:block;font-size:12px;font-weight:600">'+t+'</b><span style="display:block;font-size:15px;white-space:normal;word-break:break-word">'+v+'</span></button>';}
+  modal('<h3 style="margin:0 0 2px">'+E(lab)+'</h3><p class="muted" style="margin:0 0 10px;font-size:13px">This field differs from the sales order. Pick one.</p>'+op('cur','Current (what is in the field)',cur?E(cur):'Nothing entered',!cur,false)+op('so','Sales order',E(o.so),false,same(cur,o.so))+op('blank','Blank','Clear this field',false,!cur)+'<div class="row" style="gap:8px;flex-wrap:nowrap"><button data-so="pc" style="flex:1">Cancel</button><button data-so="ty" data-k="'+k+'" style="flex:1">Type it myself</button></div>');
+  var m=$q('#modal>div');if(m)m.style.maxWidth='420px';
+}
+document.addEventListener('click',function(e){
+  var t=e.target;if(!t||!t.getAttribute)return;
+  if(t.getAttribute('data-sofc')==='1'){e.preventDefault();e.stopPropagation();t.blur();chooser(t.getAttribute('data-b').slice(4));}
+},true);
+function pickField(k,m){
+  var r=S.rec,o=r&&r.sov&&r.sov[k];if(!o||r.signed)return;
+  var cur=String(r.hdr[k]||'').trim();
+  r.hdr[k]=m==='cur'?cur:(m==='so'?o.so:'');
+  markDirty();closeModal();render();
 }
 function soCard(){
   var r=S.rec;if(!r||(typeof isVc==='function'&&isVc(r)))return '';
-  return '<div class="card" id="soCard"><h2 style="margin:0 0 4px">Import sales order</h2><p class="muted" style="margin:0 0 8px">Upload the Teledyne order acknowledgement (PDF) or take a photo. Empty fields fill in. Fields that already have a value are kept, with a Prev / SO / Blank toggle on each field to pick which one to use.</p><div class="row" style="gap:8px;flex-wrap:nowrap"><button class="pri" data-so="pick" style="flex:1">Import SO (PDF or photo)</button><button data-so="cam" style="flex:1">Take photo</button></div><input type="file" id="soFile" accept=".pdf,application/pdf,image/*" hidden data-nativecam="1"><input type="file" id="soCam" accept="image/*" capture="environment" hidden data-nativecam="1"><div id="soStatus" class="muted" style="margin-top:6px" role="status"></div></div>';
+  return '<div class="card" id="soCard"><h2 style="margin:0 0 4px">Import sales order</h2><p class="muted" style="margin:0 0 8px">Upload the Teledyne order acknowledgement (PDF) or take a photo. A review screen lets you pick Prev, SO or Blank for each field before anything changes.</p><div class="row" style="gap:8px;flex-wrap:nowrap"><button class="pri" data-so="pick" style="flex:1">Import SO (PDF or photo)</button><button data-so="cam" style="flex:1">Take photo</button></div><input type="file" id="soFile" accept=".pdf,application/pdf,image/*" hidden data-nativecam="1"><input type="file" id="soCam" accept="image/*" capture="environment" hidden data-nativecam="1"><div id="soStatus" class="muted" style="margin-top:6px" role="status"></div></div>';
 }
 var _ih=infoHtml;
 infoHtml=function(){return soCard()+_ih.apply(this,arguments);};
@@ -16820,7 +16833,11 @@ document.addEventListener('click',function(e){
   if(a==='trip'){var t=document.createElement('input');t.type='file';t.id='soFile';t.accept='.pdf,application/pdf,image/*';t.hidden=true;t.setAttribute('data-nativecam','1');document.body.appendChild(t);t.addEventListener('change',function(){var f=t.files&&t.files[0];if(f)importFile(f);setTimeout(function(){t.remove();},0);},{once:true});t.click();}
   else if(a==='pick'){var f=$q('#soFile');if(f)f.click();}
   else if(a==='cam'){var c=$q('#soCam');if(c)c.click();}
-  else if(a==='tg'){if(!b.disabled)pickMode(b.getAttribute('data-k'),b.getAttribute('data-m'));}
+  else if(a==='pm'){if(SOP&&!b.disabled){var x=SOP.rows[+b.getAttribute('data-i')];if(x){x.m=b.getAttribute('data-m');var c=$q('#soRows');if(c)c.innerHTML=popRows();}}}
+  else if(a==='pd')popDone();
+  else if(a==='pc'){SOP=null;closeModal();}
+  else if(a==='pk'){if(!b.disabled)pickField(b.getAttribute('data-k'),b.getAttribute('data-m'));}
+  else if(a==='ty'){var k2=b.getAttribute('data-k');FREE=k2;closeModal();render();setTimeout(function(){var i2=document.querySelector('input[data-b="hdr.'+k2+'"]');if(i2){i2.readOnly=false;i2.focus();}},150);}
   else if(a==='close')closeModal();
 });
 document.addEventListener('change',function(e){
@@ -16829,4 +16846,5 @@ document.addEventListener('change',function(e){
 });
 })();
 </script>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.76 · 11/16/2026</div>
 </body></html>
