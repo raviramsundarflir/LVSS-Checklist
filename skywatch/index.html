@@ -14952,9 +14952,9 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/17/2026',site:'158'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/17/2026',site:'159'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
-function creditText(rev){const r='Rev 1.81';return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
+function creditText(rev){const r='Rev 1.82';return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
 function creditLine(d,rev){d.setFont('helvetica','normal');d.setFontSize(6.5);d.setTextColor(150);d.text(creditText(rev).replace(/[^\x20-\x7E]/g,'-'),d.internal.pageSize.getWidth()/2,d.internal.pageSize.getHeight()-8,{align:'center'});}
 function ensureCredit(){
@@ -15015,7 +15015,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='b4a04eb5f5';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='10669a8a05';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);Promise.resolve().then(function(){return typeof save==='function'?save():0;}).catch(function(){}).then(function(){return fetch(location.pathname,{cache:'reload'});}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -16281,12 +16281,20 @@ function drawVcert(d,V,T){var h=V.hdr,c=V.cert,y;
 function buildVcertPdf(V,T){var d=pdfNew(),skip=new Set([1]);drawVcert(d,V,T);if(V.warr&&V.warr.on){d.addPage();skip.add(d.getNumberOfPages());drawWarr(d,V,skip);}footers(d,V,true,skip);return d;}
 function vcName(V,T){var sn=T.map(serOf).filter(Boolean).join('_')||V.hdr.customer||'visit';return stdName(V.hdr.rma,sn,'SKYWATCH-CERT',V.hdr.date)+'.pdf';}
 
+var _plP;function loadPdfLib(){if(window.PDFLib)return Promise.resolve();if(!_plP)_plP=new Promise(function(res,rej){var s=document.createElement('script');s.src='lib/pdf-lib.min.js';s.onload=res;s.onerror=function(){_plP=null;rej(new Error('Could not load the PDF merge library. Connect to the internet once, then try again.'));};document.head.appendChild(s);});return _plP;}
 var _prepPdfs=prepPdfs;
 prepPdfs=async function(){var r=S.rec;if(!isVc(r))return _prepPdfs();
  S.pdf=null;S.left=null;var el=function(){return q('#pdfst');};
  try{await new Promise(function(z){setTimeout(z,30);});if(!S.vct||S.vct.vid!==r.id)await vcLoad(r);var T=S.vct.towers,d=buildVcertPdf(r,T);
-  S.pdf={blob:d.output('blob'),name:vcName(r,T)};
-  if(el())el().innerHTML='📄 <b>'+esc(S.pdf.name)+'</b> ('+Math.round(S.pdf.blob.size/1024)+' KB) – completion certificate for '+plural(T.length,'tower');}
+  /* Rev 1.82: one visit PDF = completion certificate (+ warranty certificate) + each tower's checksheet report, in tower order */
+  var parts=[d.output('arraybuffer')],sp=S.photos,sr=S.rec,sz=S.zimg;
+  try{for(var i=0;i<T.length;i++){var t=T[i];S.rec=t;await loadPhotos(t);await prepZoom(t);parts.push(buildPdf(t).output('arraybuffer'));}}
+  finally{S.rec=sr;S.photos=sp;S.zimg=sz;}
+  await loadPdfLib();var out=await PDFLib.PDFDocument.create();
+  for(var j=0;j<parts.length;j++){var src=await PDFLib.PDFDocument.load(parts[j]);var pg=await out.copyPages(src,src.getPageIndices());pg.forEach(function(x){out.addPage(x);});}
+  var bytes=await out.save();
+  S.pdf={blob:new Blob([bytes],{type:'application/pdf'}),name:vcName(r,T)};
+  if(el())el().innerHTML='📄 <b>'+esc(S.pdf.name)+'</b> ('+Math.round(S.pdf.blob.size/1024)+' KB) – completion certificate'+(r.warr&&r.warr.on?', warranty certificate':'')+' and the inspection report for '+plural(T.length,'tower');}
  catch(e){if(el())el().innerHTML='<span style="color:#c62828">Could not create the PDF: '+esc(e.message||e)+'</span>';console.error(e);}};
 
 /* ---------- e-mail text and the Email step ---------- */
@@ -16294,7 +16302,7 @@ var _mailDefaults=mailDefaults;
 mailDefaults=function(r){
  if(isVc(r)){var T=(S.vct&&S.vct.vid===r.id)?S.vct.towers:[],h=r.hdr;
   var subj='Teledyne FLIR SkyWatch Completion Certificate - '+(h.customer||'')+' - '+(T.length===1?'Tower S/N ':'Towers S/N ')+T.map(function(t){return serOf(t)||'-';}).join(', ');
-  var body='Attached is the signed Service Certificate of Completion for the SkyWatch service visit ('+plural(T.length,'tower')+'). The inspection report for each tower is sent separately.\n\nCustomer: '+(h.customer||'')+'\nCustomer PO #: '+(h.po||'')+'\nTeledyne FLIR Sales Order #: '+(h.salesOrder||'')+'\nRMA #: '+(h.rma||'')+'\nService Order #: '+(h.serviceOrder||'')+'\n\nTowers:\n'+T.map(function(t){var st=stats(t);return '- S/N '+(serOf(t)||'-')+': '+(t.verdict==='pass'?'PASSED':t.verdict==='fail'?'FAILED':'result not recorded')+(st.open?' ('+st.open+' open item(s))':'');}).join('\n')+'\n\nDate: '+fmtD(h.date)+'\n\nTeledyne FLIR\nTucson Service Center (TSC)\n8165 S Camino de Cafe\nTucson, Arizona, 85747\n\n'+TSC_EMAIL+'\n520-262-6910';
+  var body='Attached is one PDF for the SkyWatch service visit ('+plural(T.length,'tower')+'): the signed Service Certificate of Completion'+(r.warr&&r.warr.on?', the Certificate of Warranty':'')+' and the inspection report for each tower.\n\nCustomer: '+(h.customer||'')+'\nCustomer PO #: '+(h.po||'')+'\nTeledyne FLIR Sales Order #: '+(h.salesOrder||'')+'\nRMA #: '+(h.rma||'')+'\nService Order #: '+(h.serviceOrder||'')+'\n\nTowers:\n'+T.map(function(t){var st=stats(t);return '- S/N '+(serOf(t)||'-')+': '+(t.verdict==='pass'?'PASSED':t.verdict==='fail'?'FAILED':'result not recorded')+(st.open?' ('+st.open+' open item(s))':'');}).join('\n')+'\n\nDate: '+fmtD(h.date)+'\n\nTeledyne FLIR\nTucson Service Center (TSC)\n8165 S Camino de Cafe\nTucson, Arizona, 85747\n\n'+TSC_EMAIL+'\n520-262-6910';
   return {subject:subj.replace(/ - +$/,''),body:body};}
  var o=_mailDefaults(r);
  if(inVisit(r)){o.subject=o.subject.replace('Service Inspection & Completion Certificate','Service Inspection Report')+' (Tower '+r.visit.i+' of '+r.visit.n+')';
@@ -16854,5 +16862,5 @@ document.addEventListener('change',function(e){
 });
 })();
 </script>
-<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.81 · 11/17/2026</div>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.82 · 11/17/2026</div>
 </body></html>
