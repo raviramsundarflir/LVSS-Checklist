@@ -13731,18 +13731,22 @@ function certHtml(){const r=S.rec,c=r.cert,h=r.hdr,st=stats(r),L=r.signed;
 /* ===== Rev 1.57: Warranty period of performance certificate (step 4 card + PDF page) ===== */
 function warrOf(r){if(!r.warr)r.warr={on:false,rows:[{desc:'SkyWatch Tower',term:''}],start:'',end:''};if(!r.warr.rows||!r.warr.rows.length)r.warr.rows=[{desc:'SkyWatch Tower',term:''}];return r.warr;}
 function warrV(r,k){const w=warrOf(r),h=r.hdr;if(w[k]!=null)return w[k];return k==='customer'?(h.customer||''):k==='so'?(h.salesOrder||''):k==='po'?(h.po||''):k==='date'?today():'';}
-function warrRow(r,i,k){const x=warrOf(r).rows[i]||{};if(x[k]!=null)return x[k];return k==='serial'?(i===0?(r.hdr.towerSerial||''):''):'';}
+function warrRow(r,i,k){const x=warrOf(r).rows[i]||{};if(x[k]!=null)return x[k];return k==='serial'?((i===0&&!r.vc)?(r.hdr.towerSerial||''):''):'';}
+function towSer(t){return String((t.hdr&&t.hdr.towerSerial)||'').trim();}
+function warrTowers(r){return (r.vc&&S.vct&&S.vct.vid===r.id)?S.vct.towers:[];}
+function warrSeed(r){const w=warrOf(r);if(!r.vc||w.seeded)return;const T=warrTowers(r);if(!T.length)return;w.rows=T.map(t=>({desc:'SkyWatch Tower',term:'',serial:towSer(t),tid:t.id}));w.seeded=true;}
 function warrApplied(r){return !!(r.cert.warrSig&&r.cert.warrSig===r.cert.custSig);}
 function warrHtml(r){const w=warrOf(r),c=r.cert,L=r.signed;
  if(!w.on)return `<div class="card" id="warrCard"><div class="row"><h3 style="flex:1;margin:0">Warranty certificate</h3><button data-act="warrtog">＋ Add warranty certificate</button></div><p class="muted" style="margin:6px 0 0">Adds a Certificate of Warranty page to the report, just before the punch list.</p></div>`;
  const fld=(k,lab,t)=>`<div><label class="f">${lab}</label><input data-b="warr.${k}" ${t?'type="'+t+'" ':''}value="${esc(warrV(r,k))}"></div>`;
  const rows=w.rows.map((x,i)=>`<tr><td style="text-align:center">${i+1}</td><td><input data-b="warr.rows.${i}.desc" value="${esc(warrRow(r,i,'desc'))}"></td><td><input data-b="warr.rows.${i}.term" value="${esc(warrRow(r,i,'term'))}" placeholder="Extended Warranty Year 1"></td><td><input data-b="warr.rows.${i}.serial" value="${esc(warrRow(r,i,'serial'))}"></td><td>${w.rows.length>1?`<button class="dng" data-act="warrrm" data-i="${i}">✕</button>`:''}</td></tr>`).join('');
+ const TW=warrTowers(r),pick=(r.vc&&TW.length)?`<div class="sp"></div><label class="f">Towers this warranty applies to (tick the serial numbers to include)</label>${TW.map(t=>`<label class="row" style="gap:10px;margin:4px 0"><input type="checkbox" data-act="warrtwr" data-id="${t.id}" ${w.rows.some(x=>x.tid===t.id)?'checked':''} style="width:24px;min-height:24px"><span>S/N ${esc(towSer(t)||'no serial yet')}</span></label>`).join('')}`:'';
  const can=!!c.custSig,ap=warrApplied(r),sg=c.warrSig,unl=(S.sigUnl||{}).warr;
  const tile=`<button type="button" data-act="warrapply" data-warr-tile="${ap?'on':'off'}" aria-label="Apply customer signature, printed name, and title" style="height:180px;width:100%;border:3px solid #7F77DD !important;border-radius:10px;background:${ap?'rgba(127,119,221,.16)':'transparent'} !important;color:inherit !important;font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:0 10px;text-align:center;box-shadow:none;${can?'':'opacity:.6'}">${ap?`<img src="${c.warrSig}" alt="Applied signature" style="max-width:90%;max-height:80px;background:#fff !important;border-radius:6px;padding:4px"><b style="font-size:14px">Applied</b><span class="muted">Tap to undo</span>`:`<span style="font-size:26px;color:#7F77DD" aria-hidden="true">✍</span><b style="font-size:15px">Tap to apply signature, printed name, and title</b><span class="muted">${can?esc(custName(r)||'Customer')+' · '+esc(fmtD(c.custDate)):'The customer signs the certificate above first'}</span>`}</button>`;
  return `<div class="card" id="warrCard"><div class="row"><h2 style="flex:1;margin:0 0 10px">Certificate of Warranty</h2><button class="dng" data-act="warrtog">Remove from report</button></div>
- <p class="muted" style="margin-top:0">Goes in the PDF just before the punch list. Customer, SO and PO come from the report and can be edited here.</p>
+ <p class="muted" style="margin-top:0">${r.vc?'Its own page in the PDF, right after the Completion Certificate.':'Goes in the PDF just before the punch list.'} Customer, SO and PO come from the report and can be edited here.</p>
  <div class="grid">${fld('customer','Customer')}${fld('so','Teledyne FLIR Sales Order #')}${fld('po','Customer PO #')}${fld('date','Certificate date','date')}</div>
- <div class="sp"></div><table class="t" style="table-layout:fixed"><tr><th style="width:7%">No.</th><th style="width:30%">Description</th><th style="width:33%">Warranty term</th><th style="width:24%">Serial number</th><th style="width:6%"></th></tr>${rows}</table>
+ ${pick}<div class="sp"></div><table class="t" style="table-layout:fixed"><tr><th style="width:7%">No.</th><th style="width:30%">Description</th><th style="width:33%">Warranty term</th><th style="width:24%">Serial number</th><th style="width:6%"></th></tr>${rows}</table>
  <div style="margin-top:8px"><button data-act="warradd">＋ Add unit</button></div>
  <div class="sp"></div><h3>Period of performance</h3><div class="grid"><div><label class="f">Start date</label><input data-b="warr.start" type="date" value="${esc(w.start||'')}"></div><div><label class="f">End date</label><input data-b="warr.end" type="date" value="${esc(w.end||'')}"></div></div>
  <p class="muted">Dates can be added after the customer signs. Blank dates print as blank lines.</p>
@@ -14350,7 +14354,8 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'addsvc':{r.svc.extra.push({id:'x'+uid(),t:''});markDirty();svcRefresh();const ins=document.querySelectorAll(`[data-b="svc.extra.${r.svc.extra.length-1}.t"]`);ins.length&&ins[ins.length-1].focus();break;}
  case 'rmsvc':{r.svc.extra.splice(+b.dataset.i,1);markDirty();svcRefresh();break;}
  case 'chgsig':{const w=b.dataset.w;S.sigUnl=S.sigUnl||{};if(S.sigUnl[w]){S.sigUnl[w]=false;}else{if(!confirm('Are you sure you want to update the signature?'))break;S.sigUnl[w]=true;}$('#body').innerHTML=certHtml();initPads();break;}
- case 'warrtog':{const w=warrOf(r);w.on=!w.on;if(w.on&&w.date==null)w.date=today();markDirty();warrRedraw();break;}
+ case 'warrtog':{const w=warrOf(r);w.on=!w.on;if(w.on&&w.date==null)w.date=today();if(w.on)warrSeed(r);markDirty();warrRedraw();break;}
+ case 'warrtwr':{const w=warrOf(r),id=b.dataset.id,T=warrTowers(r),k=w.rows.findIndex(x=>x.tid===id);w.seeded=true;if(k>=0)w.rows.splice(k,1);else{const t=T.find(z=>z.id===id);if(t){w.rows.push({desc:'SkyWatch Tower',term:(w.rows[0]&&w.rows[0].term)||'',serial:towSer(t),tid:id});const o=T.map(z=>z.id);w.rows.sort((a,c)=>{const x=o.indexOf(a.tid),y=o.indexOf(c.tid);return (x<0?99:x)-(y<0?99:y);});}}markDirty();warrRedraw();break;}
  case 'warradd':{warrOf(r).rows.push({desc:'SkyWatch Tower',term:''});markDirty();warrRedraw();break;}
  case 'warrrm':{const w=warrOf(r);if(w.rows.length>1)w.rows.splice(+b.dataset.i,1);markDirty();warrRedraw();break;}
  case 'warrapply':{const w=warrOf(r);if(!r.cert.custSig){alert('Have the customer sign the certificate above first, then tap here.');break;}
@@ -14947,9 +14952,9 @@ document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 
 /* ===== AUTHOR CREDIT - REQUIRED. Do not remove or alter (see credit_check.py). ===== */
-const CREDIT={by:'Ravi Ramsundar',built:'11/16/2026',site:'157'};window.SITE_REV=CREDIT.site;
+const CREDIT={by:'Ravi Ramsundar',built:'11/17/2026',site:'158'};window.SITE_REV=CREDIT.site;
 function creditRev(rev){rev=String(rev||'').replace(/\s*\(.*\)\s*$/,'').trim();if(!rev)return '';return /^rev/i.test(rev)?rev:'Rev '+rev;}
-function creditText(rev){const r='Rev 1.80';return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
+function creditText(rev){const r='Rev 1.81';return 'Designed & developed by '+CREDIT.by+'  ·  '+(r?r+'  ·  ':'')+CREDIT.built;}
 function creditCurRev(){try{return typeof curTpl==='function'?curTpl().revision:(S.tpl&&S.tpl.revision)}catch(e){return ''}}
 function creditLine(d,rev){d.setFont('helvetica','normal');d.setFontSize(6.5);d.setTextColor(150);d.text(creditText(rev).replace(/[^\x20-\x7E]/g,'-'),d.internal.pageSize.getWidth()/2,d.internal.pageSize.getHeight()-8,{align:'center'});}
 function ensureCredit(){
@@ -15010,7 +15015,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='01a34b9094';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='b4a04eb5f5';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);Promise.resolve().then(function(){return typeof save==='function'?save():0;}).catch(function(){}).then(function(){return fetch(location.pathname,{cache:'reload'});}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -16226,6 +16231,7 @@ function vcertHtml(){var V=S.rec,L=V.signed,h=V.hdr;
  +'<div class="card"><h3>Tower results</h3><table class="t"><tr><th>Tower S/N</th><th>Result</th><th>Punch list</th><th></th></tr>'+res+'</table></div>'
  +'<div class="card"><h3>Authorized signatures</h3><p class="muted">One signature from each party covers every tower on this certificate.</p></div>'
  +padCardV('cust','Customer','cert.custName','cert.custTitle')+padCardV('tech','Teledyne FLIR Representative (Technician)','hdr.tech','cert.techTitle')
+ +warrHtml(V)
  +'<div class="card"><h3>Email the signed certificate</h3><p class="muted">The customer chooses where their copy is sent – several addresses can be separated with commas. The technician is copied (Cc), and the Tucson Service Center receives it too.</p>'+inp('hdr.email','Customer email address(es)',{type:'email',ph:'name@company.com'})
  +'<div class="sp"></div><label class="f">Technician email (Cc)</label><div class="row" style="flex-wrap:nowrap"><input id="techEmail" data-b="hdr.techEmail" type="email" value="'+esc(h.techEmail||'')+'" placeholder="first.last" style="flex:1"><button data-act="suffix" style="white-space:nowrap">＋ @teledyne.com</button></div></div>'
  +'<div class="row">'+(L?'<button class="dng" data-act="reopen">Reopen (admin PIN)</button><span style="flex:1"></span><button class="gobtn" data-act="step" data-s="5">Save / Send / Print Cert</button>':(first?'<button data-vt="goto" data-id="'+first.id+'">← Back to the towers</button>':'')+'<span style="flex:1"></span><button class="gobtn" id="finishBtn" data-vt="vfinish">Complete sign-off</button>')+'</div>';}
@@ -16272,7 +16278,7 @@ function drawVcert(d,V,T){var h=V.hdr,c=V.cert,y;
   d.text(z[0],MX+4,y+10);d.text('Signature',MX+269,y+10);d.text('Date',MX+469,y+10);d.setFontSize(10);d.setTextColor(0);d.text(wrap(d,z[1],255),MX+6,y+28);d.setFontSize(9);d.text(wrap(d,z[2]||'',255),MX+6,y+41);
   if(z[3]){var im=sigDims(z[3],185,38);d.addImage(z[3],'PNG',MX+272,y+15,im[0],im[1]);}d.setFontSize(9.5);d.text(cl(fmtD(z[4])),MX+470,y+28);y+=58;});
  var fy=Math.max(y+16,738);d.setFont('helvetica','bold');d.setFontSize(8.5);d.setTextColor(0);d.text('SkyWatch: Tucson Service Center (TSC)',PW/2,fy,{align:'center'});d.setFont('helvetica','normal');d.text('8165 S Camino De Cafe, Tucson, AZ 85747',PW/2,fy+11,{align:'center'});d.text('Customer Support: 520.262.6910 | '+TSC_EMAIL,PW/2,fy+22,{align:'center'});}
-function buildVcertPdf(V,T){var d=pdfNew();drawVcert(d,V,T);footers(d,V,true,new Set([1]));return d;}
+function buildVcertPdf(V,T){var d=pdfNew(),skip=new Set([1]);drawVcert(d,V,T);if(V.warr&&V.warr.on){d.addPage();skip.add(d.getNumberOfPages());drawWarr(d,V,skip);}footers(d,V,true,skip);return d;}
 function vcName(V,T){var sn=T.map(serOf).filter(Boolean).join('_')||V.hdr.customer||'visit';return stdName(V.hdr.rma,sn,'SKYWATCH-CERT',V.hdr.date)+'.pdf';}
 
 var _prepPdfs=prepPdfs;
@@ -16372,7 +16378,7 @@ async function mkCert(idl,pause){closeModal();await save();var a=await allRecs()
  var sg=tw.slice().reverse().find(function(t){return t.cert&&t.cert.techSig;});if(sg){V.cert.techSig=sg.cert.techSig;V.cert.techDate=sg.cert.techDate||today();}
  S.rec=V;S.vct=null;S.view='rec';S.open=-1;S.detail={};S.dirty=true;await save();render();}
 async function vFinish(){var V=S.rec;if(!isVc(V))return;var c=V.cert,miss=[];
- if(!c.custSig)miss.push('customer signature');if(!c.techSig)miss.push('Teledyne FLIR technician signature');if(!custName(V).trim())miss.push('customer printed name');if(!(V.hdr.tech||'').trim())miss.push('technician printed name');
+ if(!c.custSig)miss.push('customer signature');if(V.warr&&V.warr.on&&!c.warrSig)miss.push('warranty certificate customer signature');if(!c.techSig)miss.push('Teledyne FLIR technician signature');if(!custName(V).trim())miss.push('customer printed name');if(!(V.hdr.tech||'').trim())miss.push('technician printed name');
  ((S.vct&&S.vct.towers)||[]).forEach(function(t){if(!serOf(t))miss.push('tower serial number (Tower '+t.visit.i+')');if(!svcLines(t).length)miss.push('service line for Tower S/N '+lab(t));if(!t.done)miss.push('Tower S/N '+lab(t)+' is not finished');});
  {var bad=mails(V.hdr.email).filter(function(e){return !emailOk(e);});if(bad.length)miss.push('a valid customer email ('+bad[0]+')');}
  if(miss.length&&!(await ask('Not filled in yet:\n\n• '+miss.join('\n• ')+'\n\nThe certificate can still be completed. Blank items will show as blank lines on the PDF.',{title:'Some details are missing',ok:'Continue anyway',no:'Go fix it'})))return;
@@ -16848,5 +16854,5 @@ document.addEventListener('change',function(e){
 });
 })();
 </script>
-<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.80 · 11/16/2026</div>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.81 · 11/17/2026</div>
 </body></html>
