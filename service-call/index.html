@@ -52,7 +52,11 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(32px,6vw,48px);let
 .tr button{display:flex;justify-content:space-between;align-items:center;gap:6px;width:100%;text-align:left;font:14px/1.25 var(--body);min-height:40px;padding:6px 8px;border:0;border-left:4px solid transparent;border-radius:0;background:transparent;color:var(--muted);cursor:pointer}
 .tr button:hover{background:var(--navy-soft)}
 .tr button.d{color:var(--ink)}
-.tr button.c{color:var(--ink);font-weight:700;border-left-color:#d1500d;background:var(--navy-soft)}
+.tr button.c{color:#fff;font-weight:700;border-left-color:#8a3300;background:#d1500d}
+.tr button.c:hover{background:#d1500d}
+.tr button.c .ok,.tr button.c .ip{color:#fff}
+.tr .here{font:700 9px var(--mono);letter-spacing:.06em;text-transform:uppercase;background:#fff;color:#8a3300;border-radius:999px;padding:2px 7px;flex:none}
+.tr .trg.cur{box-shadow:0 0 0 3px #d1500d;border-radius:8px}
 .tr .ok{color:var(--new);font-weight:700}
 .rp{margin-top:14px}
 .rp textarea{width:100%;height:260px;font:13px/1.4 var(--mono);padding:10px;border:2px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
@@ -64,6 +68,19 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(32px,6vw,48px);let
 .box{border:2px solid var(--line);border-radius:8px;padding:10px 12px;margin:0 0 14px;background:var(--surface)}
 .box .it:last-child{margin-bottom:0}
 .bt{font:600 12px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--navy);margin:0 0 8px}
+.box>.bt,.sub>.bt{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 10px;padding:0 0 7px;border-bottom:2px solid var(--line)}
+.sub>.bt{margin:0;border-bottom:0;padding:0}
+.sub{display:block;border-top:2px solid var(--line);margin:14px 0 8px;padding:8px 0 0}
+.tg{font:600 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.tg.s{background:var(--signal-soft);color:var(--signal-ink);border:1px solid var(--signal)}
+.tg.o{background:var(--out);color:var(--out-ink);border:1px solid var(--line)}
+.box.s{border-left:6px solid var(--signal)}
+.box.o{border-style:dashed}
+.box.s.todo{background:var(--signal-soft)}
+.sub.s{border-top-color:var(--signal)}
+.sub.s.todo>.bt{background:var(--signal-soft);border-radius:6px;padding:6px 8px}
+.lg{font-size:13px;color:var(--muted);margin:0 0 12px}
+@media print{.tg{display:none}}
 .row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 10px}
 .fl{display:block;font-size:12px;color:var(--muted);margin:0 0 4px;font-weight:600}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
@@ -132,7 +149,7 @@ header .btn{align-self:flex-end}
 <aside class="card tr" id="tr" aria-label="Process list"></aside>
 </div>
 <div class="ov" id="lv" hidden><div class="dlg" role="dialog" aria-modal="true" aria-labelledby="lvt"><h3 id="lvt">Leave this call?</h3><p id="lvp"></p><div class="nav2"><button class="btn pri" id="lvs" type="button">Stay</button><button class="btn" id="lvo" type="button">Leave</button></div></div></div>
-<footer style="text-align:center;font-size:11px;color:var(--muted);opacity:.75;padding:18px 10px calc(16px + env(safe-area-inset-bottom))">Designed &amp; developed by Ravi Ramsundar · Rev 1.92 · 11/18/2026 10:45 AM EST</footer>
+<footer style="text-align:center;font-size:11px;color:var(--muted);opacity:.75;padding:18px 10px calc(16px + env(safe-area-inset-bottom))">Designed &amp; developed by Ravi Ramsundar · Rev 1.93 · 11/18/2026 11:02 AM EST</footer>
 </div>
 <script>var qrcode = function() {
   /**
@@ -1762,7 +1779,7 @@ header .btn{align-self:flex-end}
  return q;};for(var k in o)qrcode[k]=o[k];})();</script>
 <script>
 (function(){
-var P0='MFR-1JTC2-',KEY='scgState2',HK='scgHist',CK='scgCalls',REV='Rev 1.92 · 11/18/2026 10:45 AM EST';
+var P0='MFR-1JTC2-',KEY='scgState2',HK='scgHist',CK='scgCalls',REV='Rev 1.93 · 11/18/2026 11:02 AM EST';
 var BR=['Generator','Camera','NVR','Tower'],BS={Generator:'gen',Camera:'cam',NVR:'nvr',Tower:'twr'};
 var OUT=[['Fixed on the phone','fixed'],['Needs a site visit (quote)','n1'],['Needs a repair or RMA','rma'],['Hand off to devices group','dev']];
 var COV=['Warranty','Extended warranty','Contract','Not covered'];
@@ -1794,6 +1811,9 @@ dec:{q:'Declined',x:'No further action. Sales closes the request.',end:1,c:[],it
 n5:{q:'Sales order processing',x:'Sales order processing issues the sales order from the customer PO. If a CLIN is tied to SkyWatch Service, add those line items to the SkyWatch Service Tracker.',c:[['SO issued','n6']],it:[{l:'Customer PO number'},{l:'Sales order number'},{l:'CLIN numbers tied to SkyWatch Service'},{l:'Line items added to SkyWatch Service Tracker'}]},
 n6:{q:'Do the work',x:'SkyWatch Service (TSC) does the work, then closes out the CLIN.',end:1,c:[],it:[{l:'Work completed (date)',t:'date'},{l:'Completion cert attached to SO'},{l:'CLIN shipped in SAP'}]}
 };
+S.triage.it[1].g='Customer and site';S.triage.it[2].g='Customer and site';S.triage.it[3].g='Urgency';S.triage.gt={'Identify the tower':'s','Customer and site':'s','Urgency':'s','Contact':'o','Generator':'o'};
+S.gen.bt=S.cam.bt=S.nvr.bt=S.twr.bt='What you found';S.fixed.bt='What was done';S.rma.bt='RMA details';S.dev.bt='Hand-off details';S.n1.bt='What the quote needs';S.n3.bt='Sent to Sales';S.n4.bt='Quote';S.dec.bt='Reason';S.dec.tg='o';S.n5.bt='Order details';S.n6.bt='Work completed';
+S.n2.it[0].g=S.n2.it[1].g=S.n2.it[2].g='Services and labor';S.n2.it[3].g=S.n2.it[4].g=S.n2.it[5].g='Other costs';S.n2.it[6].g='Margin';S.n2.gt={'Services and labor':'s','Other costs':'o','Margin':'s'};
 var ORDER=['triage','cov','issues','gen','cam','nvr','twr','fixed','rma','dev','n1','n2','n3','n4','dec','n5','n6'];
 var GROUPS=[{t:'Intake',r:[['triage','Triage Calls'],['cov','Coverage check'],['issues','Reported issues']]},{t:'Troubleshoot',r:[['gen','Generator'],['cam','Camera'],['nvr','NVR'],['twr','Tower']]},{t:'Outcome',r:[['fixed','Fixed on the phone'],['rma','Repair or RMA'],['dev','Devices group']]},{t:'Quote and sale',r:[['n1','Gather info'],['n2','Price it'],['n3','Send to Sales'],['n4','Sales quotes'],['dec','Declined',1],['n5','Sales order'],['n6','Do the work']]}];
 var GOF={};GROUPS.forEach(function(g){g.r.forEach(function(r){GOF[r[0]]=g.t;});});
@@ -1861,21 +1881,25 @@ function chipRow(opts,isOn,pick){var d=document.createElement('div');d.className
 function lab(t,cls){var l=document.createElement('label');l.className=cls||'fl';l.textContent=t;return l;}
 function fld(par,label,key,type,ph){var c=CV(),d=document.createElement('div'),i=document.createElement('input');i.type=type||'text';i.value=c[key]||'';if(ph)i.placeholder=ph;i.setAttribute('aria-label',label);
  i.oninput=function(){c[key]=i.value;save();tree();covUp();};d.appendChild(lab(label));d.appendChild(i);par.appendChild(d);return i;}
-function box(title){var b=document.createElement('div');b.className='box';var p=document.createElement('p');p.className='bt';p.textContent=title;b.appendChild(p);return b;}
+var BXS=[];
+function tagEl(tag){var g=document.createElement('span');g.className='tg '+tag;g.textContent=tag==='s'?'Suggested':'Optional';return g;}
+function box(title,tag,chk){var b=document.createElement('div');b.className='box'+(tag?' '+tag:'');var p=document.createElement('p');p.className='bt';var tt=document.createElement('span');tt.textContent=title;p.appendChild(tt);if(tag){p.appendChild(tagEl(tag));BXS.push({el:b,tag:tag,chk:chk});}b.appendChild(p);return b;}
+function sub(title,tag,chk){var b=document.createElement('div');b.className='sub '+tag;var p=document.createElement('p');p.className='bt';var tt=document.createElement('span');tt.textContent=title;p.appendChild(tt);p.appendChild(tagEl(tag));b.appendChild(p);BXS.push({el:b,tag:tag,chk:chk});return b;}
+function refreshBx(){BXS=BXS.filter(function(r){return document.body.contains(r.el);});BXS.forEach(function(r){r.el.classList.toggle('todo',r.tag==='s'&&!!r.chk&&!r.chk());});}
 function pair(par){var r=document.createElement('div');r.className='row2';par.appendChild(r);return r;}
 function covUp(){var s=covStatus(),a=$('w1'),b=$('w2');if(a){a.className='st '+s.w.c;a.textContent=s.w.t;}if(b){b.className='st '+s.e.c;b.textContent=s.e.t;}var r=$('rt');if(r){var m={'Warranty':'Next: troubleshoot, then an RMA if it needs repair.','Extended warranty':'Next: troubleshoot. Only FLIR-installed devices are covered.','Contract':'Next: check the contract line, then troubleshoot and create an RMA.','Not covered':'Next: quote TSC field support, or hand off to the devices group.'};r.textContent=CV().call?m[CV().call]:'Pick a call to see where it goes next. Each issue defaults to this call, and you can change any one.';}}
 function renderCov(h){var c=CV(),p;
- var a=document.createElement('div');a.className='it';a.appendChild(lab('Resources to find existing orders (pick any)'));
- a.appendChild(chipRow(SRC,function(o){return c.src.indexOf(o)>=0;},function(o){var i=c.src.indexOf(o);if(i<0)c.src.push(o);else c.src.splice(i,1);save();tree();}));h.appendChild(a);
- var b3=box('Contract');p=pair(b3);fld(p,'Contract number','ct','text','Contract no.');fld(p,'Sales order (SO)','so','text','SO no.');p=pair(b3);fld(p,'Z1 allowance or service line','z1','text','Line or CLIN');fld(p,'RMA number','rma','text','If created');h.appendChild(b3);
- var b1=box('Serial numbers and warranty');p=pair(b1);var ts=document.createElement('div');ts.appendChild(lab('Tower serial'));var tv=document.createElement('input');tv.type='text';tv.readOnly=true;tv.value=fmtSerial();tv.placeholder='From Triage Calls';ts.appendChild(tv);p.appendChild(ts);fld(p,'Delivery date','dd','date');
+ var a=document.createElement('div');a.className='it';
+ a.appendChild(chipRow(SRC,function(o){return c.src.indexOf(o)>=0;},function(o){var i=c.src.indexOf(o);if(i<0)c.src.push(o);else c.src.splice(i,1);save();tree();}));var ab=box('Resources to find existing orders (pick any)','o');ab.appendChild(a);h.appendChild(ab);
+ var b3=box('Contract and order numbers','o');p=pair(b3);fld(p,'Contract number','ct','text','Contract no.');fld(p,'Sales order (SO)','so','text','SO no.');p=pair(b3);fld(p,'Z1 allowance or service line','z1','text','Line or CLIN');fld(p,'RMA number','rma','text','If created');h.appendChild(b3);
+ var b1=box('Serial numbers and warranty','s',function(){return !!c.dd;});p=pair(b1);var ts=document.createElement('div');ts.appendChild(lab('Tower serial'));var tv=document.createElement('input');tv.type='text';tv.readOnly=true;tv.value=fmtSerial();tv.placeholder='From Triage Calls';ts.appendChild(tv);p.appendChild(ts);fld(p,'Delivery date','dd','date');
  var w1=document.createElement('div');w1.id='w1';w1.className='st';b1.appendChild(w1);h.appendChild(b1);
- var b2=box('Extended warranty (PoP)');p=pair(b2);fld(p,'PoP start','ps','date');fld(p,'PoP end','pe','date');
+ var b2=box('Extended warranty (PoP)','o');p=pair(b2);fld(p,'PoP start','ps','date');fld(p,'PoP end','pe','date');
  var w2=document.createElement('div');w2.id='w2';w2.className='st';b2.appendChild(w2);
  var nt=document.createElement('p');nt.className='cap';nt.textContent='Covers FLIR-installed devices only. Wear and tear items and customer-provided equipment are not covered. PMx is a maintenance service, not warranty.';b2.appendChild(nt);h.appendChild(b2);
- var d=document.createElement('div');d.className='it';d.appendChild(lab('Your coverage call'));
- d.appendChild(chipRow(COV,function(o){return c.call===o;},function(o){c.call=(c.call===o?'':o);save();tree();covUp();renderCh();}));
- var rt=document.createElement('div');rt.id='rt';rt.className='st';rt.style.marginTop='8px';d.appendChild(rt);h.appendChild(d);covUp();}
+ var d=box('Your coverage call','s',function(){return !!c.call;});var dc=document.createElement('div');dc.className='it';d.appendChild(dc);
+ dc.appendChild(chipRow(COV,function(o){return c.call===o;},function(o){c.call=(c.call===o?'':o);save();tree();covUp();renderCh();}));
+ var rt=document.createElement('div');rt.id='rt';rt.className='st';rt.style.marginTop='8px';dc.appendChild(rt);h.appendChild(d);covUp();}
 function renderIssues(h){
  var list=document.createElement('div');h.appendChild(list);
  function draw(){list.innerHTML='';
@@ -1883,10 +1907,11 @@ function renderIssues(h){
    var top=document.createElement('div');top.className='isst';var t=document.createElement('b');t.textContent='Issue '+(n+1);top.appendChild(t);
    if(X.is.length>1){var rm=document.createElement('button');rm.type='button';rm.className='btn sm';rm.textContent='Remove';rm.setAttribute('aria-label','Remove issue '+(n+1));rm.onclick=function(){X.is.splice(n,1);save();draw();tree();renderCh();};top.appendChild(rm);}
    cd.appendChild(top);
+   cd.appendChild(sub('What the customer reports','s',function(){return !!(it.d||'').trim();}));
    var inp=document.createElement('input');inp.type='text';inp.value=it.d||'';inp.placeholder='What the customer reports';inp.setAttribute('aria-label','Issue '+(n+1)+' description');
    inp.oninput=function(){it.d=inp.value;save();tree();renderCh();};cd.appendChild(inp);
-   cd.appendChild(lab('Branch'));cd.appendChild(chipRow(BR,function(o){return it.b===o;},function(o){it.b=(it.b===o?'':o);save();renderCh();}));
-   cd.appendChild(lab('Coverage'));
+   cd.appendChild(sub('Branch','s',function(){return !!it.b;}));cd.appendChild(chipRow(BR,function(o){return it.b===o;},function(o){it.b=(it.b===o?'':o);save();renderCh();}));
+   cd.appendChild(sub('Coverage','s',function(){return !!effCov(it);}));
    var cvw=document.createElement('div');cd.appendChild(cvw);
    var wl=document.createElement('label');wl.className='chk';var wc=document.createElement('input');wc.type='checkbox';wc.checked=!!it.wr;wl.appendChild(wc);wl.appendChild(document.createTextNode('Wear and tear item (never warranty)'));
    function drawCv(){cvw.innerHTML='';var e=effCov(it);cvw.appendChild(chipRow(['Warranty','Non-warranty'],function(o){return (o==='Warranty')===(e==='w');},function(o){it.cv=(o==='Warranty'?'w':'n');if(it.cv==='w')it.wr=false;wc.checked=it.wr;save();drawCv();hint();}));}
@@ -1895,12 +1920,12 @@ function renderIssues(h){
    var hn=document.createElement('p');hn.className='cap';cd.appendChild(hn);
    function hint(){var e=effCov(it),m='';if(it.wr)m='Wear and tear: goes to the quote.';else if(!it.cv)m='Default from your coverage call. Tap to change.';if(e==='n'&&it.out==='Needs a repair or RMA'&&CV().call!=='Contract')m='Non-warranty with no contract. A quote or the devices group may fit better.';hn.textContent=m;}
    drawCv();hint();
-   cd.appendChild(lab('Outcome'));
+   cd.appendChild(sub('Outcome','s',function(){return !!it.out;}));
    var oc=OUT.map(function(p){return p[0];});cd.appendChild(chipRow(oc,function(o){return it.out===o;},function(o){it.out=(it.out===o?'':o);save();tree();renderCh();hint();}));
    list.appendChild(cd);});}
  draw();
  var add=document.createElement('button');add.type='button';add.className='btn';add.textContent='+ Add another issue';add.onclick=function(){X.is.push({d:'',b:'',cv:null,wr:false,out:''});save();draw();renderCh();};h.appendChild(add);
- var pb=box('Photos from the customer');var pn=document.createElement('p');pn.className='cap';pn.textContent='Photos stay on this device and are saved with the report.';pb.appendChild(pn);
+ var pb=box('Photos from the customer','o');var pn=document.createElement('p');pn.className='cap';pn.textContent='Photos stay on this device and are saved with the report.';pb.appendChild(pn);
  var fi=document.createElement('input');fi.type='file';fi.accept='image/*';fi.multiple=true;fi.setAttribute('aria-label','Add photos');pb.appendChild(fi);
  var th=document.createElement('div');th.className='ph';pb.appendChild(th);h.appendChild(pb);
  function drawPh(){th.innerHTML='';X.ph.forEach(function(p,i){var w=document.createElement('div');w.className='phi';var im=document.createElement('img');im.alt=p.n||'Photo';pGet(p.id,function(d){if(d)im.src=d;});w.appendChild(im);var x=document.createElement('button');x.type='button';x.textContent='✕';x.setAttribute('aria-label','Remove photo');x.onclick=function(){pDel(p.id);X.ph.splice(i,1);save();drawPh();tree();};w.appendChild(x);th.appendChild(w);});}
@@ -1938,11 +1963,14 @@ function itemEl(id,i,o){
  inp.oninput=function(){V[k]=inp.value;chk();save();tree();if(S[id].calc)calcUp();};
  inp.onchange=function(){remember(k,inp.value);};
  chk();w.appendChild(inp);w.appendChild(dl);w.appendChild(wn);return w;}
-function renderItems(id,host){var s=S[id],g=null,bx=null;
+function gFilled(id,idxs){return idxs.some(function(i){var o=S[id].it[i];if(o.t==='link'||o.t==='reseller')return false;if(o.t==='serial')return !!fmtSerial();if(o.t==='bind')return !!(CV()[o.b]||'').trim();if(o.t==='chips')return !!V[id+i];return !!(String(getv(id,i)).trim()||C[id+i]);});}
+function renderItems(id,host){var s=S[id];
  var ord=s.it.map(function(o,i){return {o:o,i:i,p:(o.pos!==undefined?o.pos:i)};});ord.sort(function(a,b){return a.p-b.p||a.i-b.i;});
- ord.forEach(function(e){var o=e.o,i=e.i,par=host;
-  if(o.g){if(o.g!==g){bx=box(o.g);host.appendChild(bx);g=o.g;}par=bx;}else{g=null;bx=null;}
-  par.appendChild(itemEl(id,i,o));});}
+ var grp=[],last=null;
+ ord.forEach(function(e){var key=e.o.g||'__d';if(!last||last.k!==key){last={k:key,idx:[],its:[]};grp.push(last);}last.idx.push(e.i);last.its.push(e);});
+ grp.forEach(function(G){var title=G.k==='__d'?(s.bt||'Details'):G.k,tag=G.k==='__d'?(s.tg||'s'):((s.gt&&s.gt[G.k])||'o');
+  var bx=box(title,tag,function(){return gFilled(id,G.idx);});host.appendChild(bx);
+  G.its.forEach(function(e){bx.appendChild(itemEl(id,e.i,e.o));});});}
 function calcVals(){var h=num('n2',1),r=num('n2',2),tr=num('n2',3),pa=num('n2',4),co=num('n2',5),m=num('n2',6);var lab_=h*r,cost=lab_+tr+pa+co,price=(m<100&&cost>0)?cost/(1-m/100):0;return {labor:lab_,cost:cost,m:m,price:price,profit:price-cost};}
 function money(n){return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function calcUp(){var el=$('calc');if(!el)return;var c=calcVals();el.innerHTML='';
@@ -1951,7 +1979,7 @@ function calcUp(){var el=$('calc');if(!el)return;var c=calcVals();el.innerHTML='
 function fuSubj(){var c=(V.triage1||'').trim(),t=fmtSerial();return 'Follow up: SkyWatch quote'+(c?' - '+c:'')+(t?' - tower '+t:'');}
 function fuBody(){var l=X.is.filter(function(i){return (i.d||'').trim();}).map(function(i,n){return (n+1)+'. '+i.d;}).join('\n');return 'Check whether Sales has replied about this quote request.'+(l?'\n'+l:'');}
 function fuDate(){return X.fu&&pd(X.fu)>=fuMin()?pd(X.fu):fuMin();}
-function renderFu(h){var b=box('Follow-up reminder');var p=document.createElement('p');p.className='cap';p.textContent='If you have not heard back from Sales, remind yourself to follow up. At least 1 week out.';b.appendChild(p);
+function renderFu(h){var b=box('Follow-up reminder','s',function(){return !!X.fu;});var p=document.createElement('p');p.className='cap';p.textContent='If you have not heard back from Sales, remind yourself to follow up. At least 1 week out.';b.appendChild(p);
  var d=document.createElement('div');d.appendChild(lab('Remind me on'));var i=document.createElement('input');i.type='date';i.min=iso(fuMin());i.value=iso(fuDate());i.setAttribute('aria-label','Follow-up date');
  var n=document.createElement('p');n.className='cap';n.setAttribute('role','status');
  i.onchange=function(){if(!i.value||pd(i.value)<fuMin()){i.value=iso(fuMin());n.textContent='Follow-up is at least 1 week out.';}else n.textContent='';X.fu=i.value;save();};d.appendChild(i);b.appendChild(d);b.appendChild(n);
@@ -1988,21 +2016,21 @@ function tree(){var tr=$('tr');tr.innerHTML='';
  var mn=document.createElement('button');mn.type='button';mn.className='trmn';mn.textContent='›';mn.setAttribute('aria-label','Minimize the process list');mn.onclick=function(){setPanel(true,1);};hd.appendChild(mn);tr.appendChild(hd);
  var r=relevant(),dn=0;r.forEach(function(i){if(full(i))dn++;});
  var pp=document.createElement('p');pp.className='trp';pp.textContent=dn+' of '+r.length+' sections done';tr.appendChild(pp);
- GROUPS.forEach(function(g,gi){var gb=document.createElement('div');gb.className='trg';var gh=document.createElement('div');gh.className='trgh';var ci=document.createElement('i');ci.textContent=gi+1;gh.appendChild(ci);gh.appendChild(document.createTextNode(g.t));gb.appendChild(gh);
+ GROUPS.forEach(function(g,gi){var gb=document.createElement('div');gb.className='trg'+(g.r.some(function(n){return n[0]===cur();})?' cur':'');var gh=document.createElement('div');gh.className='trgh';var ci=document.createElement('i');ci.textContent=gi+1;gh.appendChild(ci);gh.appendChild(document.createTextNode(g.t));gb.appendChild(gh);
   g.r.forEach(function(n){var b=document.createElement('button');b.type='button';var cls=[];if(n[2])cls.push('sub');
    if(n[0]===cur()){cls.push('c');b.setAttribute('aria-current','step');}else if(has(n[0]))cls.push('d');b.className=cls.join(' ');
-   var sp=document.createElement('span');sp.textContent=n[1];b.appendChild(sp);
+   var sp=document.createElement('span');sp.textContent=n[1];b.appendChild(sp);if(n[0]===cur()){var hr=document.createElement('span');hr.className='here';hr.textContent='Here';b.appendChild(hr);}
    if(full(n[0])){var k=document.createElement('span');k.className='ok';k.textContent='✓';k.setAttribute('aria-label','complete');b.appendChild(k);}
    else if(has(n[0])){var q=document.createElement('span');q.className='ip';q.textContent='●';q.setAttribute('aria-label','started, not finished');b.appendChild(q);}
    b.onclick=function(){keepOpen();go(n[0]);window.scrollTo(0,0);};gb.appendChild(b);});
   tr.appendChild(gb);});
  var tb=document.createElement('button');tb.type='button';tb.className='trtab';tb.setAttribute('aria-label','Expand the process list');tb.textContent='‹ Process';tb.onclick=function(){setPanel(false,1);};tr.appendChild(tb);}
-function render(){var id=cur(),s=S[id];$('q').textContent=s.q;$('tx').textContent=s.x;var it=$('it');it.innerHTML='';
+function render(){var id=cur(),s=S[id];BXS=[];$('q').textContent=s.q;$('tx').textContent=s.x;var it=$('it');it.innerHTML='';it.onclick=it.onchange=it.oninput=function(){setTimeout(refreshBx,0);};
  if(s.custom==='cov')renderCov(it);else if(s.custom==='issues')renderIssues(it);else renderItems(id,it);
  if(s.calc){var cd=document.createElement('div');cd.id='calc';cd.className='calc';it.appendChild(cd);calcUp();}
  if(s.fu)renderFu(it);
  if(s.devmail){var r=document.createElement('div');r.className='nav2';var b=document.createElement('button');b.type='button';b.className='btn pri';b.textContent='Email to devices group';b.onclick=function(){$('ta').value=reportText();$('rp').hidden=false;location.href='mailto:'+encodeURIComponent((V.dev0||'').trim())+'?subject='+encodeURIComponent(subj('Devices group handoff'))+'&body='+encodeURIComponent($('ta').value);};var c=document.createElement('button');c.type='button';c.className='btn';c.textContent='Copy report';c.onclick=function(){$('ta').value=reportText();$('rp').hidden=false;copy();};r.appendChild(b);r.appendChild(c);it.appendChild(r);}
- renderCh();$('bk').disabled=H.length<2;tree();}
+ if(BXS.length){var lg=document.createElement('p');lg.className='lg';lg.textContent='Highlighted groups are suggested. Optional groups can be skipped. Nothing here stops you from moving on.';it.insertBefore(lg,it.firstChild);}refreshBx();renderCh();$('bk').disabled=H.length<2;tree();}
 /* report */
 function repData(){var d={date:new Date().toLocaleString(),secs:[],open:[],flags:[],ph:X.ph.length,cust:(V.triage1||'').trim(),serial:fmtSerial(),so:(CV().so||'').trim(),po:(CV().po||'').trim(),rma:(CV().rma||'').trim()},u=V.triage3;
  ORDER.forEach(function(id){if(!has(id))return;var s=S[id],rows=[];
@@ -2126,5 +2154,5 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
 ensure();setTimeout(ensure,500);
 })();</script>
-<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.92 · 11/18/2026</div>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.93 · 11/18/2026</div>
 </body></html>
