@@ -34,6 +34,11 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(32px,6vw,48px);let
 .it{margin:0 0 14px}
 .it label{display:flex;gap:10px;align-items:center;font-size:15px;font-weight:600;margin:0 0 5px;min-height:32px}
 .it input[type=checkbox]{width:24px;height:24px;flex:none;accent-color:#d1500d}
+.it.inl{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px}
+.it.inl>label{flex:1 1 150px;margin:0}
+.it.inl>input[type=text],.it.inl>input[type=date],.it.inl>input[type=email],.it.inl>input[type=tel]{flex:2 1 230px;width:auto;min-width:0}
+.it.inl>.srow{flex:2 1 230px;min-width:0}.it.inl>.srow input{flex:1;min-width:0}
+.it.inl>.warn,.it.inl>.cap,.it.inl>.chk{flex:1 1 100%;margin:0}
 .it input[type=text]{width:100%;min-height:44px;font:15px var(--body);color:var(--ink);background:var(--bg);border:2px solid var(--line);border-radius:6px;padding:6px 10px}
 .it input[type=text]:focus{outline:3px solid var(--signal);outline-offset:1px;border-color:var(--navy)}
 .warn{font-size:13px;color:#c0392b;margin:4px 0 0;font-weight:600}
@@ -122,8 +127,8 @@ header .btn{align-self:flex-end}
 .ch.nx{background:var(--navy);border-color:var(--navy);color:#fff}
 :root[data-theme="dark"] .ch.nx{color:#06182b}
 .ch.nx::after{content:'Next ›';float:right;font:600 12px var(--mono)}
-.lk.gl{display:inline-flex;align-items:center;gap:10px;text-decoration:underline}
-.gl svg{width:30px;height:30px;flex:none}
+.lk.gl{display:inline-flex;align-items:center;gap:14px;text-decoration:underline;font-size:20px;line-height:1.25;padding:6px 0}
+.gl svg{width:64px;height:64px;flex:none}
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:2147483100;padding:16px}
 .ov[hidden]{display:none}
 .dlg{background:var(--surface);color:var(--ink);border:2px solid var(--line);border-radius:12px;padding:16px;max-width:420px;width:100%}
@@ -149,7 +154,7 @@ header .btn{align-self:flex-end}
 <aside class="card tr" id="tr" aria-label="Process list"></aside>
 </div>
 <div class="ov" id="lv" hidden><div class="dlg" role="dialog" aria-modal="true" aria-labelledby="lvt"><h3 id="lvt">Leave this call?</h3><p id="lvp"></p><div class="nav2"><button class="btn pri" id="lvs" type="button">Stay</button><button class="btn" id="lvo" type="button">Leave</button></div></div></div>
-<footer style="text-align:center;font-size:11px;color:var(--muted);opacity:.75;padding:18px 10px calc(16px + env(safe-area-inset-bottom))">Designed &amp; developed by Ravi Ramsundar · Rev 1.96 · 11/18/2026 11:53 AM EST</footer>
+<footer style="text-align:center;font-size:11px;color:var(--muted);opacity:.75;padding:18px 10px calc(16px + env(safe-area-inset-bottom))">Designed &amp; developed by Ravi Ramsundar · Rev 1.97 · 11/18/2026 12:27 PM EST</footer>
 </div>
 <script>var qrcode = function() {
   /**
@@ -1779,7 +1784,7 @@ header .btn{align-self:flex-end}
  return q;};for(var k in o)qrcode[k]=o[k];})();</script>
 <script>
 (function(){
-var P0='MFR-1JTC2-',KEY='scgState2',HK='scgHist',CK='scgCalls',REV='Rev 1.96 · 11/18/2026 11:53 AM EST';
+var P0='MFR-1JTC2-',KEY='scgState2',HK='scgHist',CK='scgCalls',REV='Rev 1.97 · 11/18/2026 12:27 PM EST';
 var BR=['Generator','Camera','NVR','Tower'],BS={Generator:'gen',Camera:'cam',NVR:'nvr',Tower:'twr'};
 var OUT=[['Fixed on the phone','fixed'],['Needs a site visit (quote)','n1'],['Needs a repair or RMA','rma'],['Hand off to devices group','dev']];
 var COV=['Warranty','Extended warranty','Contract','Not covered'];
@@ -1788,7 +1793,7 @@ var GL='../skywatch/#generator';
 var TS=[{l:'What was tried'},{l:'Result'}];
 var S={
 triage:{q:'Triage Calls',x:'Start by identifying the tower. Any one of the tower serial number, sales order, or PO is enough to find the order.',c:[['Coverage check','cov']],it:[
- {l:'Tower serial number',t:'serial',g:'Identify the tower',pos:-5},{l:'Customer'},{l:'Site and location'},{l:'Urgency',t:'chips',o:['Tower down','Degraded','Routine']},
+ {l:'Tower serial number',t:'serial',g:'Identify the tower',pos:-5},{l:'Customer'},{l:'Site and location'},{l:'Urgency',t:'chips',o:['Hard down','Safety Concern','N/A']},
  {l:'Contact name',g:'Contact'},{l:'Contact phone',g:'Contact',inp:'tel'},{l:'Contact email',g:'Contact',inp:'email'},
  {l:'Generator serial number (best)',g:'Generator'},{l:'Generator hours',g:'Generator'},{l:'Generator model (optional)',g:'Generator'},
  {t:'link',g:'Generator',l:'Open the generator support page',href:GL},
@@ -1799,17 +1804,17 @@ gen:{q:'Generator troubleshooting',x:'Check the fault code on the generator supp
 cam:{q:'Camera issues',x:'Work through the camera problem.',c:[['Back to reported issues','issues']],it:[{l:'Which camera (name or position)'}].concat(TS)},
 nvr:{q:'NVR issues',x:'Work through the NVR problem.',c:[['Back to reported issues','issues']],it:[{l:'NVR status and lights'}].concat(TS)},
 twr:{q:'Tower issues',x:'Work through the tower problem.',c:[['Back to reported issues','issues']],it:[{l:'Which part of the tower (hydraulics, electrical, structure)'}].concat(TS)},
-fixed:{q:'Fixed on the phone',x:'Log what was done.',end:1,c:[],it:[{l:'Issue fixed'},{l:'How it was fixed'},{l:'Date fixed',t:'date'}]},
+fixed:{q:'Fixed on the phone',x:'Log what was done.',end:1,c:[],it:[{l:'Issue fixed',ck:1},{l:'How it was fixed'},{l:'Date fixed',t:'date'}]},
 rma:{q:'Repair or RMA',x:'Create an RMA to track the issue. Check the contract for a Z1 warranty allowance or a specific service line.',end:1,c:[],it:[{l:'RMA number'},{l:'Contract number'},{l:'Z1 allowance or service line used'},{l:'Part or device'}]},
 dev:{q:'Hand off to devices group',x:'Use this when the tower is out of warranty or has no maintenance contract, or the issue is not a SkyWatch issue. Generate report, then email it.',end:1,devmail:1,c:[],it:[{l:'Devices group email',inp:'email'},{l:'Devices and serial numbers affected'},{l:'Why (out of warranty, no contract, or not SkyWatch)'}]},
 n1:{q:'New Service Request: gather info',x:'The call details carry over. Confirm what the quote needs.',c:[['Info collected','n2']],it:[{l:'Work needed'},{l:'Site access and dates needed'},{l:'Special requirements'}]},
 n2:{q:'Price it',x:'Pick services from the price list (list coming). Add costs, then the margin sets the price.',calc:1,c:[['Price is ready','n3']],it:[
  {l:'Services from price list'},{l:'Labor hours',t:'num'},{l:'Labor cost per hour ($)',t:'num'},{l:'Travel and accommodations cost ($)',t:'num'},{l:'Parts cost ($)',t:'num'},{l:'Consumables cost ($)',t:'num'},{l:'Margin % (target 65, minimum 45)',t:'num',min:45,def:'65'}]},
-n3:{q:'Send to Sales',x:'Email Sales with SkyWatch.Support@teledyne.com copied. Generate report makes the email for you. Then set a reminder to follow up.',fu:1,c:[['Sent','n4']],it:[{l:'Sent to Sales (date)',t:'date'},{l:'SkyWatch.Support copied'}]},
+n3:{q:'Send to Sales',x:'Email Sales with SkyWatch.Support@teledyne.com copied. Generate report makes the email for you. Then set a reminder to follow up.',fu:1,c:[['Sent','n4']],it:[{l:'Sent to Sales (date)',t:'date'},{l:'SkyWatch.Support copied',ck:1}]},
 n4:{q:'Sales quotes the customer',x:'The Sr. Sales Manager or Director sends the quote.',c:[['Customer sends a PO','n5'],['Customer declines','dec']],it:[{l:'Quote number'},{l:'Quote sent (date)',t:'date'}]},
 dec:{q:'Declined',x:'No further action. Sales closes the request.',end:1,c:[],it:[{l:'Reason, if known'}]},
-n5:{q:'Sales order processing',x:'Sales order processing issues the sales order from the customer PO. If a CLIN is tied to SkyWatch Service, add those line items to the SkyWatch Service Tracker.',c:[['SO issued','n6']],it:[{l:'Customer PO number'},{l:'Sales order number'},{l:'CLIN numbers tied to SkyWatch Service'},{l:'Line items added to SkyWatch Service Tracker'}]},
-n6:{q:'Do the work',x:'SkyWatch Service (TSC) does the work, then closes out the CLIN.',end:1,c:[],it:[{l:'Work completed (date)',t:'date'},{l:'Completion cert attached to SO'},{l:'CLIN shipped in SAP'}]}
+n5:{q:'Sales order processing',x:'Sales order processing issues the sales order from the customer PO. If a CLIN is tied to SkyWatch Service, add those line items to the SkyWatch Service Tracker.',c:[['SO issued','n6']],it:[{l:'Customer PO number'},{l:'Sales order number'},{l:'CLIN numbers tied to SkyWatch Service'},{l:'Line items added to SkyWatch Service Tracker',ck:1}]},
+n6:{q:'Do the work',x:'SkyWatch Service (TSC) does the work, then closes out the CLIN.',end:1,c:[],it:[{l:'Work completed (date)',t:'date'},{l:'Completion cert attached to SO',ck:1},{l:'CLIN shipped in SAP',ck:1}]}
 };
 S.triage.it[1].g='Customer and site';S.triage.it[2].g='Customer and site';S.triage.it[3].g='Urgency';S.triage.gt={'Identify the tower':'s','Customer and site':'s','Urgency':'s','Contact':'o','Generator':'o'};
 S.gen.bt=S.cam.bt=S.nvr.bt=S.twr.bt='What you found';S.fixed.bt='What was done';S.rma.bt='RMA details';S.dev.bt='Hand-off details';S.n1.bt='What the quote needs';S.n3.bt='Sent to Sales';S.n4.bt='Quote';S.dec.bt='Reason';S.dec.tg='o';S.n5.bt='Order details';S.n6.bt='Work completed';
@@ -1835,7 +1840,7 @@ function fuMin(){var d=today();d.setDate(d.getDate()+7);if(d.getDay()===6)d.setD
 function fmtSerial(){var r=(V.triage0||'').trim();if(!r)return '';if(X.pre){var d=r.replace(/\D/g,'');return d?P0+pad4(d.slice(0,4)):'';}return r;}
 function getv(id,i){var o=S[id].it[i],k=id+i;return V[k]!==undefined?V[k]:(o.def||'');}
 function num(id,i){var n=parseFloat(String(getv(id,i)).replace(/[$,]/g,''));return isNaN(n)?0:n;}
-function itemDone(id,i){var o=S[id].it[i];return o.t==='chips'?!!V[id+i]:!!C[id+i];}
+function itemDone(id,i){var o=S[id].it[i];if(o.t==='chips')return !!V[id+i];if(o.ck)return !!C[id+i];if(o.t==='serial')return !!fmtSerial();if(o.t==='bind')return !!(CV()[o.b]||'').trim();return !!String(getv(id,i)).trim();}
 function realItems(id){var r=[];S[id].it.forEach(function(o,i){if(o.t!=='link'&&!o.opt)r.push(i);});return r;}
 function CV(){return X.cov;}
 function warrEnd(){var c=CV();if(!c.dd)return null;var d=pd(c.dd);d.setFullYear(d.getFullYear()+1);return d;}
@@ -1942,7 +1947,8 @@ function itemEl(id,i,o){
   function rs(){rb.hidden=!R.on;}
   rc.onchange=function(){R.on=rc.checked;save();rs();tree();};ri.oninput=function(){R.name=ri.value;save();tree();};rs();return w;}
  var lb=document.createElement('label');
- if(o.t!=='chips'){var cb=document.createElement('input');cb.type='checkbox';cb.checked=!!C[k];cb.onchange=function(){C[k]=cb.checked;save();tree();};lb.appendChild(cb);}
+ if(o.t!=='chips'&&!o.ck)w.className='it inl';
+ if(o.t!=='chips'&&o.ck){var cb=document.createElement('input');cb.type='checkbox';cb.checked=!!C[k];cb.onchange=function(){C[k]=cb.checked;save();tree();};lb.appendChild(cb);}
  lb.appendChild(document.createTextNode(o.l));w.appendChild(lb);
  if(o.t==='chips'){w.appendChild(chipRow(o.o,function(v){return V[k]===v;},function(v){V[k]=(V[k]===v?'':v);save();tree();}));return w;}
  var inp=document.createElement('input');inp.type=o.t==='date'?'date':'text';if(o.inp)inp.type=o.inp;
@@ -1951,8 +1957,8 @@ function itemEl(id,i,o){
  var wn=document.createElement('p');wn.className='warn';wn.hidden=true;
  function chk(){var n=parseFloat(inp.value);if(o.min&&inp.value.trim()&&!isNaN(n)&&n<o.min){wn.textContent='Below the '+o.min+'% minimum. Sales will review this quote.';wn.hidden=false;}else wn.hidden=true;}
  if(o.t==='serial'){
-  var pl=document.createElement('label');pl.className='chk';var pc=document.createElement('input');pc.type='checkbox';pc.checked=!!X.pre;pl.appendChild(pc);pl.appendChild(document.createTextNode('Starts with '+P0));w.appendChild(pl);
-  var row=document.createElement('div');row.className='srow';var px=document.createElement('span');px.className='px';px.textContent=P0;row.appendChild(px);row.appendChild(inp);w.appendChild(row);
+  var pl=document.createElement('label');pl.className='chk';var pc=document.createElement('input');pc.type='checkbox';pc.checked=!!X.pre;pl.appendChild(pc);pl.appendChild(document.createTextNode('Starts with '+P0));
+  var row=document.createElement('div');row.className='srow';var px=document.createElement('span');px.className='px';px.textContent=P0;row.appendChild(px);row.appendChild(inp);w.appendChild(row);w.appendChild(pl);
   var pv=document.createElement('p');pv.className='cap';
   function sp(){px.hidden=!X.pre;inp.maxLength=X.pre?4:60;inp.setAttribute('inputmode',X.pre?'numeric':'text');pv.textContent=fmtSerial()?('Serial: '+fmtSerial()):'';}
   pc.onchange=function(){X.pre=pc.checked;if(X.pre){var d=(inp.value||'').replace(/\D/g,'').slice(0,4);inp.value=d?pad4(d):'';V[k]=inp.value;}save();sp();tree();};
@@ -2039,7 +2045,7 @@ function repData(){var d={date:new Date().toLocaleString(),secs:[],open:[],flags
   else{s.it.forEach(function(o,i){if(o.t==='link')return;var v=String(getv(id,i)).trim(),dn=itemDone(id,i),k=id+i;if(id==='triage'&&i===0)v=fmtSerial();
    if(o.t==='bind'){v=(CV()[o.b]||'').trim();if(v)rows.push([o.l,v]);return;}
    if(o.t==='reseller'){var R=X.rs||{};if(R.on)rows.push(['Bought through a reseller',(R.name||'(name not entered)')+' (PO to FLIR: '+((CV().po||'').trim()||'not entered')+')']);return;}
-   if(v||dn)rows.push([o.l,v+(dn&&o.t!=='chips'?(v?' ':'')+'[done]':'')]);else d.open.push(s.q+': '+o.l);});
+   if(v||dn)rows.push([o.l,v+(dn&&o.ck?(v?' ':'')+'[done]':'')]);else d.open.push(s.q+': '+o.l);});
    if(id==='n2'){var c2=calcVals();if(c2.cost)rows.push(['Total cost',money(c2.cost)],['Quote price',c2.price?money(c2.price):'-'],['Profit',c2.price?money(c2.profit):'-']);if(c2.m<45)d.flags.push('Margin '+c2.m+'% is below the 45% minimum. Sales to review.');}
    if(id==='n3'&&X.fu)rows.push(['Follow-up reminder',fd(fuDate())]);}
   d.secs.push({t:s.q,g:GOF[id],rows:rows});});
@@ -2054,7 +2060,7 @@ function reportText(){var d=repData(),o='SkyWatch service call report\n';
 function subj(p){var c=(V.triage1||'').trim(),t=fmtSerial();return (p||'SkyWatch New Service Request')+(c?' - '+c:'')+(t?' - tower '+t:'');}
 function fname(){var c=(V.triage1||'Customer').trim()||'Customer',t=fmtSerial()||'no serial';return (c+' - '+t+' - '+iso(new Date())+' - Service Call').replace(/[\\\/:*?"<>|]/g,'');}
 function qrSvg(d){if(!d.serial&&!d.cust&&!d.so&&!d.po)return '';try{var o={a:'SKYWATCH-CALL',v:1,t:d.serial,c:d.cust.slice(0,40),d:iso(new Date())};if(d.so)o.so=d.so;if(d.po)o.po=d.po;if(d.rma)o.rma=d.rma;if(d.urg)o.u=d.urg;var q=qrcode(0,'L');q.addData(JSON.stringify(o));q.make();return q.createSvgTag({cellSize:3,margin:2,scalable:true});}catch(e){return '';}}
-function reportHtml(photos){var d=repData(),UC={'Tower down':'#c0392b','Degraded':'#b7791f','Routine':'#1b7f5a'},q=qrSvg(d);
+function reportHtml(photos){var d=repData(),UC={'Hard down':'#c0392b','Safety Concern':'#b7791f','N/A':'#51627a','Tower down':'#c0392b','Degraded':'#b7791f','Routine':'#1b7f5a'},q=qrSvg(d);
  var h='<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(fname())+'</title><style>*{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{font:14px/1.45 system-ui,Arial,sans-serif;color:#14233a;max-width:820px;margin:0 auto;padding:24px}.bn{display:flex;justify-content:space-between;gap:14px;border:3px solid #0b3d6b;border-radius:8px;padding:12px 14px;margin:0 0 14px;background:#f3f7fb}.bt1{font:700 11px system-ui;letter-spacing:.08em;text-transform:uppercase;color:#51627a}.bc{font-size:24px;font-weight:700;line-height:1.15}.bs{font-size:18px;font-weight:600}.bm{color:#51627a;margin:4px 0}.ug{display:inline-block;color:#fff;font-weight:700;padding:3px 12px;border-radius:999px;margin-top:4px}.qr{text-align:center;flex:none}.qr svg{width:108px;height:108px}.qc{font-size:10px;color:#51627a}.grp{border:2px solid #0b3d6b;border-radius:8px;margin:14px 0;overflow:hidden}.gt{background:#dbe8f6;color:#0b3d6b;font:700 12px system-ui;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px}.sec{padding:6px 12px 8px;border-top:1px solid #cfd8e3;break-inside:avoid}.sec:first-of-type{border-top:0}h2{font-size:15px;margin:6px 0}table{border-collapse:collapse;width:100%}td{padding:3px 8px 3px 0;vertical-align:top}td:first-child{width:36%;color:#51627a}.fl{background:#fff3cf;border:1px solid #f2b705;padding:6px 10px;margin:8px 0}.ph{display:flex;flex-wrap:wrap;gap:8px}.ph img{width:240px;max-width:48%;border:1px solid #cfd8e3}footer{margin-top:28px;font-size:11px;color:#777;text-align:center}@media print{.ph img{break-inside:avoid}}</style></head><body>';
  h+='<div class="bn"><div><div class="bt1">SkyWatch service call report</div><div class="bc">'+esc(d.cust||'No customer')+'</div><div class="bs">Tower '+esc(d.serial||'no serial')+'</div><div class="bm">'+esc(d.date)+(d.so?' · SO '+esc(d.so):'')+(d.po?' · PO '+esc(d.po):'')+(d.rma?' · RMA '+esc(d.rma):'')+'</div>'+(d.urg?'<span class="ug" style="background:'+(UC[d.urg]||'#51627a')+'">'+esc(d.urg)+'</span>':'')+'</div>'+(q?'<div class="qr">'+q+'<div class="qc">Call details</div></div>':'')+'</div>';
  d.flags.forEach(function(f){h+='<div class="fl">'+esc(f)+'</div>';});
@@ -2154,5 +2160,5 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
 ensure();setTimeout(ensure,500);
 })();</script>
-<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.96 · 11/18/2026</div>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.97 · 11/18/2026</div>
 </body></html>
