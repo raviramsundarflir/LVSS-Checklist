@@ -132,7 +132,7 @@ header .btn{align-self:flex-end}
 <aside class="card tr" id="tr" aria-label="Process list"></aside>
 </div>
 <div class="ov" id="lv" hidden><div class="dlg" role="dialog" aria-modal="true" aria-labelledby="lvt"><h3 id="lvt">Leave this call?</h3><p id="lvp"></p><div class="nav2"><button class="btn pri" id="lvs" type="button">Stay</button><button class="btn" id="lvo" type="button">Leave</button></div></div></div>
-<footer style="text-align:center;font-size:11px;color:var(--muted);opacity:.75;padding:18px 10px calc(16px + env(safe-area-inset-bottom))">Designed &amp; developed by Ravi Ramsundar · Rev 1.91 · 11/18/2026 10:26 AM EST</footer>
+<footer style="text-align:center;font-size:11px;color:var(--muted);opacity:.75;padding:18px 10px calc(16px + env(safe-area-inset-bottom))">Designed &amp; developed by Ravi Ramsundar · Rev 1.92 · 11/18/2026 10:45 AM EST</footer>
 </div>
 <script>var qrcode = function() {
   /**
@@ -1762,7 +1762,7 @@ header .btn{align-self:flex-end}
  return q;};for(var k in o)qrcode[k]=o[k];})();</script>
 <script>
 (function(){
-var P0='MFR-1JTC2-',KEY='scgState2',HK='scgHist',CK='scgCalls',REV='Rev 1.91 · 11/18/2026 10:26 AM EST';
+var P0='MFR-1JTC2-',KEY='scgState2',HK='scgHist',CK='scgCalls',REV='Rev 1.92 · 11/18/2026 10:45 AM EST';
 var BR=['Generator','Camera','NVR','Tower'],BS={Generator:'gen',Camera:'cam',NVR:'nvr',Tower:'twr'};
 var OUT=[['Fixed on the phone','fixed'],['Needs a site visit (quote)','n1'],['Needs a repair or RMA','rma'],['Hand off to devices group','dev']];
 var COV=['Warranty','Extended warranty','Contract','Not covered'];
@@ -1770,11 +1770,12 @@ var SRC=['SkyWatch Service Tracker','SAP SO or contract','Asked the customer','L
 var GL='../skywatch/#generator';
 var TS=[{l:'What was tried'},{l:'Result'}];
 var S={
-triage:{q:'Triage Calls',x:'Start with the tower serial number, then who is calling and where.',c:[['Coverage check','cov']],it:[
- {l:'Tower serial number',t:'serial'},{l:'Customer'},{l:'Site and location'},{l:'Urgency',t:'chips',o:['Tower down','Degraded','Routine']},
+triage:{q:'Triage Calls',x:'Start by identifying the tower. Any one of the tower serial number, sales order, or PO is enough to find the order.',c:[['Coverage check','cov']],it:[
+ {l:'Tower serial number',t:'serial',g:'Identify the tower',pos:-5},{l:'Customer'},{l:'Site and location'},{l:'Urgency',t:'chips',o:['Tower down','Degraded','Routine']},
  {l:'Contact name',g:'Contact'},{l:'Contact phone',g:'Contact',inp:'tel'},{l:'Contact email',g:'Contact',inp:'email'},
  {l:'Generator serial number (best)',g:'Generator'},{l:'Generator hours',g:'Generator'},{l:'Generator model (optional)',g:'Generator'},
- {t:'link',g:'Generator',l:'Open the generator support page',href:GL}]},
+ {t:'link',g:'Generator',l:'Open the generator support page',href:GL},
+ {l:'Sales order (SO)',t:'bind',b:'so',g:'Identify the tower',pos:-4,opt:1},{l:'Purchase order (PO)',t:'bind',b:'po',g:'Identify the tower',pos:-3,opt:1},{t:'reseller',g:'Identify the tower',pos:-2,opt:1}]},
 cov:{q:'Coverage check',x:'Look up what this tower is covered by before deciding what happens next.',custom:'cov',c:[['Reported issues','issues']],it:[]},
 issues:{q:'Reported issues',x:'List every issue the customer reports. Each one gets its own branch, coverage, and outcome. Add photos the customer sent.',custom:'issues',c:[],it:[]},
 gen:{q:'Generator troubleshooting',x:'Check the fault code on the generator support page first.',c:[['Back to reported issues','issues']],it:[{l:'Fault code'},{t:'link',l:'Open the generator support page',href:GL}].concat(TS)},
@@ -1815,7 +1816,7 @@ function fmtSerial(){var r=(V.triage0||'').trim();if(!r)return '';if(X.pre){var 
 function getv(id,i){var o=S[id].it[i],k=id+i;return V[k]!==undefined?V[k]:(o.def||'');}
 function num(id,i){var n=parseFloat(String(getv(id,i)).replace(/[$,]/g,''));return isNaN(n)?0:n;}
 function itemDone(id,i){var o=S[id].it[i];return o.t==='chips'?!!V[id+i]:!!C[id+i];}
-function realItems(id){var r=[];S[id].it.forEach(function(o,i){if(o.t!=='link')r.push(i);});return r;}
+function realItems(id){var r=[];S[id].it.forEach(function(o,i){if(o.t!=='link'&&!o.opt)r.push(i);});return r;}
 function CV(){return X.cov;}
 function warrEnd(){var c=CV();if(!c.dd)return null;var d=pd(c.dd);d.setFullYear(d.getFullYear()+1);return d;}
 function inWarr(){var e=warrEnd();return !!e&&e>=today();}
@@ -1826,7 +1827,7 @@ function covStatus(){var c=CV(),a={c:'',t:'Enter the delivery date to check the 
  if(e){var ok=e>=today();a={c:ok?'ok':'bad',t:(ok?'In warranty until ':'Warranty ended ')+fd(e)};}
  if(c.ps&&c.pe){var s=pd(c.ps),f=pd(c.pe),t=today();if(f<s)b={c:'bad',t:'End date is before the start date.'};else if(t<s)b={c:'',t:'Starts '+fd(s)};else if(t<=f)b={c:'ok',t:'Extended warranty current, ends '+fd(f)};else b={c:'bad',t:'Extended warranty ended '+fd(f)};}
  return {w:a,e:b};}
-function hasContent(){return !!((V.triage0||'').trim()||(V.triage1||'').trim()||X.is.some(function(i){return (i.d||'').trim();}));}
+function hasContent(){return !!((V.triage0||'').trim()||((CV()||{}).so||'').trim()||((CV()||{}).po||'').trim()||(V.triage1||'').trim()||X.is.some(function(i){return (i.d||'').trim();}));}
 function save(){var st={id:ID,H:H,C:C,V:V,X:X};lsSet(KEY,JSON.stringify(st));
  var L=getCalls(),i,f=-1;for(i=0;i<L.length;i++)if(L[i].id===ID)f=i;
  if(hasContent()){var e={id:ID,ts:Date.now(),s:st};if(f<0)L.unshift(e);else L[f]=e;lsSet(CK,JSON.stringify(L.slice(0,40)));}}
@@ -1840,6 +1841,7 @@ function go(id){if(id!==cur())H.push(id);if(H.length>80)H.shift();save();render(
 function has(id){var s=S[id],i;
  if(s.custom==='cov'){var c=CV();return !!(c.call||c.dd||c.ps||c.pe||c.ct||c.so||c.z1||c.rma||c.src.length);}
  if(s.custom==='issues')return X.is.some(function(t){return (t.d||'').trim()||t.b||t.out;})||X.ph.length>0;
+ if(id==='triage'&&((CV().so||'').trim()||(CV().po||'').trim()||(X.rs&&X.rs.on)))return true;
  for(i=0;i<s.it.length;i++){if(s.it[i].t==='link')continue;if(C[id+i]||(V[id+i]||'').trim())return true;}return false;}
 function full(id){var s=S[id];
  if(s.custom==='cov')return !!CV().call;
@@ -1907,11 +1909,19 @@ function renderIssues(h){
 function itemEl(id,i,o){
  var k=id+i,w=document.createElement('div');w.className='it';
  if(o.t==='link'){var a=document.createElement('a');a.href=o.href;a.target='_blank';a.rel='noopener';a.className='lk gl';a.innerHTML=GENSVG+'<span></span>';a.lastChild.textContent=o.l+' ↗';w.appendChild(a);return w;}
+ if(o.t==='reseller'){if(!X.rs)X.rs={on:false,name:''};var R=X.rs;
+  var rl=document.createElement('label');rl.className='chk';var rc=document.createElement('input');rc.type='checkbox';rc.checked=!!R.on;rl.appendChild(rc);rl.appendChild(document.createTextNode('Bought through a reseller'));w.appendChild(rl);
+  var rb=document.createElement('div');var ri=document.createElement('input');ri.type='text';ri.value=R.name||'';ri.setAttribute('aria-label','Reseller name');ri.setAttribute('placeholder','Reseller name');ri.setAttribute('autocomplete','off');
+  var rn=document.createElement('p');rn.className='cap';rn.textContent='Get the PO the reseller sent to FLIR and enter it in the PO field above. Not the customer\'s PO to the reseller.';
+  rb.appendChild(ri);rb.appendChild(rn);w.appendChild(rb);
+  function rs(){rb.hidden=!R.on;}
+  rc.onchange=function(){R.on=rc.checked;save();rs();tree();};ri.oninput=function(){R.name=ri.value;save();tree();};rs();return w;}
  var lb=document.createElement('label');
  if(o.t!=='chips'){var cb=document.createElement('input');cb.type='checkbox';cb.checked=!!C[k];cb.onchange=function(){C[k]=cb.checked;save();tree();};lb.appendChild(cb);}
  lb.appendChild(document.createTextNode(o.l));w.appendChild(lb);
  if(o.t==='chips'){w.appendChild(chipRow(o.o,function(v){return V[k]===v;},function(v){V[k]=(V[k]===v?'':v);save();tree();}));return w;}
- var inp=document.createElement('input');inp.type=o.t==='date'?'date':'text';if(o.inp)inp.type=o.inp;if(o.t==='num')inp.setAttribute('inputmode','decimal');
+ var inp=document.createElement('input');inp.type=o.t==='date'?'date':'text';if(o.inp)inp.type=o.inp;
+ if(o.t==='bind'){inp.value=CV()[o.b]||'';inp.setAttribute('aria-label',o.l);inp.setAttribute('autocomplete','off');inp.oninput=function(){CV()[o.b]=inp.value;save();tree();};w.appendChild(inp);return w;}if(o.t==='num')inp.setAttribute('inputmode','decimal');
  inp.value=getv(id,i);inp.setAttribute('aria-label',o.l);inp.setAttribute('autocomplete','off');
  var wn=document.createElement('p');wn.className='warn';wn.hidden=true;
  function chk(){var n=parseFloat(inp.value);if(o.min&&inp.value.trim()&&!isNaN(n)&&n<o.min){wn.textContent='Below the '+o.min+'% minimum. Sales will review this quote.';wn.hidden=false;}else wn.hidden=true;}
@@ -1929,7 +1939,8 @@ function itemEl(id,i,o){
  inp.onchange=function(){remember(k,inp.value);};
  chk();w.appendChild(inp);w.appendChild(dl);w.appendChild(wn);return w;}
 function renderItems(id,host){var s=S[id],g=null,bx=null;
- s.it.forEach(function(o,i){var par=host;
+ var ord=s.it.map(function(o,i){return {o:o,i:i,p:(o.pos!==undefined?o.pos:i)};});ord.sort(function(a,b){return a.p-b.p||a.i-b.i;});
+ ord.forEach(function(e){var o=e.o,i=e.i,par=host;
   if(o.g){if(o.g!==g){bx=box(o.g);host.appendChild(bx);g=o.g;}par=bx;}else{g=null;bx=null;}
   par.appendChild(itemEl(id,i,o));});}
 function calcVals(){var h=num('n2',1),r=num('n2',2),tr=num('n2',3),pa=num('n2',4),co=num('n2',5),m=num('n2',6);var lab_=h*r,cost=lab_+tr+pa+co,price=(m<100&&cost>0)?cost/(1-m/100):0;return {labor:lab_,cost:cost,m:m,price:price,profit:price-cost};}
@@ -1993,11 +2004,13 @@ function render(){var id=cur(),s=S[id];$('q').textContent=s.q;$('tx').textConten
  if(s.devmail){var r=document.createElement('div');r.className='nav2';var b=document.createElement('button');b.type='button';b.className='btn pri';b.textContent='Email to devices group';b.onclick=function(){$('ta').value=reportText();$('rp').hidden=false;location.href='mailto:'+encodeURIComponent((V.dev0||'').trim())+'?subject='+encodeURIComponent(subj('Devices group handoff'))+'&body='+encodeURIComponent($('ta').value);};var c=document.createElement('button');c.type='button';c.className='btn';c.textContent='Copy report';c.onclick=function(){$('ta').value=reportText();$('rp').hidden=false;copy();};r.appendChild(b);r.appendChild(c);it.appendChild(r);}
  renderCh();$('bk').disabled=H.length<2;tree();}
 /* report */
-function repData(){var d={date:new Date().toLocaleString(),secs:[],open:[],flags:[],ph:X.ph.length,cust:(V.triage1||'').trim(),serial:fmtSerial(),so:(CV().so||'').trim(),rma:(CV().rma||'').trim()},u=V.triage3;
+function repData(){var d={date:new Date().toLocaleString(),secs:[],open:[],flags:[],ph:X.ph.length,cust:(V.triage1||'').trim(),serial:fmtSerial(),so:(CV().so||'').trim(),po:(CV().po||'').trim(),rma:(CV().rma||'').trim()},u=V.triage3;
  ORDER.forEach(function(id){if(!has(id))return;var s=S[id],rows=[];
-  if(s.custom==='cov'){var c=CV(),st=covStatus();if(c.src.length)rows.push(['Resources used',c.src.join(', ')]);if(c.ct)rows.push(['Contract number',c.ct]);if(c.so)rows.push(['Sales order',c.so]);if(c.z1)rows.push(['Z1 allowance or service line',c.z1]);if(c.rma)rows.push(['RMA number',c.rma]);if(c.dd)rows.push(['Delivery date',c.dd+' ('+st.w.t+')']);if(c.ps||c.pe)rows.push(['Extended warranty',(c.ps||'?')+' to '+(c.pe||'?')+' ('+st.e.t+')']);if(c.call)rows.push(['Coverage call',c.call]);}
+  if(s.custom==='cov'){var c=CV(),st=covStatus();if(c.src.length)rows.push(['Resources used',c.src.join(', ')]);if(c.ct)rows.push(['Contract number',c.ct]);if(c.z1)rows.push(['Z1 allowance or service line',c.z1]);if(c.rma)rows.push(['RMA number',c.rma]);if(c.dd)rows.push(['Delivery date',c.dd+' ('+st.w.t+')']);if(c.ps||c.pe)rows.push(['Extended warranty',(c.ps||'?')+' to '+(c.pe||'?')+' ('+st.e.t+')']);if(c.call)rows.push(['Coverage call',c.call]);}
   else if(s.custom==='issues'){X.is.forEach(function(t,n){if(!(t.d||'').trim()&&!t.b&&!t.out)return;var e=effCov(t);rows.push(['Issue '+(n+1),(t.d||'(no description)')+' | '+(t.b||'no branch')+' | '+(e==='w'?'Warranty':'Non-warranty')+(t.wr?' (wear and tear)':'')+' | '+(t.out||'no outcome')]);});if(X.ph.length)rows.push(['Photos',X.ph.length+' attached (saved with the report on the device)']);}
   else{s.it.forEach(function(o,i){if(o.t==='link')return;var v=String(getv(id,i)).trim(),dn=itemDone(id,i),k=id+i;if(id==='triage'&&i===0)v=fmtSerial();
+   if(o.t==='bind'){v=(CV()[o.b]||'').trim();if(v)rows.push([o.l,v]);return;}
+   if(o.t==='reseller'){var R=X.rs||{};if(R.on)rows.push(['Bought through a reseller',(R.name||'(name not entered)')+' (PO to FLIR: '+((CV().po||'').trim()||'not entered')+')']);return;}
    if(v||dn)rows.push([o.l,v+(dn&&o.t!=='chips'?(v?' ':'')+'[done]':'')]);else d.open.push(s.q+': '+o.l);});
    if(id==='n2'){var c2=calcVals();if(c2.cost)rows.push(['Total cost',money(c2.cost)],['Quote price',c2.price?money(c2.price):'-'],['Profit',c2.price?money(c2.profit):'-']);if(c2.m<45)d.flags.push('Margin '+c2.m+'% is below the 45% minimum. Sales to review.');}
    if(id==='n3'&&X.fu)rows.push(['Follow-up reminder',fd(fuDate())]);}
@@ -2005,17 +2018,17 @@ function repData(){var d={date:new Date().toLocaleString(),secs:[],open:[],flags
  d.urg=u||'';return d;}
 function reportText(){var d=repData(),o='SkyWatch service call report\n';
  if(d.urg)o+='URGENCY: '+d.urg.toUpperCase()+'\n';
- o+='Customer: '+(d.cust||'-')+' | Tower: '+(d.serial||'-')+(d.so?' | SO: '+d.so:'')+(d.rma?' | RMA: '+d.rma:'')+'\nDate: '+d.date+'\n';
+ o+='Customer: '+(d.cust||'-')+' | Tower: '+(d.serial||'-')+(d.so?' | SO: '+d.so:'')+(d.po?' | PO: '+d.po:'')+(d.rma?' | RMA: '+d.rma:'')+'\nDate: '+d.date+'\n';
  d.flags.forEach(function(f){o+='FLAG: '+f+'\n';});
  d.secs.forEach(function(s){o+='\n'+s.t+'\n';s.rows.forEach(function(r){o+='  '+r[0]+': '+r[1]+'\n';});});
  if(!d.secs.length)o+='\nNothing entered yet.\n';
  if(d.open.length){o+='\nNot yet completed\n';d.open.forEach(function(x){o+='  '+x+'\n';});}return o;}
 function subj(p){var c=(V.triage1||'').trim(),t=fmtSerial();return (p||'SkyWatch New Service Request')+(c?' - '+c:'')+(t?' - tower '+t:'');}
 function fname(){var c=(V.triage1||'Customer').trim()||'Customer',t=fmtSerial()||'no serial';return (c+' - '+t+' - '+iso(new Date())+' - Service Call').replace(/[\\\/:*?"<>|]/g,'');}
-function qrSvg(d){if(!d.serial&&!d.cust)return '';try{var o={a:'SKYWATCH-CALL',v:1,t:d.serial,c:d.cust.slice(0,40),d:iso(new Date())};if(d.so)o.so=d.so;if(d.rma)o.rma=d.rma;if(d.urg)o.u=d.urg;var q=qrcode(0,'L');q.addData(JSON.stringify(o));q.make();return q.createSvgTag({cellSize:3,margin:2,scalable:true});}catch(e){return '';}}
+function qrSvg(d){if(!d.serial&&!d.cust&&!d.so&&!d.po)return '';try{var o={a:'SKYWATCH-CALL',v:1,t:d.serial,c:d.cust.slice(0,40),d:iso(new Date())};if(d.so)o.so=d.so;if(d.po)o.po=d.po;if(d.rma)o.rma=d.rma;if(d.urg)o.u=d.urg;var q=qrcode(0,'L');q.addData(JSON.stringify(o));q.make();return q.createSvgTag({cellSize:3,margin:2,scalable:true});}catch(e){return '';}}
 function reportHtml(photos){var d=repData(),UC={'Tower down':'#c0392b','Degraded':'#b7791f','Routine':'#1b7f5a'},q=qrSvg(d);
  var h='<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(fname())+'</title><style>*{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{font:14px/1.45 system-ui,Arial,sans-serif;color:#14233a;max-width:820px;margin:0 auto;padding:24px}.bn{display:flex;justify-content:space-between;gap:14px;border:3px solid #0b3d6b;border-radius:8px;padding:12px 14px;margin:0 0 14px;background:#f3f7fb}.bt1{font:700 11px system-ui;letter-spacing:.08em;text-transform:uppercase;color:#51627a}.bc{font-size:24px;font-weight:700;line-height:1.15}.bs{font-size:18px;font-weight:600}.bm{color:#51627a;margin:4px 0}.ug{display:inline-block;color:#fff;font-weight:700;padding:3px 12px;border-radius:999px;margin-top:4px}.qr{text-align:center;flex:none}.qr svg{width:108px;height:108px}.qc{font-size:10px;color:#51627a}.grp{border:2px solid #0b3d6b;border-radius:8px;margin:14px 0;overflow:hidden}.gt{background:#dbe8f6;color:#0b3d6b;font:700 12px system-ui;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px}.sec{padding:6px 12px 8px;border-top:1px solid #cfd8e3;break-inside:avoid}.sec:first-of-type{border-top:0}h2{font-size:15px;margin:6px 0}table{border-collapse:collapse;width:100%}td{padding:3px 8px 3px 0;vertical-align:top}td:first-child{width:36%;color:#51627a}.fl{background:#fff3cf;border:1px solid #f2b705;padding:6px 10px;margin:8px 0}.ph{display:flex;flex-wrap:wrap;gap:8px}.ph img{width:240px;max-width:48%;border:1px solid #cfd8e3}footer{margin-top:28px;font-size:11px;color:#777;text-align:center}@media print{.ph img{break-inside:avoid}}</style></head><body>';
- h+='<div class="bn"><div><div class="bt1">SkyWatch service call report</div><div class="bc">'+esc(d.cust||'No customer')+'</div><div class="bs">Tower '+esc(d.serial||'no serial')+'</div><div class="bm">'+esc(d.date)+(d.so?' · SO '+esc(d.so):'')+(d.rma?' · RMA '+esc(d.rma):'')+'</div>'+(d.urg?'<span class="ug" style="background:'+(UC[d.urg]||'#51627a')+'">'+esc(d.urg)+'</span>':'')+'</div>'+(q?'<div class="qr">'+q+'<div class="qc">Call details</div></div>':'')+'</div>';
+ h+='<div class="bn"><div><div class="bt1">SkyWatch service call report</div><div class="bc">'+esc(d.cust||'No customer')+'</div><div class="bs">Tower '+esc(d.serial||'no serial')+'</div><div class="bm">'+esc(d.date)+(d.so?' · SO '+esc(d.so):'')+(d.po?' · PO '+esc(d.po):'')+(d.rma?' · RMA '+esc(d.rma):'')+'</div>'+(d.urg?'<span class="ug" style="background:'+(UC[d.urg]||'#51627a')+'">'+esc(d.urg)+'</span>':'')+'</div>'+(q?'<div class="qr">'+q+'<div class="qc">Call details</div></div>':'')+'</div>';
  d.flags.forEach(function(f){h+='<div class="fl">'+esc(f)+'</div>';});
  GROUPS.forEach(function(g){var ss=d.secs.filter(function(x){return x.g===g.t;});if(!ss.length)return;h+='<div class="grp"><div class="gt">'+esc(g.t)+'</div>';
   ss.forEach(function(x){h+='<div class="sec"><h2>'+esc(x.t)+'</h2><table>';x.rows.forEach(function(r){h+='<tr><td>'+esc(r[0])+'</td><td>'+esc(r[1])+'</td></tr>';});h+='</table></div>';});h+='</div>';});
@@ -2113,5 +2126,5 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
 ensure();setTimeout(ensure,500);
 })();</script>
-<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.91 · 11/18/2026</div>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.92 · 11/18/2026</div>
 </body></html>
