@@ -31,17 +31,23 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(32px,6vw,48px);let
 .cv text{fill:var(--ink);font-family:var(--body)}
 .cv .th{font-size:14px;font-weight:600}.cv .ts{font-size:12px;fill:var(--muted)}
 .cv .arr{stroke:var(--muted);stroke-width:3;fill:none}
+.cv .arr.svc,#v2 .arr{stroke:#12803f}
+:root[data-theme="dark"] .cv .arr.svc,:root[data-theme="dark"] #v2 .arr{stroke:#2fe57a}
 .cv .node{cursor:pointer}
 .cv rect{stroke-width:1}
 .c-gray rect{fill:#F1EFE8;stroke:#5F5E5A}.c-gray .th{fill:#444441}.c-gray .ts{fill:#5F5E5A}
 .c-purple rect{fill:#EEEDFE;stroke:#534AB7}.c-purple .th{fill:#3C3489}.c-purple .ts{fill:#534AB7}
 .c-teal rect{fill:#E1F5EE;stroke:#0F6E56}.c-teal .th{fill:#085041}.c-teal .ts{fill:#0F6E56}
+.c-tsc rect{fill:#DDF7E7;stroke:#12803f;filter:drop-shadow(0 0 3px rgba(18,128,63,.45))}.c-tsc .th{fill:#0a4d27}.c-tsc .ts{fill:#12803f}
 .c-coral rect{fill:#FAECE7;stroke:#993C1D}.c-coral .th{fill:#712B13}.c-coral .ts{fill:#993C1D}
+.gbx{fill:none;stroke:#854F0B;stroke-width:1.5;stroke-dasharray:5 4}.glb{font:700 8.5px ui-monospace,monospace;letter-spacing:.04em;fill:#854F0B}
 .c-amber rect{fill:#FAEEDA;stroke:#854F0B}.c-amber .th{fill:#633806}.c-amber .ts{fill:#854F0B}
 :root[data-theme="dark"] .c-gray rect{fill:#444441;stroke:#B4B2A9}:root[data-theme="dark"] .c-gray .th{fill:#D3D1C7}:root[data-theme="dark"] .c-gray .ts{fill:#B4B2A9}
 :root[data-theme="dark"] .c-purple rect{fill:#3C3489;stroke:#AFA9EC}:root[data-theme="dark"] .c-purple .th{fill:#CECBF6}:root[data-theme="dark"] .c-purple .ts{fill:#AFA9EC}
 :root[data-theme="dark"] .c-teal rect{fill:#085041;stroke:#5DCAA5}:root[data-theme="dark"] .c-teal .th{fill:#9FE1CB}:root[data-theme="dark"] .c-teal .ts{fill:#5DCAA5}
+:root[data-theme="dark"] .c-tsc rect{fill:#0b4a2a;stroke:#2fe57a;filter:drop-shadow(0 0 5px rgba(47,229,122,.75))}:root[data-theme="dark"] .c-tsc .th{fill:#c4f7d9}:root[data-theme="dark"] .c-tsc .ts{fill:#7df0aa}
 :root[data-theme="dark"] .c-coral rect{fill:#712B13;stroke:#F0997B}:root[data-theme="dark"] .c-coral .th{fill:#F5C4B3}:root[data-theme="dark"] .c-coral .ts{fill:#F0997B}
+:root[data-theme="dark"] .gbx{stroke:#EF9F27}:root[data-theme="dark"] .glb{fill:#EF9F27}
 :root[data-theme="dark"] .c-amber rect{fill:#633806;stroke:#EF9F27}:root[data-theme="dark"] .c-amber .th{fill:#FAC775}:root[data-theme="dark"] .c-amber .ts{fill:#EF9F27}
 .bar{display:flex;align-items:center;gap:12px;margin:0 0 10px}
 .bar button,.dir .sec button{font:600 14px var(--body);min-height:44px;padding:8px 14px;border:2px solid var(--navy);border-radius:8px;background:var(--surface);color:var(--ink);cursor:pointer}
@@ -72,39 +78,41 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(32px,6vw,48px);let
 </defs>
 <g class="node c-gray" onclick="LC.d('cust')"><rect x="12" y="8" width="112" height="40" rx="8"/><text class="th" x="68" y="22" text-anchor="middle" dominant-baseline="central">Customer</text><text class="ts" x="68" y="38" text-anchor="middle" dominant-baseline="central">Per SO / PO</text></g>
 <g class="node c-purple" onclick="LC.d('sales')"><rect x="145" y="8" width="112" height="40" rx="8"/><text class="th" x="201" y="22" text-anchor="middle" dominant-baseline="central">Sales</text><text class="ts" x="201" y="38" text-anchor="middle" dominant-baseline="central">Skrocki, Saksa</text></g>
-<g class="node c-teal" onclick="LC.d('prod')"><rect x="264" y="8" width="140" height="40" rx="8"/><text class="th" x="334" y="22" text-anchor="middle" dominant-baseline="central">Production (ELK)</text><text class="ts" x="334" y="38" text-anchor="middle" dominant-baseline="central">7 contacts</text></g>
-<g class="node c-coral" onclick="LC.detail()"><rect x="411" y="8" width="112" height="40" rx="8"/><text class="th" x="467" y="22" text-anchor="middle" dominant-baseline="central">Service (TSC)</text><text class="ts" x="467" y="38" text-anchor="middle" dominant-baseline="central">Tap for detail</text></g>
-<g class="node c-amber" onclick="LC.d('fin')"><rect x="544" y="8" width="112" height="40" rx="8"/><text class="th" x="600" y="22" text-anchor="middle" dominant-baseline="central">Admin</text><text class="ts" x="600" y="38" text-anchor="middle" dominant-baseline="central">Saunders, Ballard</text></g>
+<g class="node c-coral" onclick="LC.d('prod')"><rect x="264" y="8" width="140" height="40" rx="8"/><text class="th" x="334" y="22" text-anchor="middle" dominant-baseline="central">Production (ELK)</text><text class="ts" x="334" y="38" text-anchor="middle" dominant-baseline="central">7 contacts</text></g>
+<g class="node c-tsc" onclick="LC.detail()"><rect x="411" y="8" width="112" height="40" rx="8"/><text class="th" x="467" y="22" text-anchor="middle" dominant-baseline="central">Service (TSC)</text><text class="ts" x="467" y="38" text-anchor="middle" dominant-baseline="central">Tap for detail</text></g>
+<g class="node c-amber" onclick="LC.d('fin')"><rect x="544" y="8" width="112" height="40" rx="8"/><text class="th" x="600" y="22" text-anchor="middle" dominant-baseline="central">Accounting</text><text class="ts" x="600" y="38" text-anchor="middle" dominant-baseline="central">Invoicing</text></g>
 <line x1="12" y1="62" x2="656" y2="62" stroke="var(--muted)" stroke-width="4" stroke-linecap="round"/>
 <g transform="translate(0,22)">
 <g class="c-gray"><rect x="12" y="60" width="112" height="44" rx="8"/><text class="th" x="68" y="77" text-anchor="middle" dominant-baseline="central">Issues PO</text><text class="ts" x="68" y="93" text-anchor="middle" dominant-baseline="central">Customer order</text></g>
 <g class="c-purple"><rect x="145" y="60" width="112" height="44" rx="8"/><text class="th" x="201" y="77" text-anchor="middle" dominant-baseline="central">Sales order</text><text class="ts" x="201" y="93" text-anchor="middle" dominant-baseline="central">Brewer issues SO</text></g>
-<g class="c-teal"><rect x="278" y="60" width="112" height="44" rx="8"/><text class="th" x="334" y="77" text-anchor="middle" dominant-baseline="central">Build</text><text class="ts" x="334" y="93" text-anchor="middle" dominant-baseline="central">Bolton (ELK)</text></g>
-<g class="c-teal"><rect x="278" y="128" width="112" height="44" rx="8"/><text class="th" x="334" y="145" text-anchor="middle" dominant-baseline="central">Ship / Polaris</text><text class="ts" x="334" y="161" text-anchor="middle" dominant-baseline="central">Davies, Holland</text></g>
+<g class="c-coral"><rect x="278" y="60" width="112" height="44" rx="8"/><text class="th" x="334" y="77" text-anchor="middle" dominant-baseline="central">Build</text><text class="ts" x="334" y="93" text-anchor="middle" dominant-baseline="central">Bolton (ELK)</text></g>
+<g class="c-coral"><rect x="278" y="128" width="112" height="44" rx="8"/><text class="th" x="334" y="145" text-anchor="middle" dominant-baseline="central">Ship / Polaris</text><text class="ts" x="334" y="161" text-anchor="middle" dominant-baseline="central">Davies, Holland</text></g>
 <g class="c-gray"><rect x="12" y="222" width="112" height="44" rx="8"/><text class="th" x="68" y="239" text-anchor="middle" dominant-baseline="central">Receives tower</text><text class="ts" x="68" y="255" text-anchor="middle" dominant-baseline="central">Delivered to site</text></g>
 <line x1="124" y1="82" x2="143" y2="82" class="arr" marker-end="url(#arrow)"/>
 <line x1="257" y1="82" x2="276" y2="82" class="arr" marker-end="url(#arrow)"/>
 <line x1="334" y1="104" x2="334" y2="126" class="arr" marker-end="url(#arrow)"/>
-<line x1="334" y1="172" x2="334" y2="204" class="arr"/>
-<path d="M68 204 H467" class="arr"/>
-<line x1="68" y1="204" x2="68" y2="220" class="arr" marker-end="url(#arrow)"/>
-<line x1="467" y1="204" x2="467" y2="220" class="arr" marker-end="url(#arrow)"/>
+<line x1="334" y1="172" x2="334" y2="188" class="arr"/>
+<line x1="334" y1="188" x2="334" y2="204" class="arr svc"/>
+<path d="M68 204 H467" class="arr svc"/>
+<line x1="68" y1="204" x2="68" y2="220" class="arr svc" marker-end="url(#arrow)"/>
+<line x1="467" y1="204" x2="467" y2="220" class="arr svc" marker-end="url(#arrow)"/>
 <line id="handoff" x1="12" y1="188" x2="656" y2="188" stroke="#2fe57a" stroke-width="3" stroke-linecap="round" filter="url(#gl)"/>
 <rect x="24" y="180" width="160" height="16" rx="8" fill="var(--bg)"/><text x="104" y="188.5" text-anchor="middle" dominant-baseline="central" style="font:700 10px var(--mono,monospace);letter-spacing:.08em;fill:#2fe57a">SERVICE TAKES OVER</text>
 <g transform="translate(0,26)">
-<g class="node c-coral" onclick="LC.detail()"><rect x="392" y="196" width="150" height="72" rx="8"/><text class="th" x="467" y="212" text-anchor="middle" dominant-baseline="central">Service takes over</text><text class="ts" x="467" y="229" text-anchor="middle" dominant-baseline="central">Service assists with</text><text class="ts" x="467" y="244" text-anchor="middle" dominant-baseline="central">delivery and trains</text><text class="ts" x="467" y="259" text-anchor="middle" dominant-baseline="central">customer</text></g>
+<g class="node c-tsc" onclick="LC.detail()"><rect x="392" y="196" width="150" height="72" rx="8"/><text class="th" x="467" y="212" text-anchor="middle" dominant-baseline="central">Service takes over</text><text class="ts" x="467" y="229" text-anchor="middle" dominant-baseline="central">Service assists with</text><text class="ts" x="467" y="244" text-anchor="middle" dominant-baseline="central">delivery and trains</text><text class="ts" x="467" y="259" text-anchor="middle" dominant-baseline="central">customer</text></g>
 <g transform="translate(0,60)"><g class="c-gray"><rect x="12" y="196" width="112" height="72" rx="8"/><text class="th" x="68" y="212" text-anchor="middle" dominant-baseline="central">Customer signs</text><text class="ts" x="68" y="233" text-anchor="middle" dominant-baseline="central">Delivery and</text><text class="ts" x="68" y="248" text-anchor="middle" dominant-baseline="central">Training Cert.</text></g></g>
-<line x1="392" y1="264" x2="126" y2="264" class="arr" marker-end="url(#arrow)"/>
-<g class="node c-coral" onclick="LC.detail()"><rect x="392" y="292" width="150" height="100" rx="8"/><text class="th" x="467" y="308" text-anchor="middle" dominant-baseline="central">Service owns it</text><text class="ts" x="467" y="325" text-anchor="middle" dominant-baseline="central">PMx visits, repairs,</text><text class="ts" x="467" y="340" text-anchor="middle" dominant-baseline="central">CLIN close-out</text><text class="ts" x="467" y="355" text-anchor="middle" dominant-baseline="central">PMx is a service,</text><text class="ts" x="467" y="370" text-anchor="middle" dominant-baseline="central">not warranty</text><text class="ts" x="467" y="385" text-anchor="middle" dominant-baseline="central">Tap for detail</text></g>
+<line x1="392" y1="264" x2="126" y2="264" class="arr svc" marker-end="url(#arrow)"/>
+<g class="node c-tsc" onclick="LC.detail()"><rect x="392" y="292" width="150" height="100" rx="8"/><text class="th" x="467" y="308" text-anchor="middle" dominant-baseline="central">Service owns it</text><text class="ts" x="467" y="325" text-anchor="middle" dominant-baseline="central">PMx visits, repairs,</text><text class="ts" x="467" y="340" text-anchor="middle" dominant-baseline="central">CLIN close-out</text><text class="ts" x="467" y="355" text-anchor="middle" dominant-baseline="central">PMx is a service,</text><text class="ts" x="467" y="370" text-anchor="middle" dominant-baseline="central">not warranty</text><text class="ts" x="467" y="385" text-anchor="middle" dominant-baseline="central">Tap for detail</text></g>
 <g class="c-gray"><rect x="150" y="296" width="230" height="92" rx="8"/><text class="th" x="265" y="312" text-anchor="middle" dominant-baseline="central">1-year warranty</text><text class="ts" x="265" y="330" text-anchor="middle" dominant-baseline="central">Tower and devices, from date</text><text class="ts" x="265" y="345" text-anchor="middle" dominant-baseline="central">of delivery. Wear and tear not</text><text class="ts" x="265" y="360" text-anchor="middle" dominant-baseline="central">covered. Extended: FLIR-installed</text><text class="ts" x="265" y="375" text-anchor="middle" dominant-baseline="central">devices only. Bundle with PMx.</text></g>
 <g class="c-gray"><rect x="12" y="464" width="112" height="44" rx="8"/><text class="th" x="68" y="481" text-anchor="middle" dominant-baseline="central">Gets reports</text><text class="ts" x="68" y="497" text-anchor="middle" dominant-baseline="central">Passed only</text></g>
-<g class="c-amber"><rect x="544" y="464" width="112" height="44" rx="8"/><text class="th" x="600" y="481" text-anchor="middle" dominant-baseline="central">Invoice sent</text><text class="ts" x="600" y="497" text-anchor="middle" dominant-baseline="central">To customer</text></g>
-<g class="c-amber"><rect x="544" y="532" width="112" height="44" rx="8"/><text class="th" x="600" y="549" text-anchor="middle" dominant-baseline="central">Follow-up</text><text class="ts" x="600" y="565" text-anchor="middle" dominant-baseline="central">Open invoices</text></g>
-<line x1="467" y1="268" x2="467" y2="290" class="arr" marker-end="url(#arrow)"/>
-<path d="M467 392 V412 M68 412 H600" class="arr"/>
-<line x1="68" y1="412" x2="68" y2="462" class="arr" marker-end="url(#arrow)"/>
-<line x1="600" y1="412" x2="600" y2="462" class="arr" marker-end="url(#arrow)"/>
-<line x1="600" y1="508" x2="600" y2="530" class="arr" marker-end="url(#arrow)"/>
+<rect class="gbx" x="536" y="458" width="128" height="142" rx="10"/><text class="glb" x="600" y="469" text-anchor="middle" dominant-baseline="central">ACCOUNTING &amp; INVOICING</text>
+<g class="c-amber"><rect x="544" y="480" width="112" height="44" rx="8"/><text class="th" x="600" y="497" text-anchor="middle" dominant-baseline="central">Invoice sent</text><text class="ts" x="600" y="513" text-anchor="middle" dominant-baseline="central">To customer</text></g>
+<g class="c-amber"><rect x="544" y="548" width="112" height="44" rx="8"/><text class="th" x="600" y="565" text-anchor="middle" dominant-baseline="central">Follow-up</text><text class="ts" x="600" y="581" text-anchor="middle" dominant-baseline="central">Open invoices</text></g>
+<line x1="467" y1="268" x2="467" y2="290" class="arr svc" marker-end="url(#arrow)"/>
+<path d="M467 392 V412 M68 412 H600" class="arr svc"/>
+<line x1="68" y1="412" x2="68" y2="462" class="arr svc" marker-end="url(#arrow)"/>
+<line x1="600" y1="412" x2="600" y2="456" class="arr svc" marker-end="url(#arrow)"/>
+<line x1="600" y1="526" x2="600" y2="546" class="arr" marker-end="url(#arrow)"/>
 <text class="ts" x="90" y="438" text-anchor="start" dominant-baseline="central">Service sends report to customer</text>
 <text class="ts" x="578" y="430" text-anchor="end" dominant-baseline="central">Service ships CLINs to give accounting</text>
 <text class="ts" x="578" y="446" text-anchor="end" dominant-baseline="central">details to invoice and recognize revenue</text>
@@ -119,14 +127,14 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(32px,6vw,48px);let
 <title id="t2">SkyWatch Tower and Service Lifecycle: Service (TSC) detail</title>
 <desc id="d2">Service takes over at delivery, performs PM visits, repairs failed items with parts transfer or procurement, then closes out the CLIN in SAP and sends details to Leslie for invoicing. Weekly, Kevin updates the SkyWatch Service Tracker and reconciles open sales orders with Leslie. Tower and devices have a 1-year warranty from the date of delivery; extended warranties can be bought a la carte or bundled with Preventative Maintenance Service (PMx), and are tracked by tower serial number with PoP start and end dates.</desc>
 <defs><marker id="arrow2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
-<g class="c-coral"><rect x="40" y="20" width="250" height="52" rx="8"/><text class="th" x="165" y="38" text-anchor="middle" dominant-baseline="central">Takes over at delivery</text><text class="ts" x="165" y="57" text-anchor="middle" dominant-baseline="central">Commissions, trains customer</text></g>
-<g class="c-coral"><rect x="40" y="96" width="250" height="52" rx="8"/><text class="th" x="165" y="114" text-anchor="middle" dominant-baseline="central">PM visit</text><text class="ts" x="165" y="133" text-anchor="middle" dominant-baseline="central">Inspect, make PDFs</text></g>
+<g class="c-tsc"><rect x="40" y="20" width="250" height="52" rx="8"/><text class="th" x="165" y="38" text-anchor="middle" dominant-baseline="central">Takes over at delivery</text><text class="ts" x="165" y="57" text-anchor="middle" dominant-baseline="central">Commissions, trains customer</text></g>
+<g class="c-tsc"><rect x="40" y="96" width="250" height="52" rx="8"/><text class="th" x="165" y="114" text-anchor="middle" dominant-baseline="central">PM visit</text><text class="ts" x="165" y="133" text-anchor="middle" dominant-baseline="central">Inspect, make PDFs</text></g>
 <g class="c-gray"><rect x="40" y="172" width="250" height="52" rx="8"/><text class="th" x="165" y="198" text-anchor="middle" dominant-baseline="central">All items pass?</text></g>
 <g class="c-gray"><rect x="390" y="172" width="250" height="52" rx="8"/><text class="th" x="515" y="198" text-anchor="middle" dominant-baseline="central">Repair onsite?</text></g>
 <g class="c-gray"><rect x="390" y="248" width="250" height="52" rx="8"/><text class="th" x="515" y="274" text-anchor="middle" dominant-baseline="central">Warranty concern?</text></g>
-<g class="c-coral"><rect x="390" y="324" width="250" height="52" rx="8"/><text class="th" x="515" y="342" text-anchor="middle" dominant-baseline="central">Warranty Repair Service form</text><text class="ts" x="515" y="361" text-anchor="middle" dominant-baseline="central">Like Service Completed, new title</text></g>
-<g class="c-coral"><rect x="390" y="400" width="250" height="52" rx="8"/><text class="th" x="515" y="418" text-anchor="middle" dominant-baseline="central">Create RMA</text><text class="ts" x="515" y="437" text-anchor="middle" dominant-baseline="central">Device or platform</text></g>
-<g class="c-coral"><rect x="390" y="476" width="250" height="98" rx="8"/><text class="th" x="515" y="496" text-anchor="middle" dominant-baseline="central">Procure repair parts and/or</text><text class="th" x="515" y="516" text-anchor="middle" dominant-baseline="central">transfer stock from ELK</text><text class="ts" x="515" y="538" text-anchor="middle" dominant-baseline="central">ELK (1000) to TSC (2040); Pocius first</text><text class="ts" x="515" y="558" text-anchor="middle" dominant-baseline="central">Charge procured parts to the SVO</text></g>
+<g class="c-tsc"><rect x="390" y="324" width="250" height="52" rx="8"/><text class="th" x="515" y="342" text-anchor="middle" dominant-baseline="central">Warranty Repair Service form</text><text class="ts" x="515" y="361" text-anchor="middle" dominant-baseline="central">Like Service Completed, new title</text></g>
+<g class="c-tsc"><rect x="390" y="400" width="250" height="52" rx="8"/><text class="th" x="515" y="418" text-anchor="middle" dominant-baseline="central">Create RMA</text><text class="ts" x="515" y="437" text-anchor="middle" dominant-baseline="central">Device or platform</text></g>
+<g class="c-tsc"><rect x="390" y="476" width="250" height="98" rx="8"/><text class="th" x="515" y="496" text-anchor="middle" dominant-baseline="central">Procure repair parts and/or</text><text class="th" x="515" y="516" text-anchor="middle" dominant-baseline="central">transfer stock from ELK</text><text class="ts" x="515" y="538" text-anchor="middle" dominant-baseline="central">ELK (1000) to TSC (2040); Pocius first</text><text class="ts" x="515" y="558" text-anchor="middle" dominant-baseline="central">Charge procured parts to the SVO</text></g>
 <line x1="290" y1="198" x2="388" y2="198" class="arr" marker-end="url(#arrow2)"/>
 <text class="ts" x="339" y="186" text-anchor="middle" dominant-baseline="central">No</text>
 <line x1="515" y1="224" x2="515" y2="246" class="arr" marker-end="url(#arrow2)"/>
@@ -145,21 +153,21 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(32px,6vw,48px);let
 <line x1="165" y1="224" x2="165" y2="638" class="arr" marker-end="url(#arrow2)"/>
 <text class="ts" x="175" y="420" text-anchor="start" dominant-baseline="central">Yes</text>
 <g transform="translate(0,222)">
-<g class="c-coral"><rect x="40" y="418" width="600" height="116" rx="8"/><text class="th" x="60" y="438" text-anchor="start" dominant-baseline="central">Close out CLIN</text><text class="ts" x="60" y="462" text-anchor="start" dominant-baseline="central">1. Attach the completion cert to the sales order in SAP</text><text class="ts" x="60" y="480" text-anchor="start" dominant-baseline="central">2. Ship the CLIN in SAP for the delivery number. Add SkyWatch CLINs to the tracker</text><text class="ts" x="60" y="498" text-anchor="start" dominant-baseline="central">3. Email Leslie: delivery number, order details, copy of cert</text><text class="ts" x="60" y="516" text-anchor="start" dominant-baseline="central">4. cc manager, Director of Service and TSC, Davies, Brewer, Jacober</text></g>
+<g class="c-tsc"><rect x="40" y="418" width="600" height="116" rx="8"/><text class="th" x="60" y="438" text-anchor="start" dominant-baseline="central">Close out CLIN</text><text class="ts" x="60" y="462" text-anchor="start" dominant-baseline="central">1. Attach the completion cert to the sales order in SAP</text><text class="ts" x="60" y="480" text-anchor="start" dominant-baseline="central">2. Ship the CLIN in SAP for the delivery number. Add SkyWatch CLINs to the tracker</text><text class="ts" x="60" y="498" text-anchor="start" dominant-baseline="central">3. Email Leslie: delivery number, order details, copy of cert</text><text class="ts" x="60" y="516" text-anchor="start" dominant-baseline="central">4. cc manager, Director of Service and TSC, Davies, Brewer, Jacober</text></g>
 <g class="c-amber"><rect x="40" y="558" width="600" height="52" rx="8"/><text class="th" x="340" y="576" text-anchor="middle" dominant-baseline="central">Leslie sends the invoice to the customer</text><text class="ts" x="340" y="595" text-anchor="middle" dominant-baseline="central">Kevin never sends an invoice outside the company</text></g>
 <g class="c-amber"><rect x="40" y="634" width="600" height="52" rx="8"/><text class="th" x="340" y="652" text-anchor="middle" dominant-baseline="central">Theresa follows up</text><text class="ts" x="340" y="671" text-anchor="middle" dominant-baseline="central">Unpaid invoices and incomplete orders</text></g>
 <line x1="340" y1="534" x2="340" y2="556" class="arr" marker-end="url(#arrow2)"/>
 <line x1="340" y1="610" x2="340" y2="632" class="arr" marker-end="url(#arrow2)"/>
 <line x1="40" y1="712" x2="640" y2="712" stroke="var(--muted)" stroke-width="4" stroke-linecap="round"/>
 <text class="th" x="40" y="738" text-anchor="start" dominant-baseline="central">Every week: SkyWatch Service Tracker</text>
-<g class="c-coral"><rect x="40" y="756" width="290" height="88" rx="8"/><text class="th" x="185" y="772" text-anchor="middle" dominant-baseline="central">Kevin updates the tracker</text><text class="ts" x="185" y="792" text-anchor="middle" dominant-baseline="central">Watches for new SkyWatch orders</text><text class="ts" x="185" y="809" text-anchor="middle" dominant-baseline="central">and adds them to the SkyWatch</text><text class="ts" x="185" y="826" text-anchor="middle" dominant-baseline="central">Service Tracker spreadsheet</text></g>
+<g class="c-tsc"><rect x="40" y="756" width="290" height="88" rx="8"/><text class="th" x="185" y="772" text-anchor="middle" dominant-baseline="central">Kevin updates the tracker</text><text class="ts" x="185" y="792" text-anchor="middle" dominant-baseline="central">Watches for new SkyWatch orders</text><text class="ts" x="185" y="809" text-anchor="middle" dominant-baseline="central">and adds them to the SkyWatch</text><text class="ts" x="185" y="826" text-anchor="middle" dominant-baseline="central">Service Tracker spreadsheet</text></g>
 <g class="c-amber"><rect x="350" y="756" width="290" height="88" rx="8"/><text class="th" x="495" y="772" text-anchor="middle" dominant-baseline="central">Kevin and Leslie reconcile</text><text class="ts" x="495" y="792" text-anchor="middle" dominant-baseline="central">About 1 hour on open SkyWatch SOs.</text><text class="ts" x="495" y="809" text-anchor="middle" dominant-baseline="central">Cert shipped: add the invoice # and</text><text class="ts" x="495" y="826" text-anchor="middle" dominant-baseline="central">refresh; closed orders filter out</text></g>
 <line x1="330" y1="800" x2="348" y2="800" class="arr" marker-end="url(#arrow2)"/>
 <g class="c-gray"><rect x="40" y="866" width="600" height="76" rx="8"/><text class="th" x="60" y="882" text-anchor="start" dominant-baseline="central">Tracker columns (organized by sales order)</text><text class="ts" x="60" y="905" text-anchor="start" dominant-baseline="central">Sales order, sold to, tower serial number, generator serial number and model, CLIN</text><text class="ts" x="60" y="924" text-anchor="start" dominant-baseline="central">Description of service, term year, due date (filter by year and quarter), invoice #</text></g>
 <line x1="40" y1="966" x2="640" y2="966" stroke="var(--muted)" stroke-width="4" stroke-linecap="round"/>
 <text class="th" x="40" y="992" text-anchor="start" dominant-baseline="central">Warranty (tracked by tower serial number)</text>
-<g class="c-coral"><rect x="40" y="1010" width="290" height="88" rx="8"/><text class="th" x="185" y="1026" text-anchor="middle" dominant-baseline="central">At delivery: 1-year warranty</text><text class="ts" x="185" y="1046" text-anchor="middle" dominant-baseline="central">Tower and devices installed at</text><text class="ts" x="185" y="1063" text-anchor="middle" dominant-baseline="central">delivery are covered for 1 year</text><text class="ts" x="185" y="1080" text-anchor="middle" dominant-baseline="central">from the date of delivery</text></g>
-<g class="c-coral"><rect x="350" y="1010" width="290" height="88" rx="8"/><text class="th" x="495" y="1026" text-anchor="middle" dominant-baseline="central">Extended warranty (optional)</text><text class="ts" x="495" y="1046" text-anchor="middle" dominant-baseline="central">Buy a la carte, or bundle with</text><text class="ts" x="495" y="1063" text-anchor="middle" dominant-baseline="central">Preventative Maintenance Service (PMx)</text><text class="ts" x="495" y="1080" text-anchor="middle" dominant-baseline="central">FLIR-installed devices, in warranty</text></g>
+<g class="c-tsc"><rect x="40" y="1010" width="290" height="88" rx="8"/><text class="th" x="185" y="1026" text-anchor="middle" dominant-baseline="central">At delivery: 1-year warranty</text><text class="ts" x="185" y="1046" text-anchor="middle" dominant-baseline="central">Tower and devices installed at</text><text class="ts" x="185" y="1063" text-anchor="middle" dominant-baseline="central">delivery are covered for 1 year</text><text class="ts" x="185" y="1080" text-anchor="middle" dominant-baseline="central">from the date of delivery</text></g>
+<g class="c-tsc"><rect x="350" y="1010" width="290" height="88" rx="8"/><text class="th" x="495" y="1026" text-anchor="middle" dominant-baseline="central">Extended warranty (optional)</text><text class="ts" x="495" y="1046" text-anchor="middle" dominant-baseline="central">Buy a la carte, or bundle with</text><text class="ts" x="495" y="1063" text-anchor="middle" dominant-baseline="central">Preventative Maintenance Service (PMx)</text><text class="ts" x="495" y="1080" text-anchor="middle" dominant-baseline="central">FLIR-installed devices, in warranty</text></g>
 <line x1="330" y1="1054" x2="348" y2="1054" class="arr" marker-end="url(#arrow2)"/>
 <g class="c-gray"><rect x="40" y="1122" width="600" height="64" rx="8"/><text class="th" x="340" y="1140" text-anchor="middle" dominant-baseline="central">Extended warranty shows its PoP</text><text class="ts" x="340" y="1162" text-anchor="middle" dominant-baseline="central">PoP start date and end date, tracked by tower serial number</text></g>
 <line x1="495" y1="1098" x2="495" y2="1120" class="arr" marker-end="url(#arrow2)"/>
@@ -168,7 +176,7 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(32px,6vw,48px);let
 </div>
 </div>
 <div class="dir" id="dir"></div>
-<footer style="text-align:center;font-size:11px;color:var(--muted);opacity:.75;padding:18px 10px calc(16px + env(safe-area-inset-bottom))">Designed &amp; developed by Ravi Ramsundar · Rev 1.95 · 11/18/2026 11:25 AM EST</footer>
+<footer style="text-align:center;font-size:11px;color:var(--muted);opacity:.75;padding:18px 10px calc(16px + env(safe-area-inset-bottom))">Designed &amp; developed by Ravi Ramsundar · Rev 1.96 · 11/18/2026 11:53 AM EST</footer>
 </div>
 <script>
 var LC=(function(){
@@ -188,7 +196,7 @@ prod:{t:'Production (ELK)',n:'',sep:4,sepLabel:'Purchasing team (ELK)',p:[
 ['William (Bill) Gray','Third','','']]},
 field:{t:'Service (TSC)',n:'Service takes over responsibility for the tower at delivery. TSC is SAP site 2040, a satellite of ELK (1000).',p:[
 ['Kevin Sumlin','Field Service Support Technician (TSC), SkyWatch Support','520-262-6910','Kevin.Sumlin@teledyne.com']]},
-fin:{t:'Admin',n:'',p:[
+fin:{t:'Accounting and Invoicing',n:'',p:[
 ['Leslie Saunders','Sends out invoices','',''],
 ['Erin Jacober','Copied on CLIN close-out','',''],
 ['Theresa Ballard','Follows up on unpaid invoices and incomplete orders','','']]}
@@ -257,5 +265,5 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
 ensure();setTimeout(ensure,500);
 })();</script>
-<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.95 · 11/18/2026</div>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.96 · 11/18/2026</div>
 </body></html>
