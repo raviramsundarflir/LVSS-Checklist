@@ -62,11 +62,12 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(32px,6vw,48px);let
 </header>
 <div class="cv">
 <div id="v1" class="sv">
-<svg viewBox="0 0 680 606" role="img" aria-labelledby="t1 d1">
+<svg viewBox="0 0 680 656" role="img" aria-labelledby="t1 d1">
 <title id="t1">SkyWatch Tower and Service Lifecycle</title>
 <desc id="d1">Customer orders, Sales issues the sales order, Production (ELK) builds and ships, Service takes over the tower at delivery and owns it afterward. The tower and devices get a 1-year warranty from the date of delivery. Service sends the report to the customer and ships CLINs so accounting can invoice and recognize revenue. Admin follows up on open invoices.</desc>
 <defs>
 <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<filter id="gl" filterUnits="userSpaceOnUse" x="0" y="168" width="680" height="40"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
 <g id="twi"><image href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAAAkFBMVEVlXFEhJCaiimnfnWKRd10gHx6joJMfISJbRjHUt5XkyaiXXikoKShMOiuh06ViYGBjoGjI7M10BAT///9dXRq85MQRMlxaVU1qdofSdix3l4wxTG9dV0///wAAAH8AfwArdTYAVVU5gEV/P39//39/w4mqqlWjl4T/AAAAAAGylXU3NTK3pYvKqorMmW1VVVUE02m9AAAAMHRSTlP6GP3+/u7+W/r+/f6g+v4K/v4CAQ3//2P/////pwECAv8D/wQC/wOzAQH+9/7+/gPd0N1AAAADpElEQVR42uWXa3fbNgyGAfBOS5Zru3WStuvuGylS+v//bqBkW4lrOXJyug8bTk4+CQ9BEHgBQ8BQ/t5oGCC8034MAPt3AbbD//49ERiDiwkXgB63wegEqjJviWA4FNuUXGYEviUCYyplNSXvJSgM35YApoOaCgjaWgI413VCKrwvAlRt9k5SJ8SqmACzoEYnAAJF4VJm70fRiS4Kqo5PuuQKf4YvtBKPWTvvukhDCNQuqKgpAqB6lbMWuXhLihJki68X5TGCPhhLUnZ8rIyd1vrhARS0Qxq3/aJXQAvlATPU9unzJzZQWkI7FtQNxgSoQSmAB/G4gk+fH540gRBuZAyfbPHqdaYcjAAg9tLFTzGAzWUaGDjTYhcA4oOtKtaCplISR4ZVFVOa+Qj6UEk+VBZfkDE777O0FmTXjQx+FaaYW4VUA8gEHD/FXJw6UbzODO9FuUxo5ku54o+BL1/i58ccwj8yjpcRjsu7n+9GNGyI2CCa6uyVu8KIbggjq1/m2/ll4RcG0Bh+FhTjihkutnhLD3rEU1n8fbrVkeGdlXEl5W3AyxCGiMzEEHll7wGMk2dgcFKFeCyEewF8qyHplZJZdu4tgCEzrFYy1nK4wptGW98r2dnS7fJSZGDZDDYT4EIoYZk/V/kRUCuzuzsCAz5RHAEW4EVLvQ7Ys9qB3hCPiriykdjgLsDvAdbrza8/b0o1267rstfVlAd4PQEImw0jNnq9ljbrYq25GcHuVIKI+1JEDNCb9Qc2smkA1PW5q2G+gsd5iTxtN3+sGfDx4xmQHITdDKAJzV/UKta/hhu6Ui330ubpBKhH/xgB566wD4fsnBx0iZ+MhrTrIyBK77WOJPNZmb6P4KcqETlHPN2o6AgNxoD1ep1SdJG1Vt2IgPsmOSmjZzE/WaSY2JdpKScXoZZuFlDKPqXaSpd0jsWXEg/slHT0H5KtWSmT4wUG5p6xCQfPxnMyppjYM+rMOQViX82LUxFscgns3Cs0YU8+aTAVtz8PF+9TatsyqdtxRPIeA15PPQlX10QzCCq3ICfA5ZaHBYxK1G9Do6yjW4Dm2aRRXASU+XvgZ2v2Y5IUOFI3I8D+JDqNYUTyHIqahAg4R7G6BXi+eKJSyRNMUroLX3iX04epF/AVMVA6W/VCxyqozNVF82oMB946ZY3XOnYJ4Ldw4E3BU3iug193fX+HIrGgfjfTf/hPnsunCF//7R9d/zsA/gcAzwi4gIbjKohHDf4HGo0SyXxFQeIAAAAASUVORK5CYII=" x="-15" y="-15" width="30" height="30"/></g>
 </defs>
 <g class="node c-gray" onclick="LC.d('cust')"><rect x="12" y="8" width="112" height="40" rx="8"/><text class="th" x="68" y="22" text-anchor="middle" dominant-baseline="central">Customer</text><text class="ts" x="68" y="38" text-anchor="middle" dominant-baseline="central">Per SO / PO</text></g>
@@ -80,28 +81,34 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(32px,6vw,48px);let
 <g class="c-purple"><rect x="145" y="60" width="112" height="44" rx="8"/><text class="th" x="201" y="77" text-anchor="middle" dominant-baseline="central">Sales order</text><text class="ts" x="201" y="93" text-anchor="middle" dominant-baseline="central">Brewer issues SO</text></g>
 <g class="c-teal"><rect x="278" y="60" width="112" height="44" rx="8"/><text class="th" x="334" y="77" text-anchor="middle" dominant-baseline="central">Build</text><text class="ts" x="334" y="93" text-anchor="middle" dominant-baseline="central">Bolton (ELK)</text></g>
 <g class="c-teal"><rect x="278" y="128" width="112" height="44" rx="8"/><text class="th" x="334" y="145" text-anchor="middle" dominant-baseline="central">Ship / Polaris</text><text class="ts" x="334" y="161" text-anchor="middle" dominant-baseline="central">Davies, Holland</text></g>
-<g class="c-gray"><rect x="12" y="128" width="112" height="44" rx="8"/><text class="th" x="68" y="145" text-anchor="middle" dominant-baseline="central">Receives tower</text><text class="ts" x="68" y="161" text-anchor="middle" dominant-baseline="central">Delivered to site</text></g>
-<g class="node c-coral" onclick="LC.detail()"><rect x="392" y="196" width="150" height="72" rx="8"/><text class="th" x="467" y="212" text-anchor="middle" dominant-baseline="central">Service takes over</text><text class="ts" x="467" y="229" text-anchor="middle" dominant-baseline="central">At delivery:</text><text class="ts" x="467" y="244" text-anchor="middle" dominant-baseline="central">commissions and</text><text class="ts" x="467" y="259" text-anchor="middle" dominant-baseline="central">trains customer</text></g>
-<g class="c-gray"><rect x="12" y="196" width="112" height="72" rx="8"/><text class="th" x="68" y="212" text-anchor="middle" dominant-baseline="central">Customer signs</text><text class="ts" x="68" y="233" text-anchor="middle" dominant-baseline="central">Delivery and</text><text class="ts" x="68" y="248" text-anchor="middle" dominant-baseline="central">Training Cert.</text></g>
-<g class="node c-coral" onclick="LC.detail()"><rect x="392" y="292" width="150" height="72" rx="8"/><text class="th" x="467" y="308" text-anchor="middle" dominant-baseline="central">Service owns it</text><text class="ts" x="467" y="325" text-anchor="middle" dominant-baseline="central">PM visits, repairs,</text><text class="ts" x="467" y="340" text-anchor="middle" dominant-baseline="central">CLIN close-out</text><text class="ts" x="467" y="355" text-anchor="middle" dominant-baseline="central">Tap for detail</text></g>
-<g class="c-gray"><rect x="150" y="296" width="230" height="76" rx="8"/><text class="th" x="265" y="312" text-anchor="middle" dominant-baseline="central">1-year warranty</text><text class="ts" x="265" y="330" text-anchor="middle" dominant-baseline="central">Tower and devices, from date</text><text class="ts" x="265" y="345" text-anchor="middle" dominant-baseline="central">of delivery. Wear and tear</text><text class="ts" x="265" y="360" text-anchor="middle" dominant-baseline="central">items are not covered</text></g>
-<g class="c-gray"><rect x="12" y="440" width="112" height="44" rx="8"/><text class="th" x="68" y="457" text-anchor="middle" dominant-baseline="central">Gets reports</text><text class="ts" x="68" y="473" text-anchor="middle" dominant-baseline="central">Passed only</text></g>
-<g class="c-amber"><rect x="544" y="440" width="112" height="44" rx="8"/><text class="th" x="600" y="457" text-anchor="middle" dominant-baseline="central">Invoice sent</text><text class="ts" x="600" y="473" text-anchor="middle" dominant-baseline="central">To customer</text></g>
-<g class="c-amber"><rect x="544" y="508" width="112" height="44" rx="8"/><text class="th" x="600" y="525" text-anchor="middle" dominant-baseline="central">Follow-up</text><text class="ts" x="600" y="541" text-anchor="middle" dominant-baseline="central">Open invoices</text></g>
+<g class="c-gray"><rect x="12" y="222" width="112" height="44" rx="8"/><text class="th" x="68" y="239" text-anchor="middle" dominant-baseline="central">Receives tower</text><text class="ts" x="68" y="255" text-anchor="middle" dominant-baseline="central">Delivered to site</text></g>
 <line x1="124" y1="82" x2="143" y2="82" class="arr" marker-end="url(#arrow)"/>
 <line x1="257" y1="82" x2="276" y2="82" class="arr" marker-end="url(#arrow)"/>
 <line x1="334" y1="104" x2="334" y2="126" class="arr" marker-end="url(#arrow)"/>
-<line x1="278" y1="150" x2="126" y2="150" class="arr" marker-end="url(#arrow)"/>
-<path d="M390 150 H467 V194" class="arr" marker-end="url(#arrow)"/>
-<line x1="392" y1="232" x2="126" y2="232" class="arr" marker-end="url(#arrow)"/>
+<line x1="334" y1="172" x2="334" y2="204" class="arr"/>
+<path d="M68 204 H467" class="arr"/>
+<line x1="68" y1="204" x2="68" y2="220" class="arr" marker-end="url(#arrow)"/>
+<line x1="467" y1="204" x2="467" y2="220" class="arr" marker-end="url(#arrow)"/>
+<line id="handoff" x1="12" y1="188" x2="656" y2="188" stroke="#2fe57a" stroke-width="3" stroke-linecap="round" filter="url(#gl)"/>
+<rect x="24" y="180" width="160" height="16" rx="8" fill="var(--bg)"/><text x="104" y="188.5" text-anchor="middle" dominant-baseline="central" style="font:700 10px var(--mono,monospace);letter-spacing:.08em;fill:#2fe57a">SERVICE TAKES OVER</text>
+<g transform="translate(0,26)">
+<g class="node c-coral" onclick="LC.detail()"><rect x="392" y="196" width="150" height="72" rx="8"/><text class="th" x="467" y="212" text-anchor="middle" dominant-baseline="central">Service takes over</text><text class="ts" x="467" y="229" text-anchor="middle" dominant-baseline="central">Service assists with</text><text class="ts" x="467" y="244" text-anchor="middle" dominant-baseline="central">delivery and trains</text><text class="ts" x="467" y="259" text-anchor="middle" dominant-baseline="central">customer</text></g>
+<g transform="translate(0,60)"><g class="c-gray"><rect x="12" y="196" width="112" height="72" rx="8"/><text class="th" x="68" y="212" text-anchor="middle" dominant-baseline="central">Customer signs</text><text class="ts" x="68" y="233" text-anchor="middle" dominant-baseline="central">Delivery and</text><text class="ts" x="68" y="248" text-anchor="middle" dominant-baseline="central">Training Cert.</text></g></g>
+<line x1="392" y1="264" x2="126" y2="264" class="arr" marker-end="url(#arrow)"/>
+<g class="node c-coral" onclick="LC.detail()"><rect x="392" y="292" width="150" height="100" rx="8"/><text class="th" x="467" y="308" text-anchor="middle" dominant-baseline="central">Service owns it</text><text class="ts" x="467" y="325" text-anchor="middle" dominant-baseline="central">PMx visits, repairs,</text><text class="ts" x="467" y="340" text-anchor="middle" dominant-baseline="central">CLIN close-out</text><text class="ts" x="467" y="355" text-anchor="middle" dominant-baseline="central">PMx is a service,</text><text class="ts" x="467" y="370" text-anchor="middle" dominant-baseline="central">not warranty</text><text class="ts" x="467" y="385" text-anchor="middle" dominant-baseline="central">Tap for detail</text></g>
+<g class="c-gray"><rect x="150" y="296" width="230" height="92" rx="8"/><text class="th" x="265" y="312" text-anchor="middle" dominant-baseline="central">1-year warranty</text><text class="ts" x="265" y="330" text-anchor="middle" dominant-baseline="central">Tower and devices, from date</text><text class="ts" x="265" y="345" text-anchor="middle" dominant-baseline="central">of delivery. Wear and tear not</text><text class="ts" x="265" y="360" text-anchor="middle" dominant-baseline="central">covered. Extended: FLIR-installed</text><text class="ts" x="265" y="375" text-anchor="middle" dominant-baseline="central">devices only. Bundle with PMx.</text></g>
+<g class="c-gray"><rect x="12" y="464" width="112" height="44" rx="8"/><text class="th" x="68" y="481" text-anchor="middle" dominant-baseline="central">Gets reports</text><text class="ts" x="68" y="497" text-anchor="middle" dominant-baseline="central">Passed only</text></g>
+<g class="c-amber"><rect x="544" y="464" width="112" height="44" rx="8"/><text class="th" x="600" y="481" text-anchor="middle" dominant-baseline="central">Invoice sent</text><text class="ts" x="600" y="497" text-anchor="middle" dominant-baseline="central">To customer</text></g>
+<g class="c-amber"><rect x="544" y="532" width="112" height="44" rx="8"/><text class="th" x="600" y="549" text-anchor="middle" dominant-baseline="central">Follow-up</text><text class="ts" x="600" y="565" text-anchor="middle" dominant-baseline="central">Open invoices</text></g>
 <line x1="467" y1="268" x2="467" y2="290" class="arr" marker-end="url(#arrow)"/>
-<path d="M467 364 V388 M68 388 H600" class="arr"/>
-<line x1="68" y1="388" x2="68" y2="438" class="arr" marker-end="url(#arrow)"/>
-<line x1="600" y1="388" x2="600" y2="438" class="arr" marker-end="url(#arrow)"/>
-<line x1="600" y1="484" x2="600" y2="506" class="arr" marker-end="url(#arrow)"/>
-<text class="ts" x="90" y="414" text-anchor="start" dominant-baseline="central">Service sends report to customer</text>
-<text class="ts" x="578" y="406" text-anchor="end" dominant-baseline="central">Service ships CLINs to give accounting</text>
-<text class="ts" x="578" y="422" text-anchor="end" dominant-baseline="central">details to invoice and recognize revenue</text>
+<path d="M467 392 V412 M68 412 H600" class="arr"/>
+<line x1="68" y1="412" x2="68" y2="462" class="arr" marker-end="url(#arrow)"/>
+<line x1="600" y1="412" x2="600" y2="462" class="arr" marker-end="url(#arrow)"/>
+<line x1="600" y1="508" x2="600" y2="530" class="arr" marker-end="url(#arrow)"/>
+<text class="ts" x="90" y="438" text-anchor="start" dominant-baseline="central">Service sends report to customer</text>
+<text class="ts" x="578" y="430" text-anchor="end" dominant-baseline="central">Service ships CLINs to give accounting</text>
+<text class="ts" x="578" y="446" text-anchor="end" dominant-baseline="central">details to invoice and recognize revenue</text>
+</g>
 </g>
 </svg>
 <p class="hint">Tap Service (TSC) or either Service box for the detailed process. Tap another lane header for its contacts.</p>
@@ -161,7 +168,7 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(32px,6vw,48px);let
 </div>
 </div>
 <div class="dir" id="dir"></div>
-<footer style="text-align:center;font-size:11px;color:var(--muted);opacity:.75;padding:18px 10px calc(16px + env(safe-area-inset-bottom))">Designed &amp; developed by Ravi Ramsundar · Rev 1.94 · 11/18/2026 11:06 AM EST</footer>
+<footer style="text-align:center;font-size:11px;color:var(--muted);opacity:.75;padding:18px 10px calc(16px + env(safe-area-inset-bottom))">Designed &amp; developed by Ravi Ramsundar · Rev 1.95 · 11/18/2026 11:25 AM EST</footer>
 </div>
 <script>
 var LC=(function(){
@@ -250,5 +257,5 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
 ensure();setTimeout(ensure,500);
 })();</script>
-<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.94 · 11/18/2026</div>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.95 · 11/18/2026</div>
 </body></html>
