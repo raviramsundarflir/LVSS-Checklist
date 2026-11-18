@@ -184,9 +184,9 @@ lifecycle:{label:'SkyWatch lifecycle',blurb:'From the customer order to the invo
   [O,'Build','Production Manager (ELK) is the build POC.'],
   [O,'Ship','Warehouse and Logistics (ELK). The tower usually ships through broker Polaris.']]},
  {n:'Service (TSC)',s:[
-  [O,'Takes over at delivery','Service takes over responsibility for the tower: commissions it and trains the customer. The warranty clock starts at the date of delivery.'],
+  [O,'Takes over at delivery','Service takes over responsibility for the tower: commissions it and trains the customer. The warranty clock starts at the date of delivery. Warranties do not cover wear and tear items. Extended warranty covers FLIR-installed devices only. PMx is a maintenance service, not warranty.'],
   [O,'PM visits and repairs','Preventative Maintenance Service (PMx) visits. Failed items go to Repair / RMA, with parts transferred from ELK warehouse 1000 to TSC (2040) or bought through procurement.'],
-  [O,'Closes out the CLIN','Attach the completion cert to the SO, ship the CLIN in SAP for the outbound delivery number, and email Admin the delivery number, order details and a copy of the cert.'],
+  [O,'Closes out the CLIN','Attach the completion cert to the SO, ship the CLIN in SAP for the outbound delivery number, and email Admin the delivery number, order details and a copy of the cert. If a CLIN is tied to SkyWatch Service, add its line items to the SkyWatch Service Tracker too.'],
   [O,'Sends the report to the customer','Service sends the report. It also ships CLINs so accounting can invoice and recognize revenue.'],
   [O,'Weekly: SkyWatch Service Tracker','Update the tracker for new SkyWatch orders and reconcile open sales orders with Admin (about 1 hour).']]},
  {n:'Admin',s:[
@@ -294,5 +294,5 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
 ensure();setTimeout(ensure,500);
 })();</script>
-<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.89 · 11/18/2026</div>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.90 · 11/18/2026</div>
 </body></html>
