@@ -171,6 +171,27 @@ audit:{label:'Punch list and audit',blurb:'The ATP finds problems, the repair te
  {n:'File',s:[
   [O,'Back to the folder','Printed audit goes in the folder so the boss can see it is closed out.']]}],
  note:'Repair items are fixed and re-checked. Advise and courtesy items are listed for the customer without a repair.'},
+lifecycle:{label:'SkyWatch lifecycle',blurb:'From the customer order to the invoice, and what Service (TSC) owns after delivery. The 1-year warranty runs from the date of delivery.',link:['lifecycle/','Open the full SkyWatch Tower and Service Lifecycle chart'],
+ lanes:[
+ {n:'Customer',s:[
+  [O,'Issues the PO','Customer order. The customer POC comes from each SO or PO.'],
+  [O,'Receives the tower','Delivered to the customer site.'],
+  [O,'Signs the Delivery and Training Certificate','After Service commissions the tower and trains the customer.'],
+  [O,'Gets reports','Passed reports only. A failed report goes to TSC only.']]},
+ {n:'Sales',s:[
+  [O,'Issues the sales order','Sales order processing issues the SO from the customer PO.']]},
+ {n:'Production (ELK)',s:[
+  [O,'Build','Production Manager (ELK) is the build POC.'],
+  [O,'Ship','Warehouse and Logistics (ELK). The tower usually ships through broker Polaris.']]},
+ {n:'Service (TSC)',s:[
+  [O,'Takes over at delivery','Service takes over responsibility for the tower: commissions it and trains the customer. The warranty clock starts at the date of delivery.'],
+  [O,'PM visits and repairs','Preventative Maintenance Service (PMx) visits. Failed items go to Repair / RMA, with parts transferred from ELK warehouse 1000 to TSC (2040) or bought through procurement.'],
+  [O,'Closes out the CLIN','Attach the completion cert to the SO, ship the CLIN in SAP for the outbound delivery number, and email Admin the delivery number, order details and a copy of the cert.'],
+  [O,'Sends the report to the customer','Service sends the report. It also ships CLINs so accounting can invoice and recognize revenue.'],
+  [O,'Weekly: SkyWatch Service Tracker','Update the tracker for new SkyWatch orders and reconcile open sales orders with Admin (about 1 hour).']]},
+ {n:'Admin',s:[
+  [O,'Sends the invoice','Admin sends the invoice to the customer. Service never sends an invoice outside the company.'],
+  [O,'Follows up','Unpaid invoices and incomplete orders.']]}]},
 carry:{label:'What carries',rules:[
  ['Core data','Platform and device serials, VIN, plate, kilo, SW/FW revs, mileage, engine and idle hours. Mileage and hours show as the “last reading”, never prefilled. Serial inputs default to CAPS.'],
  ['Intake QR','Core data first, then the RMA, then the work list: customer-reported issues, failed lines and tech notes. If space runs out, notes shrink first, then items drop.'],
@@ -210,7 +231,7 @@ function render(k){
       return '<section class="lane"><h2>'+esc(l.n)+(p.time?'<span class="sub" data-lane="'+esc(l.n)+'"></span>':'')+'</h2><ol class="steps">'+l.s.map(function(s){
         n++; var tid=k+':'+n, tm=(p.time&&s[0]!==D)?'<label class="tm">Est. hours <input type="number" inputmode="decimal" min="0" step="0.25" data-t="'+tid+'" value="'+esc(TV[tid]||'')+'" aria-label="Estimated hours for '+esc(s[1])+'"></label>':''; var br=s.slice(3).map(function(b){return '<span><em>'+esc(b[0]).toUpperCase()+'</em>'+esc(b[1])+'</span>';}).join('');
         return '<li class="step '+s[0]+'"><span class="n">'+n+'</span><b>'+esc(s[1])+'</b>'+(s[2]?'<p>'+esc(s[2])+'</p>':'')+(br?'<div class="br">'+br+'</div>':'')+tm+'</li>';
-      }).join('')+'</ol></section>';}).join('')+'</div>'+(p.time?'<div class="total" id="total"></div>':'')+(p.note?'<p class="note">'+esc(p.note)+'</p>':'');
+      }).join('')+'</ol></section>';}).join('')+'</div>'+(p.time?'<div class="total" id="total"></div>':'')+(p.note?'<p class="note">'+esc(p.note)+'</p>':'')+(p.link?'<p class="note"><a href="'+p.link[0]+'">'+esc(p.link[1])+' ›</a></p>':'');
   }
   view.innerHTML=h; if(p.time){wireTimes(k);}
   try{history.replaceState(null,'','#'+k);}catch(e){}
@@ -273,5 +294,5 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
 ensure();setTimeout(ensure,500);
 })();</script>
-<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.80 · 11/16/2026</div>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.89 · 11/18/2026</div>
 </body></html>

@@ -1,0 +1,247 @@
+<!doctype html><html lang="en"><head><script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('tscTheme')==='light'?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><title>SkyWatch Tower and Service Lifecycle</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: path tabs; each path is a row of phase columns, steps stacked top to bottom with connector lines. */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --ink:#14233a; --muted:#51627a; --line:#cfd8e3;
+  --navy:#0b3d6b; --navy-soft:#dbe8f6;
+  --signal:#f2b705; --signal-soft:#fff3cf; --signal-ink:#6b4b00;
+  --new:#1b7f5a; --new-soft:#dff3ea;
+  --out:#e7ebf0; --out-ink:#44566b;
+  --display:'Barlow Condensed','Arial Narrow',sans-serif; --body:'IBM Plex Sans',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+@media all{:root[data-theme="dark"]{
+  --bg:#0c1522; --surface:#142235; --ink:#e6edf6; --muted:#9db0c6; --line:#2b3d55;
+  --navy:#6fb0ee; --navy-soft:#173a5e; --signal:#f2b705; --signal-soft:#3a2f0c; --signal-ink:#f5d572;
+  --new:#4fd0a0; --new-soft:#12392c; --out:#1c2c42; --out-ink:#a9bbd0; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1522; --surface:#142235; --ink:#e6edf6; --muted:#9db0c6; --line:#2b3d55;
+  --navy:#6fb0ee; --navy-soft:#173a5e; --signal:#f2b705; --signal-soft:#3a2f0c; --signal-ink:#f5d572;
+  --new:#4fd0a0; --new-soft:#12392c; --out:#1c2c42; --out-ink:#a9bbd0; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;margin:0;
+  padding-block:24px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1240px;margin:0 auto}
+header{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:flex-end;justify-content:space-between;border-bottom:3px solid var(--navy);padding-bottom:12px}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(32px,6vw,48px);letter-spacing:.01em;text-transform:uppercase;margin:0;line-height:1}
+.sub{color:var(--muted);margin:6px 0 0;max-width:60ch}
+.cv{max-width:760px;margin:14px auto 0}
+.cv svg{display:block;width:100%;height:auto}
+.sv{overflow-x:auto}
+.cv text{fill:var(--ink);font-family:var(--body)}
+.cv .th{font-size:14px;font-weight:600}.cv .ts{font-size:12px;fill:var(--muted)}
+.cv .arr{stroke:var(--muted);stroke-width:1.5;fill:none}
+.cv .node{cursor:pointer}
+.cv rect{stroke-width:1}
+.c-gray rect{fill:#F1EFE8;stroke:#5F5E5A}.c-gray .th{fill:#444441}.c-gray .ts{fill:#5F5E5A}
+.c-purple rect{fill:#EEEDFE;stroke:#534AB7}.c-purple .th{fill:#3C3489}.c-purple .ts{fill:#534AB7}
+.c-teal rect{fill:#E1F5EE;stroke:#0F6E56}.c-teal .th{fill:#085041}.c-teal .ts{fill:#0F6E56}
+.c-coral rect{fill:#FAECE7;stroke:#993C1D}.c-coral .th{fill:#712B13}.c-coral .ts{fill:#993C1D}
+.c-amber rect{fill:#FAEEDA;stroke:#854F0B}.c-amber .th{fill:#633806}.c-amber .ts{fill:#854F0B}
+:root[data-theme="dark"] .c-gray rect{fill:#444441;stroke:#B4B2A9}:root[data-theme="dark"] .c-gray .th{fill:#D3D1C7}:root[data-theme="dark"] .c-gray .ts{fill:#B4B2A9}
+:root[data-theme="dark"] .c-purple rect{fill:#3C3489;stroke:#AFA9EC}:root[data-theme="dark"] .c-purple .th{fill:#CECBF6}:root[data-theme="dark"] .c-purple .ts{fill:#AFA9EC}
+:root[data-theme="dark"] .c-teal rect{fill:#085041;stroke:#5DCAA5}:root[data-theme="dark"] .c-teal .th{fill:#9FE1CB}:root[data-theme="dark"] .c-teal .ts{fill:#5DCAA5}
+:root[data-theme="dark"] .c-coral rect{fill:#712B13;stroke:#F0997B}:root[data-theme="dark"] .c-coral .th{fill:#F5C4B3}:root[data-theme="dark"] .c-coral .ts{fill:#F0997B}
+:root[data-theme="dark"] .c-amber rect{fill:#633806;stroke:#EF9F27}:root[data-theme="dark"] .c-amber .th{fill:#FAC775}:root[data-theme="dark"] .c-amber .ts{fill:#EF9F27}
+.bar{display:flex;align-items:center;gap:12px;margin:0 0 10px}
+.bar button,.dir .sec button{font:600 14px var(--body);min-height:44px;padding:8px 14px;border:2px solid var(--navy);border-radius:8px;background:var(--surface);color:var(--ink);cursor:pointer}
+.hint{font-size:13px;color:var(--muted);margin:6px 0 0}
+.dir{max-width:760px;margin:14px auto 0;font-size:15px}
+.dir .sec{border:2px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0;background:var(--surface)}
+.dir .sec.on{border-color:var(--navy);background:var(--navy-soft)}
+.dir h3{font-family:var(--display);text-transform:uppercase;letter-spacing:.06em;font-size:19px;margin:0 0 4px;color:var(--navy)}
+.dir .p{padding:6px 0;border-top:1px solid var(--line)}.dir .n{font-weight:600}.dir .r{font-size:13px;color:var(--muted)}
+.dir a{color:var(--navy);font-size:14px;margin-right:10px}
+.dir .thick{height:5px;border-radius:3px;background:var(--muted);margin:12px 0 6px}
+.back{display:inline-block;margin-bottom:10px;color:var(--navy);font-weight:600;text-decoration:none}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<div class="wrap"><a class="back" href="../#cat/sw">‹ SkyWatch</a>
+<header>
+  <div><h1>SkyWatch Tower and Service Lifecycle</h1><p class="sub">From the customer order to the invoice. Service (TSC) takes over responsibility for the tower at delivery. Tap a Service box for the detailed process.</p></div>
+</header>
+<div class="cv">
+<div id="v1" class="sv">
+<svg viewBox="0 0 680 606" role="img" aria-labelledby="t1 d1">
+<title id="t1">SkyWatch Tower and Service Lifecycle</title>
+<desc id="d1">Customer orders, Sales issues the sales order, Production (ELK) builds and ships, Service takes over the tower at delivery and owns it afterward. The tower and devices get a 1-year warranty from the date of delivery. Service sends the report to the customer and ships CLINs so accounting can invoice and recognize revenue. Admin follows up on open invoices.</desc>
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<g id="twi"><image href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAAAkFBMVEVlXFEhJCaiimnfnWKRd10gHx6joJMfISJbRjHUt5XkyaiXXikoKShMOiuh06ViYGBjoGjI7M10BAT///9dXRq85MQRMlxaVU1qdofSdix3l4wxTG9dV0///wAAAH8AfwArdTYAVVU5gEV/P39//39/w4mqqlWjl4T/AAAAAAGylXU3NTK3pYvKqorMmW1VVVUE02m9AAAAMHRSTlP6GP3+/u7+W/r+/f6g+v4K/v4CAQ3//2P/////pwECAv8D/wQC/wOzAQH+9/7+/gPd0N1AAAADpElEQVR42uWXa3fbNgyGAfBOS5Zru3WStuvuGylS+v//bqBkW4lrOXJyug8bTk4+CQ9BEHgBQ8BQ/t5oGCC8034MAPt3AbbD//49ERiDiwkXgB63wegEqjJviWA4FNuUXGYEviUCYyplNSXvJSgM35YApoOaCgjaWgI413VCKrwvAlRt9k5SJ8SqmACzoEYnAAJF4VJm70fRiS4Kqo5PuuQKf4YvtBKPWTvvukhDCNQuqKgpAqB6lbMWuXhLihJki68X5TGCPhhLUnZ8rIyd1vrhARS0Qxq3/aJXQAvlATPU9unzJzZQWkI7FtQNxgSoQSmAB/G4gk+fH540gRBuZAyfbPHqdaYcjAAg9tLFTzGAzWUaGDjTYhcA4oOtKtaCplISR4ZVFVOa+Qj6UEk+VBZfkDE777O0FmTXjQx+FaaYW4VUA8gEHD/FXJw6UbzODO9FuUxo5ku54o+BL1/i58ccwj8yjpcRjsu7n+9GNGyI2CCa6uyVu8KIbggjq1/m2/ll4RcG0Bh+FhTjihkutnhLD3rEU1n8fbrVkeGdlXEl5W3AyxCGiMzEEHll7wGMk2dgcFKFeCyEewF8qyHplZJZdu4tgCEzrFYy1nK4wptGW98r2dnS7fJSZGDZDDYT4EIoYZk/V/kRUCuzuzsCAz5RHAEW4EVLvQ7Ys9qB3hCPiriykdjgLsDvAdbrza8/b0o1267rstfVlAd4PQEImw0jNnq9ljbrYq25GcHuVIKI+1JEDNCb9Qc2smkA1PW5q2G+gsd5iTxtN3+sGfDx4xmQHITdDKAJzV/UKta/hhu6Ui330ubpBKhH/xgB566wD4fsnBx0iZ+MhrTrIyBK77WOJPNZmb6P4KcqETlHPN2o6AgNxoD1ep1SdJG1Vt2IgPsmOSmjZzE/WaSY2JdpKScXoZZuFlDKPqXaSpd0jsWXEg/slHT0H5KtWSmT4wUG5p6xCQfPxnMyppjYM+rMOQViX82LUxFscgns3Cs0YU8+aTAVtz8PF+9TatsyqdtxRPIeA15PPQlX10QzCCq3ICfA5ZaHBYxK1G9Do6yjW4Dm2aRRXASU+XvgZ2v2Y5IUOFI3I8D+JDqNYUTyHIqahAg4R7G6BXi+eKJSyRNMUroLX3iX04epF/AVMVA6W/VCxyqozNVF82oMB946ZY3XOnYJ4Ldw4E3BU3iug193fX+HIrGgfjfTf/hPnsunCF//7R9d/zsA/gcAzwi4gIbjKohHDf4HGo0SyXxFQeIAAAAASUVORK5CYII=" x="-15" y="-15" width="30" height="30"/></g>
+</defs>
+<g class="node c-gray" onclick="LC.d('cust')"><rect x="12" y="8" width="112" height="40" rx="8"/><text class="th" x="68" y="22" text-anchor="middle" dominant-baseline="central">Customer</text><text class="ts" x="68" y="38" text-anchor="middle" dominant-baseline="central">Per SO / PO</text></g>
+<g class="node c-purple" onclick="LC.d('sales')"><rect x="145" y="8" width="112" height="40" rx="8"/><text class="th" x="201" y="22" text-anchor="middle" dominant-baseline="central">Sales</text><text class="ts" x="201" y="38" text-anchor="middle" dominant-baseline="central">Skrocki, Saksa</text></g>
+<g class="node c-teal" onclick="LC.d('prod')"><rect x="264" y="8" width="140" height="40" rx="8"/><text class="th" x="334" y="22" text-anchor="middle" dominant-baseline="central">Production (ELK)</text><text class="ts" x="334" y="38" text-anchor="middle" dominant-baseline="central">7 contacts</text></g>
+<g class="node c-coral" onclick="LC.detail()"><rect x="411" y="8" width="112" height="40" rx="8"/><text class="th" x="467" y="22" text-anchor="middle" dominant-baseline="central">Service (TSC)</text><text class="ts" x="467" y="38" text-anchor="middle" dominant-baseline="central">Tap for detail</text></g>
+<g class="node c-amber" onclick="LC.d('fin')"><rect x="544" y="8" width="112" height="40" rx="8"/><text class="th" x="600" y="22" text-anchor="middle" dominant-baseline="central">Admin</text><text class="ts" x="600" y="38" text-anchor="middle" dominant-baseline="central">Saunders, Ballard</text></g>
+<line x1="12" y1="62" x2="656" y2="62" stroke="var(--muted)" stroke-width="4" stroke-linecap="round"/>
+<g transform="translate(0,22)">
+<g class="c-gray"><rect x="12" y="60" width="112" height="44" rx="8"/><text class="th" x="68" y="77" text-anchor="middle" dominant-baseline="central">Issues PO</text><text class="ts" x="68" y="93" text-anchor="middle" dominant-baseline="central">Customer order</text></g>
+<g class="c-purple"><rect x="145" y="60" width="112" height="44" rx="8"/><text class="th" x="201" y="77" text-anchor="middle" dominant-baseline="central">Sales order</text><text class="ts" x="201" y="93" text-anchor="middle" dominant-baseline="central">Brewer issues SO</text></g>
+<g class="c-teal"><rect x="278" y="60" width="112" height="44" rx="8"/><text class="th" x="334" y="77" text-anchor="middle" dominant-baseline="central">Build</text><text class="ts" x="334" y="93" text-anchor="middle" dominant-baseline="central">Bolton (ELK)</text></g>
+<g class="c-teal"><rect x="278" y="128" width="112" height="44" rx="8"/><text class="th" x="334" y="145" text-anchor="middle" dominant-baseline="central">Ship / Polaris</text><text class="ts" x="334" y="161" text-anchor="middle" dominant-baseline="central">Davies, Holland</text></g>
+<g class="c-gray"><rect x="12" y="128" width="112" height="44" rx="8"/><text class="th" x="68" y="145" text-anchor="middle" dominant-baseline="central">Receives tower</text><text class="ts" x="68" y="161" text-anchor="middle" dominant-baseline="central">Delivered to site</text></g>
+<g class="node c-coral" onclick="LC.detail()"><rect x="392" y="196" width="150" height="72" rx="8"/><text class="th" x="467" y="212" text-anchor="middle" dominant-baseline="central">Service takes over</text><text class="ts" x="467" y="229" text-anchor="middle" dominant-baseline="central">At delivery:</text><text class="ts" x="467" y="244" text-anchor="middle" dominant-baseline="central">commissions and</text><text class="ts" x="467" y="259" text-anchor="middle" dominant-baseline="central">trains customer</text></g>
+<g class="c-gray"><rect x="12" y="196" width="112" height="72" rx="8"/><text class="th" x="68" y="212" text-anchor="middle" dominant-baseline="central">Customer signs</text><text class="ts" x="68" y="233" text-anchor="middle" dominant-baseline="central">Delivery and</text><text class="ts" x="68" y="248" text-anchor="middle" dominant-baseline="central">Training Cert.</text></g>
+<g class="node c-coral" onclick="LC.detail()"><rect x="392" y="292" width="150" height="72" rx="8"/><text class="th" x="467" y="308" text-anchor="middle" dominant-baseline="central">Service owns it</text><text class="ts" x="467" y="325" text-anchor="middle" dominant-baseline="central">PM visits, repairs,</text><text class="ts" x="467" y="340" text-anchor="middle" dominant-baseline="central">CLIN close-out</text><text class="ts" x="467" y="355" text-anchor="middle" dominant-baseline="central">Tap for detail</text></g>
+<g class="c-gray"><rect x="150" y="296" width="230" height="76" rx="8"/><text class="th" x="265" y="312" text-anchor="middle" dominant-baseline="central">1-year warranty</text><text class="ts" x="265" y="330" text-anchor="middle" dominant-baseline="central">Tower and devices, from date</text><text class="ts" x="265" y="345" text-anchor="middle" dominant-baseline="central">of delivery. Extended warranty</text><text class="ts" x="265" y="360" text-anchor="middle" dominant-baseline="central">tracked by tower serial number</text></g>
+<g class="c-gray"><rect x="12" y="440" width="112" height="44" rx="8"/><text class="th" x="68" y="457" text-anchor="middle" dominant-baseline="central">Gets reports</text><text class="ts" x="68" y="473" text-anchor="middle" dominant-baseline="central">Passed only</text></g>
+<g class="c-amber"><rect x="544" y="440" width="112" height="44" rx="8"/><text class="th" x="600" y="457" text-anchor="middle" dominant-baseline="central">Invoice sent</text><text class="ts" x="600" y="473" text-anchor="middle" dominant-baseline="central">To customer</text></g>
+<g class="c-amber"><rect x="544" y="508" width="112" height="44" rx="8"/><text class="th" x="600" y="525" text-anchor="middle" dominant-baseline="central">Follow-up</text><text class="ts" x="600" y="541" text-anchor="middle" dominant-baseline="central">Open invoices</text></g>
+<line x1="124" y1="82" x2="143" y2="82" class="arr" marker-end="url(#arrow)"/>
+<line x1="257" y1="82" x2="276" y2="82" class="arr" marker-end="url(#arrow)"/>
+<line x1="334" y1="104" x2="334" y2="126" class="arr" marker-end="url(#arrow)"/>
+<line x1="278" y1="150" x2="126" y2="150" class="arr" marker-end="url(#arrow)"/>
+<path d="M390 150 H467 V194" class="arr" marker-end="url(#arrow)"/>
+<line x1="392" y1="232" x2="126" y2="232" class="arr" marker-end="url(#arrow)"/>
+<line x1="467" y1="268" x2="467" y2="290" class="arr" marker-end="url(#arrow)"/>
+<path d="M467 364 V388 M68 388 H600" class="arr"/>
+<line x1="68" y1="388" x2="68" y2="438" class="arr" marker-end="url(#arrow)"/>
+<line x1="600" y1="388" x2="600" y2="438" class="arr" marker-end="url(#arrow)"/>
+<line x1="600" y1="484" x2="600" y2="506" class="arr" marker-end="url(#arrow)"/>
+<text class="ts" x="90" y="414" text-anchor="start" dominant-baseline="central">Service sends report to customer</text>
+<text class="ts" x="578" y="406" text-anchor="end" dominant-baseline="central">Service ships CLINs to give accounting</text>
+<text class="ts" x="578" y="422" text-anchor="end" dominant-baseline="central">details to invoice and recognize revenue</text>
+<use href="#twi" transform="translate(202,150)"/>
+<use href="#twi" transform="translate(428,150)"/>
+<use href="#twi" transform="translate(259,232)"/>
+<use href="#twi" transform="translate(68,413)"/>
+<use href="#twi" transform="translate(600,413)"/>
+</g>
+</svg>
+<p class="hint">Tap Service (TSC) or either Service box for the detailed process. Tap another lane header for its contacts.</p>
+</div>
+<div id="v2" class="sv" hidden>
+<div class="bar"><button type="button" onclick="LC.main()">‹ Back to big picture</button><b>Service (TSC) process - Kevin Sumlin</b></div>
+<svg viewBox="0 0 680 1210" role="img" aria-labelledby="t2 d2">
+<title id="t2">SkyWatch Tower and Service Lifecycle: Service (TSC) detail</title>
+<desc id="d2">Service takes over at delivery, performs PM visits, repairs failed items with parts transfer or procurement, then closes out the CLIN in SAP and sends details to Leslie for invoicing. Weekly, Kevin updates the SkyWatch Service Tracker and reconciles open sales orders with Leslie. Tower and devices have a 1-year warranty from the date of delivery; extended warranties can be bought a la carte or bundled with Preventative Maintenance Service (PMx), and are tracked by tower serial number with PoP start and end dates.</desc>
+<defs><marker id="arrow2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<g class="c-coral"><rect x="40" y="20" width="250" height="52" rx="8"/><text class="th" x="165" y="38" text-anchor="middle" dominant-baseline="central">Takes over at delivery</text><text class="ts" x="165" y="57" text-anchor="middle" dominant-baseline="central">Commissions, trains customer</text></g>
+<g class="c-coral"><rect x="40" y="96" width="250" height="52" rx="8"/><text class="th" x="165" y="114" text-anchor="middle" dominant-baseline="central">PM visit</text><text class="ts" x="165" y="133" text-anchor="middle" dominant-baseline="central">Inspect, make PDFs</text></g>
+<g class="c-gray"><rect x="40" y="172" width="250" height="52" rx="8"/><text class="th" x="165" y="198" text-anchor="middle" dominant-baseline="central">All items pass?</text></g>
+<g class="c-coral"><rect x="390" y="172" width="250" height="52" rx="8"/><text class="th" x="515" y="190" text-anchor="middle" dominant-baseline="central">Repair / RMA</text><text class="ts" x="515" y="209" text-anchor="middle" dominant-baseline="central">Fix the failed items</text></g>
+<g class="c-coral"><rect x="390" y="248" width="250" height="52" rx="8"/><text class="th" x="515" y="266" text-anchor="middle" dominant-baseline="central">Parts transfer</text><text class="ts" x="515" y="285" text-anchor="middle" dominant-baseline="central">ELK (1000) to TSC (2040)</text></g>
+<g class="c-coral"><rect x="390" y="324" width="250" height="52" rx="8"/><text class="th" x="515" y="342" text-anchor="middle" dominant-baseline="central">Procurement</text><text class="ts" x="515" y="361" text-anchor="middle" dominant-baseline="central">If not at ELK: Pocius first</text></g>
+<g class="c-coral"><rect x="40" y="418" width="600" height="116" rx="8"/><text class="th" x="60" y="438" text-anchor="start" dominant-baseline="central">Close out CLIN</text><text class="ts" x="60" y="462" text-anchor="start" dominant-baseline="central">1. Attach the completion cert to the sales order in SAP</text><text class="ts" x="60" y="480" text-anchor="start" dominant-baseline="central">2. Ship the CLIN in SAP to get the outbound delivery number</text><text class="ts" x="60" y="498" text-anchor="start" dominant-baseline="central">3. Email Leslie: delivery number, order details, copy of cert</text><text class="ts" x="60" y="516" text-anchor="start" dominant-baseline="central">4. cc manager, Director of Service and TSC, Davies, Brewer, Jacober</text></g>
+<g class="c-amber"><rect x="40" y="558" width="600" height="52" rx="8"/><text class="th" x="340" y="576" text-anchor="middle" dominant-baseline="central">Leslie sends the invoice to the customer</text><text class="ts" x="340" y="595" text-anchor="middle" dominant-baseline="central">Kevin never sends an invoice outside the company</text></g>
+<g class="c-amber"><rect x="40" y="634" width="600" height="52" rx="8"/><text class="th" x="340" y="652" text-anchor="middle" dominant-baseline="central">Theresa follows up</text><text class="ts" x="340" y="671" text-anchor="middle" dominant-baseline="central">Unpaid invoices and incomplete orders</text></g>
+<line x1="165" y1="72" x2="165" y2="94" class="arr" marker-end="url(#arrow2)"/>
+<line x1="165" y1="148" x2="165" y2="170" class="arr" marker-end="url(#arrow2)"/>
+<line x1="165" y1="224" x2="165" y2="416" class="arr" marker-end="url(#arrow2)"/>
+<text class="ts" x="175" y="320" text-anchor="start" dominant-baseline="central">Yes</text>
+<line x1="290" y1="198" x2="388" y2="198" class="arr" marker-end="url(#arrow2)"/>
+<text class="ts" x="339" y="186" text-anchor="middle" dominant-baseline="central">No</text>
+<line x1="515" y1="224" x2="515" y2="246" class="arr" marker-end="url(#arrow2)"/>
+<line x1="515" y1="300" x2="515" y2="322" class="arr" marker-end="url(#arrow2)"/>
+<line x1="515" y1="376" x2="515" y2="416" class="arr" marker-end="url(#arrow2)"/>
+<line x1="340" y1="534" x2="340" y2="556" class="arr" marker-end="url(#arrow2)"/>
+<line x1="340" y1="610" x2="340" y2="632" class="arr" marker-end="url(#arrow2)"/>
+<line x1="40" y1="712" x2="640" y2="712" stroke="var(--muted)" stroke-width="4" stroke-linecap="round"/>
+<text class="th" x="40" y="738" text-anchor="start" dominant-baseline="central">Every week: SkyWatch Service Tracker</text>
+<g class="c-coral"><rect x="40" y="756" width="290" height="88" rx="8"/><text class="th" x="185" y="772" text-anchor="middle" dominant-baseline="central">Kevin updates the tracker</text><text class="ts" x="185" y="792" text-anchor="middle" dominant-baseline="central">Watches for new SkyWatch orders</text><text class="ts" x="185" y="809" text-anchor="middle" dominant-baseline="central">and adds them to the SkyWatch</text><text class="ts" x="185" y="826" text-anchor="middle" dominant-baseline="central">Service Tracker spreadsheet</text></g>
+<g class="c-amber"><rect x="350" y="756" width="290" height="88" rx="8"/><text class="th" x="495" y="772" text-anchor="middle" dominant-baseline="central">Kevin and Leslie reconcile</text><text class="ts" x="495" y="792" text-anchor="middle" dominant-baseline="central">About 1 hour on open SkyWatch SOs.</text><text class="ts" x="495" y="809" text-anchor="middle" dominant-baseline="central">Cert shipped: add the invoice # and</text><text class="ts" x="495" y="826" text-anchor="middle" dominant-baseline="central">refresh; closed orders filter out</text></g>
+<line x1="330" y1="800" x2="348" y2="800" class="arr" marker-end="url(#arrow2)"/>
+<g class="c-gray"><rect x="40" y="866" width="600" height="76" rx="8"/><text class="th" x="60" y="882" text-anchor="start" dominant-baseline="central">Tracker columns (organized by sales order)</text><text class="ts" x="60" y="905" text-anchor="start" dominant-baseline="central">Sales order, sold to, tower serial number, generator serial number and model, CLIN</text><text class="ts" x="60" y="924" text-anchor="start" dominant-baseline="central">Description of service, term year, due date (filter by year and quarter), invoice #</text></g>
+<line x1="40" y1="966" x2="640" y2="966" stroke="var(--muted)" stroke-width="4" stroke-linecap="round"/>
+<text class="th" x="40" y="992" text-anchor="start" dominant-baseline="central">Warranty (tracked by tower serial number)</text>
+<g class="c-coral"><rect x="40" y="1010" width="290" height="88" rx="8"/><text class="th" x="185" y="1026" text-anchor="middle" dominant-baseline="central">At delivery: 1-year warranty</text><text class="ts" x="185" y="1046" text-anchor="middle" dominant-baseline="central">Tower and devices installed at</text><text class="ts" x="185" y="1063" text-anchor="middle" dominant-baseline="central">delivery are covered for 1 year</text><text class="ts" x="185" y="1080" text-anchor="middle" dominant-baseline="central">from the date of delivery</text></g>
+<g class="c-coral"><rect x="350" y="1010" width="290" height="88" rx="8"/><text class="th" x="495" y="1026" text-anchor="middle" dominant-baseline="central">Extended warranty (optional)</text><text class="ts" x="495" y="1046" text-anchor="middle" dominant-baseline="central">Buy a la carte, or bundle with</text><text class="ts" x="495" y="1063" text-anchor="middle" dominant-baseline="central">Preventative Maintenance Service (PMx)</text><text class="ts" x="495" y="1080" text-anchor="middle" dominant-baseline="central">Tower must still be in warranty</text></g>
+<line x1="330" y1="1054" x2="348" y2="1054" class="arr" marker-end="url(#arrow2)"/>
+<g class="c-gray"><rect x="40" y="1122" width="600" height="64" rx="8"/><text class="th" x="340" y="1140" text-anchor="middle" dominant-baseline="central">Extended warranty shows its PoP</text><text class="ts" x="340" y="1162" text-anchor="middle" dominant-baseline="central">PoP start date and end date, tracked by tower serial number</text></g>
+<line x1="495" y1="1098" x2="495" y2="1120" class="arr" marker-end="url(#arrow2)"/>
+</svg>
+</div>
+</div>
+<div class="dir" id="dir"></div>
+<footer style="text-align:center;font-size:11px;color:var(--muted);opacity:.75;padding:18px 10px calc(16px + env(safe-area-inset-bottom))">Designed &amp; developed by Ravi Ramsundar · Rev 1.89 · 11/18/2026 9:25 AM EST</footer>
+</div>
+<script>
+var LC=(function(){
+var D={
+cust:{t:'Customer',n:'POC comes from each SO or PO. Customer signs the Delivery and Training Certificate.',p:[]},
+sales:{t:'Sales',n:'',p:[
+['Chris Skrocki','Sr. Sales Manager','405-334-7766','Christopher.Skrocki@teledyne.com'],
+['Andy Saksa','Director US Sales, Defense Technologies','239-898-6713','Andy.Saksa@teledyne.com'],
+['Judy Brewer','Processes and issues the Sales Order from the customer PO','','']]},
+prod:{t:'Production (ELK)',n:'',sep:4,sepLabel:'Purchasing team (ELK)',p:[
+['Michael Bolton','Production Manager (ELK) - Build POC','443-936-9861','Michael.Bolton@teledyne.com'],
+['Zack Fuller','Director of Operations (ELK)','443-561-4336','Zachary.Fuller@teledyne.com'],
+['Leonard Davies','Warehouse and Logistics (ELK) - Ship POC','',''],
+['Marilyn Holland','Shipping broker, Polaris','',''],
+['John Pocius','Buyer/Planner - call first','',''],
+['Kathy Shaffer','Procurement Manager - second','',''],
+['William (Bill) Gray','Third','','']]},
+field:{t:'Service (TSC)',n:'Service takes over responsibility for the tower at delivery. TSC is SAP site 2040, a satellite of ELK (1000).',p:[
+['Kevin Sumlin','Field Service Support Technician (TSC), SkyWatch Support','520-262-6910','Kevin.Sumlin@teledyne.com']]},
+fin:{t:'Admin',n:'',p:[
+['Leslie Saunders','Sends out invoices','',''],
+['Erin Jacober','Copied on CLIN close-out','',''],
+['Theresa Ballard','Follows up on unpaid invoices and incomplete orders','','']]}
+};
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+var el=document.getElementById('dir');
+el.innerHTML=Object.keys(D).map(function(k){var d=D[k];return '<div class="sec" id="s-'+k+'"><h3>'+esc(d.t)+'</h3>'+(d.n?'<div class="r">'+esc(d.n)+'</div>':'')+d.p.map(function(p,i){return (d.sep===i?'<div class="thick"></div><div class="r" style="font-weight:600">'+esc(d.sepLabel)+'</div>':'')+'<div class="p"><div class="n">'+esc(p[0])+'</div><div class="r">'+esc(p[1])+'</div>'+(p[2]?'<a href="tel:'+esc(p[2])+'">'+esc(p[2])+'</a>':'')+(p[3]?'<a href="mailto:'+esc(p[3])+'">'+esc(p[3])+'</a>':'')+'</div>';}).join('')+'</div>';}).join('');
+return {
+ d:function(k){var s=document.querySelectorAll('.sec'),i;for(i=0;i<s.length;i++)s[i].classList.remove('on');var e=document.getElementById('s-'+k);e.classList.add('on');if(e.scrollIntoView)e.scrollIntoView({behavior:'smooth',block:'nearest'});},
+ detail:function(){document.getElementById('v1').hidden=true;document.getElementById('v2').hidden=false;el.hidden=true;window.scrollTo(0,0);},
+ main:function(){document.getElementById('v2').hidden=true;document.getElementById('v1').hidden=false;el.hidden=false;window.scrollTo(0,0);}
+};
+})();
+</script>
+<script>/* ===== shared: on-screen Back / Home bar (Ravi, 2026-11-04) =====
+   Back = the previous screen you were on (kept per app, not the browser history). Home = the main launcher.
+   Each app gives Nav.init() a snap() (where am I) and restore() (go back there). Pages without one use the browser's Back. */
+(function(){if(window.Nav)return;
+var A=null,stack=[],cur=null,busy=0,tm=null,HOME='../',NAME='';
+var CSS='#navBar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:10px;padding:8px 12px;background:#0b3d6b;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.25)}'+
+ '.gpn-h b{flex:1;text-align:center}#navBar b{flex:1;text-align:center;font:700 17px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
+ '#navBar button,.gpn-h button.nb{min-height:48px;min-width:96px;border-radius:10px;border:2px solid #fff;background:#fff;color:#0b3d6b;font:700 17px system-ui,-apple-system,"Segoe UI",sans-serif;cursor:pointer;padding:0 14px;touch-action:manipulation}'+
+ ':root{--navh:44px}html{scroll-padding-top:calc(var(--navh) + 50px)}.top,header.bar{top:var(--navh)!important}'+
+ '#navBar{padding:4px 10px!important;gap:8px!important}#navBar b{font-size:15px!important}#navBar button,.gpn-h button.nb{min-height:36px!important;min-width:72px!important;font-size:15px!important;padding:0 12px!important;border-width:1px!important;border-radius:8px!important}'+
+ '.top{border-top-width:4px!important}.top .bar{padding:3px 12px!important;gap:6px!important;row-gap:3px!important}.top img{height:22px!important}.top .brand{font-size:15px!important;line-height:1.15!important}.top .brand small{font-size:11px!important}.top .bar button{min-height:36px!important;padding:2px 10px!important;font-size:15px!important}'+
+ '.steps{padding:0 10px 4px!important;gap:3px!important;row-gap:3px!important}.steps button{min-height:30px!important;padding:2px 6px!important;font-size:13px!important;line-height:1.1!important}'+
+ '@media(min-width:761px){body:has(.top) #navBar b{visibility:hidden}.top{margin-top:calc(-1*var(--navh))!important;top:0!important;z-index:41!important;background:transparent!important;border:0!important;pointer-events:none}.top .bar{height:var(--navh);box-sizing:border-box;flex-wrap:nowrap!important;padding:0 104px!important;gap:6px!important}.top .bar>*{pointer-events:auto}.top img{display:none!important}.top .brand{color:#fff!important;flex:1 1 0!important;min-width:0;display:flex!important;align-items:baseline;gap:8px;white-space:nowrap;overflow:hidden}.top .brand small{display:inline!important;color:#b9d3ee!important;overflow:hidden;text-overflow:ellipsis}.top .steps{pointer-events:auto;background:var(--blue2,#fff);border-bottom:1px solid var(--line,#ccc);padding:4px 10px!important}}'+
+ '@media print{#navBar{display:none!important}}';
+function key(s){try{return JSON.stringify(s);}catch(e){return '';}}
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function sameOrigin(r){try{return !!r&&new URL(r).origin===location.origin;}catch(e){return false;}}
+function note(){if(busy||!A||!A.snap)return;var s;try{s=A.snap();}catch(e){return;}if(!s)return;if(cur&&key(s)===key(cur))return;if(cur){stack.push(cur);if(stack.length>60)stack.shift();}cur=s;}
+function sched(){if(tm)return;tm=setTimeout(function(){tm=null;note();},120);}
+function home(){var d=false,go=function(){if(d)return;d=true;location.href=HOME;};try{var p=A&&A.save&&A.save();if(p&&p.then){p.then(go,go);setTimeout(go,1500);return;}}catch(e){}go();}
+function overlay(){var g=document.getElementById('genPanel');if(g){var c=g.querySelector('[data-pt="gpclose"]');if(c){c.click();return true;}}return false;}
+function back(){if(overlay())return;
+ if(!A||!A.restore){if(sameOrigin(document.referrer)&&history.length>1)history.back();else home();return;}
+ note();if(!stack.length){home();return;}
+ var s=stack.pop();busy++;cur=s;var p;try{p=A.restore(s);}catch(e){p=null;}
+ Promise.resolve(p).catch(function(){}).then(function(){setTimeout(function(){busy=Math.max(0,busy-1);},200);});}
+function mount(){if(document.getElementById('navBar')||!document.body)return;
+ var st=document.createElement('style');st.id='navCss';st.textContent=CSS;(document.head||document.documentElement).appendChild(st);
+ var b=document.createElement('div');b.id='navBar';b.innerHTML='<button type="button" data-nav="back">‹ Back</button><b>'+esc(NAME||document.title||'')+'</b><button type="button" data-nav="home">⌂ Home</button>';
+ document.body.insertBefore(b,document.body.firstChild);document.documentElement.style.setProperty('--navh',b.offsetHeight+'px');
+ try{new MutationObserver(sched).observe(document.body,{childList:true,subtree:true});}catch(e){}sched();}
+document.addEventListener('pointerdown',function(){note();},true);
+document.addEventListener('click',function(ev){var b=ev.target.closest&&ev.target.closest('[data-nav]');if(!b)return;ev.preventDefault();ev.stopPropagation();if(b.getAttribute('data-nav')==='home')home();else back();},true);
+window.Nav={dbg:function(){return {stack:stack.slice(),cur:cur};},init:function(o){A=o||{};NAME=A.name||'';mount();},back:back,home:home};
+})();</script><script>Nav.init({name:document.title});</script>
+<style id="darkFix2">/* Rev 1.55: dark-mode contrast + selected state + header toggle (Ravi) */
+.tg2bar{display:flex;justify-content:flex-end;padding:6px 10px}.tg2f{min-height:36px;padding:0 12px;border-radius:8px;border:1px solid #8a94a3;background:#fff;color:#0b3d6b;font:700 14px system-ui,-apple-system,"Segoe UI",sans-serif;cursor:pointer}
+body:has([data-theme-tog]) .tg2n{display:none}
+@media screen and (min-width:761px){body:not(:has([data-theme-tog])):has(.tg2n) .top .bar{padding-right:196px!important}}
+@media print{.tg2f,.tg2n,.tg2bar{display:none!important}}
+</style>
+<script>/* Rev 1.55: light/dark toggle in the page header (Ravi) */
+(function(){if(window.__darkFix2)return;window.__darkFix2=1;
+function cur(){return document.documentElement.getAttribute('data-theme')==='light'?'light':'dark';}
+function lab(){var n=document.querySelectorAll('[data-theme-tog2]');for(var i=0;i<n.length;i++)n[i].textContent=cur()==='dark'?'☀ Light':'☾ Dark';}
+function ensure(){if(!document.body)return;var nb=document.getElementById('navBar'),ex=document.querySelector('[data-theme-tog2]');
+ if(ex){if(nb&&ex.classList.contains('tg2f')){var w0=ex.parentNode;ex.className='tg2n';nb.insertBefore(ex,nb.querySelector('[data-nav=home]'));if(w0&&w0.className==='tg2bar')w0.remove();}return;}
+ if(document.getElementById('themeBtn'))return;var b=document.createElement('button');b.type='button';b.setAttribute('data-theme-tog2','');b.setAttribute('aria-label','Switch between light and dark mode');
+ if(nb){b.className='tg2n';nb.insertBefore(b,nb.querySelector('[data-nav=home]'));}else{b.className='tg2f';var w=document.createElement('div');w.className='tg2bar';w.appendChild(b);document.body.insertBefore(w,document.body.firstChild);}lab();}
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-theme-tog2]');if(!b)return;e.preventDefault();e.stopPropagation();
+ var d=cur()==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',d);try{localStorage.setItem('tscTheme',d);}catch(x){}lab();},true);
+try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
+ensure();setTimeout(ensure,500);
+})();</script>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.89 · 11/18/2026</div>
+</body></html>

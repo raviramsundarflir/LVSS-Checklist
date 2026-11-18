@@ -1,0 +1,214 @@
+<!doctype html><html lang="en"><head><script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('tscTheme')==='light'?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><title>Service Call Guide</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: path tabs; each path is a row of phase columns, steps stacked top to bottom with connector lines. */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --ink:#14233a; --muted:#51627a; --line:#cfd8e3;
+  --navy:#0b3d6b; --navy-soft:#dbe8f6;
+  --signal:#f2b705; --signal-soft:#fff3cf; --signal-ink:#6b4b00;
+  --new:#1b7f5a; --new-soft:#dff3ea;
+  --out:#e7ebf0; --out-ink:#44566b;
+  --display:'Barlow Condensed','Arial Narrow',sans-serif; --body:'IBM Plex Sans',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+@media all{:root[data-theme="dark"]{
+  --bg:#0c1522; --surface:#142235; --ink:#e6edf6; --muted:#9db0c6; --line:#2b3d55;
+  --navy:#6fb0ee; --navy-soft:#173a5e; --signal:#f2b705; --signal-soft:#3a2f0c; --signal-ink:#f5d572;
+  --new:#4fd0a0; --new-soft:#12392c; --out:#1c2c42; --out-ink:#a9bbd0; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1522; --surface:#142235; --ink:#e6edf6; --muted:#9db0c6; --line:#2b3d55;
+  --navy:#6fb0ee; --navy-soft:#173a5e; --signal:#f2b705; --signal-soft:#3a2f0c; --signal-ink:#f5d572;
+  --new:#4fd0a0; --new-soft:#12392c; --out:#1c2c42; --out-ink:#a9bbd0; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;margin:0;
+  padding-block:24px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1240px;margin:0 auto}
+header{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:flex-end;justify-content:space-between;border-bottom:3px solid var(--navy);padding-bottom:12px}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(32px,6vw,48px);letter-spacing:.01em;text-transform:uppercase;margin:0;line-height:1}
+.sub{color:var(--muted);margin:6px 0 0;max-width:60ch}
+.sc{display:grid;grid-template-columns:minmax(0,1fr) 168px;gap:14px;align-items:start;margin-top:16px}
+@media(min-width:760px){.sc{grid-template-columns:minmax(0,1fr) 270px}}
+.card{background:var(--surface);border:2px solid var(--line);border-radius:10px;padding:14px 16px}
+.lbl{font:600 12px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 4px}
+.q{font-family:var(--display);font-weight:700;font-size:26px;line-height:1.1;margin:0 0 8px;color:var(--ink)}
+.tx{margin:0 0 12px;color:var(--muted);font-size:15px}
+.it{margin:0 0 14px}
+.it label{display:flex;gap:10px;align-items:center;font-size:15px;font-weight:600;margin:0 0 5px;min-height:32px}
+.it input[type=checkbox]{width:24px;height:24px;flex:none;accent-color:#d1500d}
+.it input[type=text]{width:100%;min-height:44px;font:15px var(--body);color:var(--ink);background:var(--bg);border:2px solid var(--line);border-radius:6px;padding:6px 10px}
+.it input[type=text]:focus{outline:3px solid var(--signal);outline-offset:1px;border-color:var(--navy)}
+.warn{font-size:13px;color:#c0392b;margin:4px 0 0;font-weight:600}
+:root[data-theme="dark"] .warn{color:#ff8a7a}
+.ch{display:block;width:100%;text-align:left;font:600 15px var(--body);padding:12px 14px;margin:0 0 8px;min-height:48px;border:2px solid var(--navy);border-radius:8px;background:var(--surface);color:var(--ink);cursor:pointer}
+.ch:hover{background:var(--navy-soft)}
+.ch:focus-visible,.btn:focus-visible,.tr button:focus-visible{outline:3px solid var(--signal);outline-offset:2px}
+.endm{font:600 13px var(--mono);color:var(--new);margin:0 0 10px}
+.nav2{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.btn{font:600 14px var(--body);min-height:44px;padding:8px 14px;border:2px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);cursor:pointer}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.pri{background:var(--navy);border-color:var(--navy);color:#fff}
+:root[data-theme="dark"] .btn.pri{color:#06182b}
+.tr{padding:8px}
+.tr h2{font:600 12px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:2px 6px 6px}
+.tr button{display:flex;justify-content:space-between;align-items:center;gap:6px;width:100%;text-align:left;font:14px/1.25 var(--body);min-height:40px;padding:6px 8px;border:0;border-left:4px solid transparent;border-radius:0;background:transparent;color:var(--muted);cursor:pointer}
+.tr button:hover{background:var(--navy-soft)}
+.tr button.d{color:var(--ink)}
+.tr button.c{color:var(--ink);font-weight:700;border-left-color:#d1500d;background:var(--navy-soft)}
+.tr .ok{color:var(--new);font-weight:700}
+.rp{margin-top:14px}
+.rp textarea{width:100%;height:260px;font:13px/1.4 var(--mono);padding:10px;border:2px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+.cap{font-size:13px;color:var(--muted);margin:8px 0 0}
+.back{display:inline-block;margin-bottom:10px;color:var(--navy);font-weight:600;text-decoration:none}
+@media print{.sc{display:block}.tr,.nav2,.ch{display:none}}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<div class="wrap"><a class="back" href="../#cat/sw">‹ SkyWatch</a>
+<header>
+  <div><h1>Service Call Guide</h1><p class="sub">When a customer calls in for SkyWatch service. Work through each section, tick items off as you go, and tap any section on the right to jump to it. Make a report at any point.</p></div>
+</header>
+<div class="sc">
+<div>
+<div class="card" id="main"><p class="lbl">Section</p><h2 class="q" id="q"></h2><p class="tx" id="tx"></p><div id="it"></div><div id="ch"></div>
+<div class="nav2"><button class="btn" id="bk" type="button">‹ Back</button><button class="btn pri" id="gen" type="button">Generate report</button><button class="btn" id="nw" type="button">New call</button></div>
+<p class="cap" id="confirm" hidden>Tap New call again to clear this call.</p></div>
+<div class="card rp" id="rp" hidden><p class="lbl">Report</p><textarea id="ta" readonly aria-label="Service call report"></textarea>
+<div class="nav2"><button class="btn pri" id="mail" type="button">Email to Sales</button><button class="btn" id="cp" type="button">Copy</button><button class="btn" id="hide" type="button">Hide</button></div>
+<p class="cap" id="cpm" role="status"></p><p class="cap">Email to Sales opens your email app addressed to the Sr. Sales Manager and Director US Sales, with SkyWatch.Support@teledyne.com copied. Check the recipients before sending.</p></div>
+</div>
+<aside class="card tr" id="tr" aria-label="Process tree"></aside>
+</div>
+<footer style="text-align:center;font-size:11px;color:var(--muted);opacity:.75;padding:18px 10px calc(16px + env(safe-area-inset-bottom))">Designed &amp; developed by Ravi Ramsundar · Rev 1.89 · 11/18/2026 9:25 AM EST</footer>
+</div>
+<script>
+(function(){
+var S={
+call:{q:'Customer calls in',x:'Who took the call?',c:[['Service (TSC) directly','triage'],['Sales','triage'],['Shared inbox or SkyWatch.Support','triage']],it:[{l:'Customer name'},{l:'Call taken by'}]},
+triage:{q:'SkyWatch Service (TSC) triages',x:'What does the issue need?',c:[['Service can fix it','fix'],['Covered by a contract','contract'],['New work that needs a quote','n1'],['Not a SkyWatch issue','redirect']],it:[]},
+fix:{q:'Fixes it',x:'Fix it by phone or on site.',end:1,c:[],it:[{l:'Issue fixed'},{l:'How: phone or on site'}]},
+contract:{q:'Under contract',x:'Create an RMA to track the issue. Check the contract for a Z1 warranty allowance or a specific service line.',end:1,c:[],it:[{l:'RMA number'},{l:'Contract number'},{l:'Z1 allowance or service line used'}]},
+redirect:{q:'Not SkyWatch',x:'Redirect the customer to the right team.',end:1,c:[],it:[{l:'Redirected to (team)'}]},
+n1:{q:'New Service Request: gather info',x:'Collect each item and tick it off.',c:[['Info collected','n2']],it:[{l:'Customer'},{l:'Contact (name, phone, email)'},{l:'Tower serial number'},{l:'Generator serial number and model'},{l:'Issue and work needed'}]},
+n2:{q:'Price it',x:'Pick services from the price list (list coming). Add costs, then apply markup.',c:[['Price is ready','n3']],it:[{l:'Services from price list'},{l:'Labor hours'},{l:'Travel and accommodations cost'},{l:'Parts cost'},{l:'Consumables cost'},{l:'Margin % (target 65, minimum 45)',min:45}]},
+n3:{q:'Send to Sales',x:'Email Sales with SkyWatch.Support@teledyne.com copied. Generate report makes the email for you.',c:[['Sent','n4']],it:[{l:'Sent to Sales (date)'},{l:'SkyWatch.Support copied'}]},
+n4:{q:'Sales quotes the customer',x:'The Sr. Sales Manager or Director sends the quote.',c:[['Customer sends a PO','n5'],['Customer declines','dec']],it:[{l:'Quote number'},{l:'Quote sent (date)'}]},
+dec:{q:'Declined',x:'No further action. Sales closes the request.',end:1,c:[],it:[{l:'Reason, if known'}]},
+n5:{q:'Sales order processing',x:'Sales order processing issues the sales order from the customer PO. If a CLIN is tied to SkyWatch Service, add those line items to the SkyWatch Service Tracker.',c:[['SO issued','n6']],it:[{l:'Customer PO number'},{l:'Sales order number'},{l:'CLIN numbers tied to SkyWatch Service'},{l:'Line items added to SkyWatch Service Tracker'}]},
+n6:{q:'Do the work',x:'SkyWatch Service (TSC) does the work, then closes out the CLIN.',end:1,c:[],it:[{l:'Work completed (date)'},{l:'Completion cert attached to SO'},{l:'CLIN shipped in SAP'}]}
+};
+var T=[['call',0,'Customer calls in'],['triage',1,'Triage'],['fix',2,'Fixes it'],['contract',2,'Under contract'],['n1',2,'New Service Request'],['n1',3,'Gather info'],['n2',3,'Price it'],['n3',3,'Send to Sales'],['n4',3,'Sales quotes'],['dec',4,'Declined'],['n5',3,'Sales order'],['n6',3,'Do the work'],['redirect',2,'Not SkyWatch']];
+var KEY='scgState',HK='scgHist',H=['call'],C={},V={},HIST={},clr=0;
+function $(i){return document.getElementById(i);}
+function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+function load(){try{var o=JSON.parse(lsGet(KEY)||'null');if(o&&o.H&&o.H.length&&S[o.H[o.H.length-1]]){H=o.H;C=o.C||{};V=o.V||{};}}catch(e){}try{HIST=JSON.parse(lsGet(HK)||'{}')||{};}catch(e){HIST={};}}
+function save(){lsSet(KEY,JSON.stringify({H:H,C:C,V:V}));}
+function cur(){return H[H.length-1];}
+function go(id){if(id!==cur())H.push(id);if(H.length>80)H.shift();save();render();}
+function has(id){var it=S[id].it,i;for(i=0;i<it.length;i++){if(C[id+i]||(V[id+i]||'').trim())return true;}return false;}
+function full(id){var it=S[id].it,i;if(!it.length)return false;for(i=0;i<it.length;i++){if(!C[id+i])return false;}return true;}
+function remember(k,v){v=(v||'').trim();if(!v)return;var L=HIST[k]||[],o=[v],i;for(i=0;i<L.length;i++){if(L[i]!==v)o.push(L[i]);}HIST[k]=o.slice(0,5);lsSet(HK,JSON.stringify(HIST));}
+function tree(){
+ var tr=$('tr');tr.innerHTML='<h2>Process</h2>';
+ T.forEach(function(n,ix){
+  var b=document.createElement('button');b.type='button';b.style.paddingLeft=(8+n[1]*10)+'px';
+  var isCur=(n[0]===cur())&&!(ix===4&&cur()==='n1');
+  if(isCur){b.className='c';b.setAttribute('aria-current','step');}else if(ix!==4&&has(n[0]))b.className='d';
+  var s=document.createElement('span');s.textContent=n[2];b.appendChild(s);
+  if(ix!==4&&full(n[0])){var k=document.createElement('span');k.className='ok';k.textContent='✓';k.setAttribute('aria-label','complete');b.appendChild(k);}
+  b.onclick=function(){go(n[0]);window.scrollTo(0,0);};
+  tr.appendChild(b);});}
+function render(){
+ var id=cur(),s=S[id];
+ $('q').textContent=s.q;$('tx').textContent=s.x;
+ var it=$('it');it.innerHTML='';
+ s.it.forEach(function(o,i){
+  var k=id+i,w=document.createElement('div');w.className='it';
+  var lb=document.createElement('label');var cb=document.createElement('input');cb.type='checkbox';cb.checked=!!C[k];
+  cb.onchange=function(){C[k]=cb.checked;save();tree();};
+  lb.appendChild(cb);lb.appendChild(document.createTextNode(o.l));w.appendChild(lb);
+  var inp=document.createElement('input');inp.type='text';inp.value=V[k]||'';inp.setAttribute('aria-label',o.l);inp.setAttribute('autocomplete','off');
+  var dl=document.createElement('datalist');dl.id='dl-'+k;(HIST[k]||[]).forEach(function(v){var op=document.createElement('option');op.value=v;dl.appendChild(op);});
+  inp.setAttribute('list',dl.id);
+  var wn=document.createElement('p');wn.className='warn';wn.hidden=true;
+  function chk(){var n=parseFloat(inp.value);if(o.min&&inp.value.trim()&&!isNaN(n)&&n<o.min){wn.textContent='Below the '+o.min+'% minimum';wn.hidden=false;}else wn.hidden=true;}
+  inp.oninput=function(){V[k]=inp.value;chk();save();tree();};
+  inp.onchange=function(){remember(k,inp.value);};
+  chk();w.appendChild(inp);w.appendChild(dl);w.appendChild(wn);it.appendChild(w);});
+ var ch=$('ch');ch.innerHTML='';
+ if(s.end){var e=document.createElement('p');e.className='endm';e.textContent='End of this path';ch.appendChild(e);}
+ s.c.forEach(function(c){var b=document.createElement('button');b.type='button';b.className='ch';b.textContent=c[0];b.onclick=function(){go(c[1]);window.scrollTo(0,0);};ch.appendChild(b);});
+ $('bk').disabled=H.length<2;
+ tree();}
+function report(){
+ var o='SkyWatch service call report\nDate: '+new Date().toLocaleString()+'\n',open=[];
+ Object.keys(S).forEach(function(id){if(!has(id))return;o+='\n'+S[id].q+'\n';
+  S[id].it.forEach(function(it,i){var v=(V[id+i]||'').trim(),c=C[id+i];
+   if(v||c)o+='  '+it.l+': '+v+(c?(v?' ':'')+'[done]':'')+'\n';else open.push(S[id].q+': '+it.l);});});
+ if(!/\n\n/.test(o))o+='\nNothing entered yet.\n';
+ if(open.length){o+='\nNot yet completed\n';open.forEach(function(x){o+='  '+x+'\n';});}
+ return o;}
+function subj(){var c=(V.n10||V.call0||'').trim(),t=(V.n12||'').trim();return 'SkyWatch New Service Request'+(c?' - '+c:'')+(t?' - tower '+t:'');}
+$('bk').onclick=function(){if(H.length>1){H.pop();save();render();}};
+$('gen').onclick=function(){$('ta').value=report();$('rp').hidden=false;$('cpm').textContent='';$('rp').scrollIntoView({behavior:'smooth',block:'nearest'});};
+$('hide').onclick=function(){$('rp').hidden=true;};
+$('cp').onclick=function(){var t=$('ta');t.select();var ok=false;try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t.value);ok=true;}else ok=document.execCommand('copy');}catch(e){try{ok=document.execCommand('copy');}catch(x){}}$('cpm').textContent=ok?'Copied.':'Select the text above and copy it.';};
+$('mail').onclick=function(){location.href='mailto:Christopher.Skrocki@teledyne.com,Andy.Saksa@teledyne.com?cc=SkyWatch.Support@teledyne.com&subject='+encodeURIComponent(subj())+'&body='+encodeURIComponent($('ta').value);};
+$('nw').onclick=function(){if(!clr){clr=1;$('confirm').hidden=false;setTimeout(function(){clr=0;$('confirm').hidden=true;},4000);return;}clr=0;$('confirm').hidden=true;H=['call'];C={};V={};save();$('rp').hidden=true;render();window.scrollTo(0,0);};
+load();render();
+})();
+</script>
+<script>/* ===== shared: on-screen Back / Home bar (Ravi, 2026-11-04) =====
+   Back = the previous screen you were on (kept per app, not the browser history). Home = the main launcher.
+   Each app gives Nav.init() a snap() (where am I) and restore() (go back there). Pages without one use the browser's Back. */
+(function(){if(window.Nav)return;
+var A=null,stack=[],cur=null,busy=0,tm=null,HOME='../',NAME='';
+var CSS='#navBar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:10px;padding:8px 12px;background:#0b3d6b;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.25)}'+
+ '.gpn-h b{flex:1;text-align:center}#navBar b{flex:1;text-align:center;font:700 17px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
+ '#navBar button,.gpn-h button.nb{min-height:48px;min-width:96px;border-radius:10px;border:2px solid #fff;background:#fff;color:#0b3d6b;font:700 17px system-ui,-apple-system,"Segoe UI",sans-serif;cursor:pointer;padding:0 14px;touch-action:manipulation}'+
+ ':root{--navh:44px}html{scroll-padding-top:calc(var(--navh) + 50px)}.top,header.bar{top:var(--navh)!important}'+
+ '#navBar{padding:4px 10px!important;gap:8px!important}#navBar b{font-size:15px!important}#navBar button,.gpn-h button.nb{min-height:36px!important;min-width:72px!important;font-size:15px!important;padding:0 12px!important;border-width:1px!important;border-radius:8px!important}'+
+ '.top{border-top-width:4px!important}.top .bar{padding:3px 12px!important;gap:6px!important;row-gap:3px!important}.top img{height:22px!important}.top .brand{font-size:15px!important;line-height:1.15!important}.top .brand small{font-size:11px!important}.top .bar button{min-height:36px!important;padding:2px 10px!important;font-size:15px!important}'+
+ '.steps{padding:0 10px 4px!important;gap:3px!important;row-gap:3px!important}.steps button{min-height:30px!important;padding:2px 6px!important;font-size:13px!important;line-height:1.1!important}'+
+ '@media(min-width:761px){body:has(.top) #navBar b{visibility:hidden}.top{margin-top:calc(-1*var(--navh))!important;top:0!important;z-index:41!important;background:transparent!important;border:0!important;pointer-events:none}.top .bar{height:var(--navh);box-sizing:border-box;flex-wrap:nowrap!important;padding:0 104px!important;gap:6px!important}.top .bar>*{pointer-events:auto}.top img{display:none!important}.top .brand{color:#fff!important;flex:1 1 0!important;min-width:0;display:flex!important;align-items:baseline;gap:8px;white-space:nowrap;overflow:hidden}.top .brand small{display:inline!important;color:#b9d3ee!important;overflow:hidden;text-overflow:ellipsis}.top .steps{pointer-events:auto;background:var(--blue2,#fff);border-bottom:1px solid var(--line,#ccc);padding:4px 10px!important}}'+
+ '@media print{#navBar{display:none!important}}';
+function key(s){try{return JSON.stringify(s);}catch(e){return '';}}
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function sameOrigin(r){try{return !!r&&new URL(r).origin===location.origin;}catch(e){return false;}}
+function note(){if(busy||!A||!A.snap)return;var s;try{s=A.snap();}catch(e){return;}if(!s)return;if(cur&&key(s)===key(cur))return;if(cur){stack.push(cur);if(stack.length>60)stack.shift();}cur=s;}
+function sched(){if(tm)return;tm=setTimeout(function(){tm=null;note();},120);}
+function home(){var d=false,go=function(){if(d)return;d=true;location.href=HOME;};try{var p=A&&A.save&&A.save();if(p&&p.then){p.then(go,go);setTimeout(go,1500);return;}}catch(e){}go();}
+function overlay(){var g=document.getElementById('genPanel');if(g){var c=g.querySelector('[data-pt="gpclose"]');if(c){c.click();return true;}}return false;}
+function back(){if(overlay())return;
+ if(!A||!A.restore){if(sameOrigin(document.referrer)&&history.length>1)history.back();else home();return;}
+ note();if(!stack.length){home();return;}
+ var s=stack.pop();busy++;cur=s;var p;try{p=A.restore(s);}catch(e){p=null;}
+ Promise.resolve(p).catch(function(){}).then(function(){setTimeout(function(){busy=Math.max(0,busy-1);},200);});}
+function mount(){if(document.getElementById('navBar')||!document.body)return;
+ var st=document.createElement('style');st.id='navCss';st.textContent=CSS;(document.head||document.documentElement).appendChild(st);
+ var b=document.createElement('div');b.id='navBar';b.innerHTML='<button type="button" data-nav="back">‹ Back</button><b>'+esc(NAME||document.title||'')+'</b><button type="button" data-nav="home">⌂ Home</button>';
+ document.body.insertBefore(b,document.body.firstChild);document.documentElement.style.setProperty('--navh',b.offsetHeight+'px');
+ try{new MutationObserver(sched).observe(document.body,{childList:true,subtree:true});}catch(e){}sched();}
+document.addEventListener('pointerdown',function(){note();},true);
+document.addEventListener('click',function(ev){var b=ev.target.closest&&ev.target.closest('[data-nav]');if(!b)return;ev.preventDefault();ev.stopPropagation();if(b.getAttribute('data-nav')==='home')home();else back();},true);
+window.Nav={dbg:function(){return {stack:stack.slice(),cur:cur};},init:function(o){A=o||{};NAME=A.name||'';mount();},back:back,home:home};
+})();</script><script>Nav.init({name:document.title});</script>
+<style id="darkFix2">/* Rev 1.55: dark-mode contrast + selected state + header toggle (Ravi) */
+.tg2bar{display:flex;justify-content:flex-end;padding:6px 10px}.tg2f{min-height:36px;padding:0 12px;border-radius:8px;border:1px solid #8a94a3;background:#fff;color:#0b3d6b;font:700 14px system-ui,-apple-system,"Segoe UI",sans-serif;cursor:pointer}
+body:has([data-theme-tog]) .tg2n{display:none}
+@media screen and (min-width:761px){body:not(:has([data-theme-tog])):has(.tg2n) .top .bar{padding-right:196px!important}}
+@media print{.tg2f,.tg2n,.tg2bar{display:none!important}}
+</style>
+<script>/* Rev 1.55: light/dark toggle in the page header (Ravi) */
+(function(){if(window.__darkFix2)return;window.__darkFix2=1;
+function cur(){return document.documentElement.getAttribute('data-theme')==='light'?'light':'dark';}
+function lab(){var n=document.querySelectorAll('[data-theme-tog2]');for(var i=0;i<n.length;i++)n[i].textContent=cur()==='dark'?'☀ Light':'☾ Dark';}
+function ensure(){if(!document.body)return;var nb=document.getElementById('navBar'),ex=document.querySelector('[data-theme-tog2]');
+ if(ex){if(nb&&ex.classList.contains('tg2f')){var w0=ex.parentNode;ex.className='tg2n';nb.insertBefore(ex,nb.querySelector('[data-nav=home]'));if(w0&&w0.className==='tg2bar')w0.remove();}return;}
+ if(document.getElementById('themeBtn'))return;var b=document.createElement('button');b.type='button';b.setAttribute('data-theme-tog2','');b.setAttribute('aria-label','Switch between light and dark mode');
+ if(nb){b.className='tg2n';nb.insertBefore(b,nb.querySelector('[data-nav=home]'));}else{b.className='tg2f';var w=document.createElement('div');w.className='tg2bar';w.appendChild(b);document.body.insertBefore(w,document.body.firstChild);}lab();}
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-theme-tog2]');if(!b)return;e.preventDefault();e.stopPropagation();
+ var d=cur()==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',d);try{localStorage.setItem('tscTheme',d);}catch(x){}lab();},true);
+try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
+ensure();setTimeout(ensure,500);
+})();</script>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.89 · 11/18/2026</div>
+</body></html>
