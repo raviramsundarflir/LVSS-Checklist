@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('tscTheme')==='light'?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><title>Service Call Guide</title>
+<!doctype html><html lang="en"><head><script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('tscTheme')==='light'?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><title>Triage Call Guide</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* Layout: path tabs; each path is a row of phase columns, steps stacked top to bottom with connector lines. */
@@ -149,12 +149,17 @@ header .btn{align-self:flex-end}
 @media(max-width:420px){.nav3 .btn{padding:8px 10px;font-size:13px}}
 @media(max-width:560px){#navBar #ncBtn{min-width:0!important;padding:0 8px!important}}
 @media(max-width:759px){.sc:not(.min) .nav3{grid-template-columns:1fr 1fr}.sc:not(.min) .nav3 #gen{grid-column:1/-1;grid-row:1}.sc:not(.min) .nav3 #bk{grid-column:1;grid-row:2}.sc:not(.min) .nav3 #nx{grid-column:2;grid-row:2}}
+.opn{display:inline-block;margin-left:4px;font:700 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;background:#d1500d;color:#fff;border-radius:20px;padding:1px 8px;vertical-align:middle}
+.cn{font:600 12px var(--mono);color:var(--muted);flex:none}.cn.ok{color:var(--new)}
+.tr button.c .cn,.tr button.c .cn.ok{color:#fff}
+.trgh .gcn{margin-left:auto;font-weight:600}
+.stabs .cn{font-size:11px}
 @media print{.stabs{display:none}}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
 <div class="wrap"><a class="back" href="../#cat/sw">‹ SkyWatch</a>
 <header>
-  <div><h1>Service Call Guide</h1><p class="sub">When a customer calls in for SkyWatch service. Work through each section, tick items off as you go, and tap any section on the right to jump to it. Make a report at any point.</p></div>
+  <div><h1>Triage Call Guide</h1><p class="sub">When a customer calls in for SkyWatch service. Work through each section, tick items off as you go, and tap any section on the right to jump to it. Make a report at any point.</p></div>
   <button class="btn" id="pc" type="button">Past calls</button>
 </header>
 <div class="card" id="calls" hidden style="margin-top:14px"><p class="lbl">Past calls on this device</p><div id="cl"></div></div>
@@ -169,7 +174,7 @@ header .btn{align-self:flex-end}
 <aside class="card tr" id="tr" aria-label="Process list"></aside>
 </div>
 <div class="ov" id="lv" hidden><div class="dlg" role="dialog" aria-modal="true" aria-labelledby="lvt"><h3 id="lvt">Leave this call?</h3><p id="lvp"></p><div class="nav2"><button class="btn pri" id="lvs" type="button">Stay</button><button class="btn" id="lvo" type="button">Leave</button></div></div></div>
-<footer style="text-align:center;font-size:11px;color:var(--muted);opacity:.75;padding:18px 10px calc(16px + env(safe-area-inset-bottom))">Designed &amp; developed by Ravi Ramsundar · Rev 1.98 · 11/19/2026 4:36 PM EST</footer>
+<footer style="text-align:center;font-size:11px;color:var(--muted);opacity:.75;padding:18px 10px calc(16px + env(safe-area-inset-bottom))">Designed &amp; developed by Ravi Ramsundar · Rev 1.99 · 11/19/2026 5:10 PM EST</footer>
 </div>
 <script>var qrcode = function() {
   /**
@@ -1799,9 +1804,10 @@ header .btn{align-self:flex-end}
  return q;};for(var k in o)qrcode[k]=o[k];})();</script>
 <script>
 (function(){
-var P0='MFR-1JTC2-',KEY='scgState2',HK='scgHist',CK='scgCalls',REV='Rev 1.98 · 11/19/2026 4:36 PM EST';
+var P0='MFR-1JTC2-',KEY='scgState2',HK='scgHist',CK='scgCalls',REV='Rev 1.99 · 11/19/2026 5:10 PM EST';
 var BR=['Generator','Camera','NVR','Tower'],BS={Generator:'gen',Camera:'cam',NVR:'nvr',Tower:'twr'};
-var OUT=[['Fixed on the phone','fixed'],['Needs a site visit (quote)','n1'],['Needs a repair or RMA','rma'],['Hand off to devices group','dev']];
+var PSV='Potential site visit',QSV='Needs a site visit (quote)';
+var OUT=[['Fixed on the phone','fixed'],[QSV,'n1'],['Needs a repair or RMA','rma'],['Hand off to devices group','dev'],[PSV,'rma']];
 var COV=['Warranty','Extended warranty','Contract','Not covered'];
 var SRC=['SkyWatch Service Tracker','SAP SO or contract','Asked the customer','Local SkyWatch folder'];
 var GL='../skywatch/#generator';
@@ -1820,7 +1826,7 @@ cam:{q:'Camera issues',x:'Work through the camera problem.',c:[['Back to reporte
 nvr:{q:'NVR issues',x:'Work through the NVR problem.',c:[['Back to reported issues','issues']],it:[{l:'NVR status and lights'}].concat(TS)},
 twr:{q:'Tower issues',x:'Work through the tower problem.',c:[['Back to reported issues','issues']],it:[{l:'Which part of the tower (hydraulics, electrical, structure)'}].concat(TS)},
 fixed:{q:'Fixed on the phone',x:'Log what was done.',end:1,c:[],it:[{l:'Issue fixed',ck:1},{l:'How it was fixed'},{l:'Date fixed',t:'date'}]},
-rma:{q:'Repair or RMA',x:'Create an RMA to track the issue. Check the contract for a Z1 warranty allowance or a specific service line.',end:1,c:[],it:[{l:'RMA number'},{l:'Contract number'},{l:'Z1 allowance or service line used'},{l:'Part or device'}]},
+rma:{q:'Repair or RMA',x:'Create an RMA to track the issue. Enter the sales order or customer PO, and pick the line type (Z1, Z2, Z3 or ZM).',end:1,c:[],it:[{l:'RMA number'},{l:'Sales order or customer PO number'},{l:'Line type',t:'chips',o:['Z1','Z2','Z3','ZM']},{l:'Part or device'}]},
 dev:{q:'Hand off to devices group',x:'Use this when the tower is out of warranty or has no maintenance contract, or the issue is not a SkyWatch issue. Generate report, then email it.',end:1,devmail:1,c:[],it:[{l:'Devices group email',inp:'email'},{l:'Devices and serial numbers affected'},{l:'Why (out of warranty, no contract, or not SkyWatch)'}]},
 n1:{q:'New Service Request: gather info',x:'The call details carry over. Confirm what the quote needs.',c:[['Info collected','n2']],it:[{l:'Work needed'},{l:'Site access and dates needed'},{l:'Special requirements'}]},
 n2:{q:'Price it',x:'Pick services from the price list (list coming). Add costs, then the margin sets the price.',calc:1,c:[['Price is ready','n3']],it:[
@@ -1863,19 +1869,24 @@ function inWarr(){var e=warrEnd();return !!e&&e>=today();}
 function extCur(){var c=CV();if(!c.ps||!c.pe)return false;var s=pd(c.ps),e=pd(c.pe),t=today();return t>=s&&t<=e;}
 function defCov(){var c=CV().call;if(c==='Warranty'||c==='Extended warranty'||c==='Contract')return 'w';if(c==='Not covered')return 'n';return (inWarr()||extCur())?'w':'n';}
 function effCov(it){return it.wr?'n':(it.cv||defCov());}
+function outOf(it){var o=it.out;if(o===QSV||o===PSV)return effCov(it)==='w'?PSV:QSV;return o||'';}
 function covStatus(){var c=CV(),a={c:'',t:'Enter the delivery date to check the 1-year warranty.'},b={c:'',t:"Leave blank if there's no extended warranty."},e=warrEnd();
  if(e){var ok=e>=today();a={c:ok?'ok':'bad',t:(ok?'In warranty until ':'Warranty ended ')+fd(e)};}
  if(c.ps&&c.pe){var s=pd(c.ps),f=pd(c.pe),t=today();if(f<s)b={c:'bad',t:'End date is before the start date.'};else if(t<s)b={c:'',t:'Starts '+fd(s)};else if(t<=f)b={c:'ok',t:'Extended warranty current, ends '+fd(f)};else b={c:'bad',t:'Extended warranty ended '+fd(f)};}
  return {w:a,e:b};}
 function hasContent(){return !!((V.triage0||'').trim()||((CV()||{}).so||'').trim()||((CV()||{}).po||'').trim()||(V.triage1||'').trim()||X.is.some(function(i){return (i.d||'').trim();}));}
+function recSave(){if(!hasContent())return;try{var L=JSON.parse(lsGet('tscRecent')||'[]');if(!Array.isArray(L))L=[];L=L.filter(function(x){return !(x&&x.k==='service-call'&&x.id===ID);});var cu=(V.triage1||'').trim(),sr=fmtSerial();L.unshift({k:'service-call',n:'Triage Call Guide',id:ID,sn:cu?(cu+(sr?' · '+sr:'')):(sr||'Untitled call'),st:(S[cur()]||{}).q||'',done:!!X.gen,t:Date.now(),pos:{}});lsSet('tscRecent',JSON.stringify(L.slice(0,30)));}catch(e){}}
+function recDrop(id){try{var L=JSON.parse(lsGet('tscRecent')||'[]');if(!Array.isArray(L))return;lsSet('tscRecent',JSON.stringify(L.filter(function(x){return !(x&&x.k==='service-call'&&x.id===id);})));}catch(e){}}
+function markGen(){if(!X.gen)X.gen=Date.now();save();}
 function save(){var st={id:ID,H:H,C:C,V:V,X:X};lsSet(KEY,JSON.stringify(st));
  var L=getCalls(),i,f=-1;for(i=0;i<L.length;i++)if(L[i].id===ID)f=i;
- if(hasContent()){var e={id:ID,ts:Date.now(),s:st};if(f<0)L.unshift(e);else L[f]=e;lsSet(CK,JSON.stringify(L.slice(0,40)));}}
+ if(hasContent()){var e={id:ID,ts:Date.now(),s:st};if(f<0)L.unshift(e);else L[f]=e;lsSet(CK,JSON.stringify(L.slice(0,40)));}recSave();}
 function getCalls(){try{return JSON.parse(lsGet(CK)||'[]')||[];}catch(e){return [];}}
+function normV(){if(V.rma2&&['Z1','Z2','Z3','ZM'].indexOf(V.rma2)<0)delete V.rma2;}
 function load(){var o=null;try{o=JSON.parse(lsGet(KEY)||'null');}catch(e){}
  if(o&&o.H&&o.H.length&&S[o.H[o.H.length-1]]){ID=o.id||newId();H=o.H;C=o.C||{};V=o.V||{};X=o.X||fresh();}else{ID=newId();X=fresh();}
  if(!X.cov)X.cov={src:[]};if(!X.cov.src)X.cov.src=[];if(!X.is||!X.is.length)X.is=fresh().is;if(!X.ph)X.ph=[];
- try{HIST=JSON.parse(lsGet(HK)||'{}')||{};}catch(e){HIST={};}}
+ normV();try{HIST=JSON.parse(lsGet(HK)||'{}')||{};}catch(e){HIST={};}}
 function remember(k,v){v=(v||'').trim();if(!v)return;var L=HIST[k]||[],o=[v],i;for(i=0;i<L.length;i++){if(L[i]!==v)o.push(L[i]);}HIST[k]=o.slice(0,5);lsSet(HK,JSON.stringify(HIST));}
 function go(id){if(id!==cur())H.push(id);if(H.length>80)H.shift();save();render();}
 function has(id){var s=S[id],i;
@@ -1934,14 +1945,16 @@ function renderIssues(h){
    cd.appendChild(sub('Coverage','s',function(){return !!effCov(it);}));
    var cvw=document.createElement('div');cd.appendChild(cvw);
    var wl=document.createElement('label');wl.className='chk';var wc=document.createElement('input');wc.type='checkbox';wc.checked=!!it.wr;wl.appendChild(wc);wl.appendChild(document.createTextNode('Wear and tear item (never warranty)'));
-   function drawCv(){cvw.innerHTML='';var e=effCov(it);cvw.appendChild(chipRow(['Warranty','Non-warranty'],function(o){return (o==='Warranty')===(e==='w');},function(o){it.cv=(o==='Warranty'?'w':'n');if(it.cv==='w')it.wr=false;wc.checked=it.wr;save();drawCv();hint();}));}
-   wc.onchange=function(){it.wr=wc.checked;save();drawCv();hint();};
+   function drawCv(){cvw.innerHTML='';var e=effCov(it);cvw.appendChild(chipRow(['Warranty','Non-warranty'],function(o){return (o==='Warranty')===(e==='w');},function(o){it.cv=(o==='Warranty'?'w':'n');if(it.cv==='w')it.wr=false;wc.checked=it.wr;save();drawCv();hint();drawOut();tree();renderCh();}));}
+   wc.onchange=function(){it.wr=wc.checked;save();drawCv();hint();drawOut();tree();renderCh();};
    cd.appendChild(wl);
    var hn=document.createElement('p');hn.className='cap';cd.appendChild(hn);
-   function hint(){var e=effCov(it),m='';if(it.wr)m='Wear and tear: goes to the quote.';else if(!it.cv)m='Default from your coverage call. Tap to change.';if(e==='n'&&it.out==='Needs a repair or RMA'&&CV().call!=='Contract')m='Non-warranty with no contract. A quote or the devices group may fit better.';hn.textContent=m;}
+   function hint(){var e=effCov(it),m='';if(it.wr)m='Wear and tear: goes to the quote.';else if(!it.cv)m='Default from your coverage call. Tap to change.';if(e==='n'&&it.out==='Needs a repair or RMA'&&CV().call!=='Contract')m='Non-warranty with no contract. A quote or the devices group may fit better.';if(e==='w'&&outOf(it)===PSV)m='Warranty: a possible site visit needs no quote. It goes to Repair or RMA.';hn.textContent=m;}
+   var ow=document.createElement('div');
+   function drawOut(){ow.innerHTML='';var w=effCov(it)==='w',L=[OUT[0][0],w?PSV:QSV,OUT[2][0],OUT[3][0]];ow.appendChild(chipRow(L,function(o){return outOf(it)===o;},function(o){it.out=(outOf(it)===o?'':o);save();tree();renderCh();hint();}));}
    drawCv();hint();
    cd.appendChild(sub('Outcome','s',function(){return !!it.out;}));
-   var oc=OUT.map(function(p){return p[0];});cd.appendChild(chipRow(oc,function(o){return it.out===o;},function(o){it.out=(it.out===o?'':o);save();tree();renderCh();hint();}));
+   cd.appendChild(ow);drawOut();
    list.appendChild(cd);});}
  draw();
  var add=document.createElement('button');add.type='button';add.className='btn';add.textContent='+ Add another issue';add.onclick=function(){X.is.push({d:'',b:'',cv:null,wr:false,out:''});save();draw();renderCh();};h.appendChild(add);
@@ -2009,13 +2022,19 @@ function renderFu(h){var b=box('Follow-up reminder','s',function(){return !!X.fu
  o.onclick=function(){var s=pd(i.value||iso(fuMin()));var st=iso(s)+'T09:00:00',en=iso(s)+'T09:30:00';window.open('https://outlook.office.com/calendar/0/deeplink/compose?path=%2Fcalendar%2Faction%2Fcompose&rru=addevent&subject='+encodeURIComponent(fuSubj())+'&startdt='+encodeURIComponent(st)+'&enddt='+encodeURIComponent(en)+'&body='+encodeURIComponent(fuBody()),'_blank');};
  var f=document.createElement('button');f.type='button';f.className='btn';f.textContent='Download calendar file (.ics)';
  f.onclick=function(){var s=pd(i.value||iso(fuMin())),ds=iso(s).replace(/-/g,'');function ic(t){return String(t).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');}
-  var u=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//TSC//Service Call Guide//EN','BEGIN:VEVENT','UID:'+ID+'@service-call-guide','DTSTAMP:'+new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,''),'DTSTART:'+ds+'T090000','DTEND:'+ds+'T093000','SUMMARY:'+ic(fuSubj()),'DESCRIPTION:'+ic(fuBody()),'BEGIN:VALARM','TRIGGER:-PT15M','ACTION:DISPLAY','DESCRIPTION:Follow up with Sales','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
+  var u=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//TSC//Triage Call Guide//EN','BEGIN:VEVENT','UID:'+ID+'@service-call-guide','DTSTAMP:'+new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,''),'DTSTART:'+ds+'T090000','DTEND:'+ds+'T093000','SUMMARY:'+ic(fuSubj()),'DESCRIPTION:'+ic(fuBody()),'BEGIN:VALARM','TRIGGER:-PT15M','ACTION:DISPLAY','DESCRIPTION:Follow up with Sales','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
   dl_('SkyWatch quote follow-up.ics','text/calendar',u);};
  r.appendChild(o);r.appendChild(f);b.appendChild(r);h.appendChild(b);}
 function dl_(name,type,data){var bl=new Blob([data],{type:type+';charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},1500);}
 function nextChoices(){var sb={},so={},c=[];
  X.is.forEach(function(it){if((it.d||'').trim()&&it.b&&!sb[it.b]){sb[it.b]=1;c.push(['Troubleshoot: '+it.b,BS[it.b]]);}});
- X.is.forEach(function(it){if((it.d||'').trim()&&it.out&&!so[it.out]){so[it.out]=1;OUT.forEach(function(p){if(p[0]===it.out)c.push(['Go to: '+p[0],p[1]]);});}});return c;}
+ X.is.forEach(function(it){var o=outOf(it);if((it.d||'').trim()&&o){OUT.forEach(function(p){if(p[0]===o&&!so[p[1]]){so[p[1]]=1;c.push(['Go to: '+p[0],p[1]]);}});}});return c;}
+function cnt(id){var s=S[id],n=0,t=0,i,o;
+ if(s.custom==='cov'){var c=CV();[c.ct,c.so,c.z1,c.rma,c.dd,c.ps,c.pe,c.call].forEach(function(v){t++;if((v||'').trim())n++;});t++;if(c.src.length)n++;return {n:n,t:t};}
+ if(s.custom==='issues'){X.is.forEach(function(it){t+=4;if((it.d||'').trim())n++;if(it.b)n++;if(it.cv||it.wr||CV().call)n++;if(it.out)n++;});return {n:n,t:t};}
+ for(i=0;i<s.it.length;i++){o=s.it[i];if(o.t==='link'||o.t==='reseller')continue;t++;if(itemDone(id,i)&&!(o.def!==undefined&&V[id+i]===undefined))n++;}
+ return {n:n,t:t};}
+function cn(b,id){var c=cnt(id),sp=document.createElement('span');sp.className='cn'+(c.t&&c.n===c.t?' ok':'');sp.textContent=c.n+'/'+c.t;sp.setAttribute('aria-label',c.n+' of '+c.t+' items filled in');b.appendChild(sp);}
 function renderCh(){var ch=$('ch'),id=cur(),s=S[id];ch.innerHTML='';
  if(s.end){var e=document.createElement('p');e.className='endm';e.textContent='End of this path';ch.appendChild(e);}
  var cs=s.c.slice();if(id==='issues')cs=cs.concat(nextChoices());
@@ -2024,7 +2043,7 @@ function renderCh(){var ch=$('ch'),id=cur(),s=S[id];ch.innerHTML='';
  cs.forEach(function(c,n){var b=document.createElement('button');b.type='button';b.className='ch'+(n===nx?' nx':'');b.textContent=c[0];b.onclick=function(){go(c[1]);window.scrollTo(0,0);};ch.appendChild(b);});}
 function relevant(){var ids=['triage','cov','issues'],seen={triage:1,cov:1,issues:1};
  function add(i){if(!seen[i]){seen[i]=1;ids.push(i);}}
- X.is.forEach(function(it){if(!(it.d||'').trim())return;if(it.b)add(BS[it.b]);OUT.forEach(function(p){if(p[0]===it.out){add(p[1]);if(p[1]==='n1'){add('n2');add('n3');add('n4');}}});});
+ X.is.forEach(function(it){if(!(it.d||'').trim())return;if(it.b)add(BS[it.b]);OUT.forEach(function(p){if(p[0]===outOf(it)){add(p[1]);if(p[1]==='n1'){add('n2');add('n3');add('n4');}}});});
  ORDER.forEach(function(i){if(has(i))add(i);});return ids;}
 var panelTimer=null;
 function setPanel(min,user){$('sc').classList.toggle('min',!!min);if(user){clearTimeout(panelTimer);try{sessionStorage.setItem('scgPanel',min?'min':'open');}catch(e){}}}
@@ -2037,22 +2056,20 @@ function tree(){var tr=$('tr');tr.innerHTML='';
  var mn=document.createElement('button');mn.type='button';mn.className='trmn';mn.textContent='›';mn.setAttribute('aria-label','Minimize the process list');mn.onclick=function(){setPanel(true,1);};hd.appendChild(mn);tr.appendChild(hd);
  var r=relevant(),dn=0;r.forEach(function(i){if(full(i))dn++;});
  var pp=document.createElement('p');pp.className='trp';pp.textContent=dn+' of '+r.length+' sections done';tr.appendChild(pp);
- GROUPS.forEach(function(g,gi){var gb=document.createElement('div');gb.className='trg'+(g.r.some(function(n){return n[0]===cur();})?' cur':'');var gh=document.createElement('div');gh.className='trgh';var ci=document.createElement('i');ci.textContent=gi+1;gh.appendChild(ci);gh.appendChild(document.createTextNode(g.t));gb.appendChild(gh);
+ GROUPS.forEach(function(g,gi){var gb=document.createElement('div');gb.className='trg'+(g.r.some(function(n){return n[0]===cur();})?' cur':'');var gh=document.createElement('div');gh.className='trgh';var ci=document.createElement('i');ci.textContent=gi+1;gh.appendChild(ci);gh.appendChild(document.createTextNode(g.t));var gn=0,gt=0;g.r.forEach(function(n){var c=cnt(n[0]);gn+=c.n;gt+=c.t;});var gs=document.createElement('span');gs.className='gcn';gs.textContent=gn+'/'+gt;gh.appendChild(gs);gb.appendChild(gh);
   g.r.forEach(function(n){var b=document.createElement('button');b.type='button';var cls=[];if(n[2])cls.push('sub');
    if(n[0]===cur()){cls.push('c');b.setAttribute('aria-current','step');}else if(has(n[0]))cls.push('d');b.className=cls.join(' ');
    var sp=document.createElement('span');sp.textContent=n[1];b.appendChild(sp);if(n[0]===cur()){var hr=document.createElement('span');hr.className='here';hr.textContent='Here';b.appendChild(hr);}
-   if(full(n[0])){var k=document.createElement('span');k.className='ok';k.textContent='✓';k.setAttribute('aria-label','complete');b.appendChild(k);}
-   else if(has(n[0])){var q=document.createElement('span');q.className='ip';q.textContent='●';q.setAttribute('aria-label','started, not finished');b.appendChild(q);}
+   cn(b,n[0]);
    b.onclick=function(){keepOpen();go(n[0]);window.scrollTo(0,0);};gb.appendChild(b);});
   tr.appendChild(gb);});
- var tb=document.createElement('button');tb.type='button';tb.className='trtab';tb.setAttribute('aria-label','Expand the process list');tb.textContent='‹ Process';tb.onclick=function(){setPanel(false,1);};tr.appendChild(tb);}
+ var tb=document.createElement('button');tb.type='button';tb.className='trtab';tb.setAttribute('aria-label','Expand the process list');tb.textContent='‹ Process';tb.onclick=function(){setPanel(false,1);};tr.appendChild(tb);if($('tb'))tabs();}
 function grp(id){var i;for(i=0;i<GROUPS.length;i++){if(GROUPS[i].r.some(function(n){return n[0]===id;}))return i;}return 0;}
 function tabs(){var gi=grp(cur()),g=GROUPS[gi],tb=$('tb'),act=null;tb.innerHTML='';$('lb').textContent='Section '+(gi+1)+' of '+GROUPS.length+' · '+g.t;
  g.r.forEach(function(n){var on=n[0]===cur(),b=document.createElement('button'),cls=[];b.type='button';b.setAttribute('role','tab');b.setAttribute('aria-selected',on?'true':'false');
   if(n[2])cls.push('sub');if(on)cls.push('c');else if(has(n[0]))cls.push('d');b.className=cls.join(' ');
   var sp=document.createElement('span');sp.textContent=n[1];b.appendChild(sp);
-  if(full(n[0])){var k=document.createElement('span');k.className='ok';k.textContent='✓';k.setAttribute('aria-label','complete');b.appendChild(k);}
-  else if(has(n[0])){var q=document.createElement('span');q.className='ip';q.textContent='●';q.setAttribute('aria-label','started, not finished');b.appendChild(q);}
+  cn(b,n[0]);
   b.onclick=function(){if(on)return;keepOpen();var t0=tb.getBoundingClientRect().top;go(n[0]);var t1=$('tb').getBoundingClientRect().top;if(t1!==t0)window.scrollBy(0,t1-t0);};
   tb.appendChild(b);if(on)act=b;});
  if(act)tb.scrollLeft=Math.max(0,act.offsetLeft-(tb.clientWidth-act.offsetWidth)/2);
@@ -2061,13 +2078,13 @@ function render(){var id=cur(),s=S[id];BXS=[];$('q').textContent=s.q;tabs();$('t
  if(s.custom==='cov')renderCov(it);else if(s.custom==='issues')renderIssues(it);else renderItems(id,it);
  if(s.calc){var cd=document.createElement('div');cd.id='calc';cd.className='calc';it.appendChild(cd);calcUp();}
  if(s.fu)renderFu(it);
- if(s.devmail){var r=document.createElement('div');r.className='nav2';var b=document.createElement('button');b.type='button';b.className='btn pri';b.textContent='Email to devices group';b.onclick=function(){$('ta').value=reportText();$('rp').hidden=false;location.href='mailto:'+encodeURIComponent((V.dev0||'').trim())+'?subject='+encodeURIComponent(subj('Devices group handoff'))+'&body='+encodeURIComponent($('ta').value);};var c=document.createElement('button');c.type='button';c.className='btn';c.textContent='Copy report';c.onclick=function(){$('ta').value=reportText();$('rp').hidden=false;copy();};r.appendChild(b);r.appendChild(c);it.appendChild(r);}
+ if(s.devmail){var r=document.createElement('div');r.className='nav2';var b=document.createElement('button');b.type='button';b.className='btn pri';b.textContent='Email to devices group';b.onclick=function(){markGen();$('ta').value=reportText();$('rp').hidden=false;location.href='mailto:'+encodeURIComponent((V.dev0||'').trim())+'?subject='+encodeURIComponent(subj('Devices group handoff'))+'&body='+encodeURIComponent($('ta').value);};var c=document.createElement('button');c.type='button';c.className='btn';c.textContent='Copy report';c.onclick=function(){markGen();$('ta').value=reportText();$('rp').hidden=false;copy();};r.appendChild(b);r.appendChild(c);it.appendChild(r);}
  if(BXS.length){var lg=document.createElement('p');lg.className='lg';lg.textContent='Highlighted groups are suggested. Optional groups can be skipped. Nothing here stops you from moving on.';it.insertBefore(lg,it.firstChild);}refreshBx();renderCh();$('bk').disabled=H.length<2;tree();}
 /* report */
 function repData(){var d={date:new Date().toLocaleString(),secs:[],open:[],flags:[],ph:X.ph.length,cust:(V.triage1||'').trim(),serial:fmtSerial(),so:(CV().so||'').trim(),po:(CV().po||'').trim(),rma:(CV().rma||'').trim()},u=V.triage3;
  ORDER.forEach(function(id){if(!has(id))return;var s=S[id],rows=[];
   if(s.custom==='cov'){var c=CV(),st=covStatus();if(c.src.length)rows.push(['Resources used',c.src.join(', ')]);if(c.ct)rows.push(['Contract number',c.ct]);if(c.z1)rows.push(['Z1 allowance or service line',c.z1]);if(c.rma)rows.push(['RMA number',c.rma]);if(c.dd)rows.push(['Delivery date',c.dd+' ('+st.w.t+')']);if(c.ps||c.pe)rows.push(['Extended warranty',(c.ps||'?')+' to '+(c.pe||'?')+' ('+st.e.t+')']);if(c.call)rows.push(['Coverage call',c.call]);}
-  else if(s.custom==='issues'){X.is.forEach(function(t,n){if(!(t.d||'').trim()&&!t.b&&!t.out)return;var e=effCov(t);rows.push(['Issue '+(n+1),(t.d||'(no description)')+' | '+(t.b||'no branch')+' | '+(e==='w'?'Warranty':'Non-warranty')+(t.wr?' (wear and tear)':'')+' | '+(t.out||'no outcome')]);});if(X.ph.length)rows.push(['Photos',X.ph.length+' attached (saved with the report on the device)']);}
+  else if(s.custom==='issues'){X.is.forEach(function(t,n){if(!(t.d||'').trim()&&!t.b&&!t.out)return;var e=effCov(t);rows.push(['Issue '+(n+1),(t.d||'(no description)')+' | '+(t.b||'no branch')+' | '+(e==='w'?'Warranty':'Non-warranty')+(t.wr?' (wear and tear)':'')+' | '+(outOf(t)||'no outcome')]);});if(X.ph.length)rows.push(['Photos',X.ph.length+' attached (saved with the report on the device)']);}
   else{s.it.forEach(function(o,i){if(o.t==='link')return;var v=String(getv(id,i)).trim(),dn=itemDone(id,i),k=id+i;if(id==='triage'&&i===0)v=fmtSerial();
    if(o.t==='bind'){v=(CV()[o.b]||'').trim();if(v)rows.push([o.l,v]);return;}
    if(o.t==='reseller'){var R=X.rs||{};if(R.on)rows.push(['Bought through a reseller',(R.name||'(name not entered)')+' (PO to FLIR: '+((CV().po||'').trim()||'not entered')+')']);return;}
@@ -2076,23 +2093,43 @@ function repData(){var d={date:new Date().toLocaleString(),secs:[],open:[],flags
    if(id==='n3'&&X.fu)rows.push(['Follow-up reminder',fd(fuDate())]);}
   d.secs.push({t:s.q,g:GOF[id],rows:rows});});
  d.urg=u||'';return d;}
-function reportText(){var d=repData(),o='SkyWatch service call report\n';
+function quoteData(){var c=calcVals();if(!(c.cost>0))return null;
+ var q={cust:(V.triage1||'').trim(),site:(V.triage2||'').trim(),cn:(V.triage4||'').trim(),cp:(V.triage5||'').trim(),ce:(V.triage6||'').trim(),serial:fmtSerial(),so:(CV().so||'').trim(),po:(CV().po||'').trim(),rma:(CV().rma||'').trim(),lines:[],price:c.price};
+ var svc=String(getv('n2',0)).trim();
+ if(svc)q.lines.push(['Services from price list',svc]);
+ if(c.labor>0)q.lines.push(['Labor',num('n2',1)+' hrs x '+money(num('n2',2))+'/hr = '+money(c.labor)]);
+ [['Travel and accommodations',3],['Parts',4],['Consumables',5]].forEach(function(p){var v=num('n2',p[1]);if(v>0)q.lines.push([p[0],money(v)]);});
+ return q;}
+function quoteText(){var q=quoteData();if(!q)return '';var o='\nQUOTE REQUEST\n';
+ o+='  Customer: '+(q.cust||'-')+(q.site?' | Site: '+q.site:'')+'\n';
+ o+='  Point of contact: '+(q.cn||'-')+(q.cp?' | '+q.cp:'')+(q.ce?' | '+q.ce:'')+'\n';
+ o+='  Tower serial: '+(q.serial||'-')+(q.so?' | SO: '+q.so:'')+(q.po?' | PO: '+q.po:'')+(q.rma?' | RMA: '+q.rma:'')+'\n';
+ o+='  Line items\n';q.lines.forEach(function(l){o+='    '+l[0]+': '+l[1]+'\n';});
+ o+='  Quote price: '+(q.price?money(q.price):'-')+'\n';return o+'\n';}
+function quoteHtml(){var q=quoteData();if(!q)return '';var td='style="padding:3px 8px 3px 0;vertical-align:top"',h='<div style="border:3px solid #0b3d6b;border-radius:8px;padding:10px 14px;margin:0 0 14px"><div style="font:700 11px system-ui;letter-spacing:.08em;text-transform:uppercase;color:#51627a;margin:0 0 6px">Quote request</div><table style="width:100%;border-collapse:collapse;font-size:14px">';
+ function r(a,b){if(b)h+='<tr><td '+td+'><b>'+esc(a)+'</b></td><td '+td+'>'+esc(b)+'</td></tr>';}
+ r('Customer',q.cust+(q.site?' · '+q.site:''));r('Point of contact',[q.cn,q.cp,q.ce].filter(Boolean).join(' · '));r('Tower serial',q.serial);r('SO / PO / RMA',[q.so&&'SO '+q.so,q.po&&'PO '+q.po,q.rma&&'RMA '+q.rma].filter(Boolean).join(' · '));
+ q.lines.forEach(function(l){r(l[0],l[1]);});
+ h+='<tr><td '+td+'><b>Quote price</b></td><td '+td+'><b style="font-size:18px">'+esc(q.price?money(q.price):'-')+'</b></td></tr></table></div>';return h;}
+function reportText(){var d=repData(),o='SkyWatch triage call report\n';
+ o+=quoteText();
  if(d.urg)o+='URGENCY: '+d.urg.toUpperCase()+'\n';
  o+='Customer: '+(d.cust||'-')+' | Tower: '+(d.serial||'-')+(d.so?' | SO: '+d.so:'')+(d.po?' | PO: '+d.po:'')+(d.rma?' | RMA: '+d.rma:'')+'\nDate: '+d.date+'\n';
  d.flags.forEach(function(f){o+='FLAG: '+f+'\n';});
  d.secs.forEach(function(s){o+='\n'+s.t+'\n';s.rows.forEach(function(r){o+='  '+r[0]+': '+r[1]+'\n';});});
  if(!d.secs.length)o+='\nNothing entered yet.\n';
- if(d.open.length){o+='\nNot yet completed\n';d.open.forEach(function(x){o+='  '+x+'\n';});}return o;}
+ return o;}
 function subj(p){var c=(V.triage1||'').trim(),t=fmtSerial();return (p||'SkyWatch New Service Request')+(c?' - '+c:'')+(t?' - tower '+t:'');}
-function fname(){var c=(V.triage1||'Customer').trim()||'Customer',t=fmtSerial()||'no serial';return (c+' - '+t+' - '+iso(new Date())+' - Service Call').replace(/[\\\/:*?"<>|]/g,'');}
+function fname(){var c=(V.triage1||'Customer').trim()||'Customer',t=fmtSerial()||'no serial';return (c+' - '+t+' - '+iso(new Date())+' - Triage Call').replace(/[\\\/:*?"<>|]/g,'');}
 function qrSvg(d){if(!d.serial&&!d.cust&&!d.so&&!d.po)return '';try{var o={a:'SKYWATCH-CALL',v:1,t:d.serial,c:d.cust.slice(0,40),d:iso(new Date())};if(d.so)o.so=d.so;if(d.po)o.po=d.po;if(d.rma)o.rma=d.rma;if(d.urg)o.u=d.urg;var q=qrcode(0,'L');q.addData(JSON.stringify(o));q.make();return q.createSvgTag({cellSize:3,margin:2,scalable:true});}catch(e){return '';}}
 function reportHtml(photos){var d=repData(),UC={'Hard down':'#c0392b','Safety Concern':'#b7791f','N/A':'#51627a','Tower down':'#c0392b','Degraded':'#b7791f','Routine':'#1b7f5a'},q=qrSvg(d);
  var h='<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(fname())+'</title><style>*{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{font:14px/1.45 system-ui,Arial,sans-serif;color:#14233a;max-width:820px;margin:0 auto;padding:24px}.bn{display:flex;justify-content:space-between;gap:14px;border:3px solid #0b3d6b;border-radius:8px;padding:12px 14px;margin:0 0 14px;background:#f3f7fb}.bt1{font:700 11px system-ui;letter-spacing:.08em;text-transform:uppercase;color:#51627a}.bc{font-size:24px;font-weight:700;line-height:1.15}.bs{font-size:18px;font-weight:600}.bm{color:#51627a;margin:4px 0}.ug{display:inline-block;color:#fff;font-weight:700;padding:3px 12px;border-radius:999px;margin-top:4px}.qr{text-align:center;flex:none}.qr svg{width:108px;height:108px}.qc{font-size:10px;color:#51627a}.grp{border:2px solid #0b3d6b;border-radius:8px;margin:14px 0;overflow:hidden}.gt{background:#dbe8f6;color:#0b3d6b;font:700 12px system-ui;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px}.sec{padding:6px 12px 8px;border-top:1px solid #cfd8e3;break-inside:avoid}.sec:first-of-type{border-top:0}h2{font-size:15px;margin:6px 0}table{border-collapse:collapse;width:100%}td{padding:3px 8px 3px 0;vertical-align:top}td:first-child{width:36%;color:#51627a}.fl{background:#fff3cf;border:1px solid #f2b705;padding:6px 10px;margin:8px 0}.ph{display:flex;flex-wrap:wrap;gap:8px}.ph img{width:240px;max-width:48%;border:1px solid #cfd8e3}footer{margin-top:28px;font-size:11px;color:#777;text-align:center}@media print{.ph img{break-inside:avoid}}</style></head><body>';
- h+='<div class="bn"><div><div class="bt1">SkyWatch service call report</div><div class="bc">'+esc(d.cust||'No customer')+'</div><div class="bs">Tower '+esc(d.serial||'no serial')+'</div><div class="bm">'+esc(d.date)+(d.so?' · SO '+esc(d.so):'')+(d.po?' · PO '+esc(d.po):'')+(d.rma?' · RMA '+esc(d.rma):'')+'</div>'+(d.urg?'<span class="ug" style="background:'+(UC[d.urg]||'#51627a')+'">'+esc(d.urg)+'</span>':'')+'</div>'+(q?'<div class="qr">'+q+'<div class="qc">Call details</div></div>':'')+'</div>';
+ h+='<div class="bn"><div><div class="bt1">SkyWatch triage call report</div><div class="bc">'+esc(d.cust||'No customer')+'</div><div class="bs">Tower '+esc(d.serial||'no serial')+'</div><div class="bm">'+esc(d.date)+(d.so?' · SO '+esc(d.so):'')+(d.po?' · PO '+esc(d.po):'')+(d.rma?' · RMA '+esc(d.rma):'')+'</div>'+(d.urg?'<span class="ug" style="background:'+(UC[d.urg]||'#51627a')+'">'+esc(d.urg)+'</span>':'')+'</div>'+(q?'<div class="qr">'+q+'<div class="qc">Call details</div></div>':'')+'</div>';
+ h+=quoteHtml();
  d.flags.forEach(function(f){h+='<div class="fl">'+esc(f)+'</div>';});
  GROUPS.forEach(function(g){var ss=d.secs.filter(function(x){return x.g===g.t;});if(!ss.length)return;h+='<div class="grp"><div class="gt">'+esc(g.t)+'</div>';
   ss.forEach(function(x){h+='<div class="sec"><h2>'+esc(x.t)+'</h2><table>';x.rows.forEach(function(r){h+='<tr><td>'+esc(r[0])+'</td><td>'+esc(r[1])+'</td></tr>';});h+='</table></div>';});h+='</div>';});
- if(d.open.length){h+='<div class="grp"><div class="gt">Not yet completed</div><div class="sec"><ul>';d.open.forEach(function(x){h+='<li>'+esc(x)+'</li>';});h+='</ul></div></div>';}
+ 
  if(photos&&photos.length){h+='<div class="grp"><div class="gt">Photos</div><div class="sec"><div class="ph">';photos.forEach(function(p){h+='<img alt="Customer photo" src="'+p+'">';});h+='</div></div></div>';}
  return h+'<footer>Designed &amp; developed by Ravi Ramsundar · '+REV+'</footer></body></html>';}
 function allPhotos(cb){var out=[],n=X.ph.length;if(!n){cb(out);return;}X.ph.forEach(function(p,i){pGet(p.id,function(d){out[i]=d;n--;if(!n)cb(out.filter(function(x){return x;}));});});}
@@ -2102,19 +2139,19 @@ function drawCalls(){var L=getCalls(),h=$('cl');h.innerHTML='';
  if(!L.length){var p=document.createElement('p');p.className='cap';p.textContent='No saved calls yet. Calls save on this device as you type.';h.appendChild(p);return;}
  L.forEach(function(e){var s=e.s||{},v=s.V||{},x=s.X||{},r=document.createElement('div');r.className='crow';
   var t=document.createElement('span');var sn=(x.pre&&(v.triage0||'').trim())?P0+pad4((v.triage0||'').replace(/\D/g,'').slice(0,4)):(v.triage0||'');
-  t.textContent=((v.triage1||'No customer')+' · '+(sn||'no serial')+' · '+new Date(e.ts).toLocaleDateString()+(v.triage3?' · '+v.triage3:''));r.appendChild(t);
-  var o=document.createElement('button');o.type='button';o.className='btn sm';o.textContent=e.id===ID?'Open (current)':'Open';o.onclick=function(){ID=e.id;H=s.H&&s.H.length?s.H:['triage'];C=s.C||{};V=s.V||{};X=s.X||fresh();if(!X.cov)X.cov={src:[]};if(!X.is||!X.is.length)X.is=fresh().is;if(!X.ph)X.ph=[];lsSet(KEY,JSON.stringify({id:ID,H:H,C:C,V:V,X:X}));$('calls').hidden=true;$('rp').hidden=true;render();window.scrollTo(0,0);};
+  t.textContent=((v.triage1||'No customer')+' · '+(sn||'no serial')+' · '+new Date(e.ts).toLocaleDateString()+(v.triage3?' · '+v.triage3:''));if(!x.gen){var og=document.createElement('span');og.className='opn';og.textContent='Open';t.appendChild(document.createTextNode(' '));t.appendChild(og);}r.appendChild(t);
+  var o=document.createElement('button');o.type='button';o.className='btn sm';o.textContent=e.id===ID?'Open (current)':'Open';o.onclick=function(){ID=e.id;H=s.H&&s.H.length?s.H:['triage'];C=s.C||{};V=s.V||{};X=s.X||fresh();if(!X.cov)X.cov={src:[]};if(!X.is||!X.is.length)X.is=fresh().is;if(!X.ph)X.ph=[];normV();lsSet(KEY,JSON.stringify({id:ID,H:H,C:C,V:V,X:X}));$('calls').hidden=true;$('rp').hidden=true;render();window.scrollTo(0,0);};
   var d=document.createElement('button');d.type='button';d.className='btn sm';d.textContent='Delete';d.onclick=function(){if(!d.dataset.s){d.dataset.s=1;d.textContent='Tap again to delete';setTimeout(function(){delete d.dataset.s;d.textContent='Delete';},3000);return;}
-   (x.ph||[]).forEach(function(p){pDel(p.id);});lsSet(CK,JSON.stringify(getCalls().filter(function(q){return q.id!==e.id;})));if(e.id===ID)startNew();drawCalls();};
+   (x.ph||[]).forEach(function(p){pDel(p.id);});lsSet(CK,JSON.stringify(getCalls().filter(function(q){return q.id!==e.id;})));recDrop(e.id);if(e.id===ID)startNew();drawCalls();};
   r.appendChild(o);r.appendChild(d);h.appendChild(r);});}
 function startNew(){ID=newId();H=['triage'];C={};V={};X=fresh();lsSet(KEY,JSON.stringify({id:ID,H:H,C:C,V:V,X:X}));$('rp').hidden=true;render();}
 $('bk').onclick=function(){if(H.length>1){H.pop();save();render();}};
-$('gen').onclick=function(){$('ta').value=reportText();$('rp').hidden=false;$('cpm').textContent='';$('rp').scrollIntoView({behavior:'smooth',block:'nearest'});};
+$('gen').onclick=function(){markGen();$('ta').value=reportText();$('rp').hidden=false;$('cpm').textContent='';$('rp').scrollIntoView({behavior:'smooth',block:'nearest'});};
 $('hide').onclick=function(){$('rp').hidden=true;};
 $('cp').onclick=copy;
 $('mail').onclick=function(){location.href='mailto:Christopher.Skrocki@teledyne.com,Andy.Saksa@teledyne.com?cc=SkyWatch.Support@teledyne.com&subject='+encodeURIComponent(subj())+'&body='+encodeURIComponent($('ta').value);};
-$('sv').onclick=function(){X.sv=Date.now();save();allPhotos(function(ph){dl_(fname()+'.html','text/html',reportHtml(ph));$('cpm').textContent='Saved to this device. Open the file to view it with the photos.';});};
-$('pr').onclick=function(){X.sv=Date.now();save();allPhotos(function(ph){var f=document.createElement('iframe');f.style.cssText='position:absolute;width:0;height:0;border:0;left:-9999px';document.body.appendChild(f);var dc=f.contentWindow.document;dc.open();dc.write(reportHtml(ph));dc.close();setTimeout(function(){try{f.contentWindow.focus();f.contentWindow.print();}catch(e){$('cpm').textContent='Printing is not available here. Use Save report.';}setTimeout(function(){f.remove();},60000);},400);});};
+$('sv').onclick=function(){X.sv=Date.now();X.gen=X.gen||X.sv;save();allPhotos(function(ph){dl_(fname()+'.html','text/html',reportHtml(ph));$('cpm').textContent='Saved to this device. Open the file to view it with the photos.';});};
+$('pr').onclick=function(){X.sv=Date.now();X.gen=X.gen||X.sv;save();allPhotos(function(ph){var f=document.createElement('iframe');f.style.cssText='position:absolute;width:0;height:0;border:0;left:-9999px';document.body.appendChild(f);var dc=f.contentWindow.document;dc.open();dc.write(reportHtml(ph));dc.close();setTimeout(function(){try{f.contentWindow.focus();f.contentWindow.print();}catch(e){$('cpm').textContent='Printing is not available here. Use Save report.';}setTimeout(function(){f.remove();},60000);},400);});};
 $('nx').onclick=function(){var gi=grp(cur());if(gi<GROUPS.length-1){go(GROUPS[gi+1].r[0][0]);window.scrollTo(0,0);}};
 function newCall(){save();startNew();window.scrollTo(0,0);}
 var ncT=null;
@@ -2140,7 +2177,10 @@ document.addEventListener('visibilitychange',function(){if(document.hidden)save(
 window.addEventListener('pagehide',function(){save();});
 $('tr').addEventListener('pointerdown',keepOpen);$('tr').addEventListener('touchmove',keepOpen);
 window.__scg={S:S,get:function(){return {V:V,X:X,C:C,H:H};},rep:reportText,fs:fmtSerial};
-load();render();panelInit();
+function resumeCall(id){var L=getCalls(),i,e=null;for(i=0;i<L.length;i++)if(L[i].id===id)e=L[i];if(!e)return false;var s=e.s||{};ID=e.id;H=(s.H&&s.H.length&&S[s.H[s.H.length-1]])?s.H:['triage'];C=s.C||{};V=s.V||{};X=s.X||fresh();if(!X.cov)X.cov={src:[]};if(!X.cov.src)X.cov.src=[];if(!X.is||!X.is.length)X.is=fresh().is;if(!X.ph)X.ph=[];normV();lsSet(KEY,JSON.stringify({id:ID,H:H,C:C,V:V,X:X}));return true;}
+load();
+(function(){var m=/(?:^#|&)resume=([^&]+)/.exec(location.hash);if(!m)return;var rid=decodeURIComponent(m[1]);if(!resumeCall(rid))recDrop(rid);try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}})();
+render();panelInit();
 })();
 </script>
 <script>/* ===== shared: on-screen Back / Home bar (Ravi, 2026-11-04) =====
@@ -2197,5 +2237,5 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
 ensure();setTimeout(ensure,500);
 })();</script>
-<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.98 · 11/19/2026</div>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.99 · 11/19/2026</div>
 </body></html>
