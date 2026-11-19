@@ -135,6 +135,21 @@ header .btn{align-self:flex-end}
 .dlg h3{font-family:var(--display);font-size:24px;margin:0 0 6px}
 .dlg p{margin:0 0 10px;color:var(--muted)}
 @media print{.srow,.box{break-inside:avoid}}
+.stabs{position:relative;display:flex;gap:4px;margin:0 0 12px;border-bottom:2px solid var(--line);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.stabs::-webkit-scrollbar{display:none}
+.stabs button{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:48px;padding:8px 14px;border:0;border-bottom:4px solid transparent;border-radius:8px 8px 0 0;background:transparent;color:var(--muted);font:600 14px var(--body);white-space:nowrap;cursor:pointer;touch-action:manipulation}
+.stabs button:hover{background:var(--navy-soft)}
+.stabs button.d{color:var(--ink)}
+.stabs button.c{background:var(--navy-soft);color:var(--ink);border-bottom-color:#d1500d}
+.stabs button.sub{font-weight:400;font-size:13px}
+.stabs button:focus-visible{outline:3px solid var(--signal);outline-offset:-3px}
+.stabs .ok{color:var(--new)}.stabs .ip{color:#d1500d;font-size:12px}
+.nav3{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}
+.nav3 #bk{grid-column:1;justify-self:start}.nav3 #gen{grid-column:2}.nav3 #nx{grid-column:3;justify-self:end}
+@media(max-width:420px){.nav3 .btn{padding:8px 10px;font-size:13px}}
+@media(max-width:560px){#navBar #ncBtn{min-width:0!important;padding:0 8px!important}}
+@media(max-width:759px){.sc:not(.min) .nav3{grid-template-columns:1fr 1fr}.sc:not(.min) .nav3 #gen{grid-column:1/-1;grid-row:1}.sc:not(.min) .nav3 #bk{grid-column:1;grid-row:2}.sc:not(.min) .nav3 #nx{grid-column:2;grid-row:2}}
+@media print{.stabs{display:none}}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
 <div class="wrap"><a class="back" href="../#cat/sw">‹ SkyWatch</a>
@@ -145,8 +160,8 @@ header .btn{align-self:flex-end}
 <div class="card" id="calls" hidden style="margin-top:14px"><p class="lbl">Past calls on this device</p><div id="cl"></div></div>
 <div class="sc" id="sc">
 <div>
-<div class="card" id="main"><p class="lbl">Section</p><h2 class="q" id="q"></h2><p class="tx" id="tx"></p><div id="it"></div><div id="ch"></div>
-<div class="nav2"><button class="btn" id="bk" type="button">‹ Back</button><button class="btn pri" id="gen" type="button">Generate report</button><button class="btn" id="nw" type="button">New call</button></div></div>
+<div class="card" id="main"><p class="lbl" id="lb">Section</p><h2 class="q" id="q"></h2><div class="stabs" id="tb" role="tablist" aria-label="Steps in this section"></div><p class="tx" id="tx"></p><div id="it"></div><div id="ch"></div>
+<div class="nav2 nav3"><button class="btn" id="bk" type="button">‹ Back</button><button class="btn pri" id="gen" type="button">Generate report</button><button class="btn" id="nx" type="button">Next ›</button></div></div>
 <div class="card rp" id="rp" hidden><p class="lbl">Report</p><textarea id="ta" readonly aria-label="Service call report"></textarea>
 <div class="nav2"><button class="btn pri" id="mail" type="button">Email to Sales</button><button class="btn" id="cp" type="button">Copy</button><button class="btn" id="sv" type="button">Save report</button><button class="btn" id="pr" type="button">Print or save PDF</button><button class="btn" id="hide" type="button">Hide</button></div>
 <p class="cap" id="cpm" role="status"></p><p class="cap">Email to Sales opens your email app addressed to the Sr. Sales Manager and Director US Sales, with SkyWatch.Support@teledyne.com copied. Check the recipients before sending. Email carries the text only. Save report keeps the photos with the report on this device. Before you close a finished call, tap Save report to keep a copy.</p></div>
@@ -154,7 +169,7 @@ header .btn{align-self:flex-end}
 <aside class="card tr" id="tr" aria-label="Process list"></aside>
 </div>
 <div class="ov" id="lv" hidden><div class="dlg" role="dialog" aria-modal="true" aria-labelledby="lvt"><h3 id="lvt">Leave this call?</h3><p id="lvp"></p><div class="nav2"><button class="btn pri" id="lvs" type="button">Stay</button><button class="btn" id="lvo" type="button">Leave</button></div></div></div>
-<footer style="text-align:center;font-size:11px;color:var(--muted);opacity:.75;padding:18px 10px calc(16px + env(safe-area-inset-bottom))">Designed &amp; developed by Ravi Ramsundar · Rev 1.97 · 11/18/2026 12:27 PM EST</footer>
+<footer style="text-align:center;font-size:11px;color:var(--muted);opacity:.75;padding:18px 10px calc(16px + env(safe-area-inset-bottom))">Designed &amp; developed by Ravi Ramsundar · Rev 1.98 · 11/19/2026 4:36 PM EST</footer>
 </div>
 <script>var qrcode = function() {
   /**
@@ -1784,7 +1799,7 @@ header .btn{align-self:flex-end}
  return q;};for(var k in o)qrcode[k]=o[k];})();</script>
 <script>
 (function(){
-var P0='MFR-1JTC2-',KEY='scgState2',HK='scgHist',CK='scgCalls',REV='Rev 1.97 · 11/18/2026 12:27 PM EST';
+var P0='MFR-1JTC2-',KEY='scgState2',HK='scgHist',CK='scgCalls',REV='Rev 1.98 · 11/19/2026 4:36 PM EST';
 var BR=['Generator','Camera','NVR','Tower'],BS={Generator:'gen',Camera:'cam',NVR:'nvr',Tower:'twr'};
 var OUT=[['Fixed on the phone','fixed'],['Needs a site visit (quote)','n1'],['Needs a repair or RMA','rma'],['Hand off to devices group','dev']];
 var COV=['Warranty','Extended warranty','Contract','Not covered'];
@@ -2031,7 +2046,18 @@ function tree(){var tr=$('tr');tr.innerHTML='';
    b.onclick=function(){keepOpen();go(n[0]);window.scrollTo(0,0);};gb.appendChild(b);});
   tr.appendChild(gb);});
  var tb=document.createElement('button');tb.type='button';tb.className='trtab';tb.setAttribute('aria-label','Expand the process list');tb.textContent='‹ Process';tb.onclick=function(){setPanel(false,1);};tr.appendChild(tb);}
-function render(){var id=cur(),s=S[id];BXS=[];$('q').textContent=s.q;$('tx').textContent=s.x;var it=$('it');it.innerHTML='';it.onclick=it.onchange=it.oninput=function(){setTimeout(refreshBx,0);};
+function grp(id){var i;for(i=0;i<GROUPS.length;i++){if(GROUPS[i].r.some(function(n){return n[0]===id;}))return i;}return 0;}
+function tabs(){var gi=grp(cur()),g=GROUPS[gi],tb=$('tb'),act=null;tb.innerHTML='';$('lb').textContent='Section '+(gi+1)+' of '+GROUPS.length+' · '+g.t;
+ g.r.forEach(function(n){var on=n[0]===cur(),b=document.createElement('button'),cls=[];b.type='button';b.setAttribute('role','tab');b.setAttribute('aria-selected',on?'true':'false');
+  if(n[2])cls.push('sub');if(on)cls.push('c');else if(has(n[0]))cls.push('d');b.className=cls.join(' ');
+  var sp=document.createElement('span');sp.textContent=n[1];b.appendChild(sp);
+  if(full(n[0])){var k=document.createElement('span');k.className='ok';k.textContent='✓';k.setAttribute('aria-label','complete');b.appendChild(k);}
+  else if(has(n[0])){var q=document.createElement('span');q.className='ip';q.textContent='●';q.setAttribute('aria-label','started, not finished');b.appendChild(q);}
+  b.onclick=function(){if(on)return;keepOpen();var t0=tb.getBoundingClientRect().top;go(n[0]);var t1=$('tb').getBoundingClientRect().top;if(t1!==t0)window.scrollBy(0,t1-t0);};
+  tb.appendChild(b);if(on)act=b;});
+ if(act)tb.scrollLeft=Math.max(0,act.offsetLeft-(tb.clientWidth-act.offsetWidth)/2);
+ $('nx').hidden=gi>=GROUPS.length-1;}
+function render(){var id=cur(),s=S[id];BXS=[];$('q').textContent=s.q;tabs();$('tx').textContent=s.x;var it=$('it');it.innerHTML='';it.onclick=it.onchange=it.oninput=function(){setTimeout(refreshBx,0);};
  if(s.custom==='cov')renderCov(it);else if(s.custom==='issues')renderIssues(it);else renderItems(id,it);
  if(s.calc){var cd=document.createElement('div');cd.id='calc';cd.className='calc';it.appendChild(cd);calcUp();}
  if(s.fu)renderFu(it);
@@ -2089,7 +2115,18 @@ $('cp').onclick=copy;
 $('mail').onclick=function(){location.href='mailto:Christopher.Skrocki@teledyne.com,Andy.Saksa@teledyne.com?cc=SkyWatch.Support@teledyne.com&subject='+encodeURIComponent(subj())+'&body='+encodeURIComponent($('ta').value);};
 $('sv').onclick=function(){X.sv=Date.now();save();allPhotos(function(ph){dl_(fname()+'.html','text/html',reportHtml(ph));$('cpm').textContent='Saved to this device. Open the file to view it with the photos.';});};
 $('pr').onclick=function(){X.sv=Date.now();save();allPhotos(function(ph){var f=document.createElement('iframe');f.style.cssText='position:absolute;width:0;height:0;border:0;left:-9999px';document.body.appendChild(f);var dc=f.contentWindow.document;dc.open();dc.write(reportHtml(ph));dc.close();setTimeout(function(){try{f.contentWindow.focus();f.contentWindow.print();}catch(e){$('cpm').textContent='Printing is not available here. Use Save report.';}setTimeout(function(){f.remove();},60000);},400);});};
-$('nw').onclick=function(){save();startNew();window.scrollTo(0,0);};
+$('nx').onclick=function(){var gi=grp(cur());if(gi<GROUPS.length-1){go(GROUPS[gi+1].r[0][0]);window.scrollTo(0,0);}};
+function newCall(){save();startNew();window.scrollTo(0,0);}
+var ncT=null;
+function ncReset(b){clearTimeout(ncT);if(b){delete b.dataset.s;b.textContent='New call';}}
+function ncBtn(){var nb=document.getElementById('navBar');if(!nb)return;var home=nb.querySelector('[data-nav=home]'),b=document.getElementById('ncBtn');
+ if(!b){b=document.createElement('button');b.type='button';b.id='ncBtn';b.textContent='New call';b.setAttribute('aria-label','Start a new call');nb.insertBefore(b,home);}
+ else if(home&&b.nextSibling!==home)nb.insertBefore(b,home);}
+document.addEventListener('click',function(ev){var b=ev.target.closest&&ev.target.closest('#ncBtn');if(!b)return;ev.preventDefault();
+ if(!hasContent()){newCall();return;}
+ if(!b.dataset.s){b.dataset.s=1;b.textContent='Tap again';ncT=setTimeout(function(){ncReset(b);},3000);return;}
+ ncReset(b);newCall();});
+try{new MutationObserver(ncBtn).observe(document.documentElement,{childList:true,subtree:true});}catch(e){}ncBtn();
 $('pc').onclick=function(){var c=$('calls');c.hidden=!c.hidden;if(!c.hidden){save();drawCalls();c.scrollIntoView({behavior:'smooth',block:'nearest'});}};
 var leaving=0,pend=null;
 function guard(go){if(!hasContent()){leaving=1;go();return;}$('lvp').textContent='Your progress is saved on this device and in Past calls.'+(X.sv?'':' You have not saved a copy of the report yet. Tap Save report first if you want one.');$('lv').hidden=false;pend=go;$('lvs').focus();}
@@ -2160,5 +2197,5 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
 ensure();setTimeout(ensure,500);
 })();</script>
-<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.97 · 11/18/2026</div>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.98 · 11/19/2026</div>
 </body></html>
