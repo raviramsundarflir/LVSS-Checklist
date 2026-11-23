@@ -135,14 +135,34 @@ header .btn{align-self:flex-end}
 .dlg h3{font-family:var(--display);font-size:24px;margin:0 0 6px}
 .dlg p{margin:0 0 10px;color:var(--muted)}
 @media print{.srow,.box{break-inside:avoid}}
-.stabs{position:relative;display:flex;gap:4px;margin:0 0 12px;border-bottom:2px solid var(--line);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.stabs{position:relative;display:flex;align-items:flex-end;gap:3px;margin:0 0 12px;padding:0 4px;box-shadow:inset 0 -2px 0 var(--line);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .stabs::-webkit-scrollbar{display:none}
-.stabs button{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:48px;padding:8px 14px;border:0;border-bottom:4px solid transparent;border-radius:8px 8px 0 0;background:transparent;color:var(--muted);font:600 14px var(--body);white-space:nowrap;cursor:pointer;touch-action:manipulation}
-.stabs button:hover{background:var(--navy-soft)}
+.stabs button{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:44px;margin:5px 0 2px;padding:8px 14px;border:2px solid var(--line);border-bottom:0;border-radius:10px 10px 0 0;background:var(--bg);color:var(--muted);font:600 14px var(--body);white-space:nowrap;cursor:pointer;touch-action:manipulation}
+.stabs button:hover{background:var(--navy-soft);color:var(--ink)}
 .stabs button.d{color:var(--ink)}
-.stabs button.c{background:var(--navy-soft);color:var(--ink);border-bottom-color:#d1500d}
+.stabs button.c{margin:0;min-height:50px;padding:8px 16px 10px;background:var(--surface);color:var(--ink);border-color:var(--navy);border-top:4px solid #d1500d;position:relative;z-index:1}
 .stabs button.sub{font-weight:400;font-size:13px}
 .stabs button:focus-visible{outline:3px solid var(--signal);outline-offset:-3px}
+.sectabs{display:flex;align-items:flex-end;gap:4px;padding:0 12px;position:relative;z-index:1;margin:0}
+.sectabs button{flex:0 1 auto;display:inline-flex;align-items:center;gap:8px;min-height:44px;margin-top:6px;padding:8px 16px;border:2px solid var(--line);border-bottom:0;border-radius:12px 12px 0 0;background:var(--bg);color:var(--muted);font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;cursor:pointer;touch-action:manipulation;margin-bottom:-2px;padding-bottom:10px}
+.sectabs button:hover{background:var(--navy-soft);color:var(--ink)}
+.sectabs button.d{color:var(--ink)}
+.sectabs button.c{margin-top:0;min-height:52px;padding:9px 18px 13px;background:var(--surface);color:var(--ink);border-color:var(--line);border-top:4px solid #d1500d;z-index:3;position:relative}
+.sectabs button:focus-visible{outline:3px solid var(--signal);outline-offset:-3px}
+.sectabs i{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--navy);color:var(--surface);font-style:normal;font-size:11px;flex:none}
+.sectabs button.c i{background:#d1500d;color:#fff}
+.sectabs .cn{font-size:11px}
+.sectabs button.c .cn{color:var(--muted)}
+@media(max-width:1060px){.sectabs button{min-width:0}.sectabs button.c .nm{overflow:hidden;text-overflow:ellipsis}.sectabs button:not(.c) .nm{display:none}}
+@media(max-width:860px){.sectabs button:not(.c) .cn{display:none}}
+@media(max-width:620px){.sectabs{padding:0 4px;gap:3px}.sectabs button{min-width:0;padding:8px 9px 10px;gap:5px;font-size:10px;letter-spacing:.02em}.sectabs button.c{padding:9px 10px 13px;flex:1 1 auto}.sectabs button.c .nm{overflow:hidden;text-overflow:ellipsis}.sectabs button:not(.c) .nm,.sectabs button:not(.c) .cn{display:none}.sectabs button i{width:22px;height:22px}}
+#main{position:relative;z-index:0}
+.dvq{border:2px solid var(--signal);border-radius:8px;background:var(--signal-soft);color:var(--signal-ink);padding:8px 10px;margin:8px 0 0;font-size:14px}
+.dvq p{margin:0 0 6px;font-weight:600}
+.dvq .chips{margin:0}
+.dvr{margin:8px 0 0;padding:8px 10px;border-left:4px solid var(--navy);background:var(--bg);border-radius:4px}
+.dvr .it{margin:8px 0 0}
+.dvb{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 0}
 .stabs .ok{color:var(--new)}.stabs .ip{color:#d1500d;font-size:12px}
 .nav3{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}
 .nav3 #bk{grid-column:1;justify-self:start}.nav3 #gen{grid-column:2}.nav3 #nx{grid-column:3;justify-self:end}
@@ -154,7 +174,7 @@ header .btn{align-self:flex-end}
 .tr button.c .cn,.tr button.c .cn.ok{color:#fff}
 .trgh .gcn{margin-left:auto;font-weight:600}
 .stabs .cn{font-size:11px}
-@media print{.stabs{display:none}}
+@media print{.stabs,.sectabs{display:none}}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
 <div class="wrap"><a class="back" href="../#cat/sw">‹ SkyWatch</a>
@@ -165,6 +185,7 @@ header .btn{align-self:flex-end}
 <div class="card" id="calls" hidden style="margin-top:14px"><p class="lbl">Past calls on this device</p><div id="cl"></div></div>
 <div class="sc" id="sc">
 <div>
+<div class="sectabs" id="sectabs" role="tablist" aria-label="Sections"></div>
 <div class="card" id="main"><p class="lbl" id="lb">Section</p><h2 class="q" id="q"></h2><div class="stabs" id="tb" role="tablist" aria-label="Steps in this section"></div><p class="tx" id="tx"></p><div id="it"></div><div id="ch"></div>
 <div class="nav2 nav3"><button class="btn" id="bk" type="button">‹ Back</button><button class="btn pri" id="gen" type="button">Generate report</button><button class="btn" id="nx" type="button">Next ›</button></div></div>
 <div class="card rp" id="rp" hidden><p class="lbl">Report</p><textarea id="ta" readonly aria-label="Service call report"></textarea>
@@ -174,7 +195,7 @@ header .btn{align-self:flex-end}
 <aside class="card tr" id="tr" aria-label="Process list"></aside>
 </div>
 <div class="ov" id="lv" hidden><div class="dlg" role="dialog" aria-modal="true" aria-labelledby="lvt"><h3 id="lvt">Leave this call?</h3><p id="lvp"></p><div class="nav2"><button class="btn pri" id="lvs" type="button">Stay</button><button class="btn" id="lvo" type="button">Leave</button></div></div></div>
-<footer style="text-align:center;font-size:11px;color:var(--muted);opacity:.75;padding:18px 10px calc(16px + env(safe-area-inset-bottom))">Designed &amp; developed by Ravi Ramsundar · Rev 1.99 · 11/19/2026 5:10 PM EST</footer>
+<footer style="text-align:center;font-size:11px;color:var(--muted);opacity:.75;padding:18px 10px calc(16px + env(safe-area-inset-bottom))">Designed &amp; developed by Ravi Ramsundar · Rev 2.00 · 11/23/2026 11:45 AM MST</footer>
 </div>
 <script>var qrcode = function() {
   /**
@@ -1804,14 +1825,14 @@ header .btn{align-self:flex-end}
  return q;};for(var k in o)qrcode[k]=o[k];})();</script>
 <script>
 (function(){
-var P0='MFR-1JTC2-',KEY='scgState2',HK='scgHist',CK='scgCalls',REV='Rev 1.99 · 11/19/2026 5:10 PM EST';
-var BR=['Generator','Camera','NVR','Tower'],BS={Generator:'gen',Camera:'cam',NVR:'nvr',Tower:'twr'};
+var P0='MFR-1JTC2-',KEY='scgState2',HK='scgHist',CK='scgCalls',REV='Rev 2.00 · 11/23/2026 11:45 AM MST';
+var BR=['Generator','Camera','NVR','Tower','Other device'],BS={Generator:'gen',Camera:'cam',NVR:'nvr',Tower:'twr','Other device':'oth'};
 var PSV='Potential site visit',QSV='Needs a site visit (quote)';
 var OUT=[['Fixed on the phone','fixed'],[QSV,'n1'],['Needs a repair or RMA','rma'],['Hand off to devices group','dev'],[PSV,'rma']];
 var COV=['Warranty','Extended warranty','Contract','Not covered'];
 var SRC=['SkyWatch Service Tracker','SAP SO or contract','Asked the customer','Local SkyWatch folder'];
 var GL='../skywatch/#generator';
-var TS=[{l:'What was tried'},{l:'Result'}];
+var TS=[{l:'What was tried'},{l:'Resolution'}];
 var S={
 triage:{q:'Triage Calls',x:'Start by identifying the tower. Any one of the tower serial number, sales order, or PO is enough to find the order.',c:[['Coverage check','cov']],it:[
  {l:'Tower serial number',t:'serial',g:'Identify the tower',pos:-5},{l:'Customer'},{l:'Site and location'},{l:'Urgency',t:'chips',o:['Hard down','Safety Concern','N/A']},
@@ -1821,10 +1842,11 @@ triage:{q:'Triage Calls',x:'Start by identifying the tower. Any one of the tower
  {l:'Sales order (SO)',t:'bind',b:'so',g:'Identify the tower',pos:-4,opt:1},{l:'Purchase order (PO)',t:'bind',b:'po',g:'Identify the tower',pos:-3,opt:1},{t:'reseller',g:'Identify the tower',pos:-2,opt:1}]},
 cov:{q:'Coverage check',x:'Look up what this tower is covered by before deciding what happens next.',custom:'cov',c:[['Reported issues','issues']],it:[]},
 issues:{q:'Reported issues',x:'List every issue the customer reports. Each one gets its own branch, coverage, and outcome. Add photos the customer sent.',custom:'issues',c:[],it:[]},
-gen:{q:'Generator troubleshooting',x:'Check the fault code on the generator support page first.',c:[['Back to reported issues','issues']],it:[{l:'Fault code'},{t:'link',l:'Open the generator support page',href:GL}].concat(TS)},
-cam:{q:'Camera issues',x:'Work through the camera problem.',c:[['Back to reported issues','issues']],it:[{l:'Which camera (name or position)'}].concat(TS)},
-nvr:{q:'NVR issues',x:'Work through the NVR problem.',c:[['Back to reported issues','issues']],it:[{l:'NVR status and lights'}].concat(TS)},
-twr:{q:'Tower issues',x:'Work through the tower problem.',c:[['Back to reported issues','issues']],it:[{l:'Which part of the tower (hydraulics, electrical, structure)'}].concat(TS)},
+gen:{q:'Generator troubleshooting',x:'Check the fault code on the generator support page first.',c:[['Back to reported issues','issues']],it:[{l:'Fault code'},{t:'link',l:'Open the generator support page',href:GL}].concat(TS,[{l:'Generator serial number',t:'dser',g:'Serial number',pos:-9},{l:'Issue',pos:-8}])},
+cam:{q:'Camera issues',x:'Work through each camera problem. Add a card for every camera involved.',custom:'dev',c:[['Back to reported issues','issues']],it:[]},
+nvr:{q:'NVR issues',x:'Work through the NVR problem.',c:[['Back to reported issues','issues']],it:[{l:'NVR status and lights'}].concat(TS,[{l:'NVR serial number',t:'dser',g:'Serial number',pos:-9},{l:'Issue',pos:-8}])},
+twr:{q:'Tower issues',x:'Work through the tower problem.',c:[['Back to reported issues','issues']],it:[{l:'Which part of the tower (hydraulics, electrical, structure)'}].concat(TS,[{l:'Tower serial number',t:'twsn',g:'Serial number',pos:-9},{l:'Issue',pos:-8}])},
+oth:{q:'Other device issues',x:'Anything else on the platform, such as radar, a switch, power equipment or another device. Add a card for each one.',custom:'dev',c:[['Back to reported issues','issues']],it:[]},
 fixed:{q:'Fixed on the phone',x:'Log what was done.',end:1,c:[],it:[{l:'Issue fixed',ck:1},{l:'How it was fixed'},{l:'Date fixed',t:'date'}]},
 rma:{q:'Repair or RMA',x:'Create an RMA to track the issue. Enter the sales order or customer PO, and pick the line type (Z1, Z2, Z3 or ZM).',end:1,c:[],it:[{l:'RMA number'},{l:'Sales order or customer PO number'},{l:'Line type',t:'chips',o:['Z1','Z2','Z3','ZM']},{l:'Part or device'}]},
 dev:{q:'Hand off to devices group',x:'Use this when the tower is out of warranty or has no maintenance contract, or the issue is not a SkyWatch issue. Generate report, then email it.',end:1,devmail:1,c:[],it:[{l:'Devices group email',inp:'email'},{l:'Devices and serial numbers affected'},{l:'Why (out of warranty, no contract, or not SkyWatch)'}]},
@@ -1838,10 +1860,10 @@ n5:{q:'Sales order processing',x:'Sales order processing issues the sales order 
 n6:{q:'Do the work',x:'SkyWatch Service (TSC) does the work, then closes out the CLIN.',end:1,c:[],it:[{l:'Work completed (date)',t:'date'},{l:'Completion cert attached to SO',ck:1},{l:'CLIN shipped in SAP',ck:1}]}
 };
 S.triage.it[1].g='Customer and site';S.triage.it[2].g='Customer and site';S.triage.it[3].g='Urgency';S.triage.gt={'Identify the tower':'s','Customer and site':'s','Urgency':'s','Contact':'o','Generator':'o'};
-S.gen.bt=S.cam.bt=S.nvr.bt=S.twr.bt='What you found';S.fixed.bt='What was done';S.rma.bt='RMA details';S.dev.bt='Hand-off details';S.n1.bt='What the quote needs';S.n3.bt='Sent to Sales';S.n4.bt='Quote';S.dec.bt='Reason';S.dec.tg='o';S.n5.bt='Order details';S.n6.bt='Work completed';
+S.gen.bt=S.cam.bt=S.nvr.bt=S.twr.bt='What you found';S.gen.gt={'Serial number':'s'};S.nvr.gt={'Serial number':'s'};S.fixed.bt='What was done';S.rma.bt='RMA details';S.dev.bt='Hand-off details';S.n1.bt='What the quote needs';S.n3.bt='Sent to Sales';S.n4.bt='Quote';S.dec.bt='Reason';S.dec.tg='o';S.n5.bt='Order details';S.n6.bt='Work completed';
 S.n2.it[0].g=S.n2.it[1].g=S.n2.it[2].g='Services and labor';S.n2.it[3].g=S.n2.it[4].g=S.n2.it[5].g='Other costs';S.n2.it[6].g='Margin';S.n2.gt={'Services and labor':'s','Other costs':'o','Margin':'s'};
-var ORDER=['triage','cov','issues','gen','cam','nvr','twr','fixed','rma','dev','n1','n2','n3','n4','dec','n5','n6'];
-var GROUPS=[{t:'Intake',r:[['triage','Triage Calls'],['cov','Coverage check'],['issues','Reported issues']]},{t:'Troubleshoot',r:[['gen','Generator'],['cam','Camera'],['nvr','NVR'],['twr','Tower']]},{t:'Outcome',r:[['fixed','Fixed on the phone'],['rma','Repair or RMA'],['dev','Devices group']]},{t:'Quote and sale',r:[['n1','Gather info'],['n2','Price it'],['n3','Send to Sales'],['n4','Sales quotes'],['dec','Declined',1],['n5','Sales order'],['n6','Do the work']]}];
+var ORDER=['triage','cov','issues','gen','cam','nvr','twr','oth','fixed','rma','dev','n1','n2','n3','n4','dec','n5','n6'];
+var GROUPS=[{t:'Intake',r:[['triage','Triage Calls'],['cov','Coverage check'],['issues','Reported issues']]},{t:'Troubleshoot',r:[['gen','Generator'],['cam','Camera'],['nvr','NVR'],['twr','Tower'],['oth','Other device']]},{t:'Outcome',r:[['fixed','Fixed on the phone'],['rma','Repair or RMA'],['dev','Devices group']]},{t:'Quote and sale',r:[['n1','Gather info'],['n2','Price it'],['n3','Send to Sales'],['n4','Sales quotes'],['dec','Declined',1],['n5','Sales order'],['n6','Do the work']]}];
 var GOF={};GROUPS.forEach(function(g){g.r.forEach(function(r){GOF[r[0]]=g.t;});});
 var GENSVG='<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6.5" width="19" height="11" rx="1.6" fill="#139a78" stroke="#0b6b53"/><path d="M7 6.5v11" stroke="#0b6b53"/><path d="M4.1 9.6h1.4M4.1 12h1.4M4.1 14.4h1.4" stroke="#ffffff"/><path d="M14.6 8.8l-2.7 3.4h2.4l-1.6 3.4 3.9-4.4h-2.5z" fill="#ffffff" stroke="#ffffff" stroke-width="1"/><path d="M17.5 6.5v-2h2.3v2" stroke="#0b6b53"/><path d="M5 17.5V20M19 17.5V20M3.5 20h17" stroke="#6b7782"/></svg>';
 var ID='',H=['triage'],C={},V={},X={},HIST={},PM={};
@@ -1861,8 +1883,8 @@ function fuMin(){var d=today();d.setDate(d.getDate()+7);if(d.getDay()===6)d.setD
 function fmtSerial(){var r=(V.triage0||'').trim();if(!r)return '';if(X.pre){var d=r.replace(/\D/g,'');return d?P0+pad4(d.slice(0,4)):'';}return r;}
 function getv(id,i){var o=S[id].it[i],k=id+i;return V[k]!==undefined?V[k]:(o.def||'');}
 function num(id,i){var n=parseFloat(String(getv(id,i)).replace(/[$,]/g,''));return isNaN(n)?0:n;}
-function itemDone(id,i){var o=S[id].it[i];if(o.t==='chips')return !!V[id+i];if(o.ck)return !!C[id+i];if(o.t==='serial')return !!fmtSerial();if(o.t==='bind')return !!(CV()[o.b]||'').trim();return !!String(getv(id,i)).trim();}
-function realItems(id){var r=[];S[id].it.forEach(function(o,i){if(o.t!=='link'&&!o.opt)r.push(i);});return r;}
+function itemDone(id,i){var o=S[id].it[i];if(o.t==='chips')return !!V[id+i];if(o.ck)return !!C[id+i];if(o.t==='serial')return !!fmtSerial();if(o.t==='dser')return !!(dvGet(id).sn||'').trim();if(o.t==='bind')return !!(CV()[o.b]||'').trim();return !!String(getv(id,i)).trim();}
+function realItems(id){var r=[];S[id].it.forEach(function(o,i){if(o.t!=='link'&&o.t!=='twsn'&&!o.opt)r.push(i);});return r;}
 function CV(){return X.cov;}
 function warrEnd(){var c=CV();if(!c.dd)return null;var d=pd(c.dd);d.setFullYear(d.getFullYear()+1);return d;}
 function inWarr(){var e=warrEnd();return !!e&&e>=today();}
@@ -1882,7 +1904,17 @@ function save(){var st={id:ID,H:H,C:C,V:V,X:X};lsSet(KEY,JSON.stringify(st));
  var L=getCalls(),i,f=-1;for(i=0;i<L.length;i++)if(L[i].id===ID)f=i;
  if(hasContent()){var e={id:ID,ts:Date.now(),s:st};if(f<0)L.unshift(e);else L[f]=e;lsSet(CK,JSON.stringify(L.slice(0,40)));}recSave();}
 function getCalls(){try{return JSON.parse(lsGet(CK)||'[]')||[];}catch(e){return [];}}
-function normV(){if(V.rma2&&['Z1','Z2','Z3','ZM'].indexOf(V.rma2)<0)delete V.rma2;}
+function normV(){if(V.rma2&&['Z1','Z2','Z3','ZM'].indexOf(V.rma2)<0)delete V.rma2;
+ if(!X.cams&&(V.cam0||V.cam1||V.cam2)){X.cams=[{sn:'',rep:false,nsn:'',note:'',nm:V.cam0||'',td:V.cam1||'',rs:V.cam2||''}];delete V.cam0;delete V.cam1;delete V.cam2;}}
+function newRec(){return {sn:'',rep:false,nsn:'',note:'',nm:'',is:'',td:'',rs:''};}
+function dvGet(k){return (X.dv&&X.dv[k])||{};}
+function dvRec(k){if(!X.dv)X.dv={};if(!X.dv[k])X.dv[k]=newRec();return X.dv[k];}
+function devList(id){var k=id==='cam'?'cams':'oth';if(!X[k]||!X[k].length)X[k]=[newRec()];return X[k];}
+function devPeek(id){return (id==='cam'?X.cams:X.oth)||[];}
+function devHas(r){return !!((r.sn||'').trim()||(r.nm||'').trim()||(r.is||'').trim()||(r.td||'').trim()||(r.rs||'').trim()||r.rep);}
+function devFull(r){return !!((r.sn||'').trim()&&(r.nm||'').trim()&&(r.is||'').trim()&&(r.rs||'').trim());}
+function devRows(rows,r,pre){var sn=(r.sn||'').trim();if(sn)rows.push([pre+'Serial number'+(r.rep?' (as reported)':''),sn]);
+ if(r.rep){rows.push([pre+'Replaced with serial number',(r.nsn||'').trim()||'(not entered)']);if((r.note||'').trim())rows.push([pre+'What was done',r.note.trim()]);}}
 function load(){var o=null;try{o=JSON.parse(lsGet(KEY)||'null');}catch(e){}
  if(o&&o.H&&o.H.length&&S[o.H[o.H.length-1]]){ID=o.id||newId();H=o.H;C=o.C||{};V=o.V||{};X=o.X||fresh();}else{ID=newId();X=fresh();}
  if(!X.cov)X.cov={src:[]};if(!X.cov.src)X.cov.src=[];if(!X.is||!X.is.length)X.is=fresh().is;if(!X.ph)X.ph=[];
@@ -1892,11 +1924,13 @@ function go(id){if(id!==cur())H.push(id);if(H.length>80)H.shift();save();render(
 function has(id){var s=S[id],i;
  if(s.custom==='cov'){var c=CV();return !!(c.call||c.dd||c.ps||c.pe||c.ct||c.so||c.z1||c.rma||c.src.length);}
  if(s.custom==='issues')return X.is.some(function(t){return (t.d||'').trim()||t.b||t.out;})||X.ph.length>0;
+ if(s.custom==='dev')return devPeek(id).some(devHas);
  if(id==='triage'&&((CV().so||'').trim()||(CV().po||'').trim()||(X.rs&&X.rs.on)))return true;
- for(i=0;i<s.it.length;i++){if(s.it[i].t==='link')continue;if(C[id+i]||(V[id+i]||'').trim())return true;}return false;}
+ for(i=0;i<s.it.length;i++){if(s.it[i].t==='link'||s.it[i].t==='twsn')continue;if(s.it[i].t==='dser'){if((dvGet(id).sn||'').trim()||dvGet(id).rep)return true;continue;}if(C[id+i]||(V[id+i]||'').trim())return true;}return false;}
 function full(id){var s=S[id];
  if(s.custom==='cov')return !!CV().call;
  if(s.custom==='issues')return X.is.some(function(t){return (t.d||'').trim();})&&X.is.every(function(t){return !(t.d||'').trim()||t.out;});
+ if(s.custom==='dev'){var dl=devPeek(id);return dl.some(devHas)&&dl.every(function(r){return !devHas(r)||devFull(r);});}
  var r=realItems(id),i;if(!r.length)return false;for(i=0;i<r.length;i++){if(!itemDone(id,r[i]))return false;}return true;}
 /* photos: kept in IndexedDB so they stay on this device */
 var DB=null;
@@ -1964,8 +1998,52 @@ function renderIssues(h){
  function drawPh(){th.innerHTML='';X.ph.forEach(function(p,i){var w=document.createElement('div');w.className='phi';var im=document.createElement('img');im.alt=p.n||'Photo';pGet(p.id,function(d){if(d)im.src=d;});w.appendChild(im);var x=document.createElement('button');x.type='button';x.textContent='✕';x.setAttribute('aria-label','Remove photo');x.onclick=function(){pDel(p.id);X.ph.splice(i,1);save();drawPh();tree();};w.appendChild(x);th.appendChild(w);});}
  fi.onchange=function(){var fs=[].slice.call(fi.files||[]);var left=fs.length;if(!left)return;fs.forEach(function(f){shrink(f,function(d){if(d){var id=ID+'_'+Date.now()+'_'+Math.floor(Math.random()*1e5);pPut(id,d);X.ph.push({id:id,n:f.name});}left--;if(!left){save();drawPh();tree();fi.value='';}});});};
  drawPh();}
+
+function txtF(par,label,rec,f,hk){var w=document.createElement('div');w.className='it inl';var lb=document.createElement('label');lb.textContent=label;w.appendChild(lb);
+ var i=document.createElement('input');i.type='text';i.value=rec[f]||'';i.setAttribute('aria-label',label);i.setAttribute('autocomplete','off');
+ var dl=document.createElement('datalist');dl.id='dl-'+hk+f+(txtF.n=(txtF.n||0)+1);(HIST[hk]||[]).forEach(function(v){var op=document.createElement('option');op.value=v;dl.appendChild(op);});i.setAttribute('list',dl.id);
+ i.oninput=function(){rec[f]=i.value;save();tree();};i.onchange=function(){remember(hk,i.value);};w.appendChild(i);w.appendChild(dl);par.appendChild(w);return i;}
+function serialBlock(w,rec,label,hk){
+ var lb=document.createElement('label');lb.textContent=label;w.appendChild(lb);
+ var inp=document.createElement('input');inp.type='text';inp.value=rec.sn||'';inp.setAttribute('aria-label',label);inp.setAttribute('autocomplete','off');inp.setAttribute('autocapitalize','characters');
+ var dl=document.createElement('datalist');dl.id='dl-'+hk+(serialBlock.n=(serialBlock.n||0)+1);(HIST[hk]||[]).forEach(function(v){var op=document.createElement('option');op.value=v;dl.appendChild(op);});inp.setAttribute('list',dl.id);
+ var committed=(rec.sn||'').trim(),q=document.createElement('div');q.className='dvq';q.hidden=true;var rb=document.createElement('div');
+ function rr(){rb.innerHTML='';if(!(rec.sn||'').trim())return;
+  var cl=document.createElement('label');cl.className='chk';var cb=document.createElement('input');cb.type='checkbox';cb.checked=!!rec.rep;cl.appendChild(cb);cl.appendChild(document.createTextNode('Device was replaced'));rb.appendChild(cl);
+  var bx=document.createElement('div');bx.className='dvr';bx.hidden=!rec.rep;
+  var n1=document.createElement('p');n1.className='cap';n1.style.margin='0';n1.textContent='The serial number above stays on the report as reported. Add the replacement and what was done.';bx.appendChild(n1);
+  var a=document.createElement('div');a.className='it';var al=document.createElement('label');al.textContent='Replacement serial number';a.appendChild(al);var ai=document.createElement('input');ai.type='text';ai.value=rec.nsn||'';ai.setAttribute('aria-label','Replacement serial number');ai.setAttribute('autocomplete','off');ai.setAttribute('autocapitalize','characters');ai.oninput=function(){rec.nsn=ai.value;save();};ai.onchange=function(){remember(hk,ai.value);};a.appendChild(ai);bx.appendChild(a);
+  var b=document.createElement('div');b.className='it';var bl=document.createElement('label');bl.textContent='What was done';b.appendChild(bl);var bi=document.createElement('input');bi.type='text';bi.value=rec.note||'';bi.setAttribute('aria-label','What was done');bi.setAttribute('autocomplete','off');bi.oninput=function(){rec.note=bi.value;save();};b.appendChild(bi);bx.appendChild(b);
+  cb.onchange=function(){rec.rep=cb.checked;bx.hidden=!rec.rep;save();tree();};rb.appendChild(bx);}
+ inp.oninput=function(){if(!committed){rec.sn=inp.value;save();tree();rr();}};
+ inp.onchange=function(){var v=inp.value.trim();
+  if(!committed){rec.sn=v;committed=v;remember(hk,v);save();tree();rr();return;}
+  if(v===committed){q.hidden=true;inp.value=committed;return;}
+  if(!v){rec.sn='';rec.rep=false;rec.nsn='';rec.note='';committed='';q.hidden=true;save();tree();rr();return;}
+  if(!q.hidden&&q.dataset.p===v)return;q.dataset.p=v;
+  q.innerHTML='';var qp=document.createElement('p');qp.textContent='You changed a serial number that was already entered. Which is it?';q.appendChild(qp);
+  var ch=chipRow(['Correction','Device replaced','Undo'],function(){return false;},function(o){
+   if(o==='Correction'){rec.sn=v;committed=v;remember(hk,v);}
+   else if(o==='Device replaced'){rec.rep=true;rec.nsn=v;remember(hk,v);inp.value=committed;}
+   else{inp.value=committed;}
+   q.hidden=true;save();tree();rr();});
+  q.appendChild(ch);q.hidden=false;};
+ w.appendChild(inp);w.appendChild(dl);w.appendChild(q);w.appendChild(rb);rr();}
+function renderDevs(id,host){var isC=id==='cam',nm=isC?'Camera':'Device',L=devList(id),hk='dv-'+id;
+ L.forEach(function(r,n){var bx=box(nm+' '+(n+1),isC?'s':'o',function(){return devFull(r);});host.appendChild(bx);
+  txtF(bx,isC?'Which camera (name or position)':'Which device (name or type)',r,'nm',hk+'-nm');
+  var w=document.createElement('div');w.className='it';serialBlock(w,r,(isC?'Camera':'Device')+' serial number',hk+'-sn');bx.appendChild(w);
+  txtF(bx,'Issue',r,'is',hk+'-is');txtF(bx,'What was tried',r,'td',hk+'-td');txtF(bx,'Resolution',r,'rs',hk+'-rs');
+  if(L.length>1){var rm=document.createElement('button');rm.type='button';rm.className='btn sm';rm.textContent='Remove this '+nm.toLowerCase();var t=null;
+   rm.onclick=function(){if(rm.dataset.s){clearTimeout(t);L.splice(n,1);save();render();return;}rm.dataset.s='1';rm.textContent='Tap again to remove';t=setTimeout(function(){delete rm.dataset.s;rm.textContent='Remove this '+nm.toLowerCase();},3000);};
+   var rw=document.createElement('div');rw.className='dvb';rw.appendChild(rm);bx.appendChild(rw);}});
+ var ad=document.createElement('button');ad.type='button';ad.className='btn';ad.textContent='+ Add '+(isC?'camera':'another device');
+ ad.onclick=function(){L.push(newRec());save();render();var bs=document.querySelectorAll('#it .box');var last=bs[bs.length-1];if(last){var f=last.querySelector('input');if(f){f.focus();last.scrollIntoView({block:'nearest',behavior:'smooth'});}}};
+ var aw=document.createElement('div');aw.className='dvb';aw.appendChild(ad);host.appendChild(aw);}
 function itemEl(id,i,o){
  var k=id+i,w=document.createElement('div');w.className='it';
+ if(o.t==='dser'){serialBlock(w,dvRec(id),o.l,'dv-'+id+'-sn');return w;}
+ if(o.t==='twsn'){var tl=document.createElement('label');tl.textContent='Tower serial number';w.appendChild(tl);var tv=document.createElement('input');tv.type='text';tv.readOnly=true;tv.value=fmtSerial();tv.placeholder='From Triage Calls';tv.setAttribute('aria-label','Tower serial number');w.appendChild(tv);var tc=document.createElement('p');tc.className='cap';tc.textContent='Carried over from Triage Calls. Change it there.';w.appendChild(tc);return w;}
  if(o.t==='link'){var a=document.createElement('a');a.href=o.href;a.target='_blank';a.rel='noopener';a.className='lk gl';a.innerHTML=GENSVG+'<span></span>';a.lastChild.textContent=o.l+' ↗';w.appendChild(a);return w;}
  if(o.t==='reseller'){if(!X.rs)X.rs={on:false,name:''};var R=X.rs;
   var rl=document.createElement('label');rl.className='chk';var rc=document.createElement('input');rc.type='checkbox';rc.checked=!!R.on;rl.appendChild(rc);rl.appendChild(document.createTextNode('Bought through a reseller'));w.appendChild(rl);
@@ -1997,7 +2075,7 @@ function itemEl(id,i,o){
  inp.oninput=function(){V[k]=inp.value;chk();save();tree();if(S[id].calc)calcUp();};
  inp.onchange=function(){remember(k,inp.value);};
  chk();w.appendChild(inp);w.appendChild(dl);w.appendChild(wn);return w;}
-function gFilled(id,idxs){return idxs.some(function(i){var o=S[id].it[i];if(o.t==='link'||o.t==='reseller')return false;if(o.t==='serial')return !!fmtSerial();if(o.t==='bind')return !!(CV()[o.b]||'').trim();if(o.t==='chips')return !!V[id+i];return !!(String(getv(id,i)).trim()||C[id+i]);});}
+function gFilled(id,idxs){return idxs.some(function(i){var o=S[id].it[i];if(o.t==='link'||o.t==='reseller'||o.t==='twsn')return false;if(o.t==='dser')return !!(dvGet(id).sn||'').trim();if(o.t==='serial')return !!fmtSerial();if(o.t==='bind')return !!(CV()[o.b]||'').trim();if(o.t==='chips')return !!V[id+i];return !!(String(getv(id,i)).trim()||C[id+i]);});}
 function renderItems(id,host){var s=S[id];
  var ord=s.it.map(function(o,i){return {o:o,i:i,p:(o.pos!==undefined?o.pos:i)};});ord.sort(function(a,b){return a.p-b.p||a.i-b.i;});
  var grp=[],last=null;
@@ -2031,8 +2109,9 @@ function nextChoices(){var sb={},so={},c=[];
  X.is.forEach(function(it){var o=outOf(it);if((it.d||'').trim()&&o){OUT.forEach(function(p){if(p[0]===o&&!so[p[1]]){so[p[1]]=1;c.push(['Go to: '+p[0],p[1]]);}});}});return c;}
 function cnt(id){var s=S[id],n=0,t=0,i,o;
  if(s.custom==='cov'){var c=CV();[c.ct,c.so,c.z1,c.rma,c.dd,c.ps,c.pe,c.call].forEach(function(v){t++;if((v||'').trim())n++;});t++;if(c.src.length)n++;return {n:n,t:t};}
+ if(s.custom==='dev'){devList(id).forEach(function(r){[r.nm,r.sn,r.is,r.td,r.rs].forEach(function(v){t++;if((v||'').trim())n++;});});return {n:n,t:t};}
  if(s.custom==='issues'){X.is.forEach(function(it){t+=4;if((it.d||'').trim())n++;if(it.b)n++;if(it.cv||it.wr||CV().call)n++;if(it.out)n++;});return {n:n,t:t};}
- for(i=0;i<s.it.length;i++){o=s.it[i];if(o.t==='link'||o.t==='reseller')continue;t++;if(itemDone(id,i)&&!(o.def!==undefined&&V[id+i]===undefined))n++;}
+ for(i=0;i<s.it.length;i++){o=s.it[i];if(o.t==='link'||o.t==='reseller'||o.t==='twsn')continue;t++;if(itemDone(id,i)&&!(o.def!==undefined&&V[id+i]===undefined))n++;}
  return {n:n,t:t};}
 function cn(b,id){var c=cnt(id),sp=document.createElement('span');sp.className='cn'+(c.t&&c.n===c.t?' ok':'');sp.textContent=c.n+'/'+c.t;sp.setAttribute('aria-label',c.n+' of '+c.t+' items filled in');b.appendChild(sp);}
 function renderCh(){var ch=$('ch'),id=cur(),s=S[id];ch.innerHTML='';
@@ -2065,7 +2144,16 @@ function tree(){var tr=$('tr');tr.innerHTML='';
   tr.appendChild(gb);});
  var tb=document.createElement('button');tb.type='button';tb.className='trtab';tb.setAttribute('aria-label','Expand the process list');tb.textContent='‹ Process';tb.onclick=function(){setPanel(false,1);};tr.appendChild(tb);if($('tb'))tabs();}
 function grp(id){var i;for(i=0;i<GROUPS.length;i++){if(GROUPS[i].r.some(function(n){return n[0]===id;}))return i;}return 0;}
-function tabs(){var gi=grp(cur()),g=GROUPS[gi],tb=$('tb'),act=null;tb.innerHTML='';$('lb').textContent='Section '+(gi+1)+' of '+GROUPS.length+' · '+g.t;
+var LASTIN={};
+function secTabs(){var st=$('sectabs');if(!st)return;st.innerHTML='';var gi=grp(cur());LASTIN[gi]=cur();
+ GROUPS.forEach(function(g,i){var on=i===gi,b=document.createElement('button'),cls=[];b.type='button';b.setAttribute('role','tab');b.setAttribute('aria-selected',on?'true':'false');
+  var gn=0,gt=0,any=false;g.r.forEach(function(n){var c=cnt(n[0]);gn+=c.n;gt+=c.t;if(has(n[0]))any=true;});
+  if(on)cls.push('c');else if(any)cls.push('d');b.className=cls.join(' ');b.setAttribute('aria-label','Section '+(i+1)+', '+g.t+', '+gn+' of '+gt+' items filled in');
+  var nb=document.createElement('i');nb.textContent=i+1;b.appendChild(nb);var nm=document.createElement('span');nm.className='nm';nm.textContent=g.t;b.appendChild(nm);
+  var sp=document.createElement('span');sp.className='cn'+(gt&&gn===gt?' ok':'');sp.textContent=gn+'/'+gt;b.appendChild(sp);
+  b.onclick=function(){if(on)return;keepOpen();var t0=st.getBoundingClientRect().top;go(LASTIN[i]&&GROUPS[i].r.some(function(n){return n[0]===LASTIN[i];})?LASTIN[i]:g.r[0][0]);var t1=$('sectabs').getBoundingClientRect().top;if(t1!==t0)window.scrollBy(0,t1-t0);};
+  st.appendChild(b);});}
+function tabs(){secTabs();var gi=grp(cur()),g=GROUPS[gi],tb=$('tb'),act=null;tb.innerHTML='';$('lb').textContent='Section '+(gi+1)+' of '+GROUPS.length+' · '+g.t;
  g.r.forEach(function(n){var on=n[0]===cur(),b=document.createElement('button'),cls=[];b.type='button';b.setAttribute('role','tab');b.setAttribute('aria-selected',on?'true':'false');
   if(n[2])cls.push('sub');if(on)cls.push('c');else if(has(n[0]))cls.push('d');b.className=cls.join(' ');
   var sp=document.createElement('span');sp.textContent=n[1];b.appendChild(sp);
@@ -2075,7 +2163,7 @@ function tabs(){var gi=grp(cur()),g=GROUPS[gi],tb=$('tb'),act=null;tb.innerHTML=
  if(act)tb.scrollLeft=Math.max(0,act.offsetLeft-(tb.clientWidth-act.offsetWidth)/2);
  $('nx').hidden=gi>=GROUPS.length-1;}
 function render(){var id=cur(),s=S[id];BXS=[];$('q').textContent=s.q;tabs();$('tx').textContent=s.x;var it=$('it');it.innerHTML='';it.onclick=it.onchange=it.oninput=function(){setTimeout(refreshBx,0);};
- if(s.custom==='cov')renderCov(it);else if(s.custom==='issues')renderIssues(it);else renderItems(id,it);
+ if(s.custom==='cov')renderCov(it);else if(s.custom==='issues')renderIssues(it);else if(s.custom==='dev')renderDevs(id,it);else renderItems(id,it);
  if(s.calc){var cd=document.createElement('div');cd.id='calc';cd.className='calc';it.appendChild(cd);calcUp();}
  if(s.fu)renderFu(it);
  if(s.devmail){var r=document.createElement('div');r.className='nav2';var b=document.createElement('button');b.type='button';b.className='btn pri';b.textContent='Email to devices group';b.onclick=function(){markGen();$('ta').value=reportText();$('rp').hidden=false;location.href='mailto:'+encodeURIComponent((V.dev0||'').trim())+'?subject='+encodeURIComponent(subj('Devices group handoff'))+'&body='+encodeURIComponent($('ta').value);};var c=document.createElement('button');c.type='button';c.className='btn';c.textContent='Copy report';c.onclick=function(){markGen();$('ta').value=reportText();$('rp').hidden=false;copy();};r.appendChild(b);r.appendChild(c);it.appendChild(r);}
@@ -2085,7 +2173,8 @@ function repData(){var d={date:new Date().toLocaleString(),secs:[],open:[],flags
  ORDER.forEach(function(id){if(!has(id))return;var s=S[id],rows=[];
   if(s.custom==='cov'){var c=CV(),st=covStatus();if(c.src.length)rows.push(['Resources used',c.src.join(', ')]);if(c.ct)rows.push(['Contract number',c.ct]);if(c.z1)rows.push(['Z1 allowance or service line',c.z1]);if(c.rma)rows.push(['RMA number',c.rma]);if(c.dd)rows.push(['Delivery date',c.dd+' ('+st.w.t+')']);if(c.ps||c.pe)rows.push(['Extended warranty',(c.ps||'?')+' to '+(c.pe||'?')+' ('+st.e.t+')']);if(c.call)rows.push(['Coverage call',c.call]);}
   else if(s.custom==='issues'){X.is.forEach(function(t,n){if(!(t.d||'').trim()&&!t.b&&!t.out)return;var e=effCov(t);rows.push(['Issue '+(n+1),(t.d||'(no description)')+' | '+(t.b||'no branch')+' | '+(e==='w'?'Warranty':'Non-warranty')+(t.wr?' (wear and tear)':'')+' | '+(outOf(t)||'no outcome')]);});if(X.ph.length)rows.push(['Photos',X.ph.length+' attached (saved with the report on the device)']);}
-  else{s.it.forEach(function(o,i){if(o.t==='link')return;var v=String(getv(id,i)).trim(),dn=itemDone(id,i),k=id+i;if(id==='triage'&&i===0)v=fmtSerial();
+  else if(s.custom==='dev'){var DL=devPeek(id),isC=id==='cam',nm=isC?'Camera':'Device';DL.forEach(function(r,n){if(!devHas(r))return;var pr=DL.length>1?nm+' '+(n+1)+': ':'';if((r.nm||'').trim())rows.push([pr+nm,r.nm.trim()]);devRows(rows,r,pr);if((r.is||'').trim())rows.push([pr+'Issue',r.is.trim()]);if((r.td||'').trim())rows.push([pr+'What was tried',r.td.trim()]);if((r.rs||'').trim())rows.push([pr+'Resolution',r.rs.trim()]);});}
+  else{s.it.forEach(function(o,i){if(o.t==='link'||o.t==='twsn')return;if(o.t==='dser'){devRows(rows,dvGet(id),'');return;}var v=String(getv(id,i)).trim(),dn=itemDone(id,i),k=id+i;if(id==='triage'&&i===0)v=fmtSerial();
    if(o.t==='bind'){v=(CV()[o.b]||'').trim();if(v)rows.push([o.l,v]);return;}
    if(o.t==='reseller'){var R=X.rs||{};if(R.on)rows.push(['Bought through a reseller',(R.name||'(name not entered)')+' (PO to FLIR: '+((CV().po||'').trim()||'not entered')+')']);return;}
    if(v||dn)rows.push([o.l,v+(dn&&o.ck?(v?' ':'')+'[done]':'')]);else d.open.push(s.q+': '+o.l);});
@@ -2237,5 +2326,5 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
 ensure();setTimeout(ensure,500);
 })();</script>
-<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.99 · 11/19/2026</div>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 2.00 · 11/23/2026</div>
 </body></html>
