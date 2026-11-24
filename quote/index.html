@@ -13830,7 +13830,7 @@ function card(r){css();r=r||cfg.rec();if(!r)return '';
   '<div id="stoRc">'+rcHtml(r)+'</div>'+
   '<div class="sto-sum" id="stoSum">'+sumHtml(r)+'</div>'+
   '<div class="sto-row"><button type="button" data-sto="copyto">📋 Copy To</button><button type="button" data-sto="copycc">📋 Copy Cc</button></div>'+
-  '<p class="sto-m" style="margin:8px 0 0;font-size:13px">The share sheet can’t fill in addresses. When you tap Email, the To addresses are copied: paste them into To, then tap Copy Cc and paste into Cc.</p></div>';}
+  '<p class="sto-m" style="margin:8px 0 0;font-size:13px">When you tap Email, the report is saved to this device and your default mail app opens with the To / Cc addresses and subject filled in. Attach the saved file with the paperclip.</p></div>';}
 function paint(full){var r=cfg.rec();if(!r)return;var t=document.getElementById('stoTg'),s=document.getElementById('stoSum'),c=document.getElementById('stoRc');if(t)t.innerHTML=tgHtml(r);if(s)s.innerHTML=sumHtml(r);if(c&&full)c.innerHTML=rcHtml(r);if(full){var i=document.getElementById('stoCust');if(i&&document.activeElement!==i)i.value=custStr(r);}try{cfg.changed(r);}catch(e){}}
 function copy(t){return new Promise(function(res){var done=function(ok){res(ok);};try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){done(true);},function(){done(fb(t));});return;}}catch(e){}done(fb(t));});}
 function fb(t){try{var a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;left:0;top:0;opacity:0';document.body.appendChild(a);a.focus();a.select();var ok=document.execCommand('copy');a.remove();return ok;}catch(e){return false;}}
@@ -14263,9 +14263,15 @@ function mailHtml(r){fx(r);const h=r.hdr,L=incList(r),rp=rollup(r),cu=(window.CU
 async function copyHtml(html,txt){let ok=false;try{if(window.ClipboardItem&&navigator.clipboard&&navigator.clipboard.write){await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([txt],{type:'text/plain'})})]);ok=true;}}catch(e){}
  if(!ok){const dv=document.createElement('div');dv.contentEditable='true';dv.innerHTML=html;dv.style.cssText='position:fixed;left:-9999px;top:0';document.body.appendChild(dv);const rg=document.createRange();rg.selectNodeContents(dv);const sl=getSelection();sl.removeAllRanges();sl.addRange(rg);try{ok=document.execCommand('copy');}catch(e){}sl.removeAllRanges();dv.remove();}
  notice(ok?'Quote copied as tables. Paste it into the email body.':'Could not copy automatically. Use Copy message (plain text) instead.',{title:ok?'Copied':'Copy failed'});}
+function mailSave(f){var u=URL.createObjectURL(f),a=document.createElement('a');a.href=u;a.download=f.name;a.style.display='none';document.body.appendChild(a);a.click();setTimeout(function(){a.remove();URL.revokeObjectURL(u);},4000);}
+/* email (Ravi 2026-11-24): never the share sheet / Gmail. Save the report (and photo zip) to this device, then open the default mail app with To / Cc / subject filled in */
+async function mailGo(files,href){files=(files||[]).filter(Boolean);
+ for(var i=0;i<files.length;i++){try{mailSave(files[i]);}catch(e){}await new Promise(function(r){setTimeout(r,700);});}
+ var names=files.map(function(f){return f.name;}).join('\n');
+ var ok=await ask((files.length?'Saved to this device (Downloads):\n'+names+'\n\n':'')+'Your email app opens next with the address and subject filled in. Attach the saved file'+(files.length>1?'s':'')+' with the paperclip, then send.',{title:'Report saved',ok:'Open email app',no:'Cancel'});
+ if(ok)location.href=href;}
 async function emailReport(){const r=S.rec,f=quotePdfFile(r),sj=subj(r),body=mailText(r);const fl=new File([f.blob],f.name,{type:'application/pdf'});await SendTo.copyTo(r);
- try{if(navigator.canShare&&navigator.canShare({files:[fl]})){await navigator.share({files:[fl],title:sj,text:body});return;}}catch(e){if(e&&e.name==='AbortError')return;}
- await notice('This browser cannot attach the PDF automatically, so the email will open without it. Use "Save PDF" and attach the file from Downloads.',{title:'PDF not attached'});location.href=SendTo.mailto(r,sj,body);}
+ await mailGo([fl],SendTo.mailto(r,sj,body));}
 /* ---- scanning: a paused quote continues here; any report's QR code starts a new quote ---- */
 async function scanDone(txt){scanStop();let o=null;try{o=JSON.parse(txt);}catch(e){}srChk(o);
  if(o&&o.a==='QTE'){closeModal();await fromQr(o);return;}
@@ -14471,7 +14477,7 @@ document.addEventListener('focusout',e=>{histCommit(e.target);setTimeout(()=>{if
 document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='4d854ea20d';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='b57d6366c8';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -14739,6 +14745,15 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
  var d=cur()==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',d);try{localStorage.setItem('tscTheme',d);}catch(x){}lab();},true);
 try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
 ensure();setTimeout(ensure,500);
-})();</script>
-<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.80 · 11/16/2026</div>
+})();/* every form: starting a new one first asks whether there is an existing QR code to carry over data from (Ravi 2026-11-24) */
+(function(){var busy=false,SEL='[data-act="new"]';
+ document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest(SEL);if(!b||busy||(window.__qrAsked))return;
+  e.stopImmediatePropagation();e.preventDefault();busy=true;
+  var ps=[];Array.prototype.forEach.call(document.querySelectorAll(SEL),function(x){ps.push(x);});var idx=ps.indexOf(b);
+  Promise.resolve(ask('Do you have an existing QR code to scan to carry over data?\n\nScanning fills in the details for you. Choose No to start with a blank form.',{title:'Carry over data?',ok:'Yes, scan a QR code',no:'No, start blank'})).then(function(yes){busy=false;
+   if(yes){var sb=document.querySelector('[data-act="scan"]');if(sb)sb.click();else if(typeof scanDlg==='function')scanDlg();return;}
+   var cur=document.body.contains(b)?b:(document.querySelectorAll(SEL)[Math.max(0,idx)]||document.querySelector(SEL));
+   if(!cur)return;window.__qrAsked=1;try{cur.click();}finally{setTimeout(function(){window.__qrAsked=0;},50);}});},true);})();
+</script>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 2.04 · 11/24/2026</div>
 </body></html>

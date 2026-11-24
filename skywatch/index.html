@@ -13914,7 +13914,7 @@ function auSummary(r){const au=r.audit,P=auF(r),v=au.verdict==='pass'?'PASSED':'
 function auNeedHtml(){const r=S.rec,m=auMissing(r);return `<div id="auNeed">${m.length?`<div class="err" style="margin-top:10px"><b>Still needed before you can submit:</b><ul style="margin:6px 0 0 18px;padding:0">${m.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}<button class="pri" data-act="ausubmit" style="width:100%;margin-top:10px;background:#6b3fa0;border-color:#6b3fa0" ${m.length?'disabled':''}>Submit audit report</button></div>`;}
 function auditHtml(){const r=S.rec,au=auEns(r),P=auF(r),st=stats(r);
  if(au.done){const v=au.verdict==='pass',s=auSummary(r);return `<div class="card" style="border:3px solid ${v?'#1b8a3a':'#c62828'}"><div class="row"><h2 style="flex:1;margin:0">Audit report – ${esc(snD(r))}</h2><span class="vd ${v?'pass':'fail'}">${v?'✓ AUDIT PASSED':'✗ AUDIT FAILED'}</span></div><p class="muted">Auditor <b>${esc(au.name)}</b> · ${esc(fmtD(au.date))} · ${P.length} fault${P.length===1?'':'s'} reviewed · ${P.filter(x=>(au.items[x.id]||{}).r==='ok').length} verified · ${P.filter(x=>(au.items[x.id]||{}).r==='no').length} not acceptable</p><div id="pdfst" class="muted">Preparing PDF…</div></div>
- <div class="card"><div class="row"><button class="pri" data-act="share" style="flex:1">📤 Share audit PDF</button><button data-act="dl" style="flex:1">⬇ Save audit PDF to tablet</button></div><div class="row" style="margin-top:8px"><button data-act="aucopy" style="flex:1">📋 Copy audit summary (for email)</button><button data-act="wip-copy" style="flex:1">📋 Copy ${WIP_MAIL}</button><button class="emailbig" data-act="auemail">✉ Email audit (PDF attached)<small>Recommended – opens your email app with the PDF attached</small></button></div><p class="muted">The audit PDF is a one-page audit report (longer only if there are many faults, or if the auditor added photos). It states it is the audit of the associated inspection report and punch list.</p></div>
+ <div class="card"><div class="row"><button class="pri" data-act="share" style="flex:1">✉ Email audit PDF (saves it first)</button><button data-act="dl" style="flex:1">⬇ Save audit PDF to tablet</button></div><div class="row" style="margin-top:8px"><button data-act="aucopy" style="flex:1">📋 Copy audit summary (for email)</button><button data-act="wip-copy" style="flex:1">📋 Copy ${WIP_MAIL}</button><button class="emailbig" data-act="auemail">✉ Email audit (PDF attached)<small>Saves the report to this device, then opens your email app with the addresses filled in</small></button></div><p class="muted">The audit PDF is a one-page audit report (longer only if there are many faults, or if the auditor added photos). It states it is the audit of the associated inspection report and punch list.</p></div>
  <div class="card"><button data-act="aureopen">Edit the audit</button> <button data-act="auback">← Back to the report</button></div>`;}
  const m=auMissing(r),done=P.filter(x=>(au.items[x.id]||{}).r).length;
  return `<div class="card" style="border:2px solid #6b3fa0"><h2 style="margin:0 0 4px">Auditor review – ${esc(snD(r))}</h2><p class="muted" style="margin:0 0 8px">Go through every fault below, confirm each repair was completed appropriately, then record the audit result at the bottom. Nothing in the tech's report is changed.</p>
@@ -13997,9 +13997,9 @@ function mailDefaults(r){if(isAud(r)){const s=auSummary(r);return {subject:s.sub
  body:`Attached are the signed Service Certificate of Completion${r.warr&&r.warr.on?', the Certificate of Warranty':''} and the SkyWatch inspection report (punch list and the complete inspection checklist).\n\nCustomer: ${h.customer||''}\nCustomer PO #: ${h.po||''}\nTeledyne FLIR Sales Order #: ${h.salesOrder||''}\nRMA #: ${h.rma||''}\nService Order #: ${h.serviceOrder||''}\nTower S/N: ${h.towerSerial||''}\nGenerator S/N: ${h.genSerial||''}\nDate: ${fmtD(h.date)}\n\nFinal result: ${r.verdict==='pass'?'PASSED':r.verdict==='fail'?'FAILED':'not recorded'}\nResults: ${st.f} item(s) failed, ${st.f-st.open} repaired, ${st.open} open${st.quote?` (${st.quote} non-warranty repair(s) to be quoted)`:''}.${st.dno&&!st.openDno?`\nDo Not Operate item(s) found: ${st.dno} - all repaired; no longer present.`:''}${st.openDno?`\n*** DO NOT OPERATE: ${st.openDno} open item(s) - tower must not be operated until resolved. ***`:''}${st.blk?`\nNot tested (blocked by other issues): ${st.blk} item(s) - retest required once the blocking issue is resolved.`:''}${rmaLines(r)}\n\nTeledyne FLIR\nTucson Service Center (TSC)\n8165 S Camino de Cafe\nTucson, Arizona, 85747\n\n${TSC_EMAIL}\n520-262-6910`};}
 function sendHtml(){const r=S.rec,md=mailDefaults(r),m=r.mail;const st=stats(r);
  return `${st.openDno?`<div class="dno-banner">⛔ DO NOT OPERATE – ${st.openDno} open<small>Included in the email text</small></div>`:''}
- <div class="card"><div class="row"><button class="emailbig" data-act="share">✉ Email Inspection Report<small>Recommended – opens your email app with the PDF attached</small></button><button class="gobtn purplebtn" data-act="dl" style="flex:1">⬇ Save All to Device</button></div>
- <div class="row" style="margin-top:8px"><button data-act="mailto" style="flex:1">✉ Open email draft (no attachments)</button><button data-act="wip-copy" style="flex:1">📋 Copy ${WIP_MAIL}</button><button data-act="copy" style="flex:1">Copy addresses</button></div>
- <p class="muted">Needs a connection (shop Wi-Fi or your phone hotspot). <b>Share</b> opens the Android share sheet with the PDF attached – pick Gmail/Outlook, then paste the addresses (the list is copied for you first; the technician is the Cc line). A web page can't pre-fill recipients <i>and</i> attach a file at the same time. If the share sheet isn't offered, <b>Save PDF</b>, then <b>Open email draft</b> (To, Cc, subject and text filled in) and attach the PDF from Downloads.</p>
+ <div class="card"><div class="row"><button class="emailbig" data-act="share">✉ Email Inspection Report<small>Saves the report to this device, then opens your email app with the addresses filled in</small></button><button class="gobtn purplebtn" data-act="dl" style="flex:1">⬇ Save All to Device</button></div>
+ <div class="row" style="margin-top:8px"><button data-act="mailto" style="flex:1">✉ Open email draft</button><button data-act="wip-copy" style="flex:1">📋 Copy ${WIP_MAIL}</button><button data-act="copy" style="flex:1">Copy addresses</button></div>
+ <p class="muted">Tap <b>Email</b>: the report (and the photo ZIP when there is one) is saved to this device, then your default email app opens with the To and Cc addresses and the subject filled in. Attach the saved file(s) with the paperclip.</p>
  <div class="row"><button data-act="step" data-s="4">← Certificate</button></div></div>
  <div class="ok"><b>Signed ${new Date(r.signedAt||Date.now()).toLocaleString()}.</b> The PDF is created on this tablet.</div>
  <div class="card"><h3>File</h3><div id="pdfst" class="muted">Preparing PDF…</div></div>
@@ -14336,10 +14336,8 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'ausubmit':{const m=auMissing(r);if(m.length){notice(m.join('\n'),{title:'Audit not complete'});break;}const au=r.audit;if(!await ask(`Submit the audit as ${au.verdict==='pass'?'PASSED':'FAILED'}?`,{title:'Submit audit report',ok:'Submit'}))break;au.done=true;au.ts=Date.now();S.settings.lastAuditor=au.name.trim();setting('lastAuditor',au.name.trim());markDirty();await save();renderRec();break;}
  case 'aureopen':{r.audit.done=false;S.pdf=null;markDirty();renderRec();break;}
  case 'aucopy':{const s=auSummary(r),tx=s.subj+'\n\n'+s.text;const ta=document.createElement('textarea');ta.value=tx;ta.style.cssText='position:fixed;left:0;top:0;opacity:0';document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,tx.length);let ok=false;try{ok=document.execCommand('copy');}catch(e){}ta.remove();notice(ok?'Paste it into the body of your email.':'Could not copy automatically.',{title:ok?'Copied':'Copy failed'});break;}
- case 'auemail':{const s=auSummary(r);
-  if(S.pdf){try{const files=pdfFiles();if(navigator.canShare&&navigator.canShare({files})){await navigator.share({files,title:s.subj,text:s.text});break;}}catch(err){if(err&&err.name==='AbortError')break;}}
-  else{alert('The PDF is still being prepared – try again in a moment.');break;}
-  alert('This browser cannot attach the PDF automatically, so the email will open without it. Save the audit PDF and attach it from Downloads.');location.href='mailto:?cc=TSC%40teledyne.com&subject='+encodeURIComponent(s.subj)+'&body='+encodeURIComponent(s.text);break;}
+ case 'auemail':{const s=auSummary(r);if(!S.pdf){alert('The PDF is still being prepared – try again in a moment.');break;}
+  await mailGo(pdfFiles(),'mailto:?cc=TSC%40teledyne.com&subject='+encodeURIComponent(s.subj)+'&body='+encodeURIComponent(s.text));break;}
  case 'new':newDlg();break;
  case 'mclose':closeModal();break;
  case 'start':{const ts=$('#n-ts').value.trim(),cu=$('#n-cu').value.trim(),te=$('#n-te').value.trim();closeModal();S.rec=newRec({towerSerial:ts,customer:cu,tech:te,techEmail:S.settings.lastTechEmail||''});techRemember(te);S.techDraft='';S.photos={};S.view='rec';S.open=-1;S.dirty=true;await save();render();break;}
@@ -14431,10 +14429,8 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'dlleft':if(!S.left){alert('The items-left page is still being prepared');break;}dlBlob(S.left.pdf.blob,S.left.pdf.name);break;
  case 'dlleftzip':if(!S.left){alert('The items-left page is still being prepared');break;}dlBlob(S.left.zip.blob,S.left.zip.name);break;
  case 'copy':{const sel=rcpSel(r),t='To: '+sel.filter(x=>x.role==='to').map(x=>x.e).join(', ')+(sel.some(x=>x.role==='cc')?'\nCc: '+sel.filter(x=>x.role==='cc').map(x=>x.e).join(', '):'');try{await navigator.clipboard.writeText(t);alert('Copied:\n'+t)}catch(_){prompt('Copy these addresses:',t)}break;}
- case 'mailto':{const md=mailDefaults(r),sub=r.mail.subject!=null?r.mail.subject:md.subject,body=r.mail.body!=null?r.mail.body:md.body,sel=rcpSel(r),to=sel.filter(x=>x.role==='to').map(x=>x.e).join(','),cc=sel.filter(x=>x.role==='cc').map(x=>x.e).join(',');location.href='mailto:'+to+'?'+(cc?'cc='+encodeURIComponent(cc)+'&':'')+'subject='+encodeURIComponent(sub)+'&body='+encodeURIComponent(body);break;}
- case 'share':{if(!S.pdf){alert('The PDF is still being prepared – try again in a moment.');break;}if(!pdfFiles().length){alert('Tick at least one file to attach.');break;}const md=mailDefaults(r),files=pdfFiles();const data={files,title:isAud(r)?md.subject:(r.mail.subject!=null?r.mail.subject:md.subject),text:isAud(r)?md.body:(r.mail.body!=null?r.mail.body:md.body)};
-  try{if(navigator.canShare&&navigator.canShare({files})){try{if(isAud(r))throw 0;const sel=rcpSel(r);await navigator.clipboard.writeText('To: '+sel.filter(x=>x.role==='to').map(x=>x.e).join(', ')+(sel.some(x=>x.role==='cc')?'\nCc: '+sel.filter(x=>x.role==='cc').map(x=>x.e).join(', '):''))}catch(_){}await navigator.share(data);r.mail.shared=Date.now();markDirty();}else alert('This browser cannot attach files from a web page. Use "Save All to Device", then "Open email draft" and attach the file.');}
-  catch(err){if(err&&err.name!=='AbortError')alert('Share failed: '+err.message)}break;}
+ case 'mailto':{await mailOpen(r);break;}
+ case 'share':{if(!S.pdf){alert('The PDF is still being prepared – try again in a moment.');break;}if(!pdfFiles().length){alert('Tick at least one file to attach.');break;}await mailOpen(r);break;}
  case 'backup':doBackup();break;
  case 'restore':doRestore();break;
  case 'admin':{const p=prompt('Admin PIN:');if(p!==ADMIN_PIN){if(p!==null)alert('Wrong PIN');break;}S.adm=clone(curTpl());if(!S.adm.cfields)S.adm.cfields=[];S.view='admin';render();break;}
@@ -14757,14 +14753,22 @@ async function wipCopyMail(b){
   let ok=false;try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(WIP_MAIL);ok=true;}}catch(e){}
   if(!ok){try{const t=document.createElement('textarea');t.value=WIP_MAIL;t.style.cssText='position:fixed;top:0;left:0;opacity:0';document.body.appendChild(t);t.focus();t.select();ok=document.execCommand('copy');t.remove();}catch(e){}}
   if(b){const o=b.dataset.t||(b.dataset.t=b.innerHTML);b.innerHTML=ok?'✓ Copied '+WIP_MAIL:'Could not copy – type '+WIP_MAIL;clearTimeout(b._tm);b._tm=setTimeout(()=>{b.innerHTML=o;},2200);}}
+function mailSave(f){var u=URL.createObjectURL(f),a=document.createElement('a');a.href=u;a.download=f.name;a.style.display='none';document.body.appendChild(a);a.click();setTimeout(function(){a.remove();URL.revokeObjectURL(u);},4000);}
+/* email (Ravi 2026-11-24): never the share sheet / Gmail. Save the report (and photo zip) to this device, then open the default mail app with To / Cc / subject filled in */
+async function mailGo(files,href){files=(files||[]).filter(Boolean);
+ for(var i=0;i<files.length;i++){try{mailSave(files[i]);}catch(e){}await new Promise(function(r){setTimeout(r,700);});}
+ var names=files.map(function(f){return f.name;}).join('\n');
+ var ok=await ask((files.length?'Saved to this device (Downloads):\n'+names+'\n\n':'')+'Your email app opens next with the address and subject filled in. Attach the saved file'+(files.length>1?'s':'')+' with the paperclip, then send.',{title:'Report saved',ok:'Open email app',no:'Cancel'});
+ if(ok)location.href=href;}
+async function mailOpen(r){const md=mailDefaults(r),aud=isAud(r),sub=aud?md.subject:(r.mail.subject!=null?r.mail.subject:md.subject),body=aud?md.body:(r.mail.body!=null?r.mail.body:md.body),sel=rcpSel(r),to=sel.filter(x=>x.role==='to').map(x=>x.e).join(','),cc=sel.filter(x=>x.role==='cc').map(x=>x.e).join(',');
+ const href='mailto:'+to+'?'+(cc?'cc='+encodeURIComponent(cc)+'&':'')+'subject='+encodeURIComponent(sub)+'&body='+encodeURIComponent(body);
+ if(S.pdf&&pdfFiles().length){await mailGo(pdfFiles(),href);r.mail.shared=Date.now();markDirty();}else location.href=href;}
 async function wipEmail(){
   const o=wipBuildPdf(),rec=WA.rec();
   const subj='Carry-over - '+o.FN+' - '+o.sn,
    text=['Carry-over for '+o.FN,'Unit: '+o.sn,'Paused: '+o.ts+(o.tech?' by '+o.tech:''),(o.pg.done!=null?'Progress: '+o.pg.done+' of '+o.pg.total+' items checked':''),'',rec.carryNotes?'Notes from the tech:\n'+rec.carryNotes:'(No notes added.)','','The carry-over sheet with the QR code'+(o.n>1?'s':'')+' is attached. Next tech: open the same form, tap Scan QR and photograph '+(o.n>1?'every code':'the code')+'. Photos are not included.'].filter((x,i)=>x!==''||i>0).join('\n');
   try{if(navigator.clipboard)await navigator.clipboard.writeText(WIP_MAIL);}catch(e){}
-  try{const f=new File([o.blob],o.name,{type:'application/pdf'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:subj,text});return;}}catch(e){if(e&&e.name==='AbortError')return;}
-  WA.dl(o.blob,o.name,1);WA.notice('This browser cannot attach the sheet automatically. It was saved as "'+o.name+'" - attach it to the email that opens next.','PDF saved');
-  location.href='mailto:'+WIP_MAIL+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(text);}
+  await mailGo([new File([o.blob],o.name,{type:'application/pdf'})],'mailto:'+WIP_MAIL+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(text));}
 
 /* ---- receiving ---- */
 const wipRx={};
@@ -15072,7 +15076,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='991f89f582';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='1c60be6ac1';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);Promise.resolve().then(function(){return typeof save==='function'?save():0;}).catch(function(){}).then(function(){return fetch(location.pathname,{cache:'reload'});}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -16370,9 +16374,9 @@ mailDefaults=function(r){
   o.body=o.body.replace(/^Attached are[^\n]*/,'Attached is the SkyWatch inspection report for Tower '+r.visit.i+' of '+r.visit.n+' at this site: the punch list report and the complete inspection checklist. The Service Certificate of Completion for the visit is sent separately.');}
  return o;};
 function vcSendHtml(){var r=S.rec,md=mailDefaults(r),m=r.mail;
- return '<div class="card"><div class="row"><button class="emailbig" data-act="share">✉ Email Reports<small>Recommended – opens your email app with the PDF attached</small></button><button class="gobtn purplebtn" data-act="dl" style="flex:1">⬇ Save All to Device</button></div>'
- +'<div class="row" style="margin-top:8px"><button data-act="mailto" style="flex:1">✉ Open email draft (no attachments)</button><button data-act="copy" style="flex:1">Copy addresses</button></div>'
- +'<p class="muted">Needs a connection (shop Wi-Fi or your phone hotspot). <b>Share</b> opens the Android share sheet with the PDF attached – pick Gmail/Outlook, then paste the addresses (the list is copied for you first; the technician is the Cc line). If the share sheet isn\'t offered, <b>Save</b> the PDF, then <b>Open email draft</b> and attach it from Downloads.</p><div class="row"><button data-act="step" data-s="4">← Certificate</button></div></div>'
+ return '<div class="card"><div class="row"><button class="emailbig" data-act="share">✉ Email Reports<small>Saves the report to this device, then opens your email app with the addresses filled in</small></button><button class="gobtn purplebtn" data-act="dl" style="flex:1">⬇ Save All to Device</button></div>'
+ +'<div class="row" style="margin-top:8px"><button data-act="mailto" style="flex:1">✉ Open email draft</button><button data-act="copy" style="flex:1">Copy addresses</button></div>'
+ +'<p class="muted">Tap <b>Email</b>: the report (and the photo ZIP when there is one) is saved to this device, then your default email app opens with the To and Cc addresses and the subject filled in. Attach the saved file(s) with the paperclip.</p><div class="row"><button data-act="step" data-s="4">← Certificate</button></div></div>'
  +'<div class="ok"><b>Signed '+new Date(r.signedAt||Date.now()).toLocaleString()+'.</b> The PDF is created on this tablet.</div>'
  +'<div class="card"><h3>File</h3><div id="pdfst" class="muted">Preparing PDF…</div></div>'
  +'<div class="card"><h3>Recipients</h3><p class="muted" style="margin:0 0 6px">Customer and SkyWatch support are addressed To; the technician is Cc, and TSC@teledyne.com is always copied.</p>'+rcpList(r).map(function(x){return '<label class="row" style="padding:6px 0"><input type="checkbox" style="width:24px;min-height:24px" data-act="rcp" data-e="'+esc(x.e)+'" '+(x.lock?'checked disabled':r.recipients.off[x.e]?'':'checked')+'> <span><b>'+esc(x.e)+'</b> <span class="tag">'+x.l+'</span></span></label>';}).join('')
@@ -16952,6 +16956,15 @@ document.addEventListener('change',function(e){
   var f=t.files&&t.files[0];t.value='';if(f)importFile(f);
 });
 })();
+/* every form: starting a new one first asks whether there is an existing QR code to carry over data from (Ravi 2026-11-24) */
+(function(){var busy=false,SEL='[data-act="new"],[data-pt="tripnew"]';
+ document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest(SEL);if(!b||busy||(window.__qrAsked))return;
+  e.stopImmediatePropagation();e.preventDefault();busy=true;
+  var ps=[];Array.prototype.forEach.call(document.querySelectorAll(SEL),function(x){ps.push(x);});var idx=ps.indexOf(b);
+  Promise.resolve(ask('Do you have an existing QR code to scan to carry over data?\n\nScanning fills in the details for you. Choose No to start with a blank form.',{title:'Carry over data?',ok:'Yes, scan a QR code',no:'No, start blank'})).then(function(yes){busy=false;
+   if(yes){var sb=document.querySelector('[data-act="scan"]');if(sb)sb.click();else if(typeof scanDlg==='function')scanDlg();return;}
+   var cur=document.body.contains(b)?b:(document.querySelectorAll(SEL)[Math.max(0,idx)]||document.querySelector(SEL));
+   if(!cur)return;window.__qrAsked=1;try{cur.click();}finally{setTimeout(function(){window.__qrAsked=0;},50);}});},true);})();
 </script>
-<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.88 · 11/17/2026</div>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 2.04 · 11/24/2026</div>
 </body></html>

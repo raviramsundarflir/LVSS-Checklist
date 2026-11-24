@@ -896,8 +896,7 @@ function mailParts(){const r=S.rec,res=result(r),c=counts(r);const subj='Pan-Til
  const body='Acceptance Test Result for the '+modelOf(r).label.split(' (')[0]+' Pan-Tilt Moving Base, S/N '+(r.hdr.sn||'?')+'.\nResult: '+res+' ('+c.pass+' pass/done, '+c.fail+' fail, '+c.na+' N/A, '+(c.nt+c.awp)+' not tested/AWP, '+c.todo+' not completed).\nTested by: '+(r.tech||'?')+'\n'+(jobLine(r)?jobLine(r)+'\n':'')+(c.fail?'Failure Report '+T.failRep.code+' is needed for the failed lines.\n':'')+'\nThe ATR is attached as a PDF.';return {subj,body};}
 async function doEmail(){const r=S.rec,to=addrs(r.send.to);to.forEach(a=>remember('sendto',a));const m=mailParts(),cc=r.send.tsc?'TSC@teledyne.com':'';
  const f=new File([S.pdf.blob],S.pdf.name,{type:'application/pdf'});
- try{if(navigator.canShare&&navigator.canShare({files:[f]})){if(to.length)copyText(to.join(', '));toast(to.length?'To addresses copied – paste them into To'+(cc?'; tap Copy Cc for the Cc':''):'Pick the mail app');await navigator.share({files:[f],title:m.subj,text:m.body});return;}}catch(e){if(e&&e.name==='AbortError')return;}
- doDownload();location.href='mailto:'+encodeURIComponent(to.join(',')).replace(/%2C/gi,',').replace(/%40/g,'@')+'?'+(cc?'cc='+encodeURIComponent(cc)+'&':'')+'subject='+encodeURIComponent(m.subj)+'&body='+encodeURIComponent(m.body+'\n\n(Attach the downloaded PDF: '+S.pdf.name+')');}
+ doDownload();toast('PDF saved to Downloads – attach it to the email that opens next');await new Promise(function(z){setTimeout(z,1200);});location.href='mailto:'+encodeURIComponent(to.join(',')).replace(/%2C/gi,',').replace(/%40/g,'@')+'?'+(cc?'cc='+encodeURIComponent(cc)+'&':'')+'subject='+encodeURIComponent(m.subj)+'&body='+encodeURIComponent(m.body+'\n\n(Attach the downloaded PDF: '+S.pdf.name+')');}
 function doDownload(){const u=URL.createObjectURL(S.pdf.blob),a=document.createElement('a');a.href=u;a.download=S.pdf.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000);}
 function doPrint(){const u=URL.createObjectURL(S.pdf.blob);const w=window.open(u,'_blank');if(!w)location.href=u;}
 
@@ -1013,7 +1012,7 @@ async function init(){
 init();
 
 </script>
-<script>(function(){var B='c0841ae758';function chk(){fetch('version.json?'+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(v){if(v&&v.build&&v.build!==B){if(navigator.serviceWorker)navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister()});});if(window.caches)caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k)});});var t=document.createElement('div');t.className='toast';t.textContent='A newer version is available - reload to update';document.body.appendChild(t);}}).catch(function(){});}setTimeout(chk,4000);setInterval(function(){if(!document.hidden)chk();},300000);document.addEventListener('visibilitychange',function(){if(!document.hidden)chk();});})();</script>
+<script>(function(){var B='0728eef8a4';function chk(){fetch('version.json?'+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(v){if(v&&v.build&&v.build!==B){if(navigator.serviceWorker)navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister()});});if(window.caches)caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k)});});var t=document.createElement('div');t.className='toast';t.textContent='A newer version is available - reload to update';document.body.appendChild(t);}}).catch(function(){});}setTimeout(chk,4000);setInterval(function(){if(!document.hidden)chk();},300000);document.addEventListener('visibilitychange',function(){if(!document.hidden)chk();});})();</script>
 <script>/* ===== shared: on-screen Back / Home bar (Ravi, 2026-11-04) =====
    Back = the previous screen you were on (kept per app, not the browser history). Home = the main launcher.
    Each app gives Nav.init() a snap() (where am I) and restore() (go back there). Pages without one use the browser's Back. */
@@ -1141,5 +1140,5 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
 ensure();setTimeout(ensure,500);
 })();</script>
-<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.80 · 11/16/2026</div>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 2.04 · 11/24/2026</div>
 </body></html>
