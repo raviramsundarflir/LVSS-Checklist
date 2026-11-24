@@ -14158,7 +14158,7 @@ function punchHtml(){const r=S.rec,L=qcLists(r),cm=qcCoreMissing(r);qsCss();
 function fyiList(r){return fyiList0(r).filter(y=>y.k[0]==='i');}
 /* before the report: revisit the issues, or proceed */
 async function qcRevisit(){const r=S.rec,sv=qcSev(r),B=qcLists(r).B.length;
- const msg=(sv.n?qcSevLine(r)+'.':'No issues recorded.')+(B?`\n${B} check${B===1?' is':'s are'} not answered yet.`:'')+'\n\nWould you like to revisit the issues first, or proceed to the report?';
+ const msg=(sv.n?qcSevLine(r)+'.':'No issues recorded.')+(B?`\n${B} check${B===1?' is':'s are'} not answered yet.`:'')+(String(tv(r,'plate')||'').trim()?'':'\n⚠ License plate # is not entered. You can still continue.')+'\n\nWould you like to revisit the issues first, or proceed to the report?';
  const v=await choose('Revisit the issues, or proceed to the report?',msg,[{v:'go',t:'Proceed to the report',c:'pri'},{v:'rev',t:'Revisit the issues'}]);
  if(v==='rev'){if(r.step!==3)go(3);return false;}return v==='go';}
 document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('[data-act]');if(!a||!S.rec)return;
@@ -16114,7 +16114,7 @@ function tkIdPdf(d,r,MX,CW,y){var h=r.hdr||{},w3=CW/4,cl2=function(t){return qrS
  if(isOldSn(r)){d.setDrawColor(0);d.setLineWidth(.6);d.rect(MX,y,CW,34);d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(90);d.text('New serial number (the serial above is the OLD S/N) - write in:',MX+5,y+9);d.setDrawColor(120);d.line(MX+5,y+28,MX+CW-8,y+28);y+=34;}
  return y;}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='66adeefd0b';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='247a1b12a1';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -16637,7 +16637,7 @@ CUST.cfg({inRec:function(){return S.view!=='home'&&S.view!=='admin';},tag:functi
 window.__atHome=function(){try{return S.view==='home';}catch(e){return false;}};
 if(typeof buildPdf==='function'){const _b=buildPdf;buildPdf=function(r){const a=arguments;return CUST.with(r,()=>_b.apply(this,a));};}
 if(typeof buildAuditPdf==='function'){const _b2=buildAuditPdf;buildAuditPdf=function(r){const a=arguments;return CUST.with(r,()=>_b2.apply(this,a));};}
-(function(){const st=document.createElement('style');st.textContent='@media(max-width:420px){#infoExt .xn{min-width:0;overflow-wrap:anywhere}#infoExt .xh{gap:6px}#infoExt .xdb{padding-left:10px;padding-right:10px}}';document.head.appendChild(st);})();
+(function(){const st=document.createElement('style');st.textContent='#infoExt .xa .xh{flex-wrap:wrap;gap:6px 8px}#infoExt .xa .xh .xn{flex:1 1 100%;width:100%;min-width:100%;overflow-wrap:normal;word-break:normal}#infoExt .xa .xh .tag{flex:0 0 auto;margin-right:auto}#infoExt .xa .xh .xdb{margin-right:0;padding-left:12px;padding-right:12px}#infoExt .xa .xh .ic{flex:0 0 auto}';document.head.appendChild(st);})();
 </script><script>
 /* ===== Return to last opened report (all forms, Ravi 2026-11-02) =====
    Remembers the last 3 reports opened on this device (any form) for the main page's "Return to last opened report" card,
@@ -16714,7 +16714,7 @@ function list(){return Array.prototype.filter.call(document.querySelectorAll('in
 var cur=null,key='',bar=null,hideT=null;
 function keyOf(el){return el.getAttribute('data-b')||el.getAttribute('data-tk')||el.id||'';}
 function find(){if(cur&&document.body.contains(cur))return cur;if(key){var all=list();for(var i=0;i<all.length;i++){if(keyOf(all[i])===key){cur=all[i];return cur;}}}return null;}
-var css=document.createElement('style');css.textContent='#cnav{position:fixed;right:8px;top:50%;transform:translateY(-50%);z-index:899;display:none;flex-direction:column;gap:8px}#cnav button{min-width:76px;min-height:52px;padding:6px 10px;border-radius:14px;border:2px solid #1d3b6a;background:#fff;color:#1d3b6a;font:800 15px/1.1 inherit;font-family:inherit;box-shadow:0 4px 14px rgba(20,33,61,.28);-webkit-tap-highlight-color:transparent}#cnav button.nx{background:#1d3b6a;color:#fff}#cnav button:disabled{opacity:.35}';document.head.appendChild(css);
+var css=document.createElement('style');css.textContent='#cnav{display:none!important;position:fixed;right:8px;top:50%;transform:translateY(-50%);z-index:899;display:none;flex-direction:column;gap:8px}#cnav button{min-width:76px;min-height:52px;padding:6px 10px;border-radius:14px;border:2px solid #1d3b6a;background:#fff;color:#1d3b6a;font:800 15px/1.1 inherit;font-family:inherit;box-shadow:0 4px 14px rgba(20,33,61,.28);-webkit-tap-highlight-color:transparent}#cnav button.nx{background:#1d3b6a;color:#fff}#cnav button:disabled{opacity:.35}';document.head.appendChild(css);
 function mk(){if(bar)return bar;bar=document.createElement('div');bar.id='cnav';bar.innerHTML='<button type="button" class="nx" data-cn="next" aria-label="Next field">Next ▶</button><button type="button" data-cn="prev" aria-label="Previous field">◀ Back</button>';document.body.appendChild(bar);
  bar.addEventListener('pointerdown',function(e){e.preventDefault();});bar.addEventListener('mousedown',function(e){e.preventDefault();});
  bar.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;e.preventDefault();e.stopPropagation();go(b.getAttribute('data-cn')==='next'?1:-1);});return bar;}
@@ -16840,5 +16840,5 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
 ensure();setTimeout(ensure,500);
 })();</script>
-<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 1.80 · 11/16/2026</div>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 2.02 · 11/24/2026</div>
 </body></html>
