@@ -14994,6 +14994,36 @@ function zsInit(opt){ opt=opt||{};
   document.getElementById('zbFit').onclick=fit;
 }
 function viewRotate(d){ var v=S.view2; if(!v) return; S.viewRot=(((S.viewRot||0)+d)%360+360)%360; showPhoto(v.pid,true); }
+/* ===== crop tool (Ravi 2026-11-24): cropPhoto(dataUrl) -> Promise<dataUrl|null> ===== */
+function cropPhoto(src){return new Promise(function(done){
+ var o=document.createElement('div');o.id='cropOv';o.style.cssText='position:fixed;inset:0;z-index:100000;background:#000;display:flex;flex-direction:column;touch-action:none;user-select:none;-webkit-user-select:none';
+ o.innerHTML='<div style="color:#fff;font:600 14px system-ui;padding:8px 12px;text-align:center">Drag the corners or edges to choose the part to keep. Drag inside to move it.</div><div id="cropBox" style="flex:1 1 auto;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:0"><img id="cropImg" alt="" style="max-width:100%;max-height:100%;display:block;pointer-events:none"><div id="cropRect" style="position:absolute;border:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.6);box-sizing:border-box;touch-action:none"></div></div><div style="display:flex;gap:8px;padding:10px"><button type="button" id="cropNo" style="flex:1;min-height:48px;margin:0">Cancel</button><button type="button" id="cropRs" style="flex:1;min-height:48px;margin:0">Reset</button><button type="button" id="cropOk" class="pri" style="flex:1.4;min-height:48px;margin:0">✂ Use this crop</button></div>';
+ document.body.appendChild(o);
+ var img=o.querySelector('#cropImg'),box=o.querySelector('#cropBox'),rc=o.querySelector('#cropRect'),R={x:0,y:0,w:0,h:0},I={x:0,y:0,w:0,h:0},drag=null,M=44;
+ function lay(){var b=box.getBoundingClientRect(),r=img.getBoundingClientRect();I={x:r.left-b.left,y:r.top-b.top,w:r.width,h:r.height};}
+ function paint(){rc.style.left=(I.x+R.x)+'px';rc.style.top=(I.y+R.y)+'px';rc.style.width=R.w+'px';rc.style.height=R.h+'px';}
+ function reset(){lay();R={x:I.w*.08,y:I.h*.08,w:I.w*.84,h:I.h*.84};paint();}
+ img.onload=function(){setTimeout(reset,30);};img.src=src;window.addEventListener('resize',reset);
+ function close(v){window.removeEventListener('resize',reset);o.remove();done(v);}
+ o.querySelector('#cropNo').onclick=function(){close(null);};o.querySelector('#cropRs').onclick=reset;
+ o.querySelector('#cropOk').onclick=function(){var k=img.naturalWidth/I.w,sx=Math.round(R.x*k),sy=Math.round(R.y*k),sw=Math.round(R.w*k),sh=Math.round(R.h*k);
+  if(sw<8||sh<8){close(null);return;}var sc=Math.min(1,2200/Math.max(sw,sh)),c=document.createElement('canvas');c.width=Math.round(sw*sc);c.height=Math.round(sh*sc);
+  c.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,c.width,c.height);close({d:c.toDataURL('image/jpeg',0.9),w:c.width,h:c.height});};
+ rc.addEventListener('pointerdown',function(e){e.preventDefault();var r=rc.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top,E=Math.max(26,Math.min(44,Math.min(r.width,r.height)/3));
+  drag={l:px<E,r:px>r.width-E,t:py<E,b:py>r.height-E,sx:e.clientX,sy:e.clientY,o:{x:R.x,y:R.y,w:R.w,h:R.h}};drag.m=!(drag.l||drag.r||drag.t||drag.b);try{rc.setPointerCapture(e.pointerId);}catch(x){}});
+ rc.addEventListener('pointermove',function(e){if(!drag)return;var dx=e.clientX-drag.sx,dy=e.clientY-drag.sy,n={x:drag.o.x,y:drag.o.y,w:drag.o.w,h:drag.o.h};
+  if(drag.m){n.x=Math.max(0,Math.min(I.w-n.w,n.x+dx));n.y=Math.max(0,Math.min(I.h-n.h,n.y+dy));}
+  else{if(drag.l){var nx=Math.max(0,Math.min(drag.o.x+drag.o.w-M,drag.o.x+dx));n.w=drag.o.x+drag.o.w-nx;n.x=nx;}
+   if(drag.r){n.w=Math.max(M,Math.min(I.w-drag.o.x,drag.o.w+dx));}
+   if(drag.t){var ny=Math.max(0,Math.min(drag.o.y+drag.o.h-M,drag.o.y+dy));n.h=drag.o.y+drag.o.h-ny;n.y=ny;}
+   if(drag.b){n.h=Math.max(M,Math.min(I.h-drag.o.y,drag.o.h+dy));}}
+  R=n;paint();});
+ function up(){drag=null;}rc.addEventListener('pointerup',up);rc.addEventListener('pointercancel',up);
+});}
+/* viewer glue: replace the photo with the cropped one (the first original is kept so it can be undone) */
+async function pvCropSave(p){S.viewRot=0;delete p.zv;try{await DB.put('photos',p);}catch(e){}markDirty();if(typeof p.num==='string'){if(S.audit)auRefresh();else swRefresh();}else refreshThumbs(p.num);showPhoto(p.id,true);}
+async function pvCropRun(pid,src){var p=S.photos.find(function(x){return x.id===pid;});if(!p)return;var res=await cropPhoto(src);if(!res)return;if(!p.o)p.o=p.data;p.data=res.d;await pvCropSave(p);}
+async function pvCropUndo(pid){var p=S.photos.find(function(x){return x.id===pid;});if(!p||!p.o)return;p.data=p.o;delete p.o;await pvCropSave(p);}
 function showPhoto(pid,keep){
   var p=S.photos.find(function(x){ return x.id===pid; }); if(!p) return;
   var t=viewTarget(p); S.view2={pid:pid}; if(!keep) S.viewRot=(p.zv&&p.zv.rot)||0;
@@ -15008,10 +15038,11 @@ function showPhoto(pid,keep){
       (t?'<input id="zsSer" value="'+esc(String(S.rec.header[t.path]||''))+'" placeholder="'+esc(t.lbl)+'" aria-label="'+esc(t.lbl)+'" autocapitalize="characters" autocomplete="off" spellcheck="false" style="width:100%;margin:0 0 6px;padding:6px 10px;min-height:44px;font:700 18px ui-monospace,Menlo,Consolas,monospace;border:2px solid var(--line);border-radius:8px">':'')+
       zsHtml(src)+
       '<div style="display:flex;gap:4px;align-items:center;margin-top:6px">'+B('rv1',-90,'⟲90')+B('rv2',-45,'↺45')+B('rv3',-5,'↺5')+'<button type="button" id="rv0" class="btn light" style="flex:.9;padding:4px 2px;min-height:42px;font-size:13px" title="Tap to reset rotation">'+rot+'°</button>'+B('rv4',5,'↻5')+B('rv5',45,'↻45')+B('rv6',90,'⟳90')+'</div>'+
-      '<div style="display:flex;gap:8px;margin-top:6px">'+(canDel?'<button class="btn danger" data-act="del-photo" data-pid="'+esc(p.id)+'" style="flex:1">Delete photo</button>':'')+'<button class="btn primary" data-act="close-modal" style="flex:2;min-height:44px">Done</button></div></div></div>';
+      '<div style="display:flex;gap:6px;margin-top:6px"><button type="button" id="pvCrop" class="btn light" style="flex:1;min-height:44px">✂ Crop</button>'+(p.o?'<button type="button" id="pvUncrop" class="btn light" style="flex:1;min-height:44px">↩ Undo crop</button>':'')+'</div>'+'<div style="display:flex;gap:8px;margin-top:6px">'+(canDel?'<button class="btn danger" data-act="del-photo" data-pid="'+esc(p.id)+'" style="flex:1">Delete photo</button>':'')+'<button class="btn primary" data-act="close-modal" style="flex:2;min-height:44px">Done</button></div></div></div>';
     pvReorder();
     [['rv1',-90],['rv2',-45],['rv3',-5],['rv4',5],['rv5',45],['rv6',90]].forEach(function(x){ document.getElementById(x[0]).onclick=function(){ viewRotate(x[1]); }; });
     document.getElementById('rv0').onclick=function(){ S.viewRot=0; showPhoto(pid,true); };
+    var cb=document.getElementById('pvCrop'); if(cb) cb.onclick=function(){ pvCropRun(pid,src); }; var ub=document.getElementById('pvUncrop'); if(ub) ub.onclick=function(){ pvCropUndo(pid); };
     zsInit(zvOpt(p));
     var si=document.getElementById('zsSer'); if(si) si.addEventListener('input',function(){ setHeaderVal(t.path,si.value); });
   };
@@ -17066,7 +17097,7 @@ SendTo.init({rec:function(){ return S.rec; },dirty:function(){ markDirty(); save
 })();
 
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='97cf6afca6';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='2b037ff695';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -17197,7 +17228,7 @@ function list(){return Array.prototype.filter.call(document.querySelectorAll('in
 var cur=null,key='',bar=null,hideT=null;
 function keyOf(el){return el.getAttribute('data-b')||el.getAttribute('data-tk')||el.id||'';}
 function find(){if(cur&&document.body.contains(cur))return cur;if(key){var all=list();for(var i=0;i<all.length;i++){if(keyOf(all[i])===key){cur=all[i];return cur;}}}return null;}
-var css=document.createElement('style');css.textContent='#cnav{position:fixed;right:8px;top:50%;transform:translateY(-50%);z-index:899;display:none;flex-direction:column;gap:8px}#cnav button{min-width:76px;min-height:52px;padding:6px 10px;border-radius:14px;border:2px solid #1d3b6a;background:#fff;color:#1d3b6a;font:800 15px/1.1 inherit;font-family:inherit;box-shadow:0 4px 14px rgba(20,33,61,.28);-webkit-tap-highlight-color:transparent}#cnav button.nx{background:#1d3b6a;color:#fff}#cnav button:disabled{opacity:.35}';document.head.appendChild(css);
+var css=document.createElement('style');css.textContent='#cnav{display:none!important;position:fixed;right:8px;top:50%;transform:translateY(-50%);z-index:899;display:none;flex-direction:column;gap:8px}#cnav button{min-width:76px;min-height:52px;padding:6px 10px;border-radius:14px;border:2px solid #1d3b6a;background:#fff;color:#1d3b6a;font:800 15px/1.1 inherit;font-family:inherit;box-shadow:0 4px 14px rgba(20,33,61,.28);-webkit-tap-highlight-color:transparent}#cnav button.nx{background:#1d3b6a;color:#fff}#cnav button:disabled{opacity:.35}';document.head.appendChild(css);
 function mk(){if(bar)return bar;bar=document.createElement('div');bar.id='cnav';bar.innerHTML='<button type="button" class="nx" data-cn="next" aria-label="Next field">Next ▶</button><button type="button" data-cn="prev" aria-label="Previous field">◀ Back</button>';document.body.appendChild(bar);
  bar.addEventListener('pointerdown',function(e){e.preventDefault();});bar.addEventListener('mousedown',function(e){e.preventDefault();});
  bar.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;e.preventDefault();e.stopPropagation();go(b.getAttribute('data-cn')==='next'?1:-1);});return bar;}
@@ -17304,6 +17335,6 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
 ensure();setTimeout(ensure,500);
 })();</script>
-<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 2.04 · 11/24/2026</div>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 2.05 · 11/24/2026</div>
 </body>
 </html>

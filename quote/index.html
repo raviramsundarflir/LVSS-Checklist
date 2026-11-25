@@ -14169,6 +14169,32 @@ function photoZipFile(r){const L=r.ph||[];if(!L.length)return null;const folder=
 function updCk(k){const r=S.rec;if(!r)return;const m=/^iss:(.+)$/.exec(k||'');if(!m)return;const i=r.iss.find(x=>x.id===m[1]);const el=i&&document.getElementById('qi-'+i.id);if(el)el.outerHTML=issCard(r,i);}
 function phRefresh(){const r=S.rec;if(!r)return;const bx=$('#phBox');if(bx)bx.innerHTML=photosInner(r);(r.iss||[]).forEach(i=>updCk('iss:'+i.id));}
 /* ---- picture viewer with rotate (same steps as the other forms) ---- */
+/* ===== crop tool (Ravi 2026-11-24): cropPhoto(dataUrl) -> Promise<dataUrl|null> ===== */
+function cropPhoto(src){return new Promise(function(done){
+ var o=document.createElement('div');o.id='cropOv';o.style.cssText='position:fixed;inset:0;z-index:100000;background:#000;display:flex;flex-direction:column;touch-action:none;user-select:none;-webkit-user-select:none';
+ o.innerHTML='<div style="color:#fff;font:600 14px system-ui;padding:8px 12px;text-align:center">Drag the corners or edges to choose the part to keep. Drag inside to move it.</div><div id="cropBox" style="flex:1 1 auto;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:0"><img id="cropImg" alt="" style="max-width:100%;max-height:100%;display:block;pointer-events:none"><div id="cropRect" style="position:absolute;border:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.6);box-sizing:border-box;touch-action:none"></div></div><div style="display:flex;gap:8px;padding:10px"><button type="button" id="cropNo" style="flex:1;min-height:48px;margin:0">Cancel</button><button type="button" id="cropRs" style="flex:1;min-height:48px;margin:0">Reset</button><button type="button" id="cropOk" class="pri" style="flex:1.4;min-height:48px;margin:0">✂ Use this crop</button></div>';
+ document.body.appendChild(o);
+ var img=o.querySelector('#cropImg'),box=o.querySelector('#cropBox'),rc=o.querySelector('#cropRect'),R={x:0,y:0,w:0,h:0},I={x:0,y:0,w:0,h:0},drag=null,M=44;
+ function lay(){var b=box.getBoundingClientRect(),r=img.getBoundingClientRect();I={x:r.left-b.left,y:r.top-b.top,w:r.width,h:r.height};}
+ function paint(){rc.style.left=(I.x+R.x)+'px';rc.style.top=(I.y+R.y)+'px';rc.style.width=R.w+'px';rc.style.height=R.h+'px';}
+ function reset(){lay();R={x:I.w*.08,y:I.h*.08,w:I.w*.84,h:I.h*.84};paint();}
+ img.onload=function(){setTimeout(reset,30);};img.src=src;window.addEventListener('resize',reset);
+ function close(v){window.removeEventListener('resize',reset);o.remove();done(v);}
+ o.querySelector('#cropNo').onclick=function(){close(null);};o.querySelector('#cropRs').onclick=reset;
+ o.querySelector('#cropOk').onclick=function(){var k=img.naturalWidth/I.w,sx=Math.round(R.x*k),sy=Math.round(R.y*k),sw=Math.round(R.w*k),sh=Math.round(R.h*k);
+  if(sw<8||sh<8){close(null);return;}var sc=Math.min(1,2200/Math.max(sw,sh)),c=document.createElement('canvas');c.width=Math.round(sw*sc);c.height=Math.round(sh*sc);
+  c.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,c.width,c.height);close({d:c.toDataURL('image/jpeg',0.9),w:c.width,h:c.height});};
+ rc.addEventListener('pointerdown',function(e){e.preventDefault();var r=rc.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top,E=Math.max(26,Math.min(44,Math.min(r.width,r.height)/3));
+  drag={l:px<E,r:px>r.width-E,t:py<E,b:py>r.height-E,sx:e.clientX,sy:e.clientY,o:{x:R.x,y:R.y,w:R.w,h:R.h}};drag.m=!(drag.l||drag.r||drag.t||drag.b);try{rc.setPointerCapture(e.pointerId);}catch(x){}});
+ rc.addEventListener('pointermove',function(e){if(!drag)return;var dx=e.clientX-drag.sx,dy=e.clientY-drag.sy,n={x:drag.o.x,y:drag.o.y,w:drag.o.w,h:drag.o.h};
+  if(drag.m){n.x=Math.max(0,Math.min(I.w-n.w,n.x+dx));n.y=Math.max(0,Math.min(I.h-n.h,n.y+dy));}
+  else{if(drag.l){var nx=Math.max(0,Math.min(drag.o.x+drag.o.w-M,drag.o.x+dx));n.w=drag.o.x+drag.o.w-nx;n.x=nx;}
+   if(drag.r){n.w=Math.max(M,Math.min(I.w-drag.o.x,drag.o.w+dx));}
+   if(drag.t){var ny=Math.max(0,Math.min(drag.o.y+drag.o.h-M,drag.o.y+dy));n.h=drag.o.y+drag.o.h-ny;n.y=ny;}
+   if(drag.b){n.h=Math.max(M,Math.min(I.h-drag.o.y,drag.o.h+dy));}}
+  R=n;paint();});
+ function up(){drag=null;}rc.addEventListener('pointerup',up);rc.addEventListener('pointercancel',up);
+});}
 function phView(id,rot){const r=S.rec,p=(r.ph||[]).find(x=>x.id===id);if(!p)return;S.phv={id,rot:rot||0,out:''};
  const im=new Image();im.onload=()=>{const a=S.phv.rot*Math.PI/180,w=im.width,h=im.height,cs=Math.abs(Math.cos(a)),sn=Math.abs(Math.sin(a));let W=Math.round(w*cs+h*sn),H=Math.round(w*sn+h*cs);const k=Math.min(1,1600/Math.max(W,H));W=Math.round(W*k);H=Math.round(H*k);
   const cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,W,H);g.translate(W/2,H/2);g.rotate(a);g.scale(k,k);g.drawImage(im,-w/2,-h/2);S.phv.out=cv.toDataURL('image/jpeg',0.8);
@@ -14176,6 +14202,7 @@ function phView(id,rot){const r=S.rec,p=(r.ph||[]).find(x=>x.id===id);if(!p)retu
   modal(`<h3 style="margin-top:0">Picture - ${esc(phLabel(r,p))}</h3><div style="background:#111;border-radius:8px;text-align:center"><img src="${S.phv.out}" style="max-width:100%;max-height:46vh;display:block;margin:0 auto" alt=""></div>
    <p class="muted" style="margin:6px 0 4px">Rotate${S.phv.rot?' (now '+S.phv.rot+'°)':''}</p><div class="row" style="gap:4px;flex-wrap:nowrap">${B(-90,'⟲90')}${B(-45,'⟲45')}${B(-5,'⟲5')}${B(5,'⟳5')}${B(45,'⟳45')}${B(90,'⟳90')}</div>
    <div class="row" style="margin-top:8px"><button data-act="phrotreset" style="flex:1 1 90px">Reset</button><button class="pri" data-act="phrotsave" style="flex:2 1 140px">Save picture</button><button data-act="phrotx" style="flex:1 1 90px">Cancel</button></div>
+   <div class="row" style="margin-top:8px"><button data-act="phcrop" style="flex:1 1 120px">✂ Crop</button>${p.o?'<button data-act="phuncrop" style="flex:1 1 120px">↩ Undo crop</button>':''}</div>
    <button class="dng" data-act="phdel" data-id="${p.id}" style="margin-top:8px;width:100%">Remove this picture</button>`);};im.src=p.d;}
 const phStrip=(r,k)=>{const L=(r.ph||[]).filter(p=>p.k===k);return L.length?`<div class="row" style="gap:6px;margin-top:6px">${L.map(p=>`<img src="${p.d}" data-act="phview" data-id="${p.id}" alt="picture" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:pointer">`).join('')}<span class="muted" style="align-self:center">tap a picture to rotate</span></div>`:'';};
 function footers(d,r){const n=d.getNumberOfPages();for(let i=1;i<=n;i++){d.setPage(i);creditLine(d,TPL.revision);d.setFont('helvetica','normal');d.setFontSize(7.5);d.setTextColor(120);d.text(cl(recName(r)+'  |  '+TPL.title),PW/2,770,{align:'center'});d.text('Page '+i+' of '+n,PW-MX,770,{align:'right'});}}
@@ -14327,7 +14354,8 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  case 'phview':phView(id);break;
  case 'phrot':phView(S.phv.id,((S.phv.rot+(+b.dataset.d))%360+360)%360);break;
  case 'phrotreset':phView(S.phv.id,0);break;
- case 'phrotx':closeModal();break;
+ case 'phrotx':closeModal();break; case 'phcrop':{const r=S.rec,p=(r.ph||[]).find(x=>x.id===S.phv.id);if(!p)break;const res=await cropPhoto(S.phv.out);if(!res)break;if(!p.o)p.o=p.d;p.d=res.d;markDirty();phRefresh();phView(p.id,0);break;}
+ case 'phuncrop':{const r=S.rec,p=(r.ph||[]).find(x=>x.id===S.phv.id);if(!p||!p.o)break;p.d=p.o;delete p.o;markDirty();phRefresh();phView(p.id,0);break;}
  case 'phrotsave':{const p=(r.ph||[]).find(x=>x.id===S.phv.id);if(p&&S.phv.out&&S.phv.rot){p.d=S.phv.out;markDirty();}closeModal();phRefresh();break;}
  case 'phcam':pickPhotos(true,'');break;
  case 'phlib':pickPhotos(false,'');break;
@@ -14477,7 +14505,7 @@ document.addEventListener('focusout',e=>{histCommit(e.target);setTimeout(()=>{if
 document.addEventListener('change',e=>histCommit(e.target),true);
 ['scroll','resize'].forEach(ev=>window.addEventListener(ev,histPlace,true));if(window.visualViewport){visualViewport.addEventListener('resize',histPlace);visualViewport.addEventListener('scroll',histPlace);}
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='b57d6366c8';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='89c1aa21ae';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
@@ -14614,7 +14642,7 @@ function list(){return Array.prototype.filter.call(document.querySelectorAll('in
 var cur=null,key='',bar=null,hideT=null;
 function keyOf(el){return el.getAttribute('data-b')||el.getAttribute('data-tk')||el.id||'';}
 function find(){if(cur&&document.body.contains(cur))return cur;if(key){var all=list();for(var i=0;i<all.length;i++){if(keyOf(all[i])===key){cur=all[i];return cur;}}}return null;}
-var css=document.createElement('style');css.textContent='#cnav{position:fixed;right:8px;top:50%;transform:translateY(-50%);z-index:899;display:none;flex-direction:column;gap:8px}#cnav button{min-width:76px;min-height:52px;padding:6px 10px;border-radius:14px;border:2px solid #1d3b6a;background:#fff;color:#1d3b6a;font:800 15px/1.1 inherit;font-family:inherit;box-shadow:0 4px 14px rgba(20,33,61,.28);-webkit-tap-highlight-color:transparent}#cnav button.nx{background:#1d3b6a;color:#fff}#cnav button:disabled{opacity:.35}';document.head.appendChild(css);
+var css=document.createElement('style');css.textContent='#cnav{display:none!important;position:fixed;right:8px;top:50%;transform:translateY(-50%);z-index:899;display:none;flex-direction:column;gap:8px}#cnav button{min-width:76px;min-height:52px;padding:6px 10px;border-radius:14px;border:2px solid #1d3b6a;background:#fff;color:#1d3b6a;font:800 15px/1.1 inherit;font-family:inherit;box-shadow:0 4px 14px rgba(20,33,61,.28);-webkit-tap-highlight-color:transparent}#cnav button.nx{background:#1d3b6a;color:#fff}#cnav button:disabled{opacity:.35}';document.head.appendChild(css);
 function mk(){if(bar)return bar;bar=document.createElement('div');bar.id='cnav';bar.innerHTML='<button type="button" class="nx" data-cn="next" aria-label="Next field">Next ▶</button><button type="button" data-cn="prev" aria-label="Previous field">◀ Back</button>';document.body.appendChild(bar);
  bar.addEventListener('pointerdown',function(e){e.preventDefault();});bar.addEventListener('mousedown',function(e){e.preventDefault();});
  bar.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;e.preventDefault();e.stopPropagation();go(b.getAttribute('data-cn')==='next'?1:-1);});return bar;}
@@ -14755,5 +14783,5 @@ ensure();setTimeout(ensure,500);
    var cur=document.body.contains(b)?b:(document.querySelectorAll(SEL)[Math.max(0,idx)]||document.querySelector(SEL));
    if(!cur)return;window.__qrAsked=1;try{cur.click();}finally{setTimeout(function(){window.__qrAsked=0;},50);}});},true);})();
 </script>
-<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 2.04 · 11/24/2026</div>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 2.05 · 11/24/2026</div>
 </body></html>

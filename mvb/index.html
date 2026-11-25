@@ -810,8 +810,35 @@ function ensureInputs(){if($('#camIn'))return;const d=document.createElement('di
  $('#camIn').addEventListener('change',on);$('#galIn').addEventListener('change',on);}
 async function readPhoto(file){const url=URL.createObjectURL(file);const img=new Image();await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=url;});const mx=1600;let w=img.naturalWidth,h=img.naturalHeight;const k=Math.min(1,mx/Math.max(w,h));w=Math.round(w*k);h=Math.round(h*k);const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);URL.revokeObjectURL(url);return c.toDataURL('image/jpeg',0.72);}
 function refreshPhotos(own){const box=$('.ph[data-own="'+own+'"]');if(!box)return;$$('.t',box).forEach(n=>n.remove());box.insertAdjacentHTML('beforeend',phThumbs(own));hydrate(box);}
-async function viewPhoto(own,id){const v=await phGet(id);if(!v)return;const r=await dlg('<img alt="photo" src="'+v+'" style="width:100%;border-radius:8px"><div class="acts"><button class="dng" data-r="del">Delete photo</button><button class="pri" data-r="close">Close</button></div>');
- if(r==='del'){const a=phIds(own),i=a.indexOf(id);if(i>=0)a.splice(i,1);phDel(id);save();refreshPhotos(own);}}
+/* ===== crop tool (Ravi 2026-11-24): cropPhoto(dataUrl) -> Promise<dataUrl|null> ===== */
+function cropPhoto(src){return new Promise(function(done){
+ var o=document.createElement('div');o.id='cropOv';o.style.cssText='position:fixed;inset:0;z-index:100000;background:#000;display:flex;flex-direction:column;touch-action:none;user-select:none;-webkit-user-select:none';
+ o.innerHTML='<div style="color:#fff;font:600 14px system-ui;padding:8px 12px;text-align:center">Drag the corners or edges to choose the part to keep. Drag inside to move it.</div><div id="cropBox" style="flex:1 1 auto;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:0"><img id="cropImg" alt="" style="max-width:100%;max-height:100%;display:block;pointer-events:none"><div id="cropRect" style="position:absolute;border:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.6);box-sizing:border-box;touch-action:none"></div></div><div style="display:flex;gap:8px;padding:10px"><button type="button" id="cropNo" style="flex:1;min-height:48px;margin:0">Cancel</button><button type="button" id="cropRs" style="flex:1;min-height:48px;margin:0">Reset</button><button type="button" id="cropOk" class="pri" style="flex:1.4;min-height:48px;margin:0">✂ Use this crop</button></div>';
+ document.body.appendChild(o);
+ var img=o.querySelector('#cropImg'),box=o.querySelector('#cropBox'),rc=o.querySelector('#cropRect'),R={x:0,y:0,w:0,h:0},I={x:0,y:0,w:0,h:0},drag=null,M=44;
+ function lay(){var b=box.getBoundingClientRect(),r=img.getBoundingClientRect();I={x:r.left-b.left,y:r.top-b.top,w:r.width,h:r.height};}
+ function paint(){rc.style.left=(I.x+R.x)+'px';rc.style.top=(I.y+R.y)+'px';rc.style.width=R.w+'px';rc.style.height=R.h+'px';}
+ function reset(){lay();R={x:I.w*.08,y:I.h*.08,w:I.w*.84,h:I.h*.84};paint();}
+ img.onload=function(){setTimeout(reset,30);};img.src=src;window.addEventListener('resize',reset);
+ function close(v){window.removeEventListener('resize',reset);o.remove();done(v);}
+ o.querySelector('#cropNo').onclick=function(){close(null);};o.querySelector('#cropRs').onclick=reset;
+ o.querySelector('#cropOk').onclick=function(){var k=img.naturalWidth/I.w,sx=Math.round(R.x*k),sy=Math.round(R.y*k),sw=Math.round(R.w*k),sh=Math.round(R.h*k);
+  if(sw<8||sh<8){close(null);return;}var sc=Math.min(1,2200/Math.max(sw,sh)),c=document.createElement('canvas');c.width=Math.round(sw*sc);c.height=Math.round(sh*sc);
+  c.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,c.width,c.height);close({d:c.toDataURL('image/jpeg',0.9),w:c.width,h:c.height});};
+ rc.addEventListener('pointerdown',function(e){e.preventDefault();var r=rc.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top,E=Math.max(26,Math.min(44,Math.min(r.width,r.height)/3));
+  drag={l:px<E,r:px>r.width-E,t:py<E,b:py>r.height-E,sx:e.clientX,sy:e.clientY,o:{x:R.x,y:R.y,w:R.w,h:R.h}};drag.m=!(drag.l||drag.r||drag.t||drag.b);try{rc.setPointerCapture(e.pointerId);}catch(x){}});
+ rc.addEventListener('pointermove',function(e){if(!drag)return;var dx=e.clientX-drag.sx,dy=e.clientY-drag.sy,n={x:drag.o.x,y:drag.o.y,w:drag.o.w,h:drag.o.h};
+  if(drag.m){n.x=Math.max(0,Math.min(I.w-n.w,n.x+dx));n.y=Math.max(0,Math.min(I.h-n.h,n.y+dy));}
+  else{if(drag.l){var nx=Math.max(0,Math.min(drag.o.x+drag.o.w-M,drag.o.x+dx));n.w=drag.o.x+drag.o.w-nx;n.x=nx;}
+   if(drag.r){n.w=Math.max(M,Math.min(I.w-drag.o.x,drag.o.w+dx));}
+   if(drag.t){var ny=Math.max(0,Math.min(drag.o.y+drag.o.h-M,drag.o.y+dy));n.h=drag.o.y+drag.o.h-ny;n.y=ny;}
+   if(drag.b){n.h=Math.max(M,Math.min(I.h-drag.o.y,drag.o.h+dy));}}
+  R=n;paint();});
+ function up(){drag=null;}rc.addEventListener('pointerup',up);rc.addEventListener('pointercancel',up);
+});}
+async function viewPhoto(own,id){const v=await phGet(id);if(!v)return;const r=await dlg('<img alt="photo" src="'+v+'" style="width:100%;border-radius:8px"><div class="acts"><button data-r="crop">✂ Crop</button><button class="dng" data-r="del">Delete photo</button><button class="pri" data-r="close">Close</button></div>');
+ if(r==='del'){const a=phIds(own),i=a.indexOf(id);if(i>=0)a.splice(i,1);phDel(id);save();refreshPhotos(own);}
+ if(r==='crop'){const res=await cropPhoto(v);if(res){await phPut(id,res.d);refreshPhotos(own);}viewPhoto(own,id);}}
 /* signature pad */
 function openSig(k){const r=S.rec,s=document.createElement('div');s.className='scrim';s.innerHTML='<div class="modal"><h3>Sign here</h3><canvas class="sigbox" id="sgc" width="900" height="300"></canvas><div class="acts"><button id="sgx">Clear</button><button id="sgcan">Cancel</button><button class="pri" id="sgok">Save signature</button></div></div>';document.body.appendChild(s);
  const c=$('#sgc',s),g=c.getContext('2d');let drawing=false,ink=false,lx=0,ly=0;g.lineWidth=4;g.lineCap='round';g.lineJoin='round';g.strokeStyle='#0a2a8f';
@@ -1012,7 +1039,7 @@ async function init(){
 init();
 
 </script>
-<script>(function(){var B='0728eef8a4';function chk(){fetch('version.json?'+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(v){if(v&&v.build&&v.build!==B){if(navigator.serviceWorker)navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister()});});if(window.caches)caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k)});});var t=document.createElement('div');t.className='toast';t.textContent='A newer version is available - reload to update';document.body.appendChild(t);}}).catch(function(){});}setTimeout(chk,4000);setInterval(function(){if(!document.hidden)chk();},300000);document.addEventListener('visibilitychange',function(){if(!document.hidden)chk();});})();</script>
+<script>(function(){var B='5e64bb5fa3';function chk(){fetch('version.json?'+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(v){if(v&&v.build&&v.build!==B){if(navigator.serviceWorker)navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister()});});if(window.caches)caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k)});});var t=document.createElement('div');t.className='toast';t.textContent='A newer version is available - reload to update';document.body.appendChild(t);}}).catch(function(){});}setTimeout(chk,4000);setInterval(function(){if(!document.hidden)chk();},300000);document.addEventListener('visibilitychange',function(){if(!document.hidden)chk();});})();</script>
 <script>/* ===== shared: on-screen Back / Home bar (Ravi, 2026-11-04) =====
    Back = the previous screen you were on (kept per app, not the browser history). Home = the main launcher.
    Each app gives Nav.init() a snap() (where am I) and restore() (go back there). Pages without one use the browser's Back. */
@@ -1140,5 +1167,5 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 try{new MutationObserver(function(){ensure();}).observe(document.documentElement,{childList:true,subtree:true});}catch(x){}
 ensure();setTimeout(ensure,500);
 })();</script>
-<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 2.04 · 11/24/2026</div>
+<div id="revTag" aria-hidden="true" style="position:fixed;top:2px;left:0;right:0;text-align:center;font:9px/1 system-ui,sans-serif;opacity:.28;pointer-events:none;z-index:2147483000;color:#888">Rev 2.05 · 11/24/2026</div>
 </body></html>
