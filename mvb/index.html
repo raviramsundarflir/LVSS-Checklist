@@ -836,9 +836,39 @@ function cropPhoto(src){return new Promise(function(done){
   R=n;paint();});
  function up(){drag=null;}rc.addEventListener('pointerup',up);rc.addEventListener('pointercancel',up);
 });}
-async function viewPhoto(own,id){const v=await phGet(id);if(!v)return;const r=await dlg('<img alt="photo" src="'+v+'" style="width:100%;border-radius:8px"><div class="acts"><button data-r="crop">✂ Crop</button><button class="dng" data-r="del">Delete photo</button><button class="pri" data-r="close">Close</button></div>');
- if(r==='del'){const a=phIds(own),i=a.indexOf(id);if(i>=0)a.splice(i,1);phDel(id);save();refreshPhotos(own);}
- if(r==='crop'){const res=await cropPhoto(v);if(res){await phPut(id,res.d);refreshPhotos(own);}viewPhoto(own,id);}}
+/* ===== rotate + pinch zoom (Ravi 2026-11-24): photoEdit(dataUrl) -> Promise<dataUrl|null>; the saved picture is exactly the rotated, zoomed view ===== */
+function photoEdit(src){return new Promise(function(done){
+ var o=document.createElement('div');o.style.cssText='position:fixed;inset:0;z-index:100000;background:#000;display:flex;flex-direction:column;touch-action:none;user-select:none;-webkit-user-select:none';
+ var bs='flex:1;min-height:44px;margin:0;padding:4px 2px;font-size:14px';
+ o.innerHTML='<div style="color:#fff;font:600 13px system-ui;padding:8px 12px;text-align:center">Pinch to zoom, drag to move, rotate below. The report prints this view.</div><div id="peS" style="flex:1 1 auto;position:relative;overflow:hidden;line-height:0"><div id="peZ" style="position:absolute;left:0;top:0;transform-origin:0 0;visibility:hidden"><img id="peI" draggable="false" style="display:block;width:100%;height:100%" alt=""></div></div><div style="display:flex;gap:4px;padding:6px 8px"><button type="button" data-d="-90" style="'+bs+'">⟲90</button><button type="button" data-d="-5" style="'+bs+'">⟲5</button><button type="button" id="peOut" style="'+bs+'">－</button><button type="button" id="peIn" style="'+bs+'">＋</button><button type="button" id="peFit" style="'+bs+'">Fit</button><button type="button" data-d="5" style="'+bs+'">⟳5</button><button type="button" data-d="90" style="'+bs+'">⟳90</button></div><div style="display:flex;gap:6px;padding:0 8px 10px"><button type="button" id="peNo" style="flex:1;min-height:46px;margin:0">Cancel</button><button type="button" id="peRs" style="flex:1;min-height:46px;margin:0">Reset</button><button type="button" id="peOk" class="pri" style="flex:1.6;min-height:46px;margin:0">Use this view</button></div>';
+ document.body.appendChild(o);
+ var st=o.querySelector('#peS'),zi=o.querySelector('#peZ'),im=o.querySelector('#peI'),rot=0,k=1,tx=0,ty=0,bw=0,bh=0,g=null,P=new Map(),orig=new Image();
+ function apply(){zi.style.transform='translate('+tx+'px,'+ty+'px) scale('+k+')';}
+ function fit(){var W=st.clientWidth,H=st.clientHeight,ar=(im.naturalWidth||4)/(im.naturalHeight||3);bw=Math.min(W,H*ar);bh=bw/ar;zi.style.width=bw+'px';zi.style.height=bh+'px';k=1;tx=(W-bw)/2;ty=(H-bh)/2;apply();zi.style.visibility='visible';}
+ function rend(max,v){var a=rot*Math.PI/180,w=orig.width,h=orig.height,cs=Math.abs(Math.cos(a)),sn=Math.abs(Math.sin(a)),W=Math.round(w*cs+h*sn),H=Math.round(w*sn+h*cs),cv=document.createElement('canvas');cv.width=W;cv.height=H;var c=cv.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,W,H);c.translate(W/2,H/2);c.rotate(a);c.drawImage(orig,-w/2,-h/2);
+  var sx=v?Math.round(v.x*W):0,sy=v?Math.round(v.y*H):0,sw=v?Math.max(8,Math.round(v.w*W)):W,sh=v?Math.max(8,Math.round(v.h*H)):H,kk=Math.min(1,max/Math.max(sw,sh)),c2=document.createElement('canvas');c2.width=Math.round(sw*kk);c2.height=Math.round(sh*kk);c2.getContext('2d').drawImage(cv,sx,sy,sw,sh,0,0,c2.width,c2.height);return c2.toDataURL('image/jpeg',0.85);}
+ function show(){zi.style.visibility='hidden';im.onload=fit;im.src=rend(1600);}
+ orig.onload=show;orig.src=src;
+ function view(){var W=st.clientWidth,H=st.clientHeight,x0=Math.max(0,-tx/k/bw),y0=Math.max(0,-ty/k/bh),x1=Math.min(1,(W-tx)/k/bw),y1=Math.min(1,(H-ty)/k/bh);return {k:k,x:x0,y:y0,w:Math.max(0,x1-x0),h:Math.max(0,y1-y0)};}
+ function loc(e){var r=st.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top};}
+ function mid(){var a=Array.from(P.values());return {x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2,d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1};}
+ function zoomAt(cx,cy,nk){nk=Math.max(1,Math.min(10,nk));var ix=(cx-tx)/k,iy=(cy-ty)/k;k=nk;tx=cx-ix*k;ty=cy-iy*k;apply();}
+ st.addEventListener('pointerdown',function(e){e.preventDefault();try{st.setPointerCapture(e.pointerId);}catch(x){}P.set(e.pointerId,loc(e));g=P.size>=2?{m:mid(),k:k,tx:tx,ty:ty}:{p:loc(e),tx:tx,ty:ty};});
+ st.addEventListener('pointermove',function(e){if(!P.has(e.pointerId))return;e.preventDefault();P.set(e.pointerId,loc(e));
+  if(P.size>=2&&g&&g.m){var m=mid(),nk=Math.max(1,Math.min(10,g.k*m.d/g.m.d)),ix=(g.m.x-g.tx)/g.k,iy=(g.m.y-g.ty)/g.k;k=nk;tx=m.x-ix*k;ty=m.y-iy*k;apply();return;}
+  if(P.size===1&&g&&g.p){var p=loc(e);tx=g.tx+p.x-g.p.x;ty=g.ty+p.y-g.p.y;apply();}});
+ function up(e){if(!P.has(e.pointerId))return;P.delete(e.pointerId);g=null;if(P.size===1){g={p:Array.from(P.values())[0],tx:tx,ty:ty};}}
+ st.addEventListener('pointerup',up);st.addEventListener('pointercancel',up);
+ st.addEventListener('wheel',function(e){e.preventDefault();var p=loc(e);zoomAt(p.x,p.y,k*(e.deltaY<0?1.25:0.8));},{passive:false});
+ function close(v){o.remove();done(v);}
+ o.querySelectorAll('[data-d]').forEach(function(b){b.onclick=function(){rot=((rot+(+b.dataset.d))%360+360)%360;show();};});
+ o.querySelector('#peIn').onclick=function(){zoomAt(st.clientWidth/2,st.clientHeight/2,k*1.5);};o.querySelector('#peOut').onclick=function(){zoomAt(st.clientWidth/2,st.clientHeight/2,k/1.5);};o.querySelector('#peFit').onclick=fit;
+ o.querySelector('#peRs').onclick=function(){rot=0;show();};o.querySelector('#peNo').onclick=function(){close(null);};
+ o.querySelector('#peOk').onclick=function(){var v=view(),zm=v.k>1.15&&v.w>0.02&&v.h>0.02;if(!rot&&!zm){close({same:true});return;}close({d:rend(1600,zm?v:null)});};
+});}
+async function viewPhoto(own,id){const v=await phGet(id);if(!v)return;const og=await phGet(id+'~o'),r=await dlg('<img alt="photo" src="'+v+'" style="width:100%;border-radius:8px"><div class="acts"><button data-r="edit">🔍 Rotate / zoom</button><button class="dng" data-r="del">Delete photo</button><button class="pri" data-r="close">Close</button></div>');
+ if(r==='del'){const a=phIds(own),i=a.indexOf(id);if(i>=0)a.splice(i,1);phDel(id);phDel(id+'~o');save();refreshPhotos(own);}
+ if(r==='edit'){const res=await photoEdit(og||v);if(res&&res.d){if(!og)await phPut(id+'~o',v);await phPut(id,res.d);refreshPhotos(own);}else if(res&&res.same&&og){await phPut(id,og);phDel(id+'~o');refreshPhotos(own);}viewPhoto(own,id);}}
 /* signature pad */
 function openSig(k){const r=S.rec,s=document.createElement('div');s.className='scrim';s.innerHTML='<div class="modal"><h3>Sign here</h3><canvas class="sigbox" id="sgc" width="900" height="300"></canvas><div class="acts"><button id="sgx">Clear</button><button id="sgcan">Cancel</button><button class="pri" id="sgok">Save signature</button></div></div>';document.body.appendChild(s);
  const c=$('#sgc',s),g=c.getContext('2d');let drawing=false,ink=false,lx=0,ly=0;g.lineWidth=4;g.lineCap='round';g.lineJoin='round';g.strokeStyle='#0a2a8f';
@@ -1039,7 +1069,7 @@ async function init(){
 init();
 
 </script>
-<script>(function(){var B='5e64bb5fa3';function chk(){fetch('version.json?'+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(v){if(v&&v.build&&v.build!==B){if(navigator.serviceWorker)navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister()});});if(window.caches)caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k)});});var t=document.createElement('div');t.className='toast';t.textContent='A newer version is available - reload to update';document.body.appendChild(t);}}).catch(function(){});}setTimeout(chk,4000);setInterval(function(){if(!document.hidden)chk();},300000);document.addEventListener('visibilitychange',function(){if(!document.hidden)chk();});})();</script>
+<script>(function(){var B='a51844790f';function chk(){fetch('version.json?'+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(v){if(v&&v.build&&v.build!==B){if(navigator.serviceWorker)navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister()});});if(window.caches)caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k)});});var t=document.createElement('div');t.className='toast';t.textContent='A newer version is available - reload to update';document.body.appendChild(t);}}).catch(function(){});}setTimeout(chk,4000);setInterval(function(){if(!document.hidden)chk();},300000);document.addEventListener('visibilitychange',function(){if(!document.hidden)chk();});})();</script>
 <script>/* ===== shared: on-screen Back / Home bar (Ravi, 2026-11-04) =====
    Back = the previous screen you were on (kept per app, not the browser history). Home = the main launcher.
    Each app gives Nav.init() a snap() (where am I) and restore() (go back there). Pages without one use the browser's Back. */

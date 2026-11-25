@@ -199,8 +199,8 @@ h2{font-size:21px}
 .t-blk{border-top-color:#c9a400!important}
 .tag-NOT{background:#6f7b8a}
 .blk-offer{margin-top:10px}.blk-offer small{display:block;color:var(--muted);margin-top:4px}
-.blkpanel{margin-top:10px;padding:12px;border:2px solid #c9a400;border-radius:8px;background:#fff}
-.blkpanel textarea{width:100%;min-height:56px;border:2px solid var(--line);border-radius:8px;padding:8px 10px;font-size:16px}
+.blkpanel{margin-top:8px;padding:8px 10px;font-size:13.5px;line-height:1.3;border:2px solid #c9a400;border-radius:8px;background:#fff}
+.blkpanel p{margin:4px 0}.blkpanel .row2{margin-top:6px}.blkpanel textarea{width:100%;min-height:44px;border:2px solid var(--line);border-radius:8px;padding:8px 10px;font-size:16px}
 .chipcol{display:flex;flex-direction:column;gap:6px;margin:6px 0}
 .chip{text-align:left;min-height:44px;padding:8px 12px;border:2px solid var(--line);border-radius:8px;background:#f4f6f9;font-size:15px}
 .chip.on{border-color:#c9a400;background:#fff3c4;font-weight:700}
@@ -14404,11 +14404,11 @@ function rowHTML(r){
     (!r.spare && /serial (number|plate)/i.test(r.text) ? '<p class="hint">New unit S/N: <b class="sn">'+esc(S.rec.header.newSerial||'(not entered)')+'</b></p>' : '')+
     (r.timed ? '<label class="timed"><span>'+esc(r.timed)+':</span><input data-f="time" value="'+esc(d.time||'')+'" placeholder="e.g. 1:45" autocomplete="off"></label>' : '')+
     '<textarea class="note" data-f="note" rows="2" placeholder="'+(s===4?'Parts awaited / what is missing':'Describe the failure')+'">'+esc(d.note||'')+'</textarea>'+
-    '<div class="blk-slot">'+blkHTML(r,d)+'</div>'+ddOmitHTML(r,d)+'<div class="rx-slot">'+rxHTML(r,d)+'</div><div class="thumbs">'+ph.map(thumbHTML).join('')+'</div></div>'+
+    ddOmitHTML(r,d)+'<div class="rx-slot">'+rxHTML(r,d)+'</div><div class="thumbs">'+ph.map(thumbHTML).join('')+'</div></div>'+
     '<button class="cam'+(off?' off':'')+'" data-act="cam" aria-label="Add photo to item '+r.num+'"'+(off?' disabled':'')+'>'+CAM+'<span class="cam-n">'+(ph.length||'')+'</span></button>'+
     '<input type="file" accept="image/*" capture="environment" data-f="photo" class="in-cam" hidden'+(off?' disabled':'')+'>'+
     '<input type="file" accept="image/*" multiple data-f="photo" class="in-lib" hidden'+(off?' disabled':'')+'>'+
-    '<button class="box'+(d.rep&&(s===2||s===4)&&!d.ovr?' fixed':'')+'" data-act="tap"'+(off?' disabled':'')+' aria-label="Item '+r.num+' status: '+STAT[s].label+'. Tap to change.">'+STAT[s].g+'</button>'+((r.spare&&off)?'':'<button class=\"tgl'+(s===5?' on':'')+'\" data-act=\"cnt\" role=\"switch\" aria-checked=\"'+(s===5?'true':'false')+'\"><span class=\"sw\"></span>Could not test</button>')+'</li>';
+    '<button class="box'+(d.rep&&(s===2||s===4)&&!d.ovr?' fixed':'')+'" data-act="tap"'+(off?' disabled':'')+' aria-label="Item '+r.num+' status: '+STAT[s].label+'. Tap to change.">'+STAT[s].g+'</button>'+((r.spare&&off)?'':'<button class=\"tgl'+(s===5?' on':'')+'\" data-act=\"cnt\" role=\"switch\" aria-checked=\"'+(s===5?'true':'false')+'\"><span class=\"sw\"></span>Could not test</button>')+'<div class="blk-slot" style="grid-column:1/-1">'+blkHTML(r,d)+'</div></li>';
 }
 function secCountText(si){
   var rows=buildRows(S.rec.tpl).filter(function(r){ return r.sec===si; }), t=0, d=0;
@@ -14586,7 +14586,7 @@ function buildPrint(mode){
     var r=a.rows.find(function(x){ return x.num===p.num; }), d=itemOf(rec,p.num), s2=d.s||0;
     var status = r && counts(r,d) ? (s2===0?'Not inspected':STAT[s2].label.replace(' (awaiting parts)','')) : '';
     var desc=((s2===2||s2===4) && (d.note||'').trim()) ? d.note.trim() : '';
-    return '<figure><img src="'+p.data+'" alt="Photo for item '+p.num+'"><figcaption><b>Item '+p.num+(status?' \u2013 '+esc(status):'')+'</b>'+(desc?'<span>'+esc(desc)+'</span>':'')+'<small>'+esc(r?lineText(r,d):'')+'</small></figcaption></figure>';
+    return '<figure><img src="'+pzd(p)+'" alt="Photo for item '+p.num+'"><figcaption><b>Item '+p.num+(status?' \u2013 '+esc(status):'')+'</b>'+(desc?'<span>'+esc(desc)+'</span>':'')+'<small>'+esc(r?lineText(r,d):'')+'</small></figcaption></figure>';
   }).join('')+'</div></section>' : '';
   var run='<div class="p-run"><span>'+esc(t.title)+' \u2013 New Unit S/N '+esc(h.newSerial)+'</span><span>'+esc(fmtDate(h.date))+'</span></div>';
   return '<table class="pwrap"><thead><tr><td>'+run+'</td></tr></thead><tbody><tr><td>'+cover+atp+punch+sign+pics+'</td></tr></tbody><tfoot><tr><td><div class="p-foot">'+esc(t.footer||'')+'</div></td></tr></tfoot></table>';
@@ -14945,13 +14945,12 @@ function blkHTML(r,d){
   var a=analyze(S.rec), cands=a.issues.filter(function(it){ return (it.kind==='FAIL'||it.kind==='AWP') && it.r.num!==r.num; });
   var has=(d.by&&d.by.length)||(d.why||'').trim()||d.later||d.pend, open=!has||((S.blkOpen||{})[r.num]);
   if(!open) return '<div class="blkpanel blksum"><b>⏸ Not tested</b> <span class="muted">– '+esc(blkTxt(S.rec,d).replace(/^NOT TESTED[\s.-]*/,'').replace(/\.$/,''))+'</span><div class="row2"><button class="btn light" data-act="blk-edit" data-num="'+r.num+'">Change reason</button><button class="btn light" data-act="unblk">↩ Test it now</button><button class="btn pass" data-act="blk-pass">✓ Passes</button><button class="btn fail" data-act="blk-fail">✗ Fails</button></div></div>';
-  return '<div class="blkpanel"><b>⏸ Can’t be tested yet – not counted as a failure</b><p class="muted">Pick the failed item(s) blocking it and/or say why. Listed as <b>Not tested</b>; retest it once the blocker is fixed.</p>'+
-    '<div class="muted" style="margin-top:6px">Blocked by (tap the failed item(s))</div>'+
-    (cands.length ? '<div class="chipcol">'+cands.map(function(it){ var on=(d.by||[]).indexOf(it.r.num)>=0; return '<button class="chip'+(on?' on':'')+'" data-act="blk-by" data-by="'+it.r.num+'">'+(on?'✓ ':'')+'#'+it.r.num+' '+esc(lineText(it.r,it.d).slice(0,70))+'</button>'; }).join('')+'</div>' : '<p class="muted">No failed items yet – describe what is blocking it below.</p>')+
-    '<label class="full">What is blocking it? (required if no item is picked)<textarea data-f="why" rows="2" placeholder="e.g. mast won’t raise until the hydraulic fault is fixed">'+esc(d.why||'')+'</textarea></label>'+
-    '<button class="btn pendbtn'+(d.later?' on':'')+'" data-act="blk-later">'+(d.later?'✓ ':'⏳ ')+'To be tested later – no details needed, does not stop the report</button>'+
-    '<button class="btn pendbtn'+(d.pend?' on':'')+'" data-act="blk-pend">'+(d.pend?'✓ ':'⏳ ')+'Pending retest – test after the suspected cause is fixed</button>'+
-    '<div class="row2">'+(has?'<button class="btn primary" data-act="blk-edit" data-num="'+r.num+'">✓ OK</button>':'')+'<button class="btn light" data-act="unblk">↩ It can be tested now – back to failed</button><button class="btn pass" data-act="blk-pass">✓ Retested – it passes</button><button class="btn fail" data-act="blk-fail">✗ Retested – it fails</button></div></div>';
+  return '<div class="blkpanel"><b>⏸ Can’t be tested yet</b><p class="muted">Not counted as a failure. Tap the failed item(s) blocking it, or say why.</p>'+
+    (cands.length ? '<div class="chipcol">'+cands.map(function(it){ var on=(d.by||[]).indexOf(it.r.num)>=0; return '<button class="chip'+(on?' on':'')+'" data-act="blk-by" data-by="'+it.r.num+'">'+(on?'✓ ':'')+'#'+it.r.num+' '+esc(lineText(it.r,it.d).slice(0,70))+'</button>'; }).join('')+'</div>' : '<p class="muted">No failed items yet – say what is blocking it.</p>')+
+    '<label class="full">What is blocking it? (if no item picked)<textarea data-f="why" rows="2" placeholder="e.g. mast won’t raise until the hydraulic fault is fixed">'+esc(d.why||'')+'</textarea></label>'+
+    '<button class="btn pendbtn'+(d.later?' on':'')+'" data-act="blk-later">'+(d.later?'✓ ':'⏳ ')+'Test later – no details needed</button>'+
+    '<button class="btn pendbtn'+(d.pend?' on':'')+'" data-act="blk-pend">'+(d.pend?'✓ ':'⏳ ')+'Pending retest</button>'+
+    '<div class="row2">'+(has?'<button class="btn primary" data-act="blk-edit" data-num="'+r.num+'">✓ OK</button>':'')+'<button class="btn light" data-act="unblk">↩ Test it now</button><button class="btn pass" data-act="blk-pass">✓ Retested – passes</button><button class="btn fail" data-act="blk-fail">✗ Retested – fails</button></div></div>';
 }
 
 /* ---- zoom / rotate viewer ---- */
@@ -14963,8 +14962,8 @@ function viewTarget(p){
 }
 function zsHtml(src){ return '<div id="zs" style="position:relative;width:100%;flex:1 1 auto;min-height:150px;overflow:hidden;background:#000;border-radius:8px;touch-action:none;user-select:none;-webkit-user-select:none;line-height:0"><div id="zi" style="position:absolute;left:0;top:0;transform-origin:0 0;visibility:hidden"><img id="zimg" src="'+src+'" draggable="false" style="display:block;width:100%;height:100%"></div></div><div style="display:flex;gap:6px;margin-top:8px"><button type="button" id="zbOut" class="btn light" style="flex:1">－</button><button type="button" id="zbIn" class="btn light" style="flex:1">＋</button><button type="button" id="zbFit" class="btn light" style="flex:1.3">Fit</button></div>'; }
 /* zoom crop for serial / revision photos: the report shows the photo cropped to where the tech left it zoomed */
-function zvOk(p){ var k=String(p.num); return k.indexOf('dd:s')===0||k.indexOf('dd:r')===0||k.indexOf('sw')===0||!!viewTarget(p); }
-function zvOpt(p){ if(!zvOk(p)) return {}; return {init:(p.zv&&(p.zv.rot||0)===(S.viewRot||0))?{x:p.zv.x,y:p.zv.y,w:p.zv.w,h:p.zv.h}:null, onView:function(v){ if(v.k>1.15&&v.w>0.02&&v.h>0.02) p.zv={rot:S.viewRot||0,x:v.x,y:v.y,w:v.w,h:v.h}; else delete p.zv; clearTimeout(S.zvT); S.zvT=setTimeout(function(){ DB.put('photos',p); },400); }}; }
+function zvOk(p){ return true; }
+function zvOpt(p){ if(!zvOk(p)) return {}; return {init:(p.zv&&(p.zv.rot||0)===(S.viewRot||0))?{x:p.zv.x,y:p.zv.y,w:p.zv.w,h:p.zv.h}:null, onView:function(v){ if(v.k>1.15&&v.w>0.02&&v.h>0.02) p.zv={rot:S.viewRot||0,x:v.x,y:v.y,w:v.w,h:v.h}; else if(S.viewRot) p.zv={rot:S.viewRot,x:0,y:0,w:1,h:1}; else delete p.zv; clearTimeout(S.zvT); S.zvT=setTimeout(function(){ DB.put('photos',p); },400); }}; }
 function pzd(p){ return (S.zimg&&S.zimg[p.id])||p.data; }
 async function atpZoom(){ S.zimg={}; for(var i=0;i<S.photos.length;i++){ var p=S.photos[i], z=p.zv; if(!z||!p.data) continue;
   try{ var im=await new Promise(function(ok,no){ var e=new Image(); e.onload=function(){ ok(e); }; e.onerror=no; e.src=p.data; });
@@ -15034,11 +15033,11 @@ function showPhoto(pid,keep){
     var canDel=true;
     modalRoot.innerHTML='<div class="scrim" data-act="noop"><div class="dialog vw" data-act="noop" style="width:min(96vw,1000px);height:96vh;height:96dvh;max-height:96dvh;padding:10px;display:flex;flex-direction:column;overflow:hidden">'+
       '<h2 style="margin:0 0 4px;font-size:17px">'+esc(t?t.what.charAt(0).toUpperCase()+t.what.slice(1):title)+'</h2>'+
-      '<p class="muted" style="margin:0 0 6px;font-size:13px;line-height:1.3">💡 <b>Tip:</b> rotate the picture first so the text reads level, then zoom in to check every character.'+(zvOk(p)?' <b>The report shows this photo cropped to the area you leave zoomed in on</b> (zoom all the way out for the full photo).':'')+(t?' Correct the serial number below as you go – it saves as you type.':'')+'</p>'+
+      '<details style="margin:0 0 6px"><summary style="font-size:14px;cursor:pointer;padding:4px 0;color:#1f5fae">💡 Tip (tap to show)</summary><p class="muted" style="margin:2px 0 0;font-size:13px;line-height:1.3"><b>Tip:</b> rotate the picture first so the text reads level, then zoom in to check every character.'+(zvOk(p)?' <b>The report shows this photo cropped to the area you leave zoomed in on</b> (zoom all the way out for the full photo).':'')+(t?' Correct the serial number below as you go – it saves as you type.':'')+'</p></details>'+
       (t?'<input id="zsSer" value="'+esc(String(S.rec.header[t.path]||''))+'" placeholder="'+esc(t.lbl)+'" aria-label="'+esc(t.lbl)+'" autocapitalize="characters" autocomplete="off" spellcheck="false" style="width:100%;margin:0 0 6px;padding:6px 10px;min-height:44px;font:700 18px ui-monospace,Menlo,Consolas,monospace;border:2px solid var(--line);border-radius:8px">':'')+
       zsHtml(src)+
       '<div style="display:flex;gap:4px;align-items:center;margin-top:6px">'+B('rv1',-90,'⟲90')+B('rv2',-45,'↺45')+B('rv3',-5,'↺5')+'<button type="button" id="rv0" class="btn light" style="flex:.9;padding:4px 2px;min-height:42px;font-size:13px" title="Tap to reset rotation">'+rot+'°</button>'+B('rv4',5,'↻5')+B('rv5',45,'↻45')+B('rv6',90,'⟳90')+'</div>'+
-      '<div style="display:flex;gap:6px;margin-top:6px"><button type="button" id="pvCrop" class="btn light" style="flex:1;min-height:44px">✂ Crop</button>'+(p.o?'<button type="button" id="pvUncrop" class="btn light" style="flex:1;min-height:44px">↩ Undo crop</button>':'')+'</div>'+'<div style="display:flex;gap:8px;margin-top:6px">'+(canDel?'<button class="btn danger" data-act="del-photo" data-pid="'+esc(p.id)+'" style="flex:1">Delete photo</button>':'')+'<button class="btn primary" data-act="close-modal" style="flex:2;min-height:44px">Done</button></div></div></div>';
+      ''+'<div style="display:flex;gap:8px;margin-top:6px">'+(canDel?'<button class="btn danger" data-act="del-photo" data-pid="'+esc(p.id)+'" style="flex:1">Delete photo</button>':'')+'<button class="btn primary" data-act="close-modal" style="flex:2;min-height:44px">Done</button></div></div></div>';
     pvReorder();
     [['rv1',-90],['rv2',-45],['rv3',-5],['rv4',5],['rv5',45],['rv6',90]].forEach(function(x){ document.getElementById(x[0]).onclick=function(){ viewRotate(x[1]); }; });
     document.getElementById('rv0').onclick=function(){ S.viewRot=0; showPhoto(pid,true); };
@@ -15637,7 +15636,7 @@ function atpAuditPdf(rec){
     var GAP=8, CWc=(CW-2*GAP)/3, IH=118;
     for(var i=0;i<cells.length;i+=3){
       var row=cells.slice(i,i+3);
-      y=PhotoBox.row(d,y,row.map(function(c){ return {src:c.p.data,t:c.t,s:c.sub}; }),{MX:MX,CWc:CWc,GAP:GAP,IH:IH,cl:cl,ens:function(n){ ens(n); return y; }});
+      y=PhotoBox.row(d,y,row.map(function(c){ return {src:pzd(c.p),t:c.t,s:c.sub}; }),{MX:MX,CWc:CWc,GAP:GAP,IH:IH,cl:cl,ens:function(n){ ens(n); return y; }});
     }
   }
   if(pass){ try{ var pq=auQrPayload(rec); if(pq&&pq.ok){ var oo=JSON.parse(pq.json); oo.ap=1; if(!oo.ai) oo.ai=rec.atpId||oo.id; var qq=window.qrcode(0,'L'); qq.addData(JSON.stringify(oo)); qq.make();
@@ -16824,7 +16823,7 @@ async function rxZipOut(){
   var rec=S.rec, h=rec.header, files=[], used={}, cnt={};
   try{ await atpZoom(); }catch(e){}
   var pdf=ddPdf(rec).output('arraybuffer'); files.push({name:stdName(h.wbs?null:h.rma,snShow(h.newSerial,''),'DD1149',h.date)+'.pdf',data:new Uint8Array(pdf)});
-  S.photos.forEach(function(p){ if(!p.data) return; var base=rxPhotoName(rec,p,1).replace(/ \(1\)\.jpg$/,''); cnt[base]=(cnt[base]||0)+1; var nm=base+' ('+cnt[base]+').jpg'; if(used[nm]) nm=base+' ('+cnt[base]+'b).jpg'; used[nm]=1; try{ files.push({name:nm,data:rxDataBytes(p.data)}); }catch(e){} });
+  S.photos.forEach(function(p){ if(!p.data) return; var base=rxPhotoName(rec,p,1).replace(/ \(1\)\.jpg$/,''); cnt[base]=(cnt[base]||0)+1; var nm=base+' ('+cnt[base]+').jpg'; if(used[nm]) nm=base+' ('+cnt[base]+'b).jpg'; used[nm]=1; try{ files.push({name:nm,data:rxDataBytes(p.o||p.data)}); }catch(e){} });
   var blob=rxZip(files), name=stdName(h.wbs?null:h.rma,snShow(h.newSerial,''),'ATP-PHOTOS',h.date)+'.zip';
   downloadBlob(name,blob); toast('Saved '+name+' ('+(files.length-1)+' photo'+(files.length===2?'':'s')+' + DD1149 attachment)');
 }
@@ -17097,7 +17096,7 @@ SendTo.init({rec:function(){ return S.rec; },dirty:function(){ markDirty(); save
 })();
 
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='2b037ff695';window.__BUILD=B;var shown=false,last=0;
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script><script>(function(){var B='0b15763ae6';window.__BUILD=B;var shown=false,last=0;
 function autoUpd(nb){try{if(navigator.onLine===false||!(window.__atHome&&window.__atHome()))return false;if(document.querySelector('.modal,.scrim,.dialog'))return false;var k='autoUpd:'+location.pathname;if(sessionStorage.getItem(k)===String(nb))return false;sessionStorage.setItem(k,String(nb));var d=document.createElement('div');d.textContent='Updating to the latest version\u2026';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483001;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;font:700 20px system-ui,sans-serif;color:#0b3d6b';document.body.appendChild(d);fetch(location.pathname,{cache:'reload'}).catch(function(){}).then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration();}).then(function(r){return r&&r.update();}).catch(function(){}).then(function(){location.reload();});return true;}catch(e){return false;}}
 function bar(nb){if(shown||!document.body)return;if(autoUpd(nb))return;shown=true;var d=document.createElement('div');d.id='newVerBar';d.setAttribute('role','alert');
 d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:2147483000;background:#0b3d6b;color:#fff;font:600 15px/1.3 system-ui,sans-serif;padding:12px 14px;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px';
